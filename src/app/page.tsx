@@ -1,32 +1,81 @@
 export default function Home() {
   return (
-    <main className="hero-lines relative flex min-h-screen w-full items-center justify-center bg-ink px-6 text-snow sm:px-10">
-      <div className="animate-fade-in mx-auto w-full max-w-[900px]">
-        <p className="font-mono text-xs uppercase tracking-[0.25em] text-signal">
-          AI-NATIVE · IB · IGCSE · A-LEVEL
-        </p>
+    <div className="flex min-h-screen flex-col bg-parchment text-ink">
+      <nav className="border-b border-ink/10">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-5 sm:px-10">
+          <a href="/" className="font-display text-xl font-medium tracking-tight text-ink">
+            Ailemy<span className="text-flask">.</span>
+          </a>
 
-        <h1 className="font-display mt-10 max-w-[900px] text-4xl font-medium leading-[1.05] tracking-tight sm:mt-12 sm:text-6xl">
-          Where reaction meets revelation.
-        </h1>
+          <ul className="hidden items-center gap-10 text-sm font-medium text-ink/70 md:flex">
+            <li>
+              <a href="#subjects" className="transition-colors duration-200 hover:text-ink">
+                Subjects
+              </a>
+            </li>
+            <li>
+              <a href="#how-it-works" className="transition-colors duration-200 hover:text-ink">
+                How it works
+              </a>
+            </li>
+            <li>
+              <a href="#for-schools" className="transition-colors duration-200 hover:text-ink">
+                For schools
+              </a>
+            </li>
+            <li>
+              <a href="#about" className="transition-colors duration-200 hover:text-ink">
+                About
+              </a>
+            </li>
+          </ul>
 
-        <p className="mt-8 max-w-[650px] text-lg leading-relaxed text-parchment/70 sm:mt-10">
-          Exam preparation built on the spec, not around it.
-        </p>
-
-        <div className="mt-12 sm:mt-14">
           <a
             href="#"
-            className="inline-flex items-center rounded-md bg-flask px-6 py-3 font-medium text-snow transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-flask/95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-signal"
+            className="inline-flex items-center rounded-md bg-flask px-4 py-2 text-sm font-medium text-snow transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-flask/95 sm:px-5 sm:py-2.5"
           >
-            Get early access →
+            Start your journey →
           </a>
         </div>
+      </nav>
 
-        <p className="mt-10 font-mono text-xs tracking-wide text-parchment/50 sm:mt-12">
-          Founder · Muhammed · Chemistry teacher · Doha
-        </p>
-      </div>
-    </main>
+      <section className="flex flex-1 items-center">
+        <div className="animate-fade-in mx-auto w-full max-w-7xl px-6 py-20 sm:px-10 sm:py-28">
+          <p className="font-mono text-xs uppercase tracking-[0.25em] text-ink/60">
+            AI-NATIVE <span className="text-signal/70">·</span> IB{" "}
+            <span className="text-signal/70">·</span> IGCSE{" "}
+            <span className="text-signal/70">·</span> A-LEVEL
+          </p>
+
+          <h1 className="font-display mt-10 max-w-[760px] text-5xl font-medium leading-[1.05] tracking-tight md:text-7xl">
+            Your complete science learning journey.
+          </h1>
+
+          <p className="mt-8 max-w-[620px] text-lg leading-relaxed text-ink/70">
+            Exam preparation from A to Z, built on the spec.
+          </p>
+
+          <div className="mt-12">
+            <a
+              href="#"
+              className="inline-flex items-center rounded-md bg-flask px-6 py-3 font-medium text-snow transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-flask/95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
+            >
+              Start your journey →
+            </a>
+          </div>
+
+          <p className="mt-8 font-mono text-xs tracking-wide text-ink/50">
+            Founder · Muhammed · Chemistry teacher · Doha
+          </p>
+        </div>
+      </section>
+
+      <footer className="border-t border-ink/10">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-6 py-5 text-xs text-ink/50 sm:flex-row sm:items-center sm:justify-between sm:px-10">
+          <p>Ailemy · AI-native exam preparation for IB, IGCSE and A-Level students.</p>
+          <p className="font-mono uppercase tracking-wider">Doha, Qatar</p>
+        </div>
+      </footer>
+    </div>
   );
 }
