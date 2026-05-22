@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type SubjectCardProps = {
   title: string;
   lines: string[];
@@ -70,12 +72,12 @@ export default function Home() {
             </li>
           </ul>
 
-          <a
-            href="#"
+          <Link
+            href="/signup"
             className="inline-flex items-center rounded-md bg-flask px-4 py-2 text-sm font-medium text-snow transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-flask/95 hover:shadow-sm sm:px-5 sm:py-2.5"
           >
             Start your journey →
-          </a>
+          </Link>
         </div>
       </nav>
 
@@ -96,12 +98,12 @@ export default function Home() {
           </p>
 
           <div className="mt-12 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-            <a
-              href="#"
+            <Link
+              href="/signup"
               className="inline-flex items-center justify-center rounded-md bg-flask px-6 py-3 font-medium text-snow transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-flask/95 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
             >
               Start your journey →
-            </a>
+            </Link>
             <a
               href="#subjects"
               className="inline-flex items-center justify-center rounded-md border border-ink/15 bg-transparent px-6 py-3 font-medium text-ink transition-all duration-200 ease-out hover:border-ink/40 hover:bg-ink/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
