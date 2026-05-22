@@ -25,13 +25,31 @@ export default async function DashboardPage({
     redirect("/login?next=/dashboard");
   }
 
-  const { data: profile } = await supabase
+  // maybeSingle (not single) so a missing/blocked row returns null rather than
+  // throwing. Single's no-row error was being swallowed by the destructure,
+  // silently masking real failures and falling through to the email.
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("full_name, role")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
-  const displayName = profile?.full_name?.trim() || user.email || "there";
+  if (profileError) {
+    // Server logs only — surfaces RLS/PostgREST issues without crashing the
+    // page. The fallback ladder below still renders a usable dashboard.
+    console.error("[dashboard] failed to load profile", profileError);
+  }
+
+  // Display name priority:
+  //   1. profiles.full_name (trimmed, non-empty)
+  //   2. auth user email
+  //   3. literal "there" — only if both above are missing
+  const trimmedFullName = profile?.full_name?.trim();
+  const displayName =
+    trimmedFullName && trimmedFullName.length > 0
+      ? trimmedFullName
+      : (user.email ?? "there");
+
   const role = profile?.role ?? "student";
 
   return (
