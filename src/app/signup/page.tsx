@@ -81,7 +81,7 @@ export default function SignupPage() {
             autoComplete="name"
             required
             value={fullName}
-            onValueChange={setFullName}
+            onChange={(event) => setFullName(event.target.value)}
             className={FORM_INPUT_CLASS}
           />
         </div>
@@ -94,7 +94,7 @@ export default function SignupPage() {
             autoComplete="email"
             required
             value={email}
-            onValueChange={setEmail}
+            onChange={(event) => setEmail(event.target.value)}
             className={FORM_INPUT_CLASS}
           />
         </div>
@@ -108,7 +108,7 @@ export default function SignupPage() {
             minLength={8}
             required
             value={password}
-            onValueChange={setPassword}
+            onChange={(event) => setPassword(event.target.value)}
             className={FORM_INPUT_CLASS}
           />
           <p className="text-xs text-ink/50">At least 8 characters.</p>

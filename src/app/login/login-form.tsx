@@ -72,7 +72,7 @@ export function LoginForm() {
             autoComplete="email"
             required
             value={email}
-            onValueChange={setEmail}
+            onChange={(event) => setEmail(event.target.value)}
             className={FORM_INPUT_CLASS}
           />
         </div>
@@ -85,7 +85,7 @@ export function LoginForm() {
             autoComplete="current-password"
             required
             value={password}
-            onValueChange={setPassword}
+            onChange={(event) => setPassword(event.target.value)}
             className={FORM_INPUT_CLASS}
           />
         </div>
