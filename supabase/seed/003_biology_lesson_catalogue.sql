@@ -88,7 +88,7 @@ WITH course_unit AS (
   WHERE c.slug='edexcel-ial-as-biology' AND u.slug='unit-1'
 )
 INSERT INTO lessons (course_id, unit_id, slug, lesson_number, title, status, sort_order, is_core_practical)
-SELECT course_id, unit_id, slug, lesson_number, title, status, sort_order, is_core_practical
+SELECT course_id, unit_id, slug, lesson_number, title, status::content_status, sort_order, is_core_practical
 FROM course_unit, (VALUES
   -- Topic 1: Molecules, Transport and Health (1–22)
   ('water-as-a-biological-solvent',                        1,  'Water as a biological solvent',                                                'coming_soon',  1, false),
@@ -152,7 +152,7 @@ WITH course_unit AS (
   WHERE c.slug='edexcel-ial-as-biology' AND u.slug='unit-2'
 )
 INSERT INTO lessons (course_id, unit_id, slug, lesson_number, title, status, sort_order, is_core_practical)
-SELECT course_id, unit_id, slug, lesson_number, title, status, sort_order, is_core_practical
+SELECT course_id, unit_id, slug, lesson_number, title, status::content_status, sort_order, is_core_practical
 FROM course_unit, (VALUES
   -- Topic 3: Cell Structure, Reproduction and Development (47–70)
   ('cells-tissues-organs-and-systems',                    47,  'Cells as units; tissues, organs and organ systems',                            'coming_soon', 47, false),
@@ -217,7 +217,7 @@ WITH course_unit AS (
   WHERE c.slug='edexcel-ial-as-biology' AND u.slug='unit-3'
 )
 INSERT INTO lessons (course_id, unit_id, slug, lesson_number, title, status, sort_order, is_core_practical)
-SELECT course_id, unit_id, slug, lesson_number, title, status, sort_order, is_core_practical
+SELECT course_id, unit_id, slug, lesson_number, title, status::content_status, sort_order, is_core_practical
 FROM course_unit, (VALUES
   ('planning-investigations-hypotheses-variables',        95,  'Planning investigations: hypotheses, variables and apparatus',                 'coming_soon', 95, false),
   ('implementation-measurements-safety-uncertainty',      96,  'Implementation: measurements, safety, uncertainty and error',                  'coming_soon', 96, false),
@@ -238,7 +238,7 @@ WITH course_unit AS (
   WHERE c.slug='edexcel-ial-a2-biology' AND u.slug='unit-4'
 )
 INSERT INTO lessons (course_id, unit_id, slug, lesson_number, title, status, sort_order, is_core_practical)
-SELECT course_id, unit_id, slug, lesson_number, title, status, sort_order, is_core_practical
+SELECT course_id, unit_id, slug, lesson_number, title, status::content_status, sort_order, is_core_practical
 FROM course_unit, (VALUES
   -- Topic 5: Energy Flow, Ecosystems and the Environment (1–29)
   ('photosynthesis-overview-and-reaction',                 1,  'Photosynthesis overview and overall reaction',                                 'coming_soon',  1, false),
@@ -307,7 +307,7 @@ WITH course_unit AS (
   WHERE c.slug='edexcel-ial-a2-biology' AND u.slug='unit-5'
 )
 INSERT INTO lessons (course_id, unit_id, slug, lesson_number, title, status, sort_order, is_core_practical)
-SELECT course_id, unit_id, slug, lesson_number, title, status, sort_order, is_core_practical
+SELECT course_id, unit_id, slug, lesson_number, title, status::content_status, sort_order, is_core_practical
 FROM course_unit, (VALUES
   -- Topic 7: Respiration, Muscles and the Internal Environment (52–77)
   ('aerobic-respiration-overview',                        52,  'Aerobic respiration overview and enzyme-controlled steps',                     'coming_soon', 52, false),
@@ -373,7 +373,7 @@ WITH course_unit AS (
   WHERE c.slug='edexcel-ial-a2-biology' AND u.slug='unit-6'
 )
 INSERT INTO lessons (course_id, unit_id, slug, lesson_number, title, status, sort_order, is_core_practical)
-SELECT course_id, unit_id, slug, lesson_number, title, status, sort_order, is_core_practical
+SELECT course_id, unit_id, slug, lesson_number, title, status::content_status, sort_order, is_core_practical
 FROM course_unit, (VALUES
   ('planning-investigations-null-hypotheses',            101,  'Planning investigations and formulating null hypotheses',                      'coming_soon', 101, false),
   ('measurement-variables-calibration-safety-ethics',    102,  'Measurement, variables, calibration, safety and ethics',                       'coming_soon', 102, false),
@@ -405,7 +405,7 @@ FROM lessons l JOIN courses c ON c.id = l.course_id
 WHERE c.slug = 'edexcel-ial-a2-biology';
 
 -- Should be 18 Core Practicals (CP1-CP9 in AS + CP10-CP18 in A2)
--- Note: CP5 and CP7 each span 2 lessons, so actual core_practical=true rows = 20
+-- Note: CP5, CP7 and CP10 each span 2 lessons, so actual core_practical=true rows = 21
 SELECT 'Biology core practical lessons' AS metric, count(*) AS value
 FROM lessons l JOIN courses c ON c.id = l.course_id
 WHERE c.slug IN ('edexcel-ial-as-biology', 'edexcel-ial-a2-biology')
