@@ -80,6 +80,8 @@ export type Lesson = {
   sort_order: number;
   estimated_duration_minutes: number | null;
   summary_md: string | null;
+  /** Mux playback ID for the primary "voice" lesson video. Null until set. */
+  voice_video_mux_id: string | null;
 };
 
 /** Lesson card row used by the lesson catalogue page. */

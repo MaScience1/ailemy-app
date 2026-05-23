@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, BookOpen, Clock } from "lucide-react";
 import { Breadcrumb } from "@/components/catalogue/breadcrumb";
 import { StatusBadge } from "@/components/catalogue/status-badge";
 import { VideoPlaceholder } from "@/components/catalogue/video-placeholder";
+import { MuxLessonPlayer } from "@/components/lesson/MuxLessonPlayer";
 import {
   getCourseBySlug,
   getLessonByCourseAndSlug,
@@ -174,7 +175,14 @@ function LiveLesson({
 
         <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-12">
           <div className="min-w-0">
-            <VideoPlaceholder />
+            {lesson.voice_video_mux_id ? (
+              <MuxLessonPlayer
+                playbackId={lesson.voice_video_mux_id}
+                title={lesson.title}
+              />
+            ) : (
+              <VideoPlaceholder />
+            )}
 
             {lesson.description && (
               <section className="mt-10">
