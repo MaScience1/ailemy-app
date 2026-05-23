@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { SiteFooter } from "@/components/site/SiteFooter";
+import { SiteNav } from "@/components/site/SiteNav";
+
 type SubjectCardProps = {
   title: string;
   lines: string[];
@@ -27,59 +30,8 @@ function SubjectCard({ title, lines, accentClass }: SubjectCardProps) {
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col bg-parchment text-ink">
-      <nav className="border-b border-ink/10">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-5 sm:px-10">
-          <a
-            href="/"
-            className="font-display text-xl font-medium tracking-tight text-ink"
-          >
-            Ailemy<span className="text-flask">.</span>
-          </a>
-
-          <ul className="hidden items-center gap-10 text-sm font-medium text-ink/70 md:flex">
-            <li>
-              <a
-                href="#subjects"
-                className="transition-colors duration-200 hover:text-ink"
-              >
-                Subjects
-              </a>
-            </li>
-            <li>
-              <a
-                href="#how-it-works"
-                className="transition-colors duration-200 hover:text-ink"
-              >
-                How it works
-              </a>
-            </li>
-            <li>
-              <a
-                href="#for-schools"
-                className="transition-colors duration-200 hover:text-ink"
-              >
-                For schools
-              </a>
-            </li>
-            <li>
-              <a
-                href="#about"
-                className="transition-colors duration-200 hover:text-ink"
-              >
-                About
-              </a>
-            </li>
-          </ul>
-
-          <Link
-            href="/signup"
-            className="inline-flex items-center rounded-md bg-flask px-4 py-2 text-sm font-medium text-snow transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-flask/95 hover:shadow-sm sm:px-5 sm:py-2.5"
-          >
-            Start your journey →
-          </Link>
-        </div>
-      </nav>
+    <div className="bg-parchment text-ink">
+      <SiteNav />
 
       <section className="flex min-h-[80vh] items-center">
         <div className="animate-fade-in mx-auto w-full max-w-7xl px-6 py-20 sm:px-10 sm:py-24">
@@ -99,17 +51,17 @@ export default function Home() {
 
           <div className="mt-12 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <Link
-              href="/signup"
+              href="/learn"
               className="inline-flex items-center justify-center rounded-md bg-flask px-6 py-3 font-medium text-snow transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-flask/95 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
             >
               Start your journey →
             </Link>
-            <a
-              href="#subjects"
+            <Link
+              href="/learn"
               className="inline-flex items-center justify-center rounded-md border border-ink/15 bg-transparent px-6 py-3 font-medium text-ink transition-all duration-200 ease-out hover:border-ink/40 hover:bg-ink/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
             >
               Explore subjects
-            </a>
+            </Link>
           </div>
 
           <p className="mt-8 max-w-[520px] text-sm leading-relaxed text-ink/55">
@@ -153,12 +105,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="border-t border-ink/10">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-6 py-5 text-xs text-ink/50 sm:flex-row sm:items-center sm:justify-between sm:px-10">
-          <p>Ailemy · Science learning for IB, IGCSE and A-Level students.</p>
-          <p className="font-mono uppercase tracking-wider">Doha, Qatar</p>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
