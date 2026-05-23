@@ -6,6 +6,7 @@ import { Breadcrumb } from "@/components/catalogue/breadcrumb";
 import { StatusBadge } from "@/components/catalogue/status-badge";
 import { listSubjects, type SubjectWithAvailability } from "@/lib/catalogue/queries";
 import { getSubjectCopy } from "@/lib/catalogue/subject-descriptions";
+import { getSubjectTheme } from "@/lib/catalogue/subject-theme";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
@@ -49,6 +50,7 @@ function SubjectCard({ subject }: { subject: SubjectWithAvailability }) {
   const copy = getSubjectCopy(subject.slug);
   const available = subject.hasInProgressCourse;
   const href = `/learn/${subject.slug}`;
+  const theme = getSubjectTheme(subject);
 
   const cardClass = cn(
     "group/card relative flex h-full flex-col justify-between gap-10 rounded-xl border border-ink/15 bg-ink p-8 text-parchment transition-all duration-300 ease-out sm:p-10",
@@ -57,8 +59,24 @@ function SubjectCard({ subject }: { subject: SubjectWithAvailability }) {
       : "cursor-not-allowed opacity-60",
   );
 
+  // Subject-coloured stripe along the top of every card. Hover intensifies to
+  // the darker variant. CSS vars set on the card so the bg-[var(--stripe)]
+  // Tailwind utility can swap on group-hover without a JS state change.
+  const stripeStyle = {
+    "--stripe": theme.primary,
+    "--stripe-hover": theme.secondary,
+  } as React.CSSProperties;
+
+  const Stripe = (
+    <span
+      aria-hidden="true"
+      className="absolute inset-x-0 top-0 h-1 rounded-t-xl bg-[var(--stripe)] transition-colors duration-300 group-hover/card:bg-[var(--stripe-hover)]"
+    />
+  );
+
   const Content = (
     <>
+      {Stripe}
       <div>
         <div className="flex items-center justify-between gap-4">
           <p className="font-mono text-xs uppercase tracking-[0.25em] text-parchment/55">
@@ -108,6 +126,7 @@ function SubjectCard({ subject }: { subject: SubjectWithAvailability }) {
       <div
         aria-disabled="true"
         className={cardClass}
+        style={stripeStyle}
         title={`${subject.name} — coming soon`}
       >
         {Content}
@@ -116,7 +135,7 @@ function SubjectCard({ subject }: { subject: SubjectWithAvailability }) {
   }
 
   return (
-    <Link href={href} className={cardClass}>
+    <Link href={href} className={cardClass} style={stripeStyle}>
       {Content}
     </Link>
   );

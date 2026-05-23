@@ -4,13 +4,18 @@ import { notFound } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 
 import { Breadcrumb } from "@/components/catalogue/breadcrumb";
-import { StatusBadge } from "@/components/catalogue/status-badge";
 import {
+  PATHWAY_COPY,
+  PATHWAY_DISPLAY_ORDER,
+  type Pathway,
+} from "@/lib/catalogue/pathways";
+import {
+  countCoursesByPathwayForSubject,
   getSubjectBySlug,
-  listCoursesForSubject,
 } from "@/lib/catalogue/queries";
+import { getSubjectThemeStyle } from "@/lib/catalogue/subject-theme";
 import { getSubjectCopy } from "@/lib/catalogue/subject-descriptions";
-import type { CourseWithRelations } from "@/lib/catalogue/types";
+import type { Subject } from "@/lib/catalogue/types";
 import { cn } from "@/lib/utils";
 
 type Params = Promise<{ subject: string }>;
@@ -26,7 +31,7 @@ export async function generateMetadata({
     return { title: "Subject not found · Ailemy" };
   }
   return {
-    title: `${subject.name} · Ailemy`,
+    title: `${subject.name} pathways · Ailemy`,
     description: getSubjectCopy(subject.slug).description,
   };
 }
@@ -36,196 +41,126 @@ export default async function SubjectPage({ params }: { params: Params }) {
   const subject = await getSubjectBySlug(subjectSlug);
   if (!subject) notFound();
 
-  const courses = await listCoursesForSubject(subject.id);
+  const counts = await countCoursesByPathwayForSubject(subject.id);
   const copy = getSubjectCopy(subject.slug);
 
-  // Group courses by curriculum, preserving the catalogue sort_order of the
-  // curricula (which we read off the first occurrence of each curriculum).
-  const grouped = groupCoursesByCurriculum(courses);
-
   return (
-    <main className="min-h-screen bg-parchment text-ink">
-      <div className="mx-auto w-full max-w-6xl px-6 py-16 sm:px-10 sm:py-20">
-        <Breadcrumb
-          crumbs={[
-            { label: "Learn", href: "/learn" },
-            { label: subject.name },
-          ]}
-        />
+    <div style={getSubjectThemeStyle(subject)}>
+      <main className="min-h-screen bg-parchment text-ink">
+        <div className="mx-auto w-full max-w-6xl px-6 py-16 sm:px-10 sm:py-20">
+          <Breadcrumb
+            crumbs={[
+              { label: "Learn", href: "/learn" },
+              { label: subject.name },
+            ]}
+          />
 
-        <header className="mt-10 max-w-3xl">
-          <p className="font-mono text-xs uppercase tracking-[0.25em] text-ink/60">
-            Subject
-          </p>
-          <h1 className="font-display mt-5 text-5xl font-medium leading-[1.05] tracking-tight md:text-6xl">
-            {subject.name}.
-          </h1>
-          <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink/70">
-            {copy.description}
-          </p>
-        </header>
+          <header className="mt-10 max-w-3xl">
+            <p className="font-mono text-xs uppercase tracking-[0.25em] text-ink/60">
+              Subject
+            </p>
+            <h1 className="font-display mt-5 text-5xl font-medium leading-[1.05] tracking-tight md:text-6xl">
+              {subject.name}.
+            </h1>
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink/70">
+              {copy.description}
+            </p>
+            <p className="font-mono mt-6 text-xs uppercase tracking-[0.2em] text-ink/55">
+              Choose your pathway
+            </p>
+          </header>
 
-        <section className="mt-16 space-y-16">
-          {grouped.length === 0 ? (
-            <EmptyState />
-          ) : (
-            grouped.map((group) => (
-              <CurriculumGroup
-                key={group.curriculumId}
-                title={group.curriculumName}
-                region={group.region}
-                courses={group.courses}
-                subjectSlug={subject.slug}
+          <section className="mt-10 grid gap-5 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
+            {PATHWAY_DISPLAY_ORDER.map((pathway) => (
+              <PathwayCard
+                key={pathway}
+                pathway={pathway}
+                courseCount={counts[pathway]}
+                subject={subject}
               />
-            ))
-          )}
-        </section>
-      </div>
-    </main>
-  );
-}
-
-type CurriculumGroup = {
-  curriculumId: string;
-  curriculumName: string;
-  region: string | null;
-  courses: CourseWithRelations[];
-};
-
-function groupCoursesByCurriculum(
-  courses: CourseWithRelations[],
-): CurriculumGroup[] {
-  const map = new Map<string, CurriculumGroup>();
-  for (const course of courses) {
-    const id = course.curriculum.id;
-    if (!map.has(id)) {
-      map.set(id, {
-        curriculumId: id,
-        curriculumName: course.curriculum.name,
-        region: course.curriculum.region,
-        courses: [],
-      });
-    }
-    map.get(id)!.courses.push(course);
-  }
-  return [...map.values()];
-}
-
-function CurriculumGroup({
-  title,
-  region,
-  courses,
-  subjectSlug,
-}: {
-  title: string;
-  region: string | null;
-  courses: CourseWithRelations[];
-  subjectSlug: string;
-}) {
-  return (
-    <div>
-      <div className="border-b border-ink/10 pb-4">
-        <h2 className="font-display text-2xl font-medium tracking-tight md:text-3xl">
-          {title}
-        </h2>
-        {region && (
-          <p className="font-mono mt-2 text-xs uppercase tracking-[0.2em] text-ink/50">
-            {region}
-          </p>
-        )}
-      </div>
-
-      <ul className="mt-6 grid gap-4 md:grid-cols-2 md:gap-6 xl:grid-cols-3">
-        {courses.map((course) => (
-          <li key={course.id}>
-            <CourseCard course={course} subjectSlug={subjectSlug} />
-          </li>
-        ))}
-      </ul>
+            ))}
+          </section>
+        </div>
+      </main>
     </div>
   );
 }
 
-function CourseCard({
-  course,
-  subjectSlug,
+function PathwayCard({
+  pathway,
+  courseCount,
+  subject,
 }: {
-  course: CourseWithRelations;
-  subjectSlug: string;
+  pathway: Pathway;
+  courseCount: number;
+  subject: Subject;
 }) {
-  const isOpen = course.status === "in_progress" || course.status === "live";
-  const href = `/learn/${subjectSlug}/${course.slug}`;
+  const copy = PATHWAY_COPY[pathway];
+  const available = courseCount > 0;
+  const href = `/learn/${subject.slug}/${pathway}`;
 
-  const className = cn(
-    "group/card flex h-full flex-col justify-between gap-8 rounded-xl border border-ink/10 bg-snow p-6 transition-all duration-300 ease-out sm:p-7",
-    isOpen
-      ? "hover:-translate-y-1 hover:border-ink/25"
+  const cardClass = cn(
+    "group/path flex h-full flex-col justify-between gap-8 rounded-xl border border-ink/10 bg-snow p-6 transition-all duration-300 ease-out sm:p-7",
+    available
+      ? "hover:-translate-y-1 hover:border-[var(--subject-accent)]"
       : "cursor-not-allowed opacity-70",
   );
 
   const Body = (
     <>
       <div>
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-start justify-between gap-3">
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-ink/55">
-            {course.level}
+            {copy.ageRange}
           </p>
-          <StatusBadge status={course.status} />
+          {available ? (
+            <span className="font-mono inline-flex items-center rounded-full bg-[var(--subject-accent)] px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.18em] text-snow">
+              {courseCount} {courseCount === 1 ? "course" : "courses"}
+            </span>
+          ) : (
+            <span className="font-mono inline-flex items-center rounded-full bg-ink/10 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.18em] text-ink/55">
+              Coming soon
+            </span>
+          )}
         </div>
-        <h3 className="font-display mt-5 text-xl font-medium tracking-tight">
-          {course.name}
-        </h3>
-        {course.description && (
-          <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-ink/65">
-            {course.description}
-          </p>
-        )}
-        {course.estimated_launch && !isOpen && (
-          <p className="font-mono mt-4 text-[10px] uppercase tracking-[0.2em] text-ink/40">
-            Est. {course.estimated_launch}
-          </p>
-        )}
+
+        <h2 className="font-display mt-6 text-2xl font-medium tracking-tight md:text-3xl">
+          {copy.name}
+        </h2>
+        <p className="mt-3 text-sm leading-relaxed text-ink/65">
+          {copy.description}
+        </p>
       </div>
 
       <div className="text-sm font-medium">
-        {isOpen ? (
-          <span className="inline-flex items-center gap-2 text-ink transition-transform duration-300 group-hover/card:translate-x-1">
-            Start course
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+        {available ? (
+          <span className="inline-flex items-center gap-2 text-ink transition-transform duration-300 group-hover/path:translate-x-1">
+            Explore {copy.shortName}
+            <ArrowRight
+              className="h-4 w-4 text-[var(--subject-accent)]"
+              aria-hidden="true"
+            />
           </span>
         ) : (
           <span className="font-mono text-xs uppercase tracking-[0.2em] text-ink/45">
-            Notify me
+            Not yet open
           </span>
         )}
       </div>
     </>
   );
 
-  if (!isOpen) {
+  if (!available) {
     return (
-      <div className={className} aria-disabled="true">
+      <div className={cardClass} aria-disabled="true">
         {Body}
       </div>
     );
   }
 
   return (
-    <Link href={href} className={className}>
+    <Link href={href} className={cardClass}>
       {Body}
     </Link>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div className="rounded-xl border border-ink/10 bg-snow p-10 text-center">
-      <p className="font-display text-2xl font-medium tracking-tight">
-        Nothing here yet.
-      </p>
-      <p className="mt-3 text-sm text-ink/60">
-        We&apos;re organising courses for this subject. Check back soon.
-      </p>
-    </div>
   );
 }

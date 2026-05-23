@@ -38,6 +38,12 @@ export type Course = {
   status: ContentStatus;
   estimated_launch: string | null;
   sort_order: number;
+  /**
+   * Educational pathway grouping. Added by migration 0005; nullable in this
+   * type so code keeps compiling against an unmigrated DB, but treat it as
+   * effectively non-null at runtime after the migration runs.
+   */
+  pathway: import("./pathways").Pathway | null;
 };
 
 export type CourseWithRelations = Course & {

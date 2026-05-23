@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 
-export default function CourseError({
+export default function PathwayError({
   error,
   reset,
 }: {
@@ -11,7 +11,7 @@ export default function CourseError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[/learn/[subject]/[course]] route error", error);
+    console.error("[/learn/[subject]/[pathway]] route error", error);
   }, [error]);
 
   return (
@@ -21,11 +21,9 @@ export default function CourseError({
           Something went wrong
         </p>
         <h1 className="font-display mt-4 text-3xl font-medium tracking-tight md:text-4xl">
-          We couldn&apos;t load this course.
+          We couldn&apos;t load this pathway.
         </h1>
-        <p className="mt-4 text-sm text-ink/65">
-          Try again, or return to the catalogue.
-        </p>
+        <p className="mt-4 text-sm text-ink/65">Try again, or browse subjects.</p>
         <div className="mt-8 flex items-center justify-center gap-3 text-sm">
           <button
             type="button"
@@ -38,7 +36,7 @@ export default function CourseError({
             href="/learn"
             className="rounded-md border border-ink/15 px-5 py-2.5 font-medium text-ink transition-colors hover:border-ink/30 hover:bg-ink/[0.04]"
           >
-            Catalogue
+            Subjects
           </Link>
         </div>
       </div>

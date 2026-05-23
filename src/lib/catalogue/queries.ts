@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import type { Pathway } from "./pathways";
 import type {
   CourseWithRelations,
   LessonForCatalogue,
@@ -7,6 +8,14 @@ import type {
   Subject,
   Unit,
 } from "./types";
+
+/** Columns to always select for a course row. Keeps queries in sync. */
+const COURSE_SELECT = `
+  id, curriculum_id, subject_id, slug, name, level, description, status,
+  estimated_launch, sort_order, pathway,
+  curriculum:curricula(id, slug, name, short_name, region),
+  subject:subjects(id, slug, name)
+`;
 
 /**
  * Catalogue data access. All functions run on the server using the standard
@@ -63,21 +72,14 @@ export async function getSubjectBySlug(slug: string): Promise<Subject | null> {
   return data;
 }
 
-/** /learn/[subject] — courses for a subject, with curriculum joined. */
+/** All courses for a subject (any pathway), curriculum joined. */
 export async function listCoursesForSubject(
   subjectId: string,
 ): Promise<CourseWithRelations[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("courses")
-    .select(
-      `
-      id, curriculum_id, subject_id, slug, name, level, description, status,
-      estimated_launch, sort_order,
-      curriculum:curricula(id, slug, name, short_name, region),
-      subject:subjects(id, slug, name)
-      `,
-    )
+    .select(COURSE_SELECT)
     .eq("subject_id", subjectId)
     .order("sort_order", { ascending: true });
 
@@ -88,21 +90,112 @@ export async function listCoursesForSubject(
   return (data ?? []) as unknown as CourseWithRelations[];
 }
 
-/** /learn/[subject]/[course] — single course by slug, with relations. */
+/**
+ * Courses for a subject filtered to a single pathway. Powers
+ * /learn/[subject]/[pathway] — the page listing every Edexcel / OCR / AQA
+ * etc. course under that pathway+subject pair.
+ */
+export async function listCoursesForSubjectAndPathway(
+  subjectId: string,
+  pathway: Pathway,
+): Promise<CourseWithRelations[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("courses")
+    .select(COURSE_SELECT)
+    .eq("subject_id", subjectId)
+    .eq("pathway", pathway)
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    console.error("[catalogue] listCoursesForSubjectAndPathway failed", error);
+    return [];
+  }
+  return (data ?? []) as unknown as CourseWithRelations[];
+}
+
+/**
+ * Counts of courses per pathway for a given subject. Used by
+ * /learn/[subject] to show "5 courses available" on each pathway card.
+ *
+ * Returns a complete record keyed by every pathway slug — pathways with no
+ * courses come back as 0, which the UI uses to decide "Coming soon" vs
+ * "Available".
+ */
+export async function countCoursesByPathwayForSubject(
+  subjectId: string,
+): Promise<Record<Pathway, number>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("courses")
+    .select("pathway")
+    .eq("subject_id", subjectId);
+
+  // Initialise every pathway to 0 so consumers don't have to handle "key missing".
+  const counts: Record<Pathway, number> = {
+    "uk-a-level": 0,
+    "international-a-level": 0,
+    ib: 0,
+    ap: 0,
+    "uk-gcse": 0,
+    igcse: 0,
+  };
+
+  if (error) {
+    console.error("[catalogue] countCoursesByPathwayForSubject failed", error);
+    return counts;
+  }
+
+  for (const row of (data ?? []) as { pathway: Pathway | null }[]) {
+    if (row.pathway && row.pathway in counts) {
+      counts[row.pathway] += 1;
+    }
+  }
+  return counts;
+}
+
+/**
+ * Single course resolved by subject + pathway + course slug. Defence in
+ * depth: a course slug ought to be globally unique, but routing through
+ * the (subject, pathway, course) triple means a stale or mismatched URL
+ * doesn't accidentally render a different course's data.
+ */
+export async function getCourseBySubjectPathwayAndSlug(
+  subjectSlug: string,
+  pathway: Pathway,
+  courseSlug: string,
+): Promise<CourseWithRelations | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("courses")
+    .select(COURSE_SELECT)
+    .eq("slug", courseSlug)
+    .eq("pathway", pathway)
+    .eq("subject.slug", subjectSlug)
+    .maybeSingle();
+
+  if (error) {
+    console.error(
+      "[catalogue] getCourseBySubjectPathwayAndSlug failed",
+      error,
+    );
+    return null;
+  }
+  return data as unknown as CourseWithRelations | null;
+}
+
+/**
+ * Legacy lookup — kept for callers that don't have pathway context yet
+ * (e.g. metadata generation in routes that haven't been migrated). New
+ * code should prefer getCourseBySubjectPathwayAndSlug.
+ */
 export async function getCourseBySlug(
   slug: string,
 ): Promise<CourseWithRelations | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("courses")
-    .select(
-      `
-      id, curriculum_id, subject_id, slug, name, level, description, status,
-      estimated_launch, sort_order,
-      curriculum:curricula(id, slug, name, short_name, region),
-      subject:subjects(id, slug, name)
-      `,
-    )
+    .select(COURSE_SELECT)
     .eq("slug", slug)
     .maybeSingle();
 

@@ -5,24 +5,42 @@ import { ArrowRight, Beaker } from "lucide-react";
 
 import { Breadcrumb } from "@/components/catalogue/breadcrumb";
 import { StatusBadge } from "@/components/catalogue/status-badge";
+import { PATHWAY_COPY, isPathway } from "@/lib/catalogue/pathways";
 import {
-  getCourseBySlug,
+  getCourseBySubjectPathwayAndSlug,
+  getSubjectBySlug,
   listLessonsForCourse,
   listUnitsForCourse,
 } from "@/lib/catalogue/queries";
+import { getSubjectThemeStyle } from "@/lib/catalogue/subject-theme";
 import type { LessonForCatalogue, Unit } from "@/lib/catalogue/types";
 import { cn } from "@/lib/utils";
 
-type Params = Promise<{ subject: string; course: string }>;
+type Params = Promise<{
+  subject: string;
+  pathway: string;
+  course: string;
+}>;
 
 export async function generateMetadata({
   params,
 }: {
   params: Params;
 }): Promise<Metadata> {
-  const { subject: subjectSlug, course: courseSlug } = await params;
-  const course = await getCourseBySlug(courseSlug);
-  if (!course || course.subject.slug !== subjectSlug) {
+  const {
+    subject: subjectSlug,
+    pathway: pathwaySlug,
+    course: courseSlug,
+  } = await params;
+  if (!isPathway(pathwaySlug)) {
+    return { title: "Course not found · Ailemy" };
+  }
+  const course = await getCourseBySubjectPathwayAndSlug(
+    subjectSlug,
+    pathwaySlug,
+    courseSlug,
+  );
+  if (!course) {
     return { title: "Course not found · Ailemy" };
   }
   return {
@@ -32,12 +50,29 @@ export async function generateMetadata({
 }
 
 export default async function CoursePage({ params }: { params: Params }) {
-  const { subject: subjectSlug, course: courseSlug } = await params;
+  const {
+    subject: subjectSlug,
+    pathway: pathwaySlug,
+    course: courseSlug,
+  } = await params;
 
-  const course = await getCourseBySlug(courseSlug);
-  // Guard: the URL pair must match. We don't want /learn/physics/edexcel-ial-as-chemistry
-  // to silently render the Chemistry course just because the course slug exists.
-  if (!course || course.subject.slug !== subjectSlug) {
+  if (!isPathway(pathwaySlug)) {
+    notFound();
+  }
+
+  // We resolve the subject row separately so we have its colour tokens for
+  // theming, even if a stale URL pair sneaks past the course lookup.
+  const subject = await getSubjectBySlug(subjectSlug);
+  if (!subject) {
+    notFound();
+  }
+
+  const course = await getCourseBySubjectPathwayAndSlug(
+    subjectSlug,
+    pathwaySlug,
+    courseSlug,
+  );
+  if (!course) {
     notFound();
   }
 
@@ -46,9 +81,7 @@ export default async function CoursePage({ params }: { params: Params }) {
     listLessonsForCourse(course.id),
   ]);
 
-  // Bucket lessons by unit. Lessons with no unit_id (shouldn't happen for this
-  // course but possible elsewhere) get bucketed under "Other".
-  const unitsById = new Map(units.map((u) => [u.id, u]));
+  // Bucket lessons by unit. Lessons with no unit_id fall under "Other".
   const lessonsByUnit = new Map<string | null, LessonForCatalogue[]>();
   for (const lesson of lessons) {
     const key = lesson.unit_id ?? null;
@@ -68,59 +101,64 @@ export default async function CoursePage({ params }: { params: Params }) {
   }
 
   const totalLessons = lessons.length;
+  const pathway = PATHWAY_COPY[pathwaySlug];
 
   return (
-    <main className="min-h-screen bg-parchment text-ink">
-      <div className="mx-auto w-full max-w-7xl px-6 py-16 sm:px-10 sm:py-20">
-        <Breadcrumb
-          crumbs={[
-            { label: "Learn", href: "/learn" },
-            {
-              label: course.subject.name,
-              href: `/learn/${course.subject.slug}`,
-            },
-            { label: course.name },
-          ]}
-        />
+    <div style={getSubjectThemeStyle(subject)}>
+      <main className="min-h-screen bg-parchment text-ink">
+        <div className="mx-auto w-full max-w-7xl px-6 py-16 sm:px-10 sm:py-20">
+          <Breadcrumb
+            crumbs={[
+              { label: "Learn", href: "/learn" },
+              { label: subject.name, href: `/learn/${subject.slug}` },
+              {
+                label: pathway.name,
+                href: `/learn/${subject.slug}/${pathwaySlug}`,
+              },
+              { label: course.name },
+            ]}
+          />
 
-        <header className="mt-10 max-w-3xl">
-          <div className="flex items-center gap-3">
-            <p className="font-mono text-xs uppercase tracking-[0.25em] text-ink/60">
-              {course.curriculum.short_name} · {course.level}
+          <header className="mt-10 max-w-3xl">
+            <div className="flex items-center gap-3">
+              <p className="font-mono text-xs uppercase tracking-[0.25em] text-ink/60">
+                {course.curriculum.short_name} · {course.level}
+              </p>
+              <StatusBadge status={course.status} />
+            </div>
+            <h1 className="font-display mt-5 text-4xl font-medium leading-[1.05] tracking-tight md:text-6xl">
+              {course.name}.
+            </h1>
+            {course.description && (
+              <p className="mt-6 max-w-2xl text-lg leading-relaxed text-ink/70">
+                {course.description}
+              </p>
+            )}
+            <p className="font-mono mt-6 text-xs uppercase tracking-[0.2em] text-ink/55">
+              {totalLessons} {totalLessons === 1 ? "lesson" : "lessons"} ·{" "}
+              {sections.length} {sections.length === 1 ? "unit" : "units"}
             </p>
-            <StatusBadge status={course.status} />
+          </header>
+
+          <div className="mt-16 space-y-20">
+            {sections.length === 0 ? (
+              <EmptyCourse />
+            ) : (
+              sections.map(({ unit, lessons }) => (
+                <UnitSection
+                  key={unit?.id ?? "orphan"}
+                  unit={unit}
+                  lessons={lessons}
+                  subjectSlug={subjectSlug}
+                  pathwaySlug={pathwaySlug}
+                  courseSlug={courseSlug}
+                />
+              ))
+            )}
           </div>
-          <h1 className="font-display mt-5 text-4xl font-medium leading-[1.05] tracking-tight md:text-6xl">
-            {course.name}.
-          </h1>
-          {course.description && (
-            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-ink/70">
-              {course.description}
-            </p>
-          )}
-          <p className="font-mono mt-6 text-xs uppercase tracking-[0.2em] text-ink/55">
-            {totalLessons} {totalLessons === 1 ? "lesson" : "lessons"} ·{" "}
-            {sections.length} {sections.length === 1 ? "unit" : "units"}
-          </p>
-        </header>
-
-        <div className="mt-16 space-y-20">
-          {sections.length === 0 ? (
-            <EmptyCourse />
-          ) : (
-            sections.map(({ unit, lessons }) => (
-              <UnitSection
-                key={unit?.id ?? "orphan"}
-                unit={unit}
-                lessons={lessons}
-                subjectSlug={subjectSlug}
-                courseSlug={courseSlug}
-              />
-            ))
-          )}
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }
 
@@ -128,11 +166,13 @@ function UnitSection({
   unit,
   lessons,
   subjectSlug,
+  pathwaySlug,
   courseSlug,
 }: {
   unit: Unit | null;
   lessons: LessonForCatalogue[];
   subjectSlug: string;
+  pathwaySlug: string;
   courseSlug: string;
 }) {
   return (
@@ -162,6 +202,7 @@ function UnitSection({
             <LessonCard
               lesson={lesson}
               subjectSlug={subjectSlug}
+              pathwaySlug={pathwaySlug}
               courseSlug={courseSlug}
             />
           </li>
@@ -174,19 +215,21 @@ function UnitSection({
 function LessonCard({
   lesson,
   subjectSlug,
+  pathwaySlug,
   courseSlug,
 }: {
   lesson: LessonForCatalogue;
   subjectSlug: string;
+  pathwaySlug: string;
   courseSlug: string;
 }) {
   const isLive = lesson.status === "live";
-  const href = `/learn/${subjectSlug}/${courseSlug}/${lesson.slug}`;
+  const href = `/learn/${subjectSlug}/${pathwaySlug}/${courseSlug}/${lesson.slug}`;
 
   const className = cn(
     "group/lesson relative flex h-full flex-col gap-5 rounded-lg border border-ink/10 bg-snow p-6 transition-all duration-300 ease-out",
     isLive
-      ? "hover:-translate-y-1 hover:border-ink/25"
+      ? "hover:-translate-y-1 hover:border-[var(--subject-accent)]"
       : "cursor-not-allowed opacity-75",
   );
 
@@ -200,7 +243,10 @@ function LessonCard({
       )}
 
       <div>
-        <p className="font-mono text-xs uppercase tracking-[0.25em] text-signal">
+        <p
+          className="font-mono text-xs uppercase tracking-[0.25em]"
+          style={{ color: "var(--subject-accent)" }}
+        >
           Lesson {String(lesson.lesson_number ?? "").padStart(2, "0")}
         </p>
         <h3 className="font-display mt-4 text-lg font-medium leading-snug tracking-tight">
@@ -214,6 +260,7 @@ function LessonCard({
             <span
               key={code}
               className="font-mono rounded bg-parchment px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-ink/65"
+              style={{ borderLeft: "1px solid var(--subject-accent)" }}
             >
               {code}
             </span>
@@ -223,7 +270,10 @@ function LessonCard({
 
       <div className="mt-auto pt-1 text-sm font-medium">
         {isLive ? (
-          <span className="inline-flex items-center gap-2 text-ink transition-transform duration-300 group-hover/lesson:translate-x-1">
+          <span
+            className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-snow transition-colors duration-200"
+            style={{ backgroundColor: "var(--subject-accent)" }}
+          >
             Start lesson
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </span>
