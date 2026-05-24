@@ -1,7 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Pathway } from "./pathways";
 import type {
+  CourseWithCounts,
   CourseWithRelations,
+  EntityCounts,
   LessonForCatalogue,
   LessonForPage,
   LessonNeighbour,
@@ -18,6 +20,22 @@ const COURSE_SELECT = `
 `;
 
 /**
+ * Tally a flat array of lesson rows (just `{ status }`) into total + live
+ * counts. Used by every entity-level query to feed the three-tier status
+ * helper in src/lib/catalogue/status.ts.
+ */
+function tallyLessons(
+  lessons: { status: string | null }[] | null | undefined,
+): EntityCounts {
+  const list = lessons ?? [];
+  let live = 0;
+  for (const lesson of list) {
+    if (lesson.status === "live") live += 1;
+  }
+  return { totalLessons: list.length, liveLessons: live };
+}
+
+/**
  * Catalogue data access. All functions run on the server using the standard
  * @supabase/ssr server client — public RLS policies (catalogue_public_read_*)
  * permit anonymous reads, so this layer is safe to call from any /learn route
@@ -25,16 +43,22 @@ const COURSE_SELECT = `
  * /learn (the brief calls this a sales surface).
  */
 
-/** /learn — all subjects + a derived "do any of this subject's courses have content yet?" flag. */
-export type SubjectWithAvailability = Subject & {
-  hasInProgressCourse: boolean;
-};
+/**
+ * Subject row + aggregate lesson counts across all courses under the subject.
+ * Feeds the three-tier status (available/preview/coming_soon) on /learn.
+ */
+export type SubjectWithCounts = Subject & EntityCounts;
 
-export async function listSubjects(): Promise<SubjectWithAvailability[]> {
+export async function listSubjects(): Promise<SubjectWithCounts[]> {
   const supabase = await createClient();
+  // Nested join: subjects → courses → lessons. We only need lesson.status
+  // for the count, so the payload stays light even with hundreds of seeded
+  // lessons under Biology.
   const { data, error } = await supabase
     .from("subjects")
-    .select("id, slug, name, color_as, color_a2, sort_order, courses(status)")
+    .select(
+      "id, slug, name, color_as, color_a2, sort_order, courses(lessons(status))",
+    )
     .order("sort_order", { ascending: true });
 
   if (error) {
@@ -42,8 +66,14 @@ export async function listSubjects(): Promise<SubjectWithAvailability[]> {
     return [];
   }
 
+  type CoursesShape = {
+    lessons: { status: string | null }[] | null;
+  }[];
+
   return (data ?? []).map((row) => {
-    const courses = (row as { courses?: { status: string }[] }).courses ?? [];
+    const courses = (row as { courses?: CoursesShape }).courses ?? [];
+    const allLessons = courses.flatMap((c) => c.lessons ?? []);
+    const counts = tallyLessons(allLessons);
     return {
       id: row.id,
       slug: row.slug,
@@ -51,7 +81,7 @@ export async function listSubjects(): Promise<SubjectWithAvailability[]> {
       color_as: row.color_as,
       color_a2: row.color_a2,
       sort_order: row.sort_order,
-      hasInProgressCourse: courses.some((c) => c.status === "in_progress"),
+      ...counts,
     };
   });
 }
@@ -98,11 +128,11 @@ export async function listCoursesForSubject(
 export async function listCoursesForSubjectAndPathway(
   subjectId: string,
   pathway: Pathway,
-): Promise<CourseWithRelations[]> {
+): Promise<CourseWithCounts[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("courses")
-    .select(COURSE_SELECT)
+    .select(`${COURSE_SELECT}, lessons(status)`)
     .eq("subject_id", subjectId)
     .eq("pathway", pathway)
     .order("sort_order", { ascending: true });
@@ -111,45 +141,69 @@ export async function listCoursesForSubjectAndPathway(
     console.error("[catalogue] listCoursesForSubjectAndPathway failed", error);
     return [];
   }
-  return (data ?? []) as unknown as CourseWithRelations[];
+
+  type Row = CourseWithRelations & {
+    lessons: { status: string | null }[] | null;
+  };
+  return ((data ?? []) as unknown as Row[]).map((row) => {
+    const { lessons, ...courseRow } = row;
+    return { ...courseRow, ...tallyLessons(lessons) };
+  });
 }
 
 /**
- * Counts of courses per pathway for a given subject. Used by
- * /learn/[subject] to show "5 courses available" on each pathway card.
+ * Aggregate lesson counts per pathway for a given subject. Used by
+ * /learn/[subject] to drive both the course count badge AND the three-tier
+ * status (available / preview / coming_soon) on each of the six pathway cards.
  *
  * Returns a complete record keyed by every pathway slug — pathways with no
- * courses come back as 0, which the UI uses to decide "Coming soon" vs
- * "Available".
+ * courses come back as zeroed counts so consumers don't have to defend
+ * against missing keys.
  */
-export async function countCoursesByPathwayForSubject(
+export type PathwayStatus = EntityCounts & {
+  courseCount: number;
+};
+
+export async function getPathwayStatusForSubject(
   subjectId: string,
-): Promise<Record<Pathway, number>> {
+): Promise<Record<Pathway, PathwayStatus>> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("courses")
-    .select("pathway")
+    .select("pathway, lessons(status)")
     .eq("subject_id", subjectId);
 
-  // Initialise every pathway to 0 so consumers don't have to handle "key missing".
-  const counts: Record<Pathway, number> = {
-    "uk-a-level": 0,
-    "international-a-level": 0,
-    ib: 0,
-    ap: 0,
-    "uk-gcse": 0,
-    igcse: 0,
+  // Initialise every pathway so consumers don't have to handle "key missing".
+  const empty = (): PathwayStatus => ({
+    totalLessons: 0,
+    liveLessons: 0,
+    courseCount: 0,
+  });
+  const counts: Record<Pathway, PathwayStatus> = {
+    "uk-a-level": empty(),
+    "international-a-level": empty(),
+    ib: empty(),
+    ap: empty(),
+    "uk-gcse": empty(),
+    igcse: empty(),
   };
 
   if (error) {
-    console.error("[catalogue] countCoursesByPathwayForSubject failed", error);
+    console.error("[catalogue] getPathwayStatusForSubject failed", error);
     return counts;
   }
 
-  for (const row of (data ?? []) as { pathway: Pathway | null }[]) {
-    if (row.pathway && row.pathway in counts) {
-      counts[row.pathway] += 1;
-    }
+  type Row = {
+    pathway: Pathway | null;
+    lessons: { status: string | null }[] | null;
+  };
+  for (const row of (data ?? []) as Row[]) {
+    if (!row.pathway || !(row.pathway in counts)) continue;
+    const bucket = counts[row.pathway];
+    bucket.courseCount += 1;
+    const tally = tallyLessons(row.lessons);
+    bucket.totalLessons += tally.totalLessons;
+    bucket.liveLessons += tally.liveLessons;
   }
   return counts;
 }

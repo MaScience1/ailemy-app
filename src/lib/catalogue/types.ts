@@ -51,6 +51,18 @@ export type CourseWithRelations = Course & {
   subject: Pick<Subject, "id" | "slug" | "name">;
 };
 
+/**
+ * Lesson aggregation used by the three-tier entity status helpers
+ * (src/lib/catalogue/status.ts). Attached to subject, pathway, and course
+ * shapes to drive AVAILABLE/PREVIEW/COMING SOON state on catalogue cards.
+ */
+export type EntityCounts = {
+  totalLessons: number;
+  liveLessons: number;
+};
+
+export type CourseWithCounts = CourseWithRelations & EntityCounts;
+
 export type Unit = {
   id: string;
   course_id: string;

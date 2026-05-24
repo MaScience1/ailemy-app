@@ -10,9 +10,15 @@ import {
   type Pathway,
 } from "@/lib/catalogue/pathways";
 import {
-  countCoursesByPathwayForSubject,
+  getPathwayStatusForSubject,
   getSubjectBySlug,
+  type PathwayStatus,
 } from "@/lib/catalogue/queries";
+import {
+  deriveStatus,
+  getStatusBadge,
+  getStatusCta,
+} from "@/lib/catalogue/status";
 import { getSubjectThemeStyle } from "@/lib/catalogue/subject-theme";
 import { getSubjectCopy } from "@/lib/catalogue/subject-descriptions";
 import type { Subject } from "@/lib/catalogue/types";
@@ -41,7 +47,7 @@ export default async function SubjectPage({ params }: { params: Params }) {
   const subject = await getSubjectBySlug(subjectSlug);
   if (!subject) notFound();
 
-  const counts = await countCoursesByPathwayForSubject(subject.id);
+  const pathwayStatuses = await getPathwayStatusForSubject(subject.id);
   const copy = getSubjectCopy(subject.slug);
 
   return (
@@ -75,7 +81,7 @@ export default async function SubjectPage({ params }: { params: Params }) {
               <PathwayCard
                 key={pathway}
                 pathway={pathway}
-                courseCount={counts[pathway]}
+                pathwayStatus={pathwayStatuses[pathway]}
                 subject={subject}
               />
             ))}
@@ -86,24 +92,35 @@ export default async function SubjectPage({ params }: { params: Params }) {
   );
 }
 
+/**
+ * Pathway card. Same three-tier derived status model as subject cards:
+ *   available   — at least one lesson under this pathway+subject is live
+ *   preview     — lessons seeded but none live yet (curriculum browseable)
+ *   coming_soon — no lessons under any course in this pathway
+ */
 function PathwayCard({
   pathway,
-  courseCount,
+  pathwayStatus,
   subject,
 }: {
   pathway: Pathway;
-  courseCount: number;
+  pathwayStatus: PathwayStatus;
   subject: Subject;
 }) {
   const copy = PATHWAY_COPY[pathway];
-  const available = courseCount > 0;
+  const status = deriveStatus(pathwayStatus);
   const href = `/learn/${subject.slug}/${pathway}`;
+
+  const badge = getStatusBadge(status);
+  const cta = getStatusCta(status, `Explore ${copy.shortName} →`);
+
+  const isClickable = !cta.isDisabled;
 
   const cardClass = cn(
     "group/path flex h-full flex-col justify-between gap-8 rounded-xl border border-ink/10 bg-snow p-6 transition-all duration-300 ease-out sm:p-7",
-    available
-      ? "hover:-translate-y-1 hover:border-[var(--subject-accent)]"
-      : "cursor-not-allowed opacity-70",
+    isClickable && "hover:-translate-y-1 hover:border-[var(--subject-accent)]",
+    status === "preview" && "text-ink/85",
+    status === "coming_soon" && "cursor-not-allowed opacity-70",
   );
 
   const Body = (
@@ -113,15 +130,14 @@ function PathwayCard({
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-ink/55">
             {copy.ageRange}
           </p>
-          {available ? (
-            <span className="font-mono inline-flex items-center rounded-full bg-[var(--subject-accent)] px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.18em] text-snow">
-              {courseCount} {courseCount === 1 ? "course" : "courses"}
-            </span>
-          ) : (
-            <span className="font-mono inline-flex items-center rounded-full bg-ink/10 px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.18em] text-ink/55">
-              Coming soon
-            </span>
-          )}
+          <span
+            className={cn(
+              "font-mono inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.18em]",
+              badge.className,
+            )}
+          >
+            {badge.label}
+          </span>
         </div>
 
         <h2 className="font-display mt-6 text-2xl font-medium tracking-tight md:text-3xl">
@@ -130,27 +146,43 @@ function PathwayCard({
         <p className="mt-3 text-sm leading-relaxed text-ink/65">
           {copy.description}
         </p>
+        {status !== "coming_soon" && pathwayStatus.courseCount > 0 && (
+          <p className="font-mono mt-3 text-[10px] uppercase tracking-[0.2em] text-ink/45">
+            {pathwayStatus.courseCount}{" "}
+            {pathwayStatus.courseCount === 1 ? "course" : "courses"}
+          </p>
+        )}
       </div>
 
       <div className="text-sm font-medium">
-        {available ? (
+        {status === "available" && (
           <span className="inline-flex items-center gap-2 text-ink transition-transform duration-300 group-hover/path:translate-x-1">
-            Explore {copy.shortName}
+            {cta.label.replace(/\s?→$/, "")}
             <ArrowRight
               className="h-4 w-4 text-[var(--subject-accent)]"
               aria-hidden="true"
             />
           </span>
-        ) : (
+        )}
+        {status === "preview" && (
+          <span className="inline-flex items-center gap-2 text-ink/80 transition-transform duration-300 group-hover/path:translate-x-1">
+            {cta.label.replace(/\s?→$/, "")}
+            <ArrowRight
+              className="h-4 w-4 text-[var(--subject-accent)]"
+              aria-hidden="true"
+            />
+          </span>
+        )}
+        {status === "coming_soon" && (
           <span className="font-mono text-xs uppercase tracking-[0.2em] text-ink/45">
-            Not yet open
+            {cta.label}
           </span>
         )}
       </div>
     </>
   );
 
-  if (!available) {
+  if (!isClickable) {
     return (
       <div className={cardClass} aria-disabled="true">
         {Body}
