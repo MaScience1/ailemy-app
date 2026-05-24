@@ -166,7 +166,13 @@ function LessonsCard({
       meta={meta}
       availableCtaLabel="Start learning →"
       previewCtaLabel="Browse lessons →"
-      icon={<BookOpen className="h-5 w-5" aria-hidden="true" />}
+      icon={
+        <BookOpen
+          className="h-10 w-10 md:h-12 md:w-12"
+          strokeWidth={1.5}
+          aria-hidden="true"
+        />
+      }
     />
   );
 }
@@ -206,7 +212,13 @@ function ExamPapersCard({
       // ExamPapers has no preview state, but the prop is required by the
       // shared ChoiceCard signature. Never rendered for this card.
       previewCtaLabel="Open exam papers →"
-      icon={<ClipboardList className="h-5 w-5" aria-hidden="true" />}
+      icon={
+        <ClipboardList
+          className="h-10 w-10 md:h-12 md:w-12"
+          strokeWidth={1.5}
+          aria-hidden="true"
+        />
+      }
     />
   );
 }
@@ -269,13 +281,12 @@ function ChoiceCard({
       {Stripe}
 
       <div className="flex items-start justify-between gap-4">
+        {/* Standalone icon (no chip background), 40px on mobile / 48px on
+            desktop, inherits subject-accent colour via currentColor. */}
         <span
-          className="flex h-10 w-10 items-center justify-center rounded-md"
-          style={{
-            backgroundColor:
-              "color-mix(in srgb, var(--subject-accent) 12%, transparent)",
-            color: "var(--subject-accent)",
-          }}
+          className="shrink-0"
+          style={{ color: "var(--subject-accent)" }}
+          aria-hidden="true"
         >
           {icon}
         </span>

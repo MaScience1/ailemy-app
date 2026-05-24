@@ -183,13 +183,13 @@ function CourseCard({
   // course been seeded with lessons yet" — that distinction is what gives us
   // the new PREVIEW state for browseable-but-not-live courses.
   const status = deriveStatus(course);
-  // Course card CTA jumps straight into the lessons grid (most common student
-  // intent on a "Start course" tap). The choice hub at /learn/.../course is
-  // still reachable via breadcrumb if they want to switch over to Exam Papers.
-  const href = `/learn/${subjectSlug}/${pathwaySlug}/${course.slug}/lessons`;
+  // Card targets the course choice hub (not the lessons grid directly) so
+  // students see Lessons and Exam Papers as peer options instead of having
+  // to back out and re-enter to discover papers.
+  const href = `/learn/${subjectSlug}/${pathwaySlug}/${course.slug}`;
 
   const badge = getStatusBadge(status);
-  const cta = getStatusCta(status, "Start course →");
+  const cta = getStatusCta(status, "Open course →");
 
   const isClickable = !cta.isDisabled;
 
