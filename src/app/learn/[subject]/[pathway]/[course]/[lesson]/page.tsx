@@ -165,6 +165,10 @@ function LiveLesson({
                 label: course.name,
                 href: `/learn/${subjectSlug}/${pathwaySlug}/${courseSlug}`,
               },
+              {
+                label: "Lessons",
+                href: `/learn/${subjectSlug}/${pathwaySlug}/${courseSlug}/lessons`,
+              },
               { label: lesson.title },
             ]}
           />
@@ -453,6 +457,10 @@ function ComingSoonLesson({
                 label: course.name,
                 href: `/learn/${subjectSlug}/${pathwaySlug}/${courseSlug}`,
               },
+              {
+                label: "Lessons",
+                href: `/learn/${subjectSlug}/${pathwaySlug}/${courseSlug}/lessons`,
+              },
               { label: lesson.title },
             ]}
           />
@@ -512,11 +520,11 @@ function ComingSoonLesson({
 
           <div className="mt-12 flex justify-center">
             <Link
-              href={`/learn/${subjectSlug}/${pathwaySlug}/${courseSlug}`}
+              href={`/learn/${subjectSlug}/${pathwaySlug}/${courseSlug}/lessons`}
               className="inline-flex items-center gap-2 rounded-md border border-ink/15 px-5 py-2.5 text-sm font-medium text-ink transition-colors hover:border-[var(--subject-accent)] hover:bg-ink/[0.04]"
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-              Back to course
+              Back to lessons
             </Link>
           </div>
         </div>

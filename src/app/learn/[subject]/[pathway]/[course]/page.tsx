@@ -1,20 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowRight, Beaker } from "lucide-react";
+import { ArrowRight, BookOpen, ClipboardList } from "lucide-react";
 
 import { Breadcrumb } from "@/components/catalogue/breadcrumb";
-import { CourseTabs } from "@/components/catalogue/course-tabs";
 import { StatusBadge } from "@/components/catalogue/status-badge";
 import { PATHWAY_COPY, isPathway } from "@/lib/catalogue/pathways";
 import {
-  getCourseBySubjectPathwayAndSlug,
+  getCourseChoiceData,
   getSubjectBySlug,
-  listLessonsForCourse,
-  listUnitsForCourse,
 } from "@/lib/catalogue/queries";
+import {
+  deriveStatus,
+  getStatusBadge,
+  type EntityStatus,
+} from "@/lib/catalogue/status";
 import { getSubjectThemeStyle } from "@/lib/catalogue/subject-theme";
-import type { LessonForCatalogue, Unit } from "@/lib/catalogue/types";
 import { cn } from "@/lib/utils";
 
 type Params = Promise<{
@@ -36,78 +37,43 @@ export async function generateMetadata({
   if (!isPathway(pathwaySlug)) {
     return { title: "Course not found · Ailemy" };
   }
-  const course = await getCourseBySubjectPathwayAndSlug(
-    subjectSlug,
-    pathwaySlug,
-    courseSlug,
-  );
-  if (!course) {
+  const data = await getCourseChoiceData(subjectSlug, pathwaySlug, courseSlug);
+  if (!data) {
     return { title: "Course not found · Ailemy" };
   }
   return {
-    title: `${course.name} · Ailemy`,
-    description: course.description ?? undefined,
+    title: `${data.course.name} · Ailemy`,
+    description: `Choose your path: spec-led video lessons or interactive exam paper practice for ${data.course.name}.`,
   };
 }
 
-export default async function CoursePage({ params }: { params: Params }) {
+export default async function CourseChoiceHubPage({
+  params,
+}: {
+  params: Params;
+}) {
   const {
     subject: subjectSlug,
     pathway: pathwaySlug,
     course: courseSlug,
   } = await params;
 
-  if (!isPathway(pathwaySlug)) {
-    notFound();
-  }
+  if (!isPathway(pathwaySlug)) notFound();
 
-  // We resolve the subject row separately so we have its colour tokens for
-  // theming, even if a stale URL pair sneaks past the course lookup.
   const subject = await getSubjectBySlug(subjectSlug);
-  if (!subject) {
-    notFound();
-  }
+  if (!subject) notFound();
 
-  const course = await getCourseBySubjectPathwayAndSlug(
-    subjectSlug,
-    pathwaySlug,
-    courseSlug,
-  );
-  if (!course) {
-    notFound();
-  }
+  const data = await getCourseChoiceData(subjectSlug, pathwaySlug, courseSlug);
+  if (!data) notFound();
 
-  const [units, lessons] = await Promise.all([
-    listUnitsForCourse(course.id),
-    listLessonsForCourse(course.id),
-  ]);
-
-  // Bucket lessons by unit. Lessons with no unit_id fall under "Other".
-  const lessonsByUnit = new Map<string | null, LessonForCatalogue[]>();
-  for (const lesson of lessons) {
-    const key = lesson.unit_id ?? null;
-    if (!lessonsByUnit.has(key)) lessonsByUnit.set(key, []);
-    lessonsByUnit.get(key)!.push(lesson);
-  }
-
-  // Render order = unit sort_order, then "Other" if any unitless lessons exist.
-  const sections: { unit: Unit | null; lessons: LessonForCatalogue[] }[] = [];
-  for (const unit of units) {
-    const items = lessonsByUnit.get(unit.id) ?? [];
-    if (items.length > 0) sections.push({ unit, lessons: items });
-  }
-  const orphan = lessonsByUnit.get(null);
-  if (orphan && orphan.length > 0) {
-    sections.push({ unit: null, lessons: orphan });
-  }
-
-  const totalLessons = lessons.length;
+  const { course, lessonStats, paperStats } = data;
   const pathway = PATHWAY_COPY[pathwaySlug];
+  const courseBase = `/learn/${subjectSlug}/${pathwaySlug}/${courseSlug}`;
 
   return (
     <div style={getSubjectThemeStyle(subject)}>
       <main className="min-h-screen bg-parchment text-ink">
-        <div className="mx-auto w-full max-w-7xl px-6 py-16 sm:px-10 sm:py-20">
+        <div className="mx-auto w-full max-w-5xl px-6 py-16 sm:px-10 sm:py-20">
           <Breadcrumb
             crumbs={[
               { label: "Learn", href: "/learn" },
@@ -136,190 +102,237 @@ export default async function CoursePage({ params }: { params: Params }) {
               </p>
             )}
             <p className="font-mono mt-6 text-xs uppercase tracking-[0.2em] text-ink/55">
-              {totalLessons} {totalLessons === 1 ? "lesson" : "lessons"} ·{" "}
-              {sections.length} {sections.length === 1 ? "unit" : "units"}
+              {lessonStats.totalLessons}{" "}
+              {lessonStats.totalLessons === 1 ? "lesson" : "lessons"} ·{" "}
+              {lessonStats.unitCount}{" "}
+              {lessonStats.unitCount === 1 ? "unit" : "units"} ·{" "}
+              {paperStats.totalPapers}{" "}
+              {paperStats.totalPapers === 1 ? "paper" : "papers"}
             </p>
           </header>
 
-          <div className="mt-10">
-            <CourseTabs
-              active="lessons"
-              subjectSlug={subjectSlug}
-              pathwaySlug={pathwaySlug}
-              courseSlug={courseSlug}
+          <section
+            aria-label="Course paths"
+            className="mt-14 grid gap-6 md:mt-20 md:grid-cols-2 md:gap-8"
+          >
+            <LessonsCard
+              href={`${courseBase}/lessons`}
+              stats={lessonStats}
             />
-          </div>
-
-          <div className="mt-12 space-y-20">
-            {sections.length === 0 ? (
-              <EmptyCourse />
-            ) : (
-              sections.map(({ unit, lessons }) => (
-                <UnitSection
-                  key={unit?.id ?? "orphan"}
-                  unit={unit}
-                  lessons={lessons}
-                  subjectSlug={subjectSlug}
-                  pathwaySlug={pathwaySlug}
-                  courseSlug={courseSlug}
-                />
-              ))
-            )}
-          </div>
+            <ExamPapersCard
+              href={`${courseBase}/exam-questions`}
+              stats={paperStats}
+            />
+          </section>
         </div>
       </main>
     </div>
   );
 }
 
-function UnitSection({
-  unit,
-  lessons,
-  subjectSlug,
-  pathwaySlug,
-  courseSlug,
-}: {
-  unit: Unit | null;
-  lessons: LessonForCatalogue[];
-  subjectSlug: string;
-  pathwaySlug: string;
-  courseSlug: string;
-}) {
-  return (
-    <section>
-      <div className="border-b border-ink/10 pb-5">
-        {unit?.code && (
-          <p className="font-mono text-xs uppercase tracking-[0.25em] text-ink/55">
-            {unit.code}
-          </p>
-        )}
-        <h2 className="font-display mt-3 text-3xl font-medium tracking-tight md:text-4xl">
-          {unit?.name ?? "Other lessons"}
-        </h2>
-        {unit?.description && (
-          <p className="mt-4 max-w-3xl text-base leading-relaxed text-ink/65">
-            {unit.description}
-          </p>
-        )}
-        <p className="font-mono mt-4 text-[11px] uppercase tracking-[0.2em] text-ink/45">
-          {lessons.length} {lessons.length === 1 ? "lesson" : "lessons"}
-        </p>
-      </div>
+// ---------------------------------------------------------------------------
+// Choice cards
+// ---------------------------------------------------------------------------
 
-      <ul className="mt-8 grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
-        {lessons.map((lesson) => (
-          <li key={lesson.id}>
-            <LessonCard
-              lesson={lesson}
-              subjectSlug={subjectSlug}
-              pathwaySlug={pathwaySlug}
-              courseSlug={courseSlug}
-            />
-          </li>
-        ))}
-      </ul>
-    </section>
+type LessonsStats = {
+  totalLessons: number;
+  liveLessons: number;
+  unitCount: number;
+};
+
+function LessonsCard({
+  href,
+  stats,
+}: {
+  href: string;
+  stats: LessonsStats;
+}) {
+  const status = deriveStatus({
+    totalLessons: stats.totalLessons,
+    liveLessons: stats.liveLessons,
+  });
+  const meta =
+    stats.totalLessons === 0
+      ? "Lessons coming soon"
+      : `${stats.totalLessons} ${stats.totalLessons === 1 ? "lesson" : "lessons"} · ${stats.unitCount} ${stats.unitCount === 1 ? "unit" : "units"}`;
+
+  return (
+    <ChoiceCard
+      href={href}
+      status={status}
+      eyebrow="Study"
+      title="Lessons"
+      description="Spec-by-spec teaching with examiner-led video walkthroughs."
+      meta={meta}
+      availableCtaLabel="Start learning →"
+      previewCtaLabel="Browse lessons →"
+      icon={<BookOpen className="h-5 w-5" aria-hidden="true" />}
+    />
   );
 }
 
-function LessonCard({
-  lesson,
-  subjectSlug,
-  pathwaySlug,
-  courseSlug,
-}: {
-  lesson: LessonForCatalogue;
-  subjectSlug: string;
-  pathwaySlug: string;
-  courseSlug: string;
-}) {
-  const isLive = lesson.status === "live";
-  const href = `/learn/${subjectSlug}/${pathwaySlug}/${courseSlug}/${lesson.slug}`;
+type PapersStats = {
+  totalPapers: number;
+  livePapers: number;
+};
 
-  const className = cn(
-    "group/lesson relative flex h-full flex-col gap-5 rounded-lg border border-ink/10 bg-snow p-6 transition-all duration-300 ease-out",
-    isLive
-      ? "hover:-translate-y-1 hover:border-[var(--subject-accent)]"
-      : "cursor-not-allowed opacity-75",
+function ExamPapersCard({
+  href,
+  stats,
+}: {
+  href: string;
+  stats: PapersStats;
+}) {
+  // Papers have a simpler two-state model: either at least one live paper
+  // exists (AVAILABLE) or none (COMING SOON). No "preview" — a paper is
+  // either uploaded and live, or it doesn't exist yet.
+  const status: EntityStatus =
+    stats.livePapers > 0 ? "available" : "coming_soon";
+
+  const meta =
+    stats.totalPapers === 0
+      ? "Papers coming soon"
+      : `${stats.totalPapers} ${stats.totalPapers === 1 ? "paper" : "papers"}`;
+
+  return (
+    <ChoiceCard
+      href={href}
+      status={status}
+      eyebrow="Practise"
+      title="Exam Papers"
+      description="Past papers, mark schemes, and interactive practice whiteboards."
+      meta={meta}
+      availableCtaLabel="Open exam papers →"
+      // ExamPapers has no preview state, but the prop is required by the
+      // shared ChoiceCard signature. Never rendered for this card.
+      previewCtaLabel="Open exam papers →"
+      icon={<ClipboardList className="h-5 w-5" aria-hidden="true" />}
+    />
+  );
+}
+
+// Generic choice-hub card. Two of these sit side-by-side on the hub.
+function ChoiceCard({
+  href,
+  status,
+  eyebrow,
+  title,
+  description,
+  meta,
+  availableCtaLabel,
+  previewCtaLabel,
+  icon,
+}: {
+  href: string;
+  status: EntityStatus;
+  eyebrow: string;
+  title: string;
+  description: string;
+  meta: string;
+  availableCtaLabel: string;
+  previewCtaLabel: string;
+  icon: React.ReactNode;
+}) {
+  const badge = getStatusBadge(status);
+  // CTA copy per status. We don't reuse getStatusCta from status.ts here
+  // because that helper hard-codes the preview label to the catalogue-wide
+  // "Browse curriculum →" — fine for the subject/pathway/course cards out
+  // in the catalogue, but the choice hub wants per-card copy ("Browse
+  // lessons →" vs ignored). Inline keeps both CTAs explicit and local.
+  const cta = (() => {
+    if (status === "available")
+      return { label: availableCtaLabel, isDisabled: false };
+    if (status === "preview")
+      return { label: previewCtaLabel, isDisabled: false };
+    return { label: "NOT YET OPEN", isDisabled: true };
+  })();
+  const isClickable = !cta.isDisabled;
+
+  const cardClass = cn(
+    "group/choice relative flex h-full flex-col gap-8 overflow-hidden rounded-2xl border border-ink/10 bg-snow p-8 transition-all duration-200 ease-out sm:p-10",
+    isClickable
+      ? "cursor-pointer hover:translate-y-[-2px] hover:border-[var(--subject-accent)] hover:shadow-md"
+      : "cursor-not-allowed opacity-70",
+    status === "preview" && "text-ink/90",
+  );
+
+  const Stripe = (
+    <span
+      aria-hidden="true"
+      className="absolute inset-x-0 top-0 h-1 rounded-t-2xl"
+      style={{ backgroundColor: "var(--subject-accent)" }}
+    />
   );
 
   const Body = (
     <>
-      {lesson.is_core_practical && (
-        <span className="font-mono absolute right-4 top-4 inline-flex items-center gap-1 rounded-full bg-flask px-2 py-0.5 text-[10px] uppercase tracking-[0.15em] text-snow">
-          <Beaker className="h-3 w-3" aria-hidden="true" />
-          Core Practical
-        </span>
-      )}
+      {Stripe}
 
-      <div>
-        <p
-          className="font-mono text-xs uppercase tracking-[0.25em]"
-          style={{ color: "var(--subject-accent)" }}
+      <div className="flex items-start justify-between gap-4">
+        <span
+          className="flex h-10 w-10 items-center justify-center rounded-md"
+          style={{
+            backgroundColor:
+              "color-mix(in srgb, var(--subject-accent) 12%, transparent)",
+            color: "var(--subject-accent)",
+          }}
         >
-          Lesson {String(lesson.lesson_number ?? "").padStart(2, "0")}
-        </p>
-        <h3 className="font-display mt-4 text-lg font-medium leading-snug tracking-tight">
-          {lesson.title}
-        </h3>
+          {icon}
+        </span>
+        <span
+          className={cn(
+            "font-mono inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.18em]",
+            badge.className,
+          )}
+        >
+          {badge.label}
+        </span>
       </div>
 
-      {lesson.spec_point_codes.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {lesson.spec_point_codes.map((code) => (
-            <span
-              key={code}
-              className="font-mono rounded bg-parchment px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-ink/65"
-              style={{ borderLeft: "1px solid var(--subject-accent)" }}
-            >
-              {code}
-            </span>
-          ))}
-        </div>
-      )}
+      <div>
+        <p className="font-mono text-xs uppercase tracking-[0.25em] text-ink/55">
+          {eyebrow}
+        </p>
+        <h2 className="font-display mt-3 text-3xl font-medium tracking-tight md:text-4xl">
+          {title}
+        </h2>
+        <p className="mt-4 max-w-md text-base leading-relaxed text-ink/65">
+          {description}
+        </p>
+        <p className="font-mono mt-5 text-[11px] uppercase tracking-[0.2em] text-ink/45">
+          {meta}
+        </p>
+      </div>
 
-      <div className="mt-auto pt-1 text-sm font-medium">
-        {isLive ? (
-          <span
-            className="inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-snow transition-colors duration-200"
-            style={{ backgroundColor: "var(--subject-accent)" }}
-          >
-            Start lesson
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+      <div className="mt-auto pt-2 text-sm font-medium">
+        {status === "coming_soon" ? (
+          <span className="font-mono text-xs uppercase tracking-[0.2em] text-ink/45">
+            {cta.label}
           </span>
         ) : (
-          <span className="font-mono text-xs uppercase tracking-[0.2em] text-ink/45">
-            Coming soon
+          <span
+            className="inline-flex items-center gap-2 transition-transform duration-200 group-hover/choice:translate-x-1"
+            style={{ color: "var(--subject-accent)" }}
+          >
+            {cta.label.replace(/\s?→$/, "")}
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </span>
         )}
       </div>
     </>
   );
 
-  if (!isLive) {
+  if (!isClickable) {
     return (
-      <div className={className} aria-disabled="true">
+      <div className={cardClass} aria-disabled="true">
         {Body}
       </div>
     );
   }
 
   return (
-    <Link href={href} className={className}>
+    <Link href={href} className={cardClass}>
       {Body}
     </Link>
-  );
-}
-
-function EmptyCourse() {
-  return (
-    <div className="rounded-xl border border-ink/10 bg-snow p-10 text-center">
-      <p className="font-display text-2xl font-medium tracking-tight">
-        No lessons published yet.
-      </p>
-      <p className="mt-3 text-sm text-ink/60">
-        We&apos;re organising lessons for this course. Check back soon.
-      </p>
-    </div>
   );
 }

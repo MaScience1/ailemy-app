@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { ArrowRight, FileText, Video } from "lucide-react";
 
 import { Breadcrumb } from "@/components/catalogue/breadcrumb";
-import { CourseTabs } from "@/components/catalogue/course-tabs";
 import { StatusBadge } from "@/components/catalogue/status-badge";
 import { PATHWAY_COPY, isPathway } from "@/lib/catalogue/pathways";
 import {
@@ -45,7 +44,7 @@ export async function generateMetadata({
     return { title: "Course not found · Ailemy" };
   }
   return {
-    title: `${course.name} — Exam Questions · Ailemy`,
+    title: `Exam Papers · ${course.name} · Ailemy`,
     description: `Past papers, mark schemes and examiner walkthroughs for ${course.name}.`,
   };
 }
@@ -106,7 +105,7 @@ export default async function ExamQuestionsPage({
                 label: course.name,
                 href: `/learn/${subjectSlug}/${pathwaySlug}/${courseSlug}`,
               },
-              { label: "Exam Questions" },
+              { label: "Exam Papers" },
             ]}
           />
 
@@ -130,15 +129,6 @@ export default async function ExamQuestionsPage({
               {papers.length} {papers.length === 1 ? "paper" : "papers"}
             </p>
           </header>
-
-          <div className="mt-10">
-            <CourseTabs
-              active="exam-questions"
-              subjectSlug={subjectSlug}
-              pathwaySlug={pathwaySlug}
-              courseSlug={courseSlug}
-            />
-          </div>
 
           {units.length === 0 ? (
             <EmptyAllUnits />

@@ -183,7 +183,10 @@ function CourseCard({
   // course been seeded with lessons yet" — that distinction is what gives us
   // the new PREVIEW state for browseable-but-not-live courses.
   const status = deriveStatus(course);
-  const href = `/learn/${subjectSlug}/${pathwaySlug}/${course.slug}`;
+  // Course card CTA jumps straight into the lessons grid (most common student
+  // intent on a "Start course" tap). The choice hub at /learn/.../course is
+  // still reachable via breadcrumb if they want to switch over to Exam Papers.
+  const href = `/learn/${subjectSlug}/${pathwaySlug}/${course.slug}/lessons`;
 
   const badge = getStatusBadge(status);
   const cta = getStatusCta(status, "Start course →");

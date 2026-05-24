@@ -460,6 +460,93 @@ export async function getLessonNeighbours(
 }
 
 // ---------------------------------------------------------------------------
+// COURSE CHOICE HUB
+// ---------------------------------------------------------------------------
+
+/**
+ * Aggregate counts the course choice hub needs to render its two cards
+ * (Lessons / Exam Papers) and the meta line beneath the title.
+ */
+export type CourseChoiceData = {
+  course: CourseWithRelations;
+  lessonStats: {
+    totalLessons: number;
+    liveLessons: number;
+    unitCount: number;
+  };
+  paperStats: {
+    totalPapers: number;
+    livePapers: number;
+  };
+};
+
+/**
+ * One-shot fetch for the choice hub. Resolves the course (1 round-trip),
+ * then fans out three parallel count-only queries for lessons / units /
+ * past papers. Total: 4 round-trips, the last three concurrent.
+ *
+ * We deliberately don't reuse listLessonsForCourse here — that one pulls
+ * spec-point joins for every lesson card on the grid (~80 KB for Biology's
+ * 205 lessons). The choice hub only needs status counts, so we fetch
+ * lesson.status alone.
+ */
+export async function getCourseChoiceData(
+  subjectSlug: string,
+  pathway: Pathway,
+  courseSlug: string,
+): Promise<CourseChoiceData | null> {
+  const course = await getCourseBySubjectPathwayAndSlug(
+    subjectSlug,
+    pathway,
+    courseSlug,
+  );
+  if (!course) return null;
+
+  const supabase = await createClient();
+
+  const [lessonsRes, unitsRes, papersRes] = await Promise.all([
+    supabase.from("lessons").select("status").eq("course_id", course.id),
+    supabase
+      .from("units")
+      .select("id", { count: "exact", head: true })
+      .eq("course_id", course.id),
+    supabase.from("past_papers").select("status").eq("course_id", course.id),
+  ]);
+
+  if (lessonsRes.error) {
+    console.error("[catalogue] choice-hub lessons fetch failed", lessonsRes.error);
+  }
+  if (unitsRes.error) {
+    console.error("[catalogue] choice-hub units fetch failed", unitsRes.error);
+  }
+  if (papersRes.error) {
+    // past_papers may not exist yet in a freshly-migrated DB — degrade
+    // gracefully to zero papers rather than crash the page.
+    console.error("[catalogue] choice-hub papers fetch failed", papersRes.error);
+  }
+
+  type StatusRow = { status: string | null };
+  const lessons = (lessonsRes.data ?? []) as StatusRow[];
+  const papers = (papersRes.data ?? []) as StatusRow[];
+
+  const liveLessons = lessons.filter((row) => row.status === "live").length;
+  const livePapers = papers.filter((row) => row.status === "live").length;
+
+  return {
+    course,
+    lessonStats: {
+      totalLessons: lessons.length,
+      liveLessons,
+      unitCount: unitsRes.count ?? 0,
+    },
+    paperStats: {
+      totalPapers: papers.length,
+      livePapers,
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
 // PAST PAPERS
 // ---------------------------------------------------------------------------
 
