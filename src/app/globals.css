@@ -14,10 +14,10 @@
   --color-snow: #FFFFFF;
   --color-subject-chem-as: #F97316;
   --color-subject-chem-a2: #C2410C;
-  --color-subject-physics-as: #3B82F6;
-  --color-subject-physics-a2: #1E40AF;
-  --color-subject-bio-as: #EF4444;
-  --color-subject-bio-a2: #B91C1C;
+  --color-subject-physics-as: #3B7CB8;
+  --color-subject-physics-a2: #2C6699;
+  --color-subject-bio-as: #4A9D5C;
+  --color-subject-bio-a2: #3D8249;
   --font-display: var(--font-fraunces), Georgia, serif;
   --font-sans: var(--font-inter), -apple-system, sans-serif;
   --font-mono: var(--font-jetbrains-mono), Menlo, monospace;

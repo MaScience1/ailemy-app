@@ -7,11 +7,16 @@ type SubjectCardProps = {
   title: string;
   lines: string[];
   accentClass: string;
+  /** Destination subject hub in the catalogue, e.g. /learn/chemistry. */
+  href: string;
 };
 
-function SubjectCard({ title, lines, accentClass }: SubjectCardProps) {
+function SubjectCard({ title, lines, accentClass, href }: SubjectCardProps) {
   return (
-    <div className="group flex flex-col rounded-lg border border-ink/10 bg-snow p-8 transition-all duration-300 ease-out hover:-translate-y-1 hover:border-ink/25 sm:p-10">
+    <Link
+      href={href}
+      className="group flex cursor-pointer flex-col rounded-lg border border-ink/10 bg-snow p-8 transition-all duration-200 ease-out hover:translate-y-[-2px] hover:border-ink/25 hover:shadow-md sm:p-10"
+    >
       <div
         className={`h-0.5 w-10 ${accentClass} transition-all duration-300 ease-out group-hover:w-16`}
         aria-hidden="true"
@@ -24,7 +29,7 @@ function SubjectCard({ title, lines, accentClass }: SubjectCardProps) {
           <p key={line}>{line}</p>
         ))}
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -82,15 +87,7 @@ export default function Home() {
                 "AI tutoring.",
               ]}
               accentClass="bg-subject-chem-as"
-            />
-            <SubjectCard
-              title="Physics"
-              lines={[
-                "Visual explanations.",
-                "Vector intuition.",
-                "Problem solving.",
-              ]}
-              accentClass="bg-subject-physics-as"
+              href="/learn/chemistry"
             />
             <SubjectCard
               title="Biology"
@@ -100,6 +97,17 @@ export default function Home() {
                 "Exam mastery.",
               ]}
               accentClass="bg-subject-bio-as"
+              href="/learn/biology"
+            />
+            <SubjectCard
+              title="Physics"
+              lines={[
+                "Visual explanations.",
+                "Vector intuition.",
+                "Problem solving.",
+              ]}
+              accentClass="bg-subject-physics-as"
+              href="/learn/physics"
             />
           </div>
         </div>
