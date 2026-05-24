@@ -7,6 +7,7 @@ import type {
   LessonForCatalogue,
   LessonForPage,
   LessonNeighbour,
+  PastPaper,
   Subject,
   Unit,
 } from "./types";
@@ -456,6 +457,81 @@ export async function getLessonNeighbours(
   ]);
 
   return { prev: prev ?? null, next: next ?? null };
+}
+
+// ---------------------------------------------------------------------------
+// PAST PAPERS
+// ---------------------------------------------------------------------------
+
+const PAST_PAPER_SELECT = `
+  id, course_id, unit_id, slug, year, session, paper_code, paper_name,
+  paper_pdf_path, markscheme_pdf_path, walkthrough_mux_playback_id,
+  walkthrough_duration_minutes, status, sort_order
+`;
+
+/** All live past papers for a course, ordered by sort_order. */
+export async function listPastPapersForCourse(
+  courseId: string,
+): Promise<PastPaper[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("past_papers")
+    .select(PAST_PAPER_SELECT)
+    .eq("course_id", courseId)
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    console.error("[catalogue] listPastPapersForCourse failed", error);
+    return [];
+  }
+  return (data ?? []) as unknown as PastPaper[];
+}
+
+/**
+ * Single past paper resolved by (course_id, slug). Defence in depth — slugs
+ * are only required to be unique within a course (UNIQUE(course_id, slug)),
+ * so resolving from a URL with both segments avoids cross-course collisions.
+ */
+export async function getPastPaperByCourseAndSlug(
+  courseId: string,
+  slug: string,
+): Promise<PastPaper | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("past_papers")
+    .select(PAST_PAPER_SELECT)
+    .eq("course_id", courseId)
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[catalogue] getPastPaperByCourseAndSlug failed", error);
+    return null;
+  }
+  return data as unknown as PastPaper | null;
+}
+
+/**
+ * Global lookup by slug only. Used by the /api/papers/[slug] route handler
+ * called from the client-side practice page. Assumes paper slugs are de-facto
+ * globally unique in practice (paper codes are descriptive: 'wch11-january-2024').
+ * If a future collision surfaces we'll move the API route to a 2-segment path.
+ */
+export async function getPastPaperBySlugOnly(
+  slug: string,
+): Promise<PastPaper | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("past_papers")
+    .select(PAST_PAPER_SELECT)
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[catalogue] getPastPaperBySlugOnly failed", error);
+    return null;
+  }
+  return data as unknown as PastPaper | null;
 }
 
 /**

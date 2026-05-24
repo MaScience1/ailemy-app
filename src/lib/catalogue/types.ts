@@ -115,3 +115,25 @@ export type LessonForPage = Lesson & {
 
 /** A tiny neighbour row for prev/next nav. */
 export type LessonNeighbour = Pick<Lesson, "slug" | "title" | "lesson_number">;
+
+/**
+ * Past paper row — see supabase/migrations/0007_past_papers.sql.
+ * PDF and mark scheme paths are keys into the public "papers" Storage bucket.
+ * Walkthrough video uses the same Mux pattern as lessons.
+ */
+export type PastPaper = {
+  id: string;
+  course_id: string;
+  unit_id: string | null;
+  slug: string;
+  year: number;
+  session: string;
+  paper_code: string | null;
+  paper_name: string;
+  paper_pdf_path: string | null;
+  markscheme_pdf_path: string | null;
+  walkthrough_mux_playback_id: string | null;
+  walkthrough_duration_minutes: number | null;
+  status: ContentStatus;
+  sort_order: number;
+};

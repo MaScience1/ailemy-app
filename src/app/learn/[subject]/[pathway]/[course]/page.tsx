@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowRight, Beaker } from "lucide-react";
 
 import { Breadcrumb } from "@/components/catalogue/breadcrumb";
+import { CourseTabs } from "@/components/catalogue/course-tabs";
 import { StatusBadge } from "@/components/catalogue/status-badge";
 import { PATHWAY_COPY, isPathway } from "@/lib/catalogue/pathways";
 import {
@@ -140,7 +141,16 @@ export default async function CoursePage({ params }: { params: Params }) {
             </p>
           </header>
 
-          <div className="mt-16 space-y-20">
+          <div className="mt-10">
+            <CourseTabs
+              active="lessons"
+              subjectSlug={subjectSlug}
+              pathwaySlug={pathwaySlug}
+              courseSlug={courseSlug}
+            />
+          </div>
+
+          <div className="mt-12 space-y-20">
             {sections.length === 0 ? (
               <EmptyCourse />
             ) : (
