@@ -88,16 +88,20 @@ export const PATHWAY_COPY: Record<Pathway, PathwayCopy> = {
 
 /**
  * Display order for the 6 pathway cards on /learn/[subject], and for the
- * pathway sub-headings on /past-papers. Mirrors typical student journey by
- * qualification weight, with our current launch focus (IAL) at the top.
+ * pathway sub-headings on /past-papers.
+ *
+ * Pedagogical progression: foundational → advanced. Students who land on
+ * the catalogue often start with their current qualification level and
+ * scan downwards toward future paths, so leading with GCSE/IGCSE and
+ * ending with AP gives a natural reading order.
  */
 export const PATHWAY_DISPLAY_ORDER: readonly Pathway[] = [
+  "uk-gcse",
+  "igcse",
   "international-a-level",
   "uk-a-level",
   "ib",
   "ap",
-  "igcse",
-  "uk-gcse",
 ];
 
 /**
