@@ -24,6 +24,7 @@ type NavLink = { label: string; href: string };
 
 const NAV_LINKS: NavLink[] = [
   { label: "Subjects", href: "/learn" },
+  { label: "Past Papers", href: "/past-papers" },
   { label: "How it works", href: "/#how-it-works" },
   { label: "For schools", href: "/#for-schools" },
   { label: "About", href: "/#about" },

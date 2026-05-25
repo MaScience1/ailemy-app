@@ -13,6 +13,7 @@ type FooterLink = { label: string; href: string };
 
 const FOOTER_LINKS: FooterLink[] = [
   { label: "Subjects", href: "/learn" },
+  { label: "Past Papers", href: "/past-papers" },
   { label: "How it works", href: "/#how-it-works" },
   { label: "For schools", href: "/#for-schools" },
   { label: "About", href: "/#about" },

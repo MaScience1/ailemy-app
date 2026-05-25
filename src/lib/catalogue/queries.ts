@@ -547,6 +547,170 @@ export async function getCourseChoiceData(
 }
 
 // ---------------------------------------------------------------------------
+// PAST PAPERS HUB (/past-papers)
+// ---------------------------------------------------------------------------
+
+/** Lightly-projected course row for the /past-papers hub. */
+export type HubCourseEntry = {
+  id: string;
+  slug: string;
+  name: string;
+  level: string;
+  pathway: Pathway;
+  subjectSlug: string;
+  curriculumId: string;
+  boardName: string; // e.g. "Edexcel IAL" — pulled from curricula.short_name
+  paperCount: number;
+};
+
+/** Subject heading row with aggregated stats and its course entries. */
+export type HubSubjectSection = {
+  id: string;
+  slug: string;
+  name: string;
+  colorAs: string | null;
+  colorA2: string | null;
+  sortOrder: number;
+  courseCount: number;
+  totalPapers: number;
+  courses: HubCourseEntry[];
+};
+
+export type PastPapersHubData = {
+  subjects: HubSubjectSection[];
+  /** Sum of live papers across every subject. */
+  totalPapers: number;
+  /** Distinct curricula (exam boards) that have at least one live paper. */
+  curriculaWithPapers: number;
+};
+
+/**
+ * One-shot fetch for the /past-papers landing hub.
+ *
+ * Nested PostgREST: subjects → courses → past_papers (live rows only, via
+ * RLS). We deliberately keep the past_papers projection to just `id` since
+ * we only need the count per course; live courses with 30+ papers stay
+ * cheap to serialise.
+ *
+ * Sorting:
+ *   - Subjects: by subjects.sort_order (DB-driven).
+ *   - Courses within a subject: AVAILABLE (paperCount > 0) bucket first,
+ *     then COMING SOON bucket. Within each bucket, by board name then level.
+ *     This puts the courses with real papers at the top of every section.
+ */
+export async function getPastPapersHubData(): Promise<PastPapersHubData> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("subjects")
+    .select(
+      `
+      id, slug, name, color_as, color_a2, sort_order,
+      courses(
+        id, slug, name, level, pathway, curriculum_id, subject_id,
+        curriculum:curricula(id, short_name),
+        past_papers(id)
+      )
+      `,
+    )
+    .order("sort_order", { ascending: true });
+
+  if (error) {
+    console.error("[catalogue] getPastPapersHubData failed", error);
+    return { subjects: [], totalPapers: 0, curriculaWithPapers: 0 };
+  }
+
+  type RawCurriculum = { id: string; short_name: string | null };
+  type RawCourse = {
+    id: string;
+    slug: string;
+    name: string;
+    level: string;
+    pathway: Pathway | null;
+    curriculum_id: string;
+    subject_id: string;
+    curriculum: RawCurriculum | null;
+    past_papers: { id: string }[] | null;
+  };
+  type RawSubject = {
+    id: string;
+    slug: string;
+    name: string;
+    color_as: string | null;
+    color_a2: string | null;
+    sort_order: number;
+    courses: RawCourse[] | null;
+  };
+
+  const subjects: HubSubjectSection[] = (
+    (data ?? []) as unknown as RawSubject[]
+  ).map((row) => {
+      const rawCourses = row.courses ?? [];
+
+      const courses: HubCourseEntry[] = rawCourses
+        // Skip any course missing a pathway — defence against pre-migration
+        // rows (the column is NOT NULL post-0005 but be safe).
+        .filter((c): c is RawCourse & { pathway: Pathway } => Boolean(c.pathway))
+        .map((c) => ({
+          id: c.id,
+          slug: c.slug,
+          name: c.name,
+          level: c.level,
+          pathway: c.pathway,
+          subjectSlug: row.slug,
+          curriculumId: c.curriculum_id,
+          boardName: c.curriculum?.short_name ?? "—",
+          paperCount: (c.past_papers ?? []).length,
+        }));
+
+      // Within-subject sort: AVAILABLE first, then COMING SOON; tie-break
+      // alphabetically by board name then level.
+      courses.sort((a, b) => {
+        const aAvail = a.paperCount > 0 ? 0 : 1;
+        const bAvail = b.paperCount > 0 ? 0 : 1;
+        if (aAvail !== bAvail) return aAvail - bAvail;
+        const boardCmp = a.boardName.localeCompare(b.boardName);
+        if (boardCmp !== 0) return boardCmp;
+        return a.level.localeCompare(b.level);
+      });
+
+      const totalPapers = courses.reduce(
+        (sum, c) => sum + c.paperCount,
+        0,
+      );
+
+      return {
+        id: row.id,
+        slug: row.slug,
+        name: row.name,
+        colorAs: row.color_as,
+        colorA2: row.color_a2,
+        sortOrder: row.sort_order,
+        courseCount: courses.length,
+        totalPapers,
+        courses,
+      };
+    },
+  );
+
+  const totalPapers = subjects.reduce((sum, s) => sum + s.totalPapers, 0);
+
+  // Distinct curricula offering at least one live paper.
+  const curriculaWithPapers = new Set<string>();
+  for (const subject of subjects) {
+    for (const course of subject.courses) {
+      if (course.paperCount > 0) curriculaWithPapers.add(course.curriculumId);
+    }
+  }
+
+  return {
+    subjects,
+    totalPapers,
+    curriculaWithPapers: curriculaWithPapers.size,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // PAST PAPERS
 // ---------------------------------------------------------------------------
 
