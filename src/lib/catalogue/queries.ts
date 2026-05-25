@@ -560,6 +560,9 @@ export type HubCourseEntry = {
   subjectSlug: string;
   curriculumId: string;
   boardName: string; // e.g. "Edexcel IAL" — pulled from curricula.short_name
+  /** courses.sort_order — used as the within-board tiebreaker on the hub
+   *  (so AS comes before A2 even though "A2" < "AS" lexicographically). */
+  sortOrder: number;
   paperCount: number;
 };
 
@@ -594,9 +597,9 @@ export type PastPapersHubData = {
  *
  * Sorting:
  *   - Subjects: by subjects.sort_order (DB-driven).
- *   - Courses within a subject: AVAILABLE (paperCount > 0) bucket first,
- *     then COMING SOON bucket. Within each bucket, by board name then level.
- *     This puts the courses with real papers at the top of every section.
+ *   - Courses: returned unsorted within each subject. The /past-papers page
+ *     groups them by pathway and applies its own pedagogical pathway order
+ *     + (board, sort_order) tiebreaker, so sorting here would just be undone.
  */
 export async function getPastPapersHubData(): Promise<PastPapersHubData> {
   const supabase = await createClient();
@@ -607,7 +610,7 @@ export async function getPastPapersHubData(): Promise<PastPapersHubData> {
       `
       id, slug, name, color_as, color_a2, sort_order,
       courses(
-        id, slug, name, level, pathway, curriculum_id, subject_id,
+        id, slug, name, level, pathway, curriculum_id, subject_id, sort_order,
         curriculum:curricula(id, short_name),
         past_papers(id)
       )
@@ -629,6 +632,7 @@ export async function getPastPapersHubData(): Promise<PastPapersHubData> {
     pathway: Pathway | null;
     curriculum_id: string;
     subject_id: string;
+    sort_order: number;
     curriculum: RawCurriculum | null;
     past_papers: { id: string }[] | null;
   };
@@ -660,19 +664,12 @@ export async function getPastPapersHubData(): Promise<PastPapersHubData> {
           subjectSlug: row.slug,
           curriculumId: c.curriculum_id,
           boardName: c.curriculum?.short_name ?? "—",
+          sortOrder: c.sort_order,
           paperCount: (c.past_papers ?? []).length,
         }));
 
-      // Within-subject sort: AVAILABLE first, then COMING SOON; tie-break
-      // alphabetically by board name then level.
-      courses.sort((a, b) => {
-        const aAvail = a.paperCount > 0 ? 0 : 1;
-        const bAvail = b.paperCount > 0 ? 0 : 1;
-        if (aAvail !== bAvail) return aAvail - bAvail;
-        const boardCmp = a.boardName.localeCompare(b.boardName);
-        if (boardCmp !== 0) return boardCmp;
-        return a.level.localeCompare(b.level);
-      });
+      // No sort here — the /past-papers view groups by pathway and applies
+      // its own pedagogical pathway order + (board, sortOrder) tiebreaker.
 
       const totalPapers = courses.reduce(
         (sum, c) => sum + c.paperCount,

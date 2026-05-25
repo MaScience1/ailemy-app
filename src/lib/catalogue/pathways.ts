@@ -87,9 +87,9 @@ export const PATHWAY_COPY: Record<Pathway, PathwayCopy> = {
 };
 
 /**
- * Display order for the 6 pathway cards on /learn/[subject].
- * Mirrors typical student journey by qualification weight, with our
- * current launch focus (IAL) at the top.
+ * Display order for the 6 pathway cards on /learn/[subject], and for the
+ * pathway sub-headings on /past-papers. Mirrors typical student journey by
+ * qualification weight, with our current launch focus (IAL) at the top.
  */
 export const PATHWAY_DISPLAY_ORDER: readonly Pathway[] = [
   "international-a-level",
@@ -99,3 +99,20 @@ export const PATHWAY_DISPLAY_ORDER: readonly Pathway[] = [
   "igcse",
   "uk-gcse",
 ];
+
+/**
+ * Short labels for pathway sub-headings on the /past-papers hub. Differ
+ * subtly from PATHWAY_COPY[].name (which is verbose, used on the pathway
+ * cards themselves) and from PATHWAY_COPY[].shortName (which uses jargon
+ * like "IAL"). The hub labels lean colloquial and SEO-friendly:
+ * "International A-Level" rather than "IAL", "AP" rather than "Advanced
+ * Placement", "IB" rather than "International Baccalaureate".
+ */
+export const PATHWAY_HUB_LABEL: Record<Pathway, string> = {
+  "international-a-level": "International A-Level",
+  "uk-a-level": "A-Level",
+  ib: "IB",
+  ap: "AP",
+  igcse: "IGCSE",
+  "uk-gcse": "GCSE",
+};

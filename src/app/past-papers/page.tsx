@@ -6,6 +6,11 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
 import { Breadcrumb } from "@/components/catalogue/breadcrumb";
 import {
+  PATHWAY_DISPLAY_ORDER,
+  PATHWAY_HUB_LABEL,
+  type Pathway,
+} from "@/lib/catalogue/pathways";
+import {
   getPastPapersHubData,
   type HubCourseEntry,
   type HubSubjectSection,
@@ -76,6 +81,32 @@ function SubjectSection({ subject }: { subject: HubSubjectSection }) {
     color_a2: subject.colorA2,
   });
 
+  // Bucket this subject's courses by pathway, then sort within each bucket
+  // by (board name asc, sort_order asc) — gives Edexcel IAL AS before
+  // Edexcel IAL A2 without lexical "A2 < AS" surprises.
+  const coursesByPathway = new Map<Pathway, HubCourseEntry[]>();
+  for (const course of subject.courses) {
+    if (!coursesByPathway.has(course.pathway)) {
+      coursesByPathway.set(course.pathway, []);
+    }
+    coursesByPathway.get(course.pathway)!.push(course);
+  }
+  for (const list of coursesByPathway.values()) {
+    list.sort((a, b) => {
+      const boardCmp = a.boardName.localeCompare(b.boardName);
+      if (boardCmp !== 0) return boardCmp;
+      return a.sortOrder - b.sortOrder;
+    });
+  }
+
+  // Walk the fixed pedagogical pathway order, skipping pathways that this
+  // subject has zero courses in (no empty "IB" heading on a subject without
+  // any IB courses).
+  const pathwaySections = PATHWAY_DISPLAY_ORDER.flatMap((pathway) => {
+    const courses = coursesByPathway.get(pathway) ?? [];
+    return courses.length === 0 ? [] : [{ pathway, courses }];
+  });
+
   return (
     <section style={themeStyle} aria-labelledby={`subject-${subject.slug}`}>
       <div className="border-b border-ink/10 pb-5">
@@ -99,18 +130,44 @@ function SubjectSection({ subject }: { subject: HubSubjectSection }) {
         </p>
       </div>
 
-      {subject.courses.length === 0 ? (
+      {pathwaySections.length === 0 ? (
         <EmptySubject subjectName={subject.name} />
       ) : (
-        <ul className="mt-8 grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
-          {subject.courses.map((course) => (
-            <li key={course.id}>
-              <CoursePapersCard course={course} />
-            </li>
-          ))}
-        </ul>
+        pathwaySections.map(({ pathway, courses }) => (
+          <PathwayBlock key={pathway} pathway={pathway} courses={courses} />
+        ))
       )}
     </section>
+  );
+}
+
+function PathwayBlock({
+  pathway,
+  courses,
+}: {
+  pathway: Pathway;
+  courses: HubCourseEntry[];
+}) {
+  return (
+    <div className="mt-8 sm:mt-12">
+      {/* Pathway sub-heading: small-caps label + thin horizontal line
+          filling remaining width. Label and line share a flex row so they
+          stay baseline-aligned. */}
+      <div className="flex items-center gap-4">
+        <h3 className="font-mono whitespace-nowrap text-xs uppercase tracking-[0.25em] text-ink">
+          {PATHWAY_HUB_LABEL[pathway]}
+        </h3>
+        <span aria-hidden="true" className="h-px flex-1 bg-ink/10" />
+      </div>
+
+      <ul className="mt-6 grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
+        {courses.map((course) => (
+          <li key={course.id}>
+            <CoursePapersCard course={course} />
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -137,8 +194,10 @@ function CoursePapersCard({ course }: { course: HubCourseEntry }) {
     <>
       <div>
         <div className="flex items-start justify-between gap-3">
+          {/* Eyebrow now drops the level (e.g. "· A2") — the pathway
+              sub-heading above the grid already conveys that context. */}
           <p className="font-mono text-xs uppercase tracking-[0.2em] text-ink/55">
-            {course.boardName} · {course.level}
+            {course.boardName}
           </p>
           <span
             className={cn(
