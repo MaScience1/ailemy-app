@@ -3,6 +3,7 @@ import Link from "next/link";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
 import { Editable } from "@/components/admin-inline/Editable";
+import { NewPageSlot } from "@/components/admin-inline/page-slots";
 
 type SubjectCardProps = {
   title: string;
@@ -82,6 +83,8 @@ export default function Home() {
               <Editable id="home.hero.cta.secondary" default="Explore subjects" />
             </Link>
           </div>
+
+          <NewPageSlot />
 
           <p className="mt-8 max-w-[520px] text-sm leading-relaxed text-ink/55">
             <Editable
