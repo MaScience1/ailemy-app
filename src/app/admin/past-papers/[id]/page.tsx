@@ -24,9 +24,9 @@ export default async function EditPastPaperPage({
   ] = await Promise.all([
     supabase
       .from("past_papers")
-      .select(
-        "id, course_id, unit_id, slug, year, session, paper_code, paper_name, paper_pdf_path, markscheme_pdf_path, walkthrough_mux_playback_id, walkthrough_duration_minutes, status, sort_order",
-      )
+      // select("*") rather than an explicit column list: this row feeds PastPaperForm,
+      // and "*" keeps working whether or not migration 0012 has been applied.
+      .select("*")
       .eq("id", id)
       .single(),
     supabase

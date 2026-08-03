@@ -20,6 +20,8 @@ export type PaperInitial = {
   paper_name: string;
   paper_pdf_path: string | null;
   markscheme_pdf_path: string | null;
+  /** Optional: absent until migration 0012 is applied. */
+  examiner_report_pdf_path?: string | null;
   walkthrough_mux_playback_id: string | null;
   walkthrough_duration_minutes: number | null;
   sort_order: number | null;
@@ -165,7 +167,7 @@ export function PastPaperForm({
         <legend className="px-1 text-xs font-medium uppercase tracking-wider text-slate-500">
           PDFs (public bucket)
         </legend>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-3">
           <Field
             label="Question paper PDF"
             hint={
@@ -196,9 +198,24 @@ export function PastPaperForm({
               className="text-sm"
             />
           </Field>
+          <Field
+            label="Examiner report PDF"
+            hint={
+              initial?.examiner_report_pdf_path
+                ? `current: ${initial.examiner_report_pdf_path}`
+                : "no file"
+            }
+          >
+            <input
+              name="examiner_report_file"
+              type="file"
+              accept="application/pdf"
+              className="text-sm"
+            />
+          </Field>
         </div>
         <p className="mt-2 text-xs text-slate-500">
-          Leave a field empty to keep the current file. Both slots live in the
+          Leave a field empty to keep the current file. All three slots live in the
           public <code className="mx-1 rounded bg-slate-100 px-1">papers</code>
           bucket; URLs are constructed directly by the /past-papers pages.
         </p>
