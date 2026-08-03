@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -10,7 +10,7 @@ type Option = { id: string; label: string; parentId?: string | null };
 type SpecPointRow = { id: string; code: string; title: string; topic_id: string };
 type TopicRow = { id: string; name: string; code: string | null; course_id: string };
 
-type LessonInitial = {
+export type LessonInitial = {
   id: string;
   title: string;
   slug: string;
@@ -36,6 +36,9 @@ export function LessonForm({
   units,
   topics,
   specPoints,
+  onDone,
+  redirectAfterCreate = true,
+  showCancel = true,
 }: {
   mode: "create" | "edit";
   initial: LessonInitial | null;
@@ -43,6 +46,15 @@ export function LessonForm({
   units: (Option & { parentId: string | null })[];
   topics: TopicRow[];
   specPoints: SpecPointRow[];
+  /** Called after a successful save. Used by the inline slide-over to close. */
+  onDone?: () => void;
+  /**
+   * /admin/lessons/new navigates to the new lesson's edit page after create.
+   * The inline slide-over sets this false so it can just close in place.
+   */
+  redirectAfterCreate?: boolean;
+  /** The slide-over supplies its own close affordance. */
+  showCancel?: boolean;
 }) {
   const router = useRouter();
 
@@ -60,18 +72,27 @@ export function LessonForm({
     null,
   );
 
-  // Refresh + navigate on success
-  if (state && (state as { ok?: boolean }).ok) {
-    if (mode === "create") {
-      const created = state as { ok: true; data?: { id: string } };
-      const id = created.data?.id;
+  // Post-save side effects belong in an effect, never in the render body —
+  // calling router.push()/refresh() while rendering re-enters React's render
+  // phase and can loop (which it did when this form was mounted in a
+  // long-lived slide-over rather than on its own page).
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+
+  useEffect(() => {
+    if (!state || !(state as { ok?: boolean }).ok) return;
+
+    if (mode === "create" && redirectAfterCreate) {
+      const id = (state as { ok: true; data?: { id: string } }).data?.id;
       if (id) {
         router.push(`/admin/lessons/${id}`);
+        return;
       }
-    } else {
-      router.refresh();
     }
-  }
+    router.refresh();
+    onDoneRef.current?.();
+    // Depend on `state` identity so each new successful submit re-fires.
+  }, [state, mode, redirectAfterCreate, router]);
 
   const filteredUnits = units.filter((u) => !courseId || u.parentId === courseId);
   const filteredTopics = topics.filter((t) => !courseId || t.course_id === courseId);
@@ -322,12 +343,14 @@ export function LessonForm({
               ? "Create lesson"
               : "Save changes"}
         </button>
-        <Link
-          href="/admin/lessons"
-          className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
-        >
-          Cancel
-        </Link>
+        {showCancel && (
+          <Link
+            href="/admin/lessons"
+            className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+          >
+            Cancel
+          </Link>
+        )}
       </div>
     </form>
   );

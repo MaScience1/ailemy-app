@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -9,7 +9,7 @@ import { createPastPaper, updatePastPaper } from "./actions";
 type CourseOption = { id: string; label: string };
 type UnitOption = { id: string; label: string; parentId: string };
 
-type PaperInitial = {
+export type PaperInitial = {
   id: string;
   course_id: string;
   unit_id: string | null;
@@ -31,11 +31,20 @@ export function PastPaperForm({
   initial,
   courses,
   units,
+  onDone,
+  redirectAfterCreate = true,
+  showCancel = true,
 }: {
   mode: "create" | "edit";
   initial: PaperInitial | null;
   courses: CourseOption[];
   units: UnitOption[];
+  /** Called after a successful save. Used by the inline slide-over to close. */
+  onDone?: () => void;
+  /** Inline slide-over sets this false so it closes in place instead of navigating. */
+  redirectAfterCreate?: boolean;
+  /** The slide-over supplies its own close affordance. */
+  showCancel?: boolean;
 }) {
   const router = useRouter();
 
@@ -50,15 +59,23 @@ export function PastPaperForm({
     null,
   );
 
-  if (state && (state as { ok?: boolean }).ok) {
-    if (mode === "create") {
-      const created = state as { ok: true; data?: { id: string } };
-      const id = created.data?.id;
-      if (id) router.push(`/admin/past-papers/${id}`);
-    } else {
-      router.refresh();
+  // Side effects in an effect, not the render body (see LessonForm for why).
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+
+  useEffect(() => {
+    if (!state || !(state as { ok?: boolean }).ok) return;
+
+    if (mode === "create" && redirectAfterCreate) {
+      const id = (state as { ok: true; data?: { id: string } }).data?.id;
+      if (id) {
+        router.push(`/admin/past-papers/${id}`);
+        return;
+      }
     }
-  }
+    router.refresh();
+    onDoneRef.current?.();
+  }, [state, mode, redirectAfterCreate, router]);
 
   return (
     <form action={formAction} className="max-w-3xl space-y-6">
@@ -250,12 +267,14 @@ export function PastPaperForm({
               ? "Create past paper"
               : "Save changes"}
         </button>
-        <Link
-          href="/admin/past-papers"
-          className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
-        >
-          Cancel
-        </Link>
+        {showCancel && (
+          <Link
+            href="/admin/past-papers"
+            className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+          >
+            Cancel
+          </Link>
+        )}
       </div>
     </form>
   );

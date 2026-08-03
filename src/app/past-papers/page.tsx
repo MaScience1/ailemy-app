@@ -21,6 +21,8 @@ import {
 } from "@/lib/catalogue/status";
 import { getSubjectThemeStyle } from "@/lib/catalogue/subject-theme";
 import { cn } from "@/lib/utils";
+import { InlineEditBoundary } from "@/components/admin-inline/InlineEditBoundary";
+import { PaperAddSlot } from "@/components/admin-inline/slots";
 
 export const metadata: Metadata = {
   title: "Past Exam Papers · IB, IGCSE, A-Level · Ailemy",
@@ -31,7 +33,11 @@ export const metadata: Metadata = {
 export default async function PastPapersHubPage() {
   const data = await getPastPapersHubData();
 
+  // Hub-level add only. Course cards stay read-only: courses are in the
+  // read-only reference set, so they get no pencil/trash. Per-paper CRUD lives
+  // on the exam-questions page, where the papers actually render.
   return (
+    <InlineEditBoundary kind="paper">
     <>
       <SiteNav />
       <main className="min-h-screen bg-parchment text-ink">
@@ -58,6 +64,11 @@ export default async function PastPapersHubPage() {
             </p>
           </header>
 
+          <PaperAddSlot
+            label="+ Add past paper"
+            note="Pick the course inside the form."
+          />
+
           <div className="mt-16 space-y-20">
             {data.subjects.length === 0 ? (
               <EmptyArchive />
@@ -71,6 +82,7 @@ export default async function PastPapersHubPage() {
       </main>
       <SiteFooter />
     </>
+    </InlineEditBoundary>
   );
 }
 

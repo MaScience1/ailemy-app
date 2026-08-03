@@ -15,6 +15,11 @@ import {
 import { getSubjectThemeStyle } from "@/lib/catalogue/subject-theme";
 import type { LessonForCatalogue, Unit } from "@/lib/catalogue/types";
 import { cn } from "@/lib/utils";
+import { InlineEditBoundary } from "@/components/admin-inline/InlineEditBoundary";
+import {
+  LessonAddSlot,
+  LessonControlsSlot,
+} from "@/components/admin-inline/slots";
 
 type Params = Promise<{
   subject: string;
@@ -102,7 +107,15 @@ export default async function LessonsPage({ params }: { params: Params }) {
   const pathway = PATHWAY_COPY[pathwaySlug];
   const courseHref = `/learn/${subjectSlug}/${pathwaySlug}/${courseSlug}`;
 
+  // Every edit affordance below is a self-gating SERVER slot: it renders null
+  // for a student, and only then defers to a client import. Nothing here adds
+  // markup or JS to the student view.
   return (
+    <InlineEditBoundary
+      kind="lesson"
+      courseId={course.id}
+      lessonIds={lessons.map((l) => l.id)}
+    >
     <div style={getSubjectThemeStyle(subject)}>
       <main className="min-h-screen bg-parchment text-ink">
         <div className="mx-auto w-full max-w-7xl px-6 py-16 sm:px-10 sm:py-20">
@@ -140,6 +153,11 @@ export default async function LessonsPage({ params }: { params: Params }) {
             </p>
           </header>
 
+          <LessonAddSlot
+            label="+ Add lesson to this course"
+            note="New lessons are prefilled with this course."
+          />
+
           <div className="mt-12 space-y-20">
             {sections.length === 0 ? (
               <EmptyCourse />
@@ -159,6 +177,7 @@ export default async function LessonsPage({ params }: { params: Params }) {
         </div>
       </main>
     </div>
+    </InlineEditBoundary>
   );
 }
 
@@ -194,6 +213,10 @@ function UnitSection({
         <p className="font-mono mt-4 text-[11px] uppercase tracking-[0.2em] text-ink/45">
           {lessons.length} {lessons.length === 1 ? "lesson" : "lessons"}
         </p>
+        <LessonAddSlot
+          label={unit ? `+ Add lesson to ${unit.name}` : "+ Add unitless lesson"}
+          unitId={unit?.id ?? null}
+        />
       </div>
 
       <ul className="mt-8 grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
@@ -205,6 +228,11 @@ function UnitSection({
               pathwaySlug={pathwaySlug}
               courseSlug={courseSlug}
             />
+            {/*
+              Controls sit OUTSIDE the card. The card is an <a>, and nesting
+              <button> inside <a> is invalid HTML and breaks keyboard nav.
+            */}
+            <LessonControlsSlot id={lesson.id} title={lesson.title} />
           </li>
         ))}
       </ul>

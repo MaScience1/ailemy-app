@@ -21,6 +21,8 @@ import type {
   LessonNeighbour,
   Subject,
 } from "@/lib/catalogue/types";
+import { InlineEditBoundary } from "@/components/admin-inline/InlineEditBoundary";
+import { LessonEditBarSlot } from "@/components/admin-inline/slots";
 
 type Params = Promise<{
   subject: string;
@@ -86,10 +88,22 @@ export default async function LessonPage({ params }: { params: Params }) {
     notFound();
   }
 
+  // The boundary self-gates: for a student it renders children untouched and
+  // pulls in no client module at all.
+  const wrap = (node: React.ReactNode) => (
+    <InlineEditBoundary
+      kind="lesson"
+      courseId={course.id}
+      lessonIds={[lesson.id]}
+    >
+      {node}
+    </InlineEditBoundary>
+  );
+
   // Coming-soon lessons get the placeholder variant — different shape,
   // different intent. Only render the full lesson page for live content.
   if (lesson.status !== "live") {
-    return (
+    return wrap(
       <ComingSoonLesson
         course={course}
         lesson={lesson}
@@ -97,7 +111,7 @@ export default async function LessonPage({ params }: { params: Params }) {
         subjectSlug={subjectSlug}
         pathwaySlug={pathwaySlug}
         courseSlug={courseSlug}
-      />
+      />,
     );
   }
 
@@ -107,7 +121,7 @@ export default async function LessonPage({ params }: { params: Params }) {
       ? await getLessonNeighbours(course.id, lesson.lesson_number)
       : { prev: null, next: null };
 
-  return (
+  return wrap(
     <LiveLesson
       course={course}
       lesson={lesson}
@@ -117,7 +131,7 @@ export default async function LessonPage({ params }: { params: Params }) {
       courseSlug={courseSlug}
       prev={neighbours.prev}
       next={neighbours.next}
-    />
+    />,
   );
 }
 
@@ -190,6 +204,8 @@ function LiveLesson({
                 </span>
               )}
             </div>
+
+            <LessonEditBarSlot id={lesson.id} title={lesson.title} />
 
             <h1 className="font-display mt-6 text-4xl font-medium leading-[1.05] tracking-tight md:text-6xl">
               {lesson.title}.
@@ -464,6 +480,8 @@ function ComingSoonLesson({
               { label: lesson.title },
             ]}
           />
+
+          <LessonEditBarSlot id={lesson.id} title={lesson.title} />
 
           <div className="mt-14 text-center">
             {paddedNumber && (
