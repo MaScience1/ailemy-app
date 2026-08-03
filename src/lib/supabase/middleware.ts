@@ -16,7 +16,12 @@ const PUBLIC_PATHS = new Set<string>([
 function isProtectedPath(pathname: string): boolean {
   if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) return true;
   if (pathname === "/app" || pathname.startsWith("/app/")) return true;
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) return true;
   return false;
+}
+
+function isAdminPath(pathname: string): boolean {
+  return pathname === "/admin" || pathname.startsWith("/admin/");
 }
 
 /**
@@ -65,6 +70,21 @@ export async function updateSession(request: NextRequest) {
     loginUrl.search = "";
     loginUrl.searchParams.set("next", pathname);
     return forwardCookies(NextResponse.redirect(loginUrl), supabaseResponse);
+  }
+
+  // Authenticated user hitting /admin/* who is NOT the configured admin →
+  // bounce to /dashboard. This is the first line of defence; every admin
+  // server action ALSO re-checks via assertAdmin() (see src/lib/admin/auth.ts)
+  // because middleware doesn't protect direct server-action invocations.
+  if (user && isAdminPath(pathname)) {
+    const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+    const userEmail = user.email?.trim().toLowerCase();
+    if (!adminEmail || !userEmail || adminEmail !== userEmail) {
+      const dashUrl = url.clone();
+      dashUrl.pathname = "/dashboard";
+      dashUrl.search = "";
+      return forwardCookies(NextResponse.redirect(dashUrl), supabaseResponse);
+    }
   }
 
   // Authenticated user hitting /login or /signup → /dashboard
