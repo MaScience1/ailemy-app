@@ -36,6 +36,7 @@ export function PastPaperForm({
   onDone,
   redirectAfterCreate = true,
   showCancel = true,
+  optionsError = null,
 }: {
   mode: "create" | "edit";
   initial: PaperInitial | null;
@@ -47,6 +48,12 @@ export function PastPaperForm({
   redirectAfterCreate?: boolean;
   /** The slide-over provides its own close affordance. */
   showCancel?: boolean;
+  /**
+   * Set when the course/unit option lists could not be loaded. Rendered as a
+   * banner and blocks submission — an empty Course dropdown otherwise looks
+   * like "no courses exist" rather than "the admin client is misconfigured".
+   */
+  optionsError?: string | null;
 }) {
   const router = useRouter();
 
@@ -82,6 +89,19 @@ export function PastPaperForm({
 
   return (
     <form action={formAction} className="max-w-3xl space-y-6">
+      {optionsError && (
+        <div
+          role="alert"
+          className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900"
+        >
+          <p className="font-semibold">{optionsError}</p>
+          <p className="mt-1 text-red-800">
+            The catalogue itself is fine, so this is a credentials problem, not
+            missing data. Saving is disabled until the courses list loads.
+          </p>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Course" required>
           <select
@@ -90,7 +110,9 @@ export function PastPaperForm({
             required
             className={INPUT}
           >
-            <option value="">— select course —</option>
+            <option value="">
+              {optionsError ? "— unavailable —" : "— select course —"}
+            </option>
             {courses.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.label}
@@ -276,7 +298,7 @@ export function PastPaperForm({
       <div className="flex items-center gap-2">
         <button
           type="submit"
-          disabled={isPending}
+          disabled={isPending || Boolean(optionsError)}
           className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
         >
           {isPending
