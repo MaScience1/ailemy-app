@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { FileText, PlayCircle, ScrollText } from "lucide-react";
 
@@ -9,9 +10,12 @@ import { Breadcrumb } from "@/components/catalogue/breadcrumb";
 import { getAdminStatus } from "@/lib/admin/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
-  getPastPaperFilterOptions,
+  buildFilterOptions,
+  filtersToQueryString,
+  getCascadeData,
   hasActiveFilters,
   listFilteredPastPapers,
+  sanitiseFilters,
   type PaperFilters,
   type PaperResult,
 } from "@/lib/catalogue/past-paper-filters";
@@ -45,7 +49,7 @@ export default async function PastPapersPage({
   searchParams: SearchParams;
 }) {
   const sp = await searchParams;
-  const filters: PaperFilters = {
+  const requested: PaperFilters = {
     subject: one(sp.subject),
     board: one(sp.board),
     course: one(sp.course),
@@ -53,8 +57,20 @@ export default async function PastPapersPage({
     doc: one(sp.doc),
   };
 
-  const [options, papers, { ok: isAdmin }] = await Promise.all([
-    getPastPaperFilterOptions(),
+  // The cascade is the single source of truth for which combinations exist.
+  const cascade = await getCascadeData();
+  const filters = sanitiseFilters(cascade, requested);
+
+  // If a selection was impossible (stale link, hand-edited URL, catalogue
+  // changed under a shared link), bounce to the canonical URL so what the user
+  // sees and what the address bar says can never disagree.
+  const canonical = filtersToQueryString(filters);
+  if (canonical !== filtersToQueryString(requested)) {
+    redirect(canonical ? `/past-papers?${canonical}` : "/past-papers");
+  }
+
+  const options = buildFilterOptions(cascade, filters);
+  const [papers, { ok: isAdmin }] = await Promise.all([
     listFilteredPastPapers(filters),
     getAdminStatus().catch(() => ({ ok: false as const })),
   ]);
@@ -78,9 +94,9 @@ export default async function PastPapersPage({
               Past papers.
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink/70">
-              Filter by subject, board, level, year or document type. Download
-              question papers and mark schemes, or watch an examiner
-              walkthrough.
+              Narrow by subject, then board, then course — each choice filters
+              the next. Download question papers and mark schemes, or watch an
+              examiner walkthrough.
             </p>
           </header>
 

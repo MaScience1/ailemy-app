@@ -4,43 +4,64 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getAdminStatus } from "@/lib/admin/auth";
 import { getPaperPublicUrl } from "@/lib/storage/papers";
+import {
+  DOC_TYPES as DOC_TYPE_LIST,
+  FILTER_ORDER as ORDER,
+  type FilterOptions as Options,
+  type PaperFilters as Filters,
+} from "./past-paper-filter-types";
 
 /**
- * Query layer for the filtered /past-papers browser.
+ * Query + cascade layer for the filtered /past-papers browser.
  *
- * Deliberately a NEW module rather than an addition to catalogue/queries.ts:
- * every function in that file feeds /learn, and this work must not perturb
- * those code paths.
+ * Deliberately separate from catalogue/queries.ts: everything in that file
+ * feeds /learn and must not be perturbed by this page.
  *
- * SCHEMA NOTE (worth knowing before reading the filters): `past_papers` has no
- * board / subject / level / doc_type columns. Board, subject and level are
- * reached relationally through courses → curricula / subjects, and "document
- * type" is not a stored value at all — a row is one PAPER carrying up to two
- * PDF slots (paper_pdf_path, markscheme_pdf_path). So filtering by document
- * type means "papers that have this document", not "rows of this type".
+ * SCHEMA NOTE: `past_papers` has no board / subject / level / doc_type columns.
+ * Board, subject and level are reached relationally through
+ * courses → curricula / subjects, and "document type" is not stored at all — a
+ * row is one PAPER carrying up to two PDF slots. So the document filter means
+ * "papers that have this document attached".
+ *
+ * CASCADE MODEL: the single source of truth is `combos` — one entry per course,
+ * carrying that course's subject and board. Because every valid
+ * Subject→Board→Course triple is, by construction, exactly one row of the
+ * catalogue, no combination of dropdowns can produce a pairing that does not
+ * exist. Options are computed by narrowing that list, never by hardcoding.
  */
 
-export type DocType = "qp" | "ms";
+// Shapes/constants shared with the client FilterBar live in a separate,
+// client-safe module (see its header for why). Re-exported here so server
+// callers still have one import site.
+export {
+  DOC_TYPES,
+  FILTER_ORDER,
+  FILTER_LABELS,
+} from "./past-paper-filter-types";
+export type {
+  DocType,
+  FilterKey,
+  FilterOptions,
+  PaperFilters,
+} from "./past-paper-filter-types";
 
-export const DOC_TYPES: { value: DocType; label: string; column: string }[] = [
-  { value: "qp", label: "Question paper", column: "paper_pdf_path" },
-  { value: "ms", label: "Mark scheme", column: "markscheme_pdf_path" },
-];
-
-export type PaperFilters = {
-  subject?: string; // subjects.slug
-  board?: string; // curricula.id
-  course?: string; // courses.id
-  year?: string; // year as string from the URL
-  doc?: string; // DocType
+/** One course, with the subject and board it belongs to. The cascade atom. */
+export type CourseCombo = {
+  courseId: string;
+  courseName: string;
+  level: string;
+  subjectSlug: string;
+  subjectName: string;
+  subjectSort: number;
+  boardId: string;
+  boardName: string;
+  boardSort: number;
 };
 
-export type FilterOptions = {
-  subjects: { value: string; label: string }[];
-  boards: { value: string; label: string }[];
-  courses: { value: string; label: string }[];
-  years: { value: string; label: string }[];
-  docTypes: { value: string; label: string }[];
+export type CascadeData = {
+  combos: CourseCombo[];
+  /** (course_id, year) for every paper visible to this viewer. */
+  paperYears: { courseId: string; year: number }[];
 };
 
 export type PaperResult = {
@@ -62,14 +83,9 @@ export type PaperResult = {
   markSchemeUrl: string | null;
   walkthroughPlaybackId: string | null;
   walkthroughMinutes: number | null;
-  /** Link to the in-app paper page (walkthrough + practice whiteboard). */
   detailHref: string | null;
 };
 
-/**
- * Row shape returned by the nested select below. PostgREST types embedded
- * relations loosely, so this is asserted rather than inferred.
- */
 type RawPaperRow = {
   id: string;
   slug: string;
@@ -78,7 +94,6 @@ type RawPaperRow = {
   session: string;
   year: number;
   status: string;
-  sort_order: number | null;
   paper_pdf_path: string | null;
   markscheme_pdf_path: string | null;
   walkthrough_mux_playback_id: string | null;
@@ -108,89 +123,229 @@ const PAPER_SELECT = `
 // (left-join) embed, PostgREST silently IGNORES a filter on the embedded
 // resource: measured against this database, `course.subject.slug=eq.<anything>`
 // — including a nonsense value — returned all 375 rows instead of filtering.
-// With !inner the same filter partitions correctly (170 chemistry + 205
-// biology + 0 physics = 375). Both FKs are NOT NULL on courses, so the inner
-// join cannot drop a legitimate row.
+// With !inner the same filter partitions correctly. Both FKs are NOT NULL on
+// courses, so the inner join cannot drop a legitimate row.
 
 /**
  * Admins read through the service-role client so their own drafts are visible
- * (and therefore editable) inline; everyone else goes through the anon client,
- * where the past_papers_public_read_live RLS policy restricts results to
- * status = 'live'.
+ * (and editable) inline; everyone else uses the anon client, where the
+ * past_papers_public_read_live policy restricts results to status = 'live'.
  */
 async function getReader() {
   const { ok: isAdmin } = await getAdminStatus().catch(() => ({ ok: false }));
-  if (isAdmin) return { db: createAdminClient(), isAdmin: true as const };
-  return { db: await createClient(), isAdmin: false as const };
+  if (isAdmin) return createAdminClient();
+  return await createClient();
 }
 
 /**
- * Build every dropdown's options FROM THE DATABASE — nothing is hardcoded.
+ * Load the cascade source of truth: every course with its subject and board,
+ * plus the (course, year) pairs that actually have papers.
  *
- * Subjects, boards and courses come from the catalogue tables, so a board with
- * zero papers is still selectable (it just yields no results), exactly as
- * specified. Years come from the distinct values actually present in
- * past_papers, because a year with no papers is meaningless as a filter and
- * there is no catalogue table of years to draw on.
+ * Subjects/boards/courses come from the CATALOGUE, so a board with zero papers
+ * is still offered — it just yields no results. Years come from past_papers,
+ * because a year with no papers is not a meaningful thing to filter by and
+ * there is no catalogue table of years.
  */
-export async function getPastPaperFilterOptions(): Promise<FilterOptions> {
-  const { db } = await getReader();
+export async function getCascadeData(): Promise<CascadeData> {
+  const db = await getReader();
 
-  const [subjectsRes, curriculaRes, coursesRes, yearsRes] = await Promise.all([
-    db.from("subjects").select("id, slug, name").order("sort_order"),
-    db.from("curricula").select("id, short_name, name").order("sort_order"),
+  const [coursesRes, papersRes] = await Promise.all([
     db
       .from("courses")
-      .select("id, name, level, subject_id, curriculum_id")
+      .select(
+        `id, name, level, sort_order,
+         curriculum:curricula!inner(id, short_name, name, sort_order),
+         subject:subjects!inner(id, slug, name, sort_order)`,
+      )
       .order("sort_order"),
-    // Distinct years present in past_papers. PostgREST has no DISTINCT, so we
-    // pull the column and dedupe here — one small integer column, cheap.
-    db.from("past_papers").select("year"),
+    db.from("past_papers").select("course_id, year"),
   ]);
 
+  if (coursesRes.error) {
+    console.error("[past-paper-filters] cascade load failed", coursesRes.error);
+    return { combos: [], paperYears: [] };
+  }
+
+  type RawCourse = {
+    id: string;
+    name: string;
+    level: string;
+    curriculum: {
+      id: string;
+      short_name: string | null;
+      name: string;
+      sort_order: number | null;
+    } | null;
+    subject: {
+      id: string;
+      slug: string;
+      name: string;
+      sort_order: number | null;
+    } | null;
+  };
+
+  const combos: CourseCombo[] = ((coursesRes.data ?? []) as unknown as RawCourse[])
+    .filter((c) => c.curriculum && c.subject)
+    .map((c) => ({
+      courseId: c.id,
+      // courses.name is already fully qualified ("Edexcel IAL AS Chemistry"),
+      // so it carries the level and needs no "(AS)" suffix appended.
+      courseName: c.name,
+      level: c.level,
+      subjectSlug: c.subject!.slug,
+      subjectName: c.subject!.name,
+      subjectSort: c.subject!.sort_order ?? 0,
+      boardId: c.curriculum!.id,
+      boardName: c.curriculum!.short_name || c.curriculum!.name,
+      boardSort: c.curriculum!.sort_order ?? 0,
+    }));
+
+  const paperYears = (
+    (papersRes.data ?? []) as { course_id: string; year: number }[]
+  ).map((p) => ({ courseId: p.course_id, year: p.year }));
+
+  return { combos, paperYears };
+}
+
+/** Narrow the combo list by whichever of subject/board/course are set. */
+function narrow(
+  combos: CourseCombo[],
+  f: { subject?: string; board?: string; course?: string },
+): CourseCombo[] {
+  return combos.filter(
+    (c) =>
+      (!f.subject || c.subjectSlug === f.subject) &&
+      (!f.board || c.boardId === f.board) &&
+      (!f.course || c.courseId === f.course),
+  );
+}
+
+function uniqueBy<T, K>(items: T[], key: (t: T) => K): T[] {
+  const seen = new Set<K>();
+  const out: T[] = [];
+  for (const i of items) {
+    const k = key(i);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(i);
+  }
+  return out;
+}
+
+/**
+ * Build every dropdown's options for the CURRENT selection.
+ *
+ * Each dropdown is derived from the combos still reachable given the filters
+ * BEFORE it in FILTER_ORDER, which is what makes impossible options disappear
+ * rather than appear greyed out:
+ *   Subject → all subjects
+ *   Board   → boards that have a course in the chosen subject
+ *   Course  → courses in the chosen subject AND board
+ *   Year    → years of papers whose course survives the above
+ */
+export function buildFilterOptions(
+  data: CascadeData,
+  filters: Filters,
+): Options {
+  const { combos } = data;
+
+  const forSubjects = combos;
+  const forBoards = narrow(combos, { subject: filters.subject });
+  const forCourses = narrow(combos, {
+    subject: filters.subject,
+    board: filters.board,
+  });
+  const forYears = narrow(combos, {
+    subject: filters.subject,
+    board: filters.board,
+    course: filters.course,
+  });
+
+  const allowedCourseIds = new Set(forYears.map((c) => c.courseId));
   const years = Array.from(
-    new Set(((yearsRes.data ?? []) as { year: number }[]).map((r) => r.year)),
-  )
-    .filter((y) => Number.isFinite(y))
-    .sort((a, b) => b - a);
+    new Set(
+      data.paperYears
+        .filter((p) => allowedCourseIds.has(p.courseId))
+        .map((p) => p.year),
+    ),
+  ).sort((a, b) => b - a);
 
   return {
-    subjects: ((subjectsRes.data ?? []) as { slug: string; name: string }[]).map(
-      (s) => ({ value: s.slug, label: s.name }),
-    ),
-    boards: (
-      (curriculaRes.data ?? []) as {
-        id: string;
-        short_name: string | null;
-        name: string;
-      }[]
-    ).map((c) => ({ value: c.id, label: c.short_name || c.name })),
-    courses: (
-      (coursesRes.data ?? []) as { id: string; name: string; level: string }[]
-    ).map((c) => ({ value: c.id, label: `${c.name} (${c.level})` })),
+    subjects: uniqueBy(forSubjects, (c) => c.subjectSlug)
+      .sort((a, b) => a.subjectSort - b.subjectSort || a.subjectName.localeCompare(b.subjectName))
+      .map((c) => ({ value: c.subjectSlug, label: c.subjectName })),
+    boards: uniqueBy(forBoards, (c) => c.boardId)
+      .sort((a, b) => a.boardSort - b.boardSort || a.boardName.localeCompare(b.boardName))
+      .map((c) => ({ value: c.boardId, label: c.boardName })),
+    courses: uniqueBy(forCourses, (c) => c.courseId)
+      .sort((a, b) => a.courseName.localeCompare(b.courseName))
+      .map((c) => ({ value: c.courseId, label: c.courseName })),
     years: years.map((y) => ({ value: String(y), label: String(y) })),
-    docTypes: DOC_TYPES.map((d) => ({ value: d.value, label: d.label })),
+    docTypes: DOC_TYPE_LIST.map((d) => ({ value: d.value, label: d.label })),
   };
+}
+
+/**
+ * Drop any selection that is impossible given the ones before it.
+ *
+ * Runs in cascade order, rebuilding the option list at each step, so a stale or
+ * hand-typed value (?board=X&course=Y where Y is not in X) is discarded rather
+ * than silently producing an empty result set. The client also clears
+ * downstream params on change; this is the server-side backstop that makes any
+ * URL — including one someone edited or shared from an older catalogue — resolve
+ * to a coherent state.
+ */
+export function sanitiseFilters(
+  data: CascadeData,
+  raw: Filters,
+): Filters {
+  const out: Filters = {};
+
+  const subjects = new Set(
+    buildFilterOptions(data, out).subjects.map((o) => o.value),
+  );
+  if (raw.subject && subjects.has(raw.subject)) out.subject = raw.subject;
+
+  const boards = new Set(buildFilterOptions(data, out).boards.map((o) => o.value));
+  if (raw.board && boards.has(raw.board)) out.board = raw.board;
+
+  const courses = new Set(
+    buildFilterOptions(data, out).courses.map((o) => o.value),
+  );
+  if (raw.course && courses.has(raw.course)) out.course = raw.course;
+
+  const years = new Set(buildFilterOptions(data, out).years.map((o) => o.value));
+  if (raw.year && years.has(raw.year)) out.year = raw.year;
+
+  if (raw.doc && DOC_TYPE_LIST.some((d) => d.value === raw.doc)) out.doc = raw.doc;
+
+  return out;
+}
+
+/** Canonical query string for a filter set, in cascade order. */
+export function filtersToQueryString(f: Filters): string {
+  const p = new URLSearchParams();
+  for (const key of ORDER) {
+    const v = f[key];
+    if (v) p.set(key, v);
+  }
+  return p.toString();
 }
 
 /** Apply the filters and return matching papers, newest first. */
 export async function listFilteredPastPapers(
-  filters: PaperFilters,
+  filters: Filters,
 ): Promise<PaperResult[]> {
-  const { db } = await getReader();
+  const db = await getReader();
 
   let query = db.from("past_papers").select(PAPER_SELECT);
 
-  // Filters on past_papers' own columns.
   if (filters.year && /^\d{4}$/.test(filters.year)) {
     query = query.eq("year", Number(filters.year));
   }
-  // Document-type filter = "this paper actually has that document attached".
   if (filters.doc === "qp") query = query.not("paper_pdf_path", "is", null);
   if (filters.doc === "ms") query = query.not("markscheme_pdf_path", "is", null);
 
-  // Filters that live on the embedded course row. `courses!inner` in the
-  // select makes these behave as real inner-join constraints.
   if (filters.course) query = query.eq("course.id", filters.course);
   if (filters.board) query = query.eq("course.curriculum_id", filters.board);
   if (filters.subject) query = query.eq("course.subject.slug", filters.subject);
@@ -204,11 +359,7 @@ export async function listFilteredPastPapers(
     return [];
   }
 
-  const rows = (data ?? []) as unknown as RawPaperRow[];
-
-  return rows
-    // `!inner` should exclude course-less rows, but a null embed would break
-    // the mapping below, so drop defensively rather than throw at render time.
+  return ((data ?? []) as unknown as RawPaperRow[])
     .filter((r) => r.course)
     .map((r) => {
       const c = r.course!;
@@ -241,6 +392,6 @@ export async function listFilteredPastPapers(
 }
 
 /** True when at least one filter is active — drives the empty-state copy. */
-export function hasActiveFilters(f: PaperFilters): boolean {
+export function hasActiveFilters(f: Filters): boolean {
   return Boolean(f.subject || f.board || f.course || f.year || f.doc);
 }
