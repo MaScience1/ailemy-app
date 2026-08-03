@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { FileText, PlayCircle, ScrollText } from "lucide-react";
+import { ClipboardCheck, FileText, PlayCircle, ScrollText } from "lucide-react";
 
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
@@ -27,7 +27,7 @@ import { AddPaperButton, PaperRowControls } from "./_admin-controls";
 export const metadata: Metadata = {
   title: "Past Exam Papers · IB, IGCSE, A-Level · Ailemy",
   description:
-    "Browse and filter past papers by subject, exam board, level, year and document type. Question papers, mark schemes and examiner walkthroughs.",
+    "Browse and filter past papers by subject, exam board, level, year and document type. Question papers, mark schemes, examiner reports and walkthroughs.",
 };
 
 /**
@@ -211,6 +211,13 @@ function PaperRow({
               label="Mark scheme"
             />
           )}
+          {paper.examinerReportUrl && (
+            <DocLink
+              href={paper.examinerReportUrl}
+              icon={<ClipboardCheck className="h-3.5 w-3.5" aria-hidden="true" />}
+              label="Examiner report"
+            />
+          )}
           {paper.walkthroughPlaybackId && paper.detailHref && (
             <DocLink
               href={paper.detailHref}
@@ -225,6 +232,7 @@ function PaperRow({
           )}
           {!paper.questionPaperUrl &&
             !paper.markSchemeUrl &&
+            !paper.examinerReportUrl &&
             !paper.walkthroughPlaybackId && (
               <span className="text-xs text-ink/45">
                 No documents attached yet.
@@ -320,7 +328,7 @@ async function loadAdminFormData(papers: PaperResult[]) {
         .from("courses")
         .select("id, name, level, subject_id, curriculum_id")
         .order("sort_order"),
-      db.from("units").select("id, course_id, name, code").order("sort_order"),
+      db.from("units").select("*").order("sort_order"),
       db.from("subjects").select("id, name"),
       db.from("curricula").select("id, short_name, name"),
       ids.length

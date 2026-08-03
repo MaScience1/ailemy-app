@@ -10,11 +10,12 @@
  * "'server-only' cannot be imported from a Client Component module".
  */
 
-export type DocType = "qp" | "ms";
+export type DocType = "qp" | "ms" | "er";
 
 export const DOC_TYPES: { value: DocType; label: string }[] = [
   { value: "qp", label: "Question paper" },
   { value: "ms", label: "Mark scheme" },
+  { value: "er", label: "Examiner report" },
 ];
 
 export type PaperFilters = {

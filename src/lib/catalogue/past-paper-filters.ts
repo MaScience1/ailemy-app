@@ -81,6 +81,7 @@ export type PaperResult = {
   pathway: string | null;
   questionPaperUrl: string | null;
   markSchemeUrl: string | null;
+  examinerReportUrl: string | null;
   walkthroughPlaybackId: string | null;
   walkthroughMinutes: number | null;
   detailHref: string | null;
@@ -96,6 +97,7 @@ type RawPaperRow = {
   status: string;
   paper_pdf_path: string | null;
   markscheme_pdf_path: string | null;
+  examiner_report_pdf_path?: string | null;
   walkthrough_mux_playback_id: string | null;
   walkthrough_duration_minutes: number | null;
   course: {
@@ -109,7 +111,7 @@ type RawPaperRow = {
   } | null;
 };
 
-const PAPER_SELECT = `
+const PAPER_COLUMNS_BASE = `
   id, slug, paper_name, paper_code, session, year, status, sort_order,
   paper_pdf_path, markscheme_pdf_path,
   walkthrough_mux_playback_id, walkthrough_duration_minutes,
@@ -119,6 +121,35 @@ const PAPER_SELECT = `
     subject:subjects!inner(id, slug, name)
   )
 `;
+
+/**
+ * Two projections: one including examiner_report_pdf_path (migration 0012) and
+ * one without it.
+ *
+ * Migrations here are applied by hand, and main auto-deploys, so this code can
+ * legitimately be live against a database where 0012 has not run yet. Asking
+ * PostgREST for a column that does not exist fails the WHOLE request (42703),
+ * which would take /past-papers down entirely rather than just hiding one link.
+ * So we try the full projection and fall back once, permanently for the
+ * process, if the column is missing.
+ */
+const PAPER_SELECT_WITH_ER = PAPER_COLUMNS_BASE.replace(
+  "paper_pdf_path, markscheme_pdf_path,",
+  "paper_pdf_path, markscheme_pdf_path, examiner_report_pdf_path,",
+);
+const PAPER_SELECT = PAPER_COLUMNS_BASE;
+
+/** null = not yet probed; true/false = whether 0012 has been applied. */
+let examinerReportColumnExists: boolean | null = null;
+
+/** PostgREST code for "column does not exist". */
+function isMissingColumn(error: { code?: string; message?: string } | null) {
+  return (
+    error?.code === "42703" ||
+    /examiner_report_pdf_path/.test(error?.message ?? "")
+  );
+}
+
 // The !inner on subject/curriculum is REQUIRED, not cosmetic. With a plain
 // (left-join) embed, PostgREST silently IGNORES a filter on the embedded
 // resource: measured against this database, `course.subject.slug=eq.<anything>`
@@ -338,26 +369,57 @@ export async function listFilteredPastPapers(
 ): Promise<PaperResult[]> {
   const db = await getReader();
 
-  let query = db.from("past_papers").select(PAPER_SELECT);
+  const run = async (withEr: boolean) => {
+    let q = db
+      .from("past_papers")
+      .select(withEr ? PAPER_SELECT_WITH_ER : PAPER_SELECT);
 
-  if (filters.year && /^\d{4}$/.test(filters.year)) {
-    query = query.eq("year", Number(filters.year));
+    if (filters.year && /^\d{4}$/.test(filters.year)) {
+      q = q.eq("year", Number(filters.year));
+    }
+    if (filters.doc === "qp") q = q.not("paper_pdf_path", "is", null);
+    if (filters.doc === "ms") q = q.not("markscheme_pdf_path", "is", null);
+    // Only filter on the examiner-report column when we know it exists;
+    // otherwise the request would 400 rather than simply matching nothing.
+    if (filters.doc === "er" && withEr) {
+      q = q.not("examiner_report_pdf_path", "is", null);
+    }
+
+    if (filters.course) q = q.eq("course.id", filters.course);
+    if (filters.board) q = q.eq("course.curriculum_id", filters.board);
+    if (filters.subject) q = q.eq("course.subject.slug", filters.subject);
+
+    return q
+      .order("year", { ascending: false })
+      .order("sort_order", { ascending: true });
+  };
+
+  // Try the projection that includes examiner_report_pdf_path unless a previous
+  // request in this process already proved the column is absent.
+  let withEr = examinerReportColumnExists !== false;
+  let { data, error } = await run(withEr);
+
+  if (error && withEr && isMissingColumn(error)) {
+    // Migration 0012 has not been applied. Remember, and retry without it so
+    // the page still renders question papers and mark schemes.
+    examinerReportColumnExists = false;
+    withEr = false;
+    console.warn(
+      "[past-paper-filters] examiner_report_pdf_path missing (apply migration 0012); continuing without it",
+    );
+    ({ data, error } = await run(false));
+  } else if (!error && withEr) {
+    examinerReportColumnExists = true;
   }
-  if (filters.doc === "qp") query = query.not("paper_pdf_path", "is", null);
-  if (filters.doc === "ms") query = query.not("markscheme_pdf_path", "is", null);
-
-  if (filters.course) query = query.eq("course.id", filters.course);
-  if (filters.board) query = query.eq("course.curriculum_id", filters.board);
-  if (filters.subject) query = query.eq("course.subject.slug", filters.subject);
-
-  const { data, error } = await query
-    .order("year", { ascending: false })
-    .order("sort_order", { ascending: true });
 
   if (error) {
     console.error("[past-paper-filters] query failed", error);
     return [];
   }
+
+  // Asked for examiner reports on a database that cannot store them yet:
+  // the honest answer is "none", not "here is everything".
+  if (filters.doc === "er" && !withEr) return [];
 
   return ((data ?? []) as unknown as RawPaperRow[])
     .filter((r) => r.course)
@@ -384,6 +446,7 @@ export async function listFilteredPastPapers(
         pathway: c.pathway,
         questionPaperUrl: getPaperPublicUrl(r.paper_pdf_path),
         markSchemeUrl: getPaperPublicUrl(r.markscheme_pdf_path),
+        examinerReportUrl: getPaperPublicUrl(r.examiner_report_pdf_path),
         walkthroughPlaybackId: r.walkthrough_mux_playback_id,
         walkthroughMinutes: r.walkthrough_duration_minutes,
         detailHref,
