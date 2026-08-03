@@ -9,6 +9,7 @@ import { SiteNav } from "@/components/site/SiteNav";
 import { Breadcrumb } from "@/components/catalogue/breadcrumb";
 import { getEditContext } from "@/lib/admin/edit-mode";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { loadPaperFormOptions } from "@/lib/admin/paper-form-options";
 import {
   buildFilterOptions,
   filtersToQueryString,
@@ -110,6 +111,7 @@ export default async function PastPapersPage({
               <AddPaperButton
                 courses={adminData.courses}
                 units={adminData.units}
+                optionsError={adminData.error}
               />
               <span className="text-xs text-ink/55">
                 Edit mode is on — drafts are listed for you and hidden from
@@ -147,6 +149,7 @@ export default async function PastPapersPage({
                             initial: adminData.rows[paper.id],
                             courses: adminData.courses,
                             units: adminData.units,
+                            optionsError: adminData.error,
                           }
                         : null
                     }
@@ -171,6 +174,7 @@ function PaperRow({
     initial: PaperInitial | undefined;
     courses: { id: string; label: string }[];
     units: { id: string; label: string; parentId: string }[];
+    optionsError: string | null;
   } | null;
 }) {
   const isDraft = paper.status !== "live";
@@ -260,6 +264,7 @@ function PaperRow({
             paper={admin.initial}
             courses={admin.courses}
             units={admin.units}
+            optionsError={admin.optionsError}
           />
         )}
       </div>
@@ -324,76 +329,33 @@ function EmptyState({ filtered }: { filtered: boolean }) {
  * shaped for the existing PastPaperForm. Admin-only.
  */
 async function loadAdminFormData(papers: PaperResult[]) {
-  const db = createAdminClient();
+  // Option lists come from the shared loader, which reports credential
+  // failures instead of yielding an empty courses array.
+  const { courses, units, error } = await loadPaperFormOptions();
+
   const ids = papers.map((p) => p.id);
+  let rows: Record<string, PaperInitial> = {};
 
-  const [coursesRes, unitsRes, subjectsRes, curriculaRes, rowsRes] =
-    await Promise.all([
-      db
-        .from("courses")
-        .select("id, name, level, subject_id, curriculum_id")
-        .order("sort_order"),
-      db.from("units").select("*").order("sort_order"),
-      db.from("subjects").select("id, name"),
-      db.from("curricula").select("id, short_name, name"),
-      ids.length
-        ? db
-            .from("past_papers")
-            .select(
-              "id, course_id, unit_id, slug, year, session, paper_code, paper_name, paper_pdf_path, markscheme_pdf_path, walkthrough_mux_playback_id, walkthrough_duration_minutes, sort_order, status",
-            )
-            .in("id", ids)
-        : Promise.resolve({ data: [] as unknown[] }),
-    ]);
-
-  const subjectName = new Map(
-    ((subjectsRes.data ?? []) as { id: string; name: string }[]).map((s) => [
-      s.id,
-      s.name,
-    ]),
-  );
-  const currName = new Map(
-    (
-      (curriculaRes.data ?? []) as {
-        id: string;
-        short_name: string | null;
-        name: string;
-      }[]
-    ).map((c) => [c.id, c.short_name || c.name]),
-  );
-
-  const rows: Record<string, PaperInitial> = {};
-  for (const r of (rowsRes.data ?? []) as PaperInitial[]) {
-    rows[r.id] = r;
+  if (ids.length) {
+    try {
+      const db = createAdminClient();
+      const { data, error: rowsError } = await db
+        .from("past_papers")
+        // select("*") deliberately: this row feeds PastPaperForm's `initial`,
+        // so it must carry examiner_report_pdf_path once migration 0012 is
+        // applied — while still working before it is. Naming the column
+        // explicitly would 400 the whole query on an un-migrated database and
+        // silently drop the Edit controls from every row.
+        .select("*")
+        .in("id", ids);
+      if (rowsError) {
+        console.error("[past-papers] editable rows fetch failed:", rowsError);
+      }
+      for (const r of (data ?? []) as PaperInitial[]) rows[r.id] = r;
+    } catch (e) {
+      console.error("[past-papers] admin client unavailable:", e);
+    }
   }
 
-  return {
-    courses: (
-      (coursesRes.data ?? []) as {
-        id: string;
-        name: string;
-        level: string;
-        subject_id: string;
-        curriculum_id: string;
-      }[]
-    ).map((c) => ({
-      id: c.id,
-      label: `${currName.get(c.curriculum_id) ?? "?"} · ${
-        subjectName.get(c.subject_id) ?? "?"
-      } · ${c.name} (${c.level})`,
-    })),
-    units: (
-      (unitsRes.data ?? []) as {
-        id: string;
-        course_id: string;
-        name: string;
-        code: string | null;
-      }[]
-    ).map((u) => ({
-      id: u.id,
-      label: u.code ? `${u.code} · ${u.name}` : u.name,
-      parentId: u.course_id,
-    })),
-    rows,
-  };
+  return { courses, units, rows, error };
 }

@@ -184,6 +184,7 @@ export function InlineEditProvider({
                   onDone={onSaved}
                   redirectAfterCreate={false}
                   showCancel={false}
+                  optionsError={paperOptions.error}
                 />
               )}
             </div>

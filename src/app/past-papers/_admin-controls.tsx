@@ -76,9 +76,11 @@ function SlideOver({
 export function AddPaperButton({
   courses,
   units,
+  optionsError = null,
 }: {
   courses: CourseOption[];
   units: UnitOption[];
+  optionsError?: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -105,6 +107,7 @@ export function AddPaperButton({
             }}
             redirectAfterCreate={false}
             showCancel={false}
+            optionsError={optionsError}
           />
         </SlideOver>
       )}
@@ -117,10 +120,12 @@ export function PaperRowControls({
   paper,
   courses,
   units,
+  optionsError = null,
 }: {
   paper: PaperInitial;
   courses: CourseOption[];
   units: UnitOption[];
+  optionsError?: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -157,6 +162,7 @@ export function PaperRowControls({
             }}
             redirectAfterCreate={false}
             showCancel={false}
+            optionsError={optionsError}
           />
         </SlideOver>
       )}

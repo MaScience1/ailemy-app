@@ -3,6 +3,7 @@ import "server-only";
 import { cache } from "react";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { loadPaperFormOptions as sharedLoadPaperFormOptions } from "./paper-form-options";
 import { getEditContext } from "./edit-mode";
 import type { LessonInitial } from "@/app/admin/lessons/_form";
 import type { PaperInitial } from "@/app/admin/past-papers/_form";
@@ -29,6 +30,8 @@ export type LessonFormOptions = {
 export type PaperFormOptions = {
   courses: { id: string; label: string }[];
   units: { id: string; label: string; parentId: string }[];
+  /** Set when the lists could not be loaded (e.g. missing service-role key). */
+  error: string | null;
 };
 
 const EMPTY_LESSON_OPTIONS: LessonFormOptions = {
@@ -145,43 +148,10 @@ export async function loadLessonRows(
 /** Shared option lists for the past-paper form. Cached per request. */
 export const loadPaperFormOptions = cache(async (): Promise<PaperFormOptions> => {
   const { isAdmin } = await getEditContext();
-  if (!isAdmin) return { courses: [], units: [] };
-
-  const supabase = createAdminClient();
-  const [{ data: courses }, { data: units }, { data: subjects }, { data: curricula }] =
-    await Promise.all([
-      supabase
-        .from("courses")
-        .select("id, name, level, subject_id, curriculum_id")
-        .order("sort_order"),
-      supabase.from("units").select("id, course_id, name, code").order("sort_order"),
-      supabase.from("subjects").select("id, name"),
-      supabase.from("curricula").select("id, short_name, name"),
-    ]);
-
-  const subjectName = new Map(
-    (subjects ?? []).map((s) => [s.id as string, s.name as string]),
-  );
-  const currName = new Map(
-    (curricula ?? []).map((c) => [
-      c.id as string,
-      (c.short_name || c.name) as string,
-    ]),
-  );
-
-  return {
-    courses: (courses ?? []).map((c) => ({
-      id: c.id as string,
-      label: `${currName.get(c.curriculum_id as string) ?? "?"} · ${
-        subjectName.get(c.subject_id as string) ?? "?"
-      } · ${c.name} (${c.level})`,
-    })),
-    units: (units ?? []).map((u) => ({
-      id: u.id as string,
-      label: (u.code ? `${u.code} · ${u.name}` : u.name) as string,
-      parentId: u.course_id as string,
-    })),
-  };
+  if (!isAdmin) return { courses: [], units: [], error: null };
+  // Delegates to the shared loader so every past-paper form surface reports a
+  // credentials failure the same way instead of silently showing no courses.
+  return sharedLoadPaperFormOptions();
 });
 
 /** Full past-paper rows keyed by id, shaped for <PastPaperForm initial={...}>. */
