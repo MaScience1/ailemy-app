@@ -7,7 +7,7 @@ import { ClipboardCheck, FileText, PlayCircle, ScrollText } from "lucide-react";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
 import { Breadcrumb } from "@/components/catalogue/breadcrumb";
-import { getAdminStatus } from "@/lib/admin/auth";
+import { getEditContext } from "@/lib/admin/edit-mode";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   buildFilterOptions,
@@ -70,9 +70,14 @@ export default async function PastPapersPage({
   }
 
   const options = buildFilterOptions(cascade, filters);
-  const [papers, { ok: isAdmin }] = await Promise.all([
+  // MERGE RECONCILIATION: main gated these controls on getAdminStatus() alone,
+  // so an admin always saw them. This branch's defining behaviour is the
+  // edit-mode toggle — with it OFF every page must be byte-identical to the
+  // student view. Gating on editMode keeps /past-papers consistent with every
+  // other surface in the inline-editing system.
+  const [papers, { editMode: isAdmin }] = await Promise.all([
     listFilteredPastPapers(filters),
-    getAdminStatus().catch(() => ({ ok: false as const })),
+    getEditContext(),
   ]);
 
   // Form option lists and full editable rows are fetched ONLY for the admin,
@@ -107,7 +112,7 @@ export default async function PastPapersPage({
                 units={adminData.units}
               />
               <span className="text-xs text-ink/55">
-                Signed in as admin — drafts are listed for you and hidden from
+                Edit mode is on — drafts are listed for you and hidden from
                 everyone else.
               </span>
             </div>

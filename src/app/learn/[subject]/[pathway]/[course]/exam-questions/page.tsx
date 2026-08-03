@@ -15,6 +15,11 @@ import {
 } from "@/lib/catalogue/queries";
 import { getSubjectThemeStyle } from "@/lib/catalogue/subject-theme";
 import type { PastPaper, Unit } from "@/lib/catalogue/types";
+import { InlineEditBoundary } from "@/components/admin-inline/InlineEditBoundary";
+import {
+  PaperAddSlot,
+  PaperControlsSlot,
+} from "@/components/admin-inline/slots";
 
 type Params = Promise<{
   subject: string;
@@ -90,6 +95,11 @@ export default async function ExamQuestionsPage({
   const pathway = PATHWAY_COPY[pathwaySlug];
 
   return (
+    <InlineEditBoundary
+      kind="paper"
+      courseId={course.id}
+      paperIds={papers.map((p) => p.id)}
+    >
     <div style={getSubjectThemeStyle(subject)}>
       <main className="min-h-screen bg-parchment text-ink">
         <div className="mx-auto w-full max-w-7xl px-6 py-16 sm:px-10 sm:py-20">
@@ -149,6 +159,7 @@ export default async function ExamQuestionsPage({
         </div>
       </main>
     </div>
+    </InlineEditBoundary>
   );
 }
 
@@ -179,6 +190,10 @@ function UnitPapers({
         <p className="font-mono mt-4 text-[11px] uppercase tracking-[0.2em] text-ink/45">
           {papers.length} {papers.length === 1 ? "paper" : "papers"}
         </p>
+        <PaperAddSlot
+          label={`+ Add past paper to ${unit.name}`}
+          unitId={unit.id}
+        />
       </div>
 
       {papers.length === 0 ? (
@@ -193,6 +208,8 @@ function UnitPapers({
                 pathwaySlug={pathwaySlug}
                 courseSlug={courseSlug}
               />
+              {/* Outside the card: the card is an <a>, no <button> nesting. */}
+              <PaperControlsSlot id={paper.id} title={paper.paper_name} />
             </li>
           ))}
         </ul>

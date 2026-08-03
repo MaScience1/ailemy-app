@@ -14,6 +14,7 @@ import { getSubjectCopy } from "@/lib/catalogue/subject-descriptions";
 import { getSubjectTheme } from "@/lib/catalogue/subject-theme";
 import type { Subject, EntityCounts } from "@/lib/catalogue/types";
 import { cn } from "@/lib/utils";
+import { Editable } from "@/components/admin-inline/Editable";
 
 export const metadata: Metadata = {
   title: "Choose your subject · Ailemy",
@@ -31,14 +32,16 @@ export default async function LearnPage() {
 
         <header className="mt-10 max-w-3xl">
           <p className="font-mono text-xs uppercase tracking-[0.25em] text-ink/60">
-            Catalogue
+            <Editable id="learn.hero.eyebrow" default="Catalogue" />
           </p>
           <h1 className="font-display mt-5 text-5xl font-medium leading-[1.05] tracking-tight md:text-6xl">
-            Choose your subject.
+            <Editable id="learn.hero.title" default="Choose your subject." />
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink/70">
-            Spec-led courses for IB, IGCSE and A-Level students. We&apos;re
-            starting with Chemistry — Physics and Biology will follow.
+            <Editable
+              id="learn.hero.subtitle"
+              default="Spec-led courses for IB, IGCSE and A-Level students. We’re starting with Chemistry — Physics and Biology will follow."
+            />
           </p>
         </header>
 

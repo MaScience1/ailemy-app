@@ -23,6 +23,7 @@ import { getSubjectThemeStyle } from "@/lib/catalogue/subject-theme";
 import { getSubjectCopy } from "@/lib/catalogue/subject-descriptions";
 import type { Subject } from "@/lib/catalogue/types";
 import { cn } from "@/lib/utils";
+import { Editable } from "@/components/admin-inline/Editable";
 
 type Params = Promise<{ subject: string }>;
 
@@ -63,16 +64,19 @@ export default async function SubjectPage({ params }: { params: Params }) {
 
           <header className="mt-10 max-w-3xl">
             <p className="font-mono text-xs uppercase tracking-[0.25em] text-ink/60">
-              Subject
+              <Editable id="learn.subject.eyebrow" default="Subject" />
             </p>
             <h1 className="font-display mt-5 text-5xl font-medium leading-[1.05] tracking-tight md:text-6xl">
               {subject.name}.
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink/70">
-              {copy.description}
+              <Editable
+                id={`learn.subject.${subject.slug}.description`}
+                default={copy.description}
+              />
             </p>
             <p className="font-mono mt-6 text-xs uppercase tracking-[0.2em] text-ink/55">
-              Choose your pathway
+              <Editable id="learn.subject.pathway_prompt" default="Choose your pathway" />
             </p>
           </header>
 

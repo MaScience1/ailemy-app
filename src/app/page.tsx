@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
+import { Editable } from "@/components/admin-inline/Editable";
+import { NewPageSlot } from "@/components/admin-inline/page-slots";
 
 type SubjectCardProps = {
   title: string;
@@ -11,7 +13,13 @@ type SubjectCardProps = {
   href: string;
 };
 
-function SubjectCard({ title, lines, accentClass, href }: SubjectCardProps) {
+function SubjectCard({
+  title,
+  lines,
+  accentClass,
+  href,
+  copyId,
+}: SubjectCardProps & { copyId: string }) {
   return (
     <Link
       href={href}
@@ -22,11 +30,13 @@ function SubjectCard({ title, lines, accentClass, href }: SubjectCardProps) {
         aria-hidden="true"
       />
       <h3 className="font-display mt-6 text-2xl font-medium tracking-tight">
-        {title}
+        <Editable id={`${copyId}.title`} default={title} />
       </h3>
       <div className="mt-5 space-y-1 text-sm leading-relaxed text-ink/70">
-        {lines.map((line) => (
-          <p key={line}>{line}</p>
+        {lines.map((line, i) => (
+          <p key={line}>
+            <Editable id={`${copyId}.line.${i}`} default={line} />
+          </p>
         ))}
       </div>
     </Link>
@@ -46,12 +56,17 @@ export default function Home() {
           </p>
 
           <h1 className="font-display mt-10 max-w-[760px] text-5xl font-medium leading-[1.05] tracking-tight md:text-7xl">
-            Your all-in-one science learning pathway.
+            <Editable
+              id="home.hero.title"
+              default="Your all-in-one science learning pathway."
+            />
           </h1>
 
           <p className="mt-8 max-w-[620px] text-lg leading-[1.65] text-ink/70">
-            From first lesson to final exam — built on the spec, grounded in real
-            mark schemes.
+            <Editable
+              id="home.hero.subtitle"
+              default="From first lesson to final exam — built on the spec, grounded in real mark schemes."
+            />
           </p>
 
           <div className="mt-12 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
@@ -59,19 +74,23 @@ export default function Home() {
               href="/learn"
               className="inline-flex items-center justify-center rounded-md bg-flask px-6 py-3 font-medium text-snow transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-flask/95 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
             >
-              Start your journey →
+              <Editable id="home.hero.cta.primary" default="Start your journey →" />
             </Link>
             <Link
               href="/learn"
               className="inline-flex items-center justify-center rounded-md border border-ink/15 bg-transparent px-6 py-3 font-medium text-ink transition-all duration-200 ease-out hover:border-ink/40 hover:bg-ink/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
             >
-              Explore subjects
+              <Editable id="home.hero.cta.secondary" default="Explore subjects" />
             </Link>
           </div>
 
+          <NewPageSlot />
+
           <p className="mt-8 max-w-[520px] text-sm leading-relaxed text-ink/55">
-            Built for IB, IGCSE and A-Level students. Powered by real mark
-            schemes and real exam papers.
+            <Editable
+              id="home.hero.footnote"
+              default="Built for IB, IGCSE and A-Level students. Powered by real mark schemes and real exam papers."
+            />
           </p>
         </div>
       </section>
@@ -88,6 +107,7 @@ export default function Home() {
               ]}
               accentClass="bg-subject-chem-as"
               href="/learn/chemistry"
+              copyId="home.subject.chemistry"
             />
             <SubjectCard
               title="Biology"
@@ -98,6 +118,7 @@ export default function Home() {
               ]}
               accentClass="bg-subject-bio-as"
               href="/learn/biology"
+              copyId="home.subject.biology"
             />
             <SubjectCard
               title="Physics"
@@ -108,6 +129,7 @@ export default function Home() {
               ]}
               accentClass="bg-subject-physics-as"
               href="/learn/physics"
+              copyId="home.subject.physics"
             />
           </div>
         </div>

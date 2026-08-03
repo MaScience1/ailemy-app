@@ -17,6 +17,7 @@ import {
 import { getSubjectThemeStyle } from "@/lib/catalogue/subject-theme";
 import type { CourseWithCounts } from "@/lib/catalogue/types";
 import { cn } from "@/lib/utils";
+import { Editable } from "@/components/admin-inline/Editable";
 
 type Params = Promise<{ subject: string; pathway: string }>;
 
@@ -76,7 +77,10 @@ export default async function PathwayPage({ params }: { params: Params }) {
               {pathway.name} {subject.name}.
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink/70">
-              {pathway.description}
+              <Editable
+                id={`learn.pathway.${pathwaySlug}.description`}
+                default={pathway.description}
+              />
             </p>
           </header>
 

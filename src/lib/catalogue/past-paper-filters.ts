@@ -2,7 +2,7 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getAdminStatus } from "@/lib/admin/auth";
+import { getEditContext } from "@/lib/admin/edit-mode";
 import { getPaperPublicUrl } from "@/lib/storage/papers";
 import {
   DOC_TYPES as DOC_TYPE_LIST,
@@ -163,8 +163,11 @@ function isMissingColumn(error: { code?: string; message?: string } | null) {
  * past_papers_public_read_live policy restricts results to status = 'live'.
  */
 async function getReader() {
-  const { ok: isAdmin } = await getAdminStatus().catch(() => ({ ok: false }));
-  if (isAdmin) return createAdminClient();
+  // Keyed on editMode, not merely on being the admin: with the toggle off this
+  // page must render exactly what a student sees, drafts included — otherwise
+  // "edit mode off == student view" would be false for past papers.
+  const { editMode } = await getEditContext().catch(() => ({ editMode: false }));
+  if (editMode) return createAdminClient();
   return await createClient();
 }
 

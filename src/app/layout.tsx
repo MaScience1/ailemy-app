@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
+import { AdminOverlay } from "@/components/admin-inline/AdminOverlay";
+
 const fraunces = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
@@ -39,7 +41,14 @@ export default function RootLayout({
       lang="en"
       className={`${fraunces.variable} ${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        {/*
+          Renders null for every non-admin (server-side branch), so students
+          receive no overlay markup and no overlay JS chunk.
+        */}
+        <AdminOverlay />
+      </body>
     </html>
   );
 }
