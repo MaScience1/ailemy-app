@@ -61,7 +61,7 @@ async function uploadIfPresent(
   supabase: ReturnType<typeof createAdminClient>,
   paperId: string,
   file: File | null,
-  kind: "paper" | "markscheme",
+  kind: "paper" | "markscheme" | "examiner-report",
 ): Promise<string | null> {
   if (!file || file.size === 0) return null;
   const ext = file.name.includes(".") ? file.name.split(".").pop() : "pdf";
@@ -115,8 +115,10 @@ export async function createPastPaper(
 
     const paperFile = fd.get("paper_file") as File | null;
     const msFile = fd.get("markscheme_file") as File | null;
+    const erFile = fd.get("examiner_report_file") as File | null;
     let paper_pdf_path: string | null = null;
     let markscheme_pdf_path: string | null = null;
+    let examiner_report_pdf_path: string | null = null;
     try {
       paper_pdf_path = await uploadIfPresent(supabase, paperId, paperFile, "paper");
       markscheme_pdf_path = await uploadIfPresent(
@@ -124,6 +126,12 @@ export async function createPastPaper(
         paperId,
         msFile,
         "markscheme",
+      );
+      examiner_report_pdf_path = await uploadIfPresent(
+        supabase,
+        paperId,
+        erFile,
+        "examiner-report",
       );
     } catch (e) {
       await supabase.from("past_papers").delete().eq("id", paperId);
@@ -133,14 +141,22 @@ export async function createPastPaper(
       };
     }
 
-    if (paper_pdf_path || markscheme_pdf_path) {
-      await supabase
-        .from("past_papers")
-        .update({ paper_pdf_path, markscheme_pdf_path })
-        .eq("id", paperId);
+    if (paper_pdf_path || markscheme_pdf_path || examiner_report_pdf_path) {
+      const paths: Record<string, string | null> = {
+        paper_pdf_path,
+        markscheme_pdf_path,
+      };
+      // Only send the examiner-report column when there is something to store,
+      // so a database that has not yet had migration 0012 applied still accepts
+      // question-paper / mark-scheme uploads instead of failing the whole write.
+      if (examiner_report_pdf_path) {
+        paths.examiner_report_pdf_path = examiner_report_pdf_path;
+      }
+      await supabase.from("past_papers").update(paths).eq("id", paperId);
     }
 
     revalidatePath("/admin/past-papers");
+    revalidatePath("/past-papers");
     return { ok: true, data: { id: paperId } };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Unknown error" };
@@ -164,8 +180,10 @@ export async function updatePastPaper(
     const supabase = createAdminClient();
     const paperFile = fd.get("paper_file") as File | null;
     const msFile = fd.get("markscheme_file") as File | null;
+    const erFile = fd.get("examiner_report_file") as File | null;
     let paper_pdf_path: string | null | undefined;
     let markscheme_pdf_path: string | null | undefined;
+    let examiner_report_pdf_path: string | null | undefined;
     try {
       paper_pdf_path = await uploadIfPresent(supabase, paperId, paperFile, "paper");
       markscheme_pdf_path = await uploadIfPresent(
@@ -173,6 +191,12 @@ export async function updatePastPaper(
         paperId,
         msFile,
         "markscheme",
+      );
+      examiner_report_pdf_path = await uploadIfPresent(
+        supabase,
+        paperId,
+        erFile,
+        "examiner-report",
       );
     } catch (e) {
       return {
@@ -196,6 +220,11 @@ export async function updatePastPaper(
     };
     if (paper_pdf_path !== null) patch.paper_pdf_path = paper_pdf_path;
     if (markscheme_pdf_path !== null) patch.markscheme_pdf_path = markscheme_pdf_path;
+    // Same reasoning as createPastPaper: omit the column unless a file was
+    // actually uploaded, so edits keep working before 0012 is applied.
+    if (examiner_report_pdf_path) {
+      patch.examiner_report_pdf_path = examiner_report_pdf_path;
+    }
 
     const { error: updateError } = await supabase
       .from("past_papers")
@@ -204,6 +233,7 @@ export async function updatePastPaper(
     if (updateError) return { ok: false, error: updateError.message };
 
     revalidatePath("/admin/past-papers");
+    revalidatePath("/past-papers");
     revalidatePath(`/admin/past-papers/${paperId}`);
     return { ok: true };
   } catch (e) {
@@ -233,6 +263,7 @@ export async function deletePastPaper(
     const { error } = await supabase.from("past_papers").delete().eq("id", paperId);
     if (error) return { error: error.message };
     revalidatePath("/admin/past-papers");
+    revalidatePath("/past-papers");
     return {};
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Unknown error" };
@@ -255,6 +286,7 @@ export async function setPastPaperStatus(
       .eq("id", paperId);
     if (error) return { error: error.message };
     revalidatePath("/admin/past-papers");
+    revalidatePath("/past-papers");
     return {};
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Unknown error" };

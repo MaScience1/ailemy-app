@@ -1,294 +1,399 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { ClipboardCheck, FileText, PlayCircle, ScrollText } from "lucide-react";
 
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
 import { Breadcrumb } from "@/components/catalogue/breadcrumb";
+import { getEditContext } from "@/lib/admin/edit-mode";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
-  PATHWAY_DISPLAY_ORDER,
-  PATHWAY_HUB_LABEL,
-  type Pathway,
-} from "@/lib/catalogue/pathways";
-import {
-  getPastPapersHubData,
-  type HubCourseEntry,
-  type HubSubjectSection,
-} from "@/lib/catalogue/queries";
-import {
-  deriveStatus,
-  getStatusBadge,
-} from "@/lib/catalogue/status";
-import { getSubjectThemeStyle } from "@/lib/catalogue/subject-theme";
-import { cn } from "@/lib/utils";
-import { InlineEditBoundary } from "@/components/admin-inline/InlineEditBoundary";
-import { PaperAddSlot } from "@/components/admin-inline/slots";
-import { Editable } from "@/components/admin-inline/Editable";
+  buildFilterOptions,
+  filtersToQueryString,
+  getCascadeData,
+  hasActiveFilters,
+  listFilteredPastPapers,
+  sanitiseFilters,
+  type PaperFilters,
+  type PaperResult,
+} from "@/lib/catalogue/past-paper-filters";
+import type { PaperInitial } from "@/app/admin/past-papers/_form";
+
+import { FilterBar } from "./_filter-bar";
+import { AddPaperButton, PaperRowControls } from "./_admin-controls";
 
 export const metadata: Metadata = {
   title: "Past Exam Papers · IB, IGCSE, A-Level · Ailemy",
   description:
-    "Free past papers for Edexcel IAL, IGCSE, AQA, OCR, CIE, IB and more. Download PDFs, attempt interactively with our whiteboard, plus examiner walkthrough videos.",
+    "Browse and filter past papers by subject, exam board, level, year and document type. Question papers, mark schemes, examiner reports and walkthroughs.",
 };
 
-export default async function PastPapersHubPage() {
-  const data = await getPastPapersHubData();
+/**
+ * Filters live in the query string and the result set is user-specific for the
+ * admin (drafts included), so this page is always rendered per request.
+ */
+export const dynamic = "force-dynamic";
 
-  // Hub-level add only. Course cards stay read-only: courses are in the
-  // read-only reference set, so they get no pencil/trash. Per-paper CRUD lives
-  // on the exam-questions page, where the papers actually render.
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+function one(v: string | string[] | undefined): string | undefined {
+  if (Array.isArray(v)) return v[0];
+  return v || undefined;
+}
+
+export default async function PastPapersPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  const sp = await searchParams;
+  const requested: PaperFilters = {
+    subject: one(sp.subject),
+    board: one(sp.board),
+    course: one(sp.course),
+    year: one(sp.year),
+    doc: one(sp.doc),
+  };
+
+  // The cascade is the single source of truth for which combinations exist.
+  const cascade = await getCascadeData();
+  const filters = sanitiseFilters(cascade, requested);
+
+  // If a selection was impossible (stale link, hand-edited URL, catalogue
+  // changed under a shared link), bounce to the canonical URL so what the user
+  // sees and what the address bar says can never disagree.
+  const canonical = filtersToQueryString(filters);
+  if (canonical !== filtersToQueryString(requested)) {
+    redirect(canonical ? `/past-papers?${canonical}` : "/past-papers");
+  }
+
+  const options = buildFilterOptions(cascade, filters);
+  // MERGE RECONCILIATION: main gated these controls on getAdminStatus() alone,
+  // so an admin always saw them. This branch's defining behaviour is the
+  // edit-mode toggle — with it OFF every page must be byte-identical to the
+  // student view. Gating on editMode keeps /past-papers consistent with every
+  // other surface in the inline-editing system.
+  const [papers, { editMode: isAdmin }] = await Promise.all([
+    listFilteredPastPapers(filters),
+    getEditContext(),
+  ]);
+
+  // Form option lists and full editable rows are fetched ONLY for the admin,
+  // so a student's request never pays for them.
+  const adminData = isAdmin ? await loadAdminFormData(papers) : null;
+
   return (
-    <InlineEditBoundary kind="paper">
     <>
       <SiteNav />
       <main className="min-h-screen bg-parchment text-ink">
-        <div className="mx-auto w-full max-w-6xl px-6 py-16 sm:px-10 sm:py-24">
+        <div className="mx-auto w-full max-w-6xl px-6 py-16 sm:px-10 sm:py-20">
           <Breadcrumb crumbs={[{ label: "Past Papers" }]} />
 
           <header className="mt-10 max-w-3xl">
             <p className="font-mono text-xs uppercase tracking-[0.25em] text-ink/60">
-              <Editable id="pastpapers.hero.eyebrow" default="Exam Archive" />
+              Exam Archive
             </p>
             <h1 className="font-display mt-5 text-5xl font-medium leading-[1.05] tracking-tight md:text-6xl">
-              <Editable id="pastpapers.hero.title" default="Past papers." />
+              Past papers.
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink/70">
-              <Editable
-                id="pastpapers.hero.subtitle"
-                default="Free past papers for international curricula. Download PDFs, attempt interactively with our whiteboard, and watch examiner walkthroughs."
-              />
-            </p>
-            <p className="font-mono mt-6 text-xs uppercase tracking-[0.2em] text-ink/55">
-              {data.totalPapers}{" "}
-              {data.totalPapers === 1 ? "paper" : "papers"} across{" "}
-              {data.curriculaWithPapers}{" "}
-              {data.curriculaWithPapers === 1 ? "curriculum" : "curricula"}
+              Narrow by subject, then board, then course — each choice filters
+              the next. Download question papers and mark schemes, or watch an
+              examiner walkthrough.
             </p>
           </header>
 
-          <PaperAddSlot
-            label="+ Add past paper"
-            note="Pick the course inside the form."
-          />
+          {isAdmin && adminData && (
+            <div className="mt-8 flex flex-wrap items-center gap-3 rounded-lg border border-dashed border-ink/25 bg-snow/70 p-3">
+              <AddPaperButton
+                courses={adminData.courses}
+                units={adminData.units}
+              />
+              <span className="text-xs text-ink/55">
+                Edit mode is on — drafts are listed for you and hidden from
+                everyone else.
+              </span>
+            </div>
+          )}
 
-          <div className="mt-16 space-y-20">
-            {data.subjects.length === 0 ? (
-              <EmptyArchive />
-            ) : (
-              data.subjects.map((subject) => (
-                <SubjectSection key={subject.id} subject={subject} />
-              ))
-            )}
+          <div className="mt-8">
+            {/* FilterBar reads useSearchParams(), which needs a boundary. */}
+            <Suspense
+              fallback={
+                <div className="h-[150px] rounded-lg border border-ink/10 bg-snow" />
+              }
+            >
+              <FilterBar options={options} />
+            </Suspense>
           </div>
+
+          <p className="font-mono mt-6 text-xs uppercase tracking-[0.2em] text-ink/55">
+            {papers.length} {papers.length === 1 ? "paper" : "papers"}
+          </p>
+
+          {papers.length === 0 ? (
+            <EmptyState filtered={hasActiveFilters(filters)} />
+          ) : (
+            <ul className="mt-4 divide-y divide-ink/10 rounded-lg border border-ink/10 bg-snow">
+              {papers.map((paper) => (
+                <li key={paper.id} className="p-5 sm:p-6">
+                  <PaperRow
+                    paper={paper}
+                    admin={
+                      adminData
+                        ? {
+                            initial: adminData.rows[paper.id],
+                            courses: adminData.courses,
+                            units: adminData.units,
+                          }
+                        : null
+                    }
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </main>
       <SiteFooter />
     </>
-    </InlineEditBoundary>
   );
 }
 
-function SubjectSection({ subject }: { subject: HubSubjectSection }) {
-  const themeStyle = getSubjectThemeStyle({
-    slug: subject.slug,
-    color_as: subject.colorAs,
-    color_a2: subject.colorA2,
-  });
-
-  // Bucket this subject's courses by pathway, then sort within each bucket
-  // by (board name asc, sort_order asc) — gives Edexcel IAL AS before
-  // Edexcel IAL A2 without lexical "A2 < AS" surprises.
-  const coursesByPathway = new Map<Pathway, HubCourseEntry[]>();
-  for (const course of subject.courses) {
-    if (!coursesByPathway.has(course.pathway)) {
-      coursesByPathway.set(course.pathway, []);
-    }
-    coursesByPathway.get(course.pathway)!.push(course);
-  }
-  for (const list of coursesByPathway.values()) {
-    list.sort((a, b) => {
-      const boardCmp = a.boardName.localeCompare(b.boardName);
-      if (boardCmp !== 0) return boardCmp;
-      return a.sortOrder - b.sortOrder;
-    });
-  }
-
-  // Walk the fixed pedagogical pathway order, skipping pathways that this
-  // subject has zero courses in (no empty "IB" heading on a subject without
-  // any IB courses).
-  const pathwaySections = PATHWAY_DISPLAY_ORDER.flatMap((pathway) => {
-    const courses = coursesByPathway.get(pathway) ?? [];
-    return courses.length === 0 ? [] : [{ pathway, courses }];
-  });
-
-  return (
-    <section style={themeStyle} aria-labelledby={`subject-${subject.slug}`}>
-      <div className="border-b border-ink/10 pb-5">
-        {/* Full-width 4px subject-accent stripe above the heading */}
-        <span
-          aria-hidden="true"
-          className="block h-1 w-full rounded-full"
-          style={{ backgroundColor: "var(--subject-accent)" }}
-        />
-        <h2
-          id={`subject-${subject.slug}`}
-          className="font-display mt-5 text-3xl font-medium tracking-tight md:text-4xl"
-        >
-          {subject.name}
-        </h2>
-        <p className="font-mono mt-3 text-[11px] uppercase tracking-[0.2em] text-ink/55">
-          {subject.totalPapers}{" "}
-          {subject.totalPapers === 1 ? "paper" : "papers"} across{" "}
-          {subject.courseCount}{" "}
-          {subject.courseCount === 1 ? "course" : "courses"}
-        </p>
-      </div>
-
-      {pathwaySections.length === 0 ? (
-        <EmptySubject subjectName={subject.name} />
-      ) : (
-        pathwaySections.map(({ pathway, courses }) => (
-          <PathwayBlock key={pathway} pathway={pathway} courses={courses} />
-        ))
-      )}
-    </section>
-  );
-}
-
-function PathwayBlock({
-  pathway,
-  courses,
+function PaperRow({
+  paper,
+  admin,
 }: {
-  pathway: Pathway;
-  courses: HubCourseEntry[];
+  paper: PaperResult;
+  admin: {
+    initial: PaperInitial | undefined;
+    courses: { id: string; label: string }[];
+    units: { id: string; label: string; parentId: string }[];
+  } | null;
 }) {
+  const isDraft = paper.status !== "live";
+
   return (
-    <div className="mt-8 sm:mt-12">
-      {/* Pathway sub-heading: small-caps label + thin horizontal line
-          filling remaining width. Label and line share a flex row so they
-          stay baseline-aligned. */}
-      <div className="flex items-center gap-4">
-        <h3 className="font-mono whitespace-nowrap text-xs uppercase tracking-[0.25em] text-ink">
-          {PATHWAY_HUB_LABEL[pathway]}
-        </h3>
-        <span aria-hidden="true" className="h-px flex-1 bg-ink/10" />
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink/55">
+            {paper.boardName} · {paper.subjectName} · {paper.courseLevel}
+          </p>
+          {paper.paperCode && (
+            <span className="font-mono rounded bg-ink/[0.06] px-1.5 py-0.5 text-[10px] font-medium text-ink/70">
+              {paper.paperCode}
+            </span>
+          )}
+          {isDraft && (
+            <span className="font-mono rounded bg-flask/15 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-flask">
+              {paper.status}
+            </span>
+          )}
+        </div>
+
+        <h2 className="font-display mt-2 text-xl font-medium tracking-tight">
+          {paper.session} {paper.year}
+          <span className="ml-2 text-base font-normal text-ink/55">
+            {paper.courseName}
+          </span>
+        </h2>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {paper.questionPaperUrl && (
+            <DocLink
+              href={paper.questionPaperUrl}
+              icon={<FileText className="h-3.5 w-3.5" aria-hidden="true" />}
+              label="Question paper"
+            />
+          )}
+          {paper.markSchemeUrl && (
+            <DocLink
+              href={paper.markSchemeUrl}
+              icon={<ScrollText className="h-3.5 w-3.5" aria-hidden="true" />}
+              label="Mark scheme"
+            />
+          )}
+          {paper.examinerReportUrl && (
+            <DocLink
+              href={paper.examinerReportUrl}
+              icon={<ClipboardCheck className="h-3.5 w-3.5" aria-hidden="true" />}
+              label="Examiner report"
+            />
+          )}
+          {paper.walkthroughPlaybackId && paper.detailHref && (
+            <DocLink
+              href={paper.detailHref}
+              external={false}
+              icon={<PlayCircle className="h-3.5 w-3.5" aria-hidden="true" />}
+              label={
+                paper.walkthroughMinutes
+                  ? `Walkthrough · ${paper.walkthroughMinutes} min`
+                  : "Walkthrough"
+              }
+            />
+          )}
+          {!paper.questionPaperUrl &&
+            !paper.markSchemeUrl &&
+            !paper.examinerReportUrl &&
+            !paper.walkthroughPlaybackId && (
+              <span className="text-xs text-ink/45">
+                No documents attached yet.
+              </span>
+            )}
+        </div>
       </div>
 
-      <ul className="mt-6 grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3 lg:gap-6">
-        {courses.map((course) => (
-          <li key={course.id}>
-            <CoursePapersCard course={course} />
-          </li>
-        ))}
-      </ul>
+      <div className="flex shrink-0 items-center gap-2">
+        {paper.detailHref && (
+          <Link
+            href={paper.detailHref}
+            className="rounded-md border border-ink/15 bg-parchment px-3 py-1.5 text-sm font-medium text-ink transition hover:border-ink/35"
+          >
+            Open →
+          </Link>
+        )}
+        {admin?.initial && (
+          <PaperRowControls
+            paper={admin.initial}
+            courses={admin.courses}
+            units={admin.units}
+          />
+        )}
+      </div>
     </div>
   );
 }
 
-function CoursePapersCard({ course }: { course: HubCourseEntry }) {
-  const status = deriveStatus({
-    // Counts collapse cleanly into the entity-status helper: a course with
-    // ≥1 paper is "available", everything else is "coming_soon". Past papers
-    // don't have a preview state — they're either uploaded or not.
-    totalLessons: course.paperCount,
-    liveLessons: course.paperCount,
-  });
-  const badge = getStatusBadge(status);
-  const isAvailable = status === "available";
-  const href = `/learn/${course.subjectSlug}/${course.pathway}/${course.slug}/exam-questions`;
-
-  const cardClass = cn(
-    "group/papers flex h-full flex-col gap-5 rounded-lg border border-ink/10 bg-snow p-6 transition-all duration-200 ease-out sm:p-7",
-    isAvailable
-      ? "cursor-pointer hover:translate-y-[-2px] hover:border-[var(--subject-accent)] hover:shadow-sm"
-      : "cursor-not-allowed opacity-70",
-  );
-
-  const Body = (
-    <>
-      <div>
-        <div className="flex items-start justify-between gap-3">
-          {/* Eyebrow now drops the level (e.g. "· A2") — the pathway
-              sub-heading above the grid already conveys that context. */}
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-ink/55">
-            {course.boardName}
-          </p>
-          <span
-            className={cn(
-              "font-mono inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.18em]",
-              badge.className,
-            )}
-          >
-            {badge.label}
-          </span>
-        </div>
-        <h3 className="font-display mt-5 text-xl font-medium leading-snug tracking-tight">
-          {course.name}
-        </h3>
-        <p className="font-mono mt-4 text-[10px] uppercase tracking-[0.2em] text-ink/45">
-          {isAvailable
-            ? `${course.paperCount} ${course.paperCount === 1 ? "paper" : "papers"}`
-            : "Papers coming soon"}
-        </p>
-      </div>
-
-      <div className="mt-auto pt-1 text-sm font-medium">
-        {isAvailable ? (
-          <span
-            className="inline-flex items-center gap-2 transition-transform duration-200 group-hover/papers:translate-x-1"
-            style={{ color: "var(--subject-accent)" }}
-          >
-            Browse papers
-            <ArrowRight className="h-4 w-4" aria-hidden="true" />
-          </span>
-        ) : (
-          <span className="font-mono text-xs uppercase tracking-[0.2em] text-ink/45">
-            NOT YET OPEN
-          </span>
-        )}
-      </div>
-    </>
-  );
-
-  if (!isAvailable) {
+function DocLink({
+  href,
+  label,
+  icon,
+  external = true,
+}: {
+  href: string;
+  label: string;
+  icon: React.ReactNode;
+  external?: boolean;
+}) {
+  const cls =
+    "inline-flex items-center gap-1.5 rounded-md border border-ink/15 bg-parchment px-2.5 py-1 text-xs font-medium text-ink transition hover:border-flask hover:text-flask";
+  if (external) {
     return (
-      <div className={cardClass} aria-disabled="true">
-        {Body}
-      </div>
+      <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>
+        {icon}
+        {label}
+      </a>
     );
   }
-
   return (
-    <Link href={href} className={cardClass}>
-      {Body}
+    <Link href={href} className={cls}>
+      {icon}
+      {label}
     </Link>
   );
 }
 
-function EmptySubject({ subjectName }: { subjectName: string }) {
+function EmptyState({ filtered }: { filtered: boolean }) {
   return (
-    <div className="mt-8 rounded-lg border border-dashed border-ink/15 bg-snow/50 p-8 text-center">
-      <p className="font-mono text-xs uppercase tracking-[0.25em] text-ink/55">
-        Coming soon
+    <div className="mt-4 rounded-lg border border-ink/10 bg-snow p-10 text-center">
+      <p className="font-display text-2xl font-medium tracking-tight">
+        No papers match these filters yet.
       </p>
-      <p className="mt-3 text-sm text-ink/65">
-        No {subjectName} courses are open yet. Check back as the catalogue
-        grows.
+      <p className="mx-auto mt-3 max-w-md text-sm text-ink/60">
+        {filtered
+          ? "Try widening or clearing a filter — an exam board is selectable before any of its papers are uploaded."
+          : "Papers will appear here as they are added."}
       </p>
+      {filtered && (
+        <Link
+          href="/past-papers"
+          className="mt-5 inline-flex rounded-md border border-ink/20 bg-parchment px-4 py-2 text-sm font-medium text-ink transition hover:border-ink/40"
+        >
+          Clear all filters
+        </Link>
+      )}
     </div>
   );
 }
 
-function EmptyArchive() {
-  return (
-    <div className="rounded-xl border border-ink/10 bg-snow p-10 text-center">
-      <p className="font-display text-2xl font-medium tracking-tight">
-        The archive is still being built.
-      </p>
-      <p className="mt-3 text-sm text-ink/65">
-        Past papers will land here as we add them — by subject, by board, by
-        year.
-      </p>
-    </div>
+/**
+ * Course/unit option lists plus the full editable row for each visible paper,
+ * shaped for the existing PastPaperForm. Admin-only.
+ */
+async function loadAdminFormData(papers: PaperResult[]) {
+  const db = createAdminClient();
+  const ids = papers.map((p) => p.id);
+
+  const [coursesRes, unitsRes, subjectsRes, curriculaRes, rowsRes] =
+    await Promise.all([
+      db
+        .from("courses")
+        .select("id, name, level, subject_id, curriculum_id")
+        .order("sort_order"),
+      db.from("units").select("*").order("sort_order"),
+      db.from("subjects").select("id, name"),
+      db.from("curricula").select("id, short_name, name"),
+      ids.length
+        ? db
+            .from("past_papers")
+            .select(
+              "id, course_id, unit_id, slug, year, session, paper_code, paper_name, paper_pdf_path, markscheme_pdf_path, walkthrough_mux_playback_id, walkthrough_duration_minutes, sort_order, status",
+            )
+            .in("id", ids)
+        : Promise.resolve({ data: [] as unknown[] }),
+    ]);
+
+  const subjectName = new Map(
+    ((subjectsRes.data ?? []) as { id: string; name: string }[]).map((s) => [
+      s.id,
+      s.name,
+    ]),
   );
+  const currName = new Map(
+    (
+      (curriculaRes.data ?? []) as {
+        id: string;
+        short_name: string | null;
+        name: string;
+      }[]
+    ).map((c) => [c.id, c.short_name || c.name]),
+  );
+
+  const rows: Record<string, PaperInitial> = {};
+  for (const r of (rowsRes.data ?? []) as PaperInitial[]) {
+    rows[r.id] = r;
+  }
+
+  return {
+    courses: (
+      (coursesRes.data ?? []) as {
+        id: string;
+        name: string;
+        level: string;
+        subject_id: string;
+        curriculum_id: string;
+      }[]
+    ).map((c) => ({
+      id: c.id,
+      label: `${currName.get(c.curriculum_id) ?? "?"} · ${
+        subjectName.get(c.subject_id) ?? "?"
+      } · ${c.name} (${c.level})`,
+    })),
+    units: (
+      (unitsRes.data ?? []) as {
+        id: string;
+        course_id: string;
+        name: string;
+        code: string | null;
+      }[]
+    ).map((u) => ({
+      id: u.id,
+      label: u.code ? `${u.code} · ${u.name}` : u.name,
+      parentId: u.course_id,
+    })),
+    rows,
+  };
 }

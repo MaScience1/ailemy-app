@@ -20,6 +20,8 @@ export type PaperInitial = {
   paper_name: string;
   paper_pdf_path: string | null;
   markscheme_pdf_path: string | null;
+  /** Optional: absent until migration 0012 is applied. */
+  examiner_report_pdf_path?: string | null;
   walkthrough_mux_playback_id: string | null;
   walkthrough_duration_minutes: number | null;
   sort_order: number | null;
@@ -39,11 +41,11 @@ export function PastPaperForm({
   initial: PaperInitial | null;
   courses: CourseOption[];
   units: UnitOption[];
-  /** Called after a successful save. Used by the inline slide-over to close. */
+  /** Called after a successful save — lets a slide-over close itself. */
   onDone?: () => void;
-  /** Inline slide-over sets this false so it closes in place instead of navigating. */
+  /** /admin/past-papers/new navigates after create; a slide-over does not. */
   redirectAfterCreate?: boolean;
-  /** The slide-over supplies its own close affordance. */
+  /** The slide-over provides its own close affordance. */
   showCancel?: boolean;
 }) {
   const router = useRouter();
@@ -59,13 +61,14 @@ export function PastPaperForm({
     null,
   );
 
-  // Side effects in an effect, not the render body (see LessonForm for why).
+  // Post-save navigation belongs in an effect, not the render body: calling
+  // router.push()/refresh() while rendering re-enters React's render phase and
+  // loops when this form is mounted inside a long-lived slide-over.
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
 
   useEffect(() => {
     if (!state || !(state as { ok?: boolean }).ok) return;
-
     if (mode === "create" && redirectAfterCreate) {
       const id = (state as { ok: true; data?: { id: string } }).data?.id;
       if (id) {
@@ -164,7 +167,7 @@ export function PastPaperForm({
         <legend className="px-1 text-xs font-medium uppercase tracking-wider text-slate-500">
           PDFs (public bucket)
         </legend>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-3">
           <Field
             label="Question paper PDF"
             hint={
@@ -195,9 +198,24 @@ export function PastPaperForm({
               className="text-sm"
             />
           </Field>
+          <Field
+            label="Examiner report PDF"
+            hint={
+              initial?.examiner_report_pdf_path
+                ? `current: ${initial.examiner_report_pdf_path}`
+                : "no file"
+            }
+          >
+            <input
+              name="examiner_report_file"
+              type="file"
+              accept="application/pdf"
+              className="text-sm"
+            />
+          </Field>
         </div>
         <p className="mt-2 text-xs text-slate-500">
-          Leave a field empty to keep the current file. Both slots live in the
+          Leave a field empty to keep the current file. All three slots live in the
           public <code className="mx-1 rounded bg-slate-100 px-1">papers</code>
           bucket; URLs are constructed directly by the /past-papers pages.
         </p>
