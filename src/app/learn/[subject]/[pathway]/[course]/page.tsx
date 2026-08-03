@@ -17,6 +17,7 @@ import {
 } from "@/lib/catalogue/status";
 import { getSubjectThemeStyle } from "@/lib/catalogue/subject-theme";
 import { cn } from "@/lib/utils";
+import { Editable } from "@/components/admin-inline/Editable";
 
 type Params = Promise<{
   subject: string;
@@ -160,9 +161,14 @@ function LessonsCard({
     <ChoiceCard
       href={href}
       status={status}
-      eyebrow="Study"
-      title="Lessons"
-      description="Spec-by-spec teaching with examiner-led video walkthroughs."
+      eyebrow={<Editable id="course.card.lessons.eyebrow" default="Study" />}
+      title={<Editable id="course.card.lessons.title" default="Lessons" />}
+      description={
+        <Editable
+          id="course.card.lessons.description"
+          default="Spec-by-spec teaching with examiner-led video walkthroughs."
+        />
+      }
       meta={meta}
       availableCtaLabel="Start learning →"
       previewCtaLabel="Browse lessons →"
@@ -204,9 +210,14 @@ function ExamPapersCard({
     <ChoiceCard
       href={href}
       status={status}
-      eyebrow="Practise"
-      title="Exam Papers"
-      description="Past papers, mark schemes, and interactive practice whiteboards."
+      eyebrow={<Editable id="course.card.papers.eyebrow" default="Practise" />}
+      title={<Editable id="course.card.papers.title" default="Exam Papers" />}
+      description={
+        <Editable
+          id="course.card.papers.description"
+          default="Past papers, mark schemes, and interactive practice whiteboards."
+        />
+      }
       meta={meta}
       availableCtaLabel="Open exam papers →"
       // ExamPapers has no preview state, but the prop is required by the
@@ -237,10 +248,12 @@ function ChoiceCard({
 }: {
   href: string;
   status: EntityStatus;
-  eyebrow: string;
-  title: string;
-  description: string;
-  meta: string;
+  // ReactNode rather than string: these slots now receive <Editable>, which
+  // renders plain text for students and a click-to-edit span for the admin.
+  eyebrow: React.ReactNode;
+  title: React.ReactNode;
+  description: React.ReactNode;
+  meta: React.ReactNode;
   availableCtaLabel: string;
   previewCtaLabel: string;
   icon: React.ReactNode;

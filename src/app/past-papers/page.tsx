@@ -23,6 +23,7 @@ import { getSubjectThemeStyle } from "@/lib/catalogue/subject-theme";
 import { cn } from "@/lib/utils";
 import { InlineEditBoundary } from "@/components/admin-inline/InlineEditBoundary";
 import { PaperAddSlot } from "@/components/admin-inline/slots";
+import { Editable } from "@/components/admin-inline/Editable";
 
 export const metadata: Metadata = {
   title: "Past Exam Papers · IB, IGCSE, A-Level · Ailemy",
@@ -46,15 +47,16 @@ export default async function PastPapersHubPage() {
 
           <header className="mt-10 max-w-3xl">
             <p className="font-mono text-xs uppercase tracking-[0.25em] text-ink/60">
-              Exam Archive
+              <Editable id="pastpapers.hero.eyebrow" default="Exam Archive" />
             </p>
             <h1 className="font-display mt-5 text-5xl font-medium leading-[1.05] tracking-tight md:text-6xl">
-              Past papers.
+              <Editable id="pastpapers.hero.title" default="Past papers." />
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink/70">
-              Free past papers for international curricula. Download PDFs,
-              attempt interactively with our whiteboard, and watch examiner
-              walkthroughs.
+              <Editable
+                id="pastpapers.hero.subtitle"
+                default="Free past papers for international curricula. Download PDFs, attempt interactively with our whiteboard, and watch examiner walkthroughs."
+              />
             </p>
             <p className="font-mono mt-6 text-xs uppercase tracking-[0.2em] text-ink/55">
               {data.totalPapers}{" "}
