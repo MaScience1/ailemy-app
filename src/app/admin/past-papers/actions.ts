@@ -141,6 +141,7 @@ export async function createPastPaper(
     }
 
     revalidatePath("/admin/past-papers");
+    revalidatePath("/past-papers");
     return { ok: true, data: { id: paperId } };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Unknown error" };
@@ -204,6 +205,7 @@ export async function updatePastPaper(
     if (updateError) return { ok: false, error: updateError.message };
 
     revalidatePath("/admin/past-papers");
+    revalidatePath("/past-papers");
     revalidatePath(`/admin/past-papers/${paperId}`);
     return { ok: true };
   } catch (e) {
@@ -233,6 +235,7 @@ export async function deletePastPaper(
     const { error } = await supabase.from("past_papers").delete().eq("id", paperId);
     if (error) return { error: error.message };
     revalidatePath("/admin/past-papers");
+    revalidatePath("/past-papers");
     return {};
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Unknown error" };
@@ -255,6 +258,7 @@ export async function setPastPaperStatus(
       .eq("id", paperId);
     if (error) return { error: error.message };
     revalidatePath("/admin/past-papers");
+    revalidatePath("/past-papers");
     return {};
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Unknown error" };
