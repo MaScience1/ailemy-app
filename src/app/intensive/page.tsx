@@ -57,7 +57,7 @@ export default function IntensiveMarketingPage() {
           <div className="mt-12 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <Link
               href="/intensive/sign-in"
-              className="inline-flex items-center justify-center rounded-md bg-flask px-6 py-3 font-medium text-snow transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-flask/95 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
+              className="inline-flex items-center justify-center rounded-md bg-signal px-6 py-3 font-medium text-ink transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-signal/90 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
             >
               <Editable
                 id="intensive.hero.cta.primary"
