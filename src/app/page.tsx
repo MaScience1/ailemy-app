@@ -51,36 +51,41 @@ export default function Home() {
       <section className="flex min-h-[80vh] items-center">
         <div className="animate-fade-in mx-auto w-full max-w-7xl px-6 py-20 sm:px-10 sm:py-24">
           <p className="font-mono text-xs uppercase tracking-[0.25em] text-ink/60">
-            IB <span className="text-signal/70">·</span> IGCSE{" "}
-            <span className="text-signal/70">·</span> A-LEVEL
+            EDEXCEL IAL <span className="text-signal/70">·</span> CHEMISTRY AS
           </p>
 
           <h1 className="font-display mt-10 max-w-[760px] text-5xl font-medium leading-[1.05] tracking-tight md:text-7xl">
             <Editable
               id="home.hero.title"
-              default="Your all-in-one science learning pathway."
+              default="Learn how the marks are awarded."
             />
           </h1>
 
           <p className="mt-8 max-w-[620px] text-lg leading-[1.65] text-ink/70">
             <Editable
               id="home.hero.subtitle"
-              default="From first lesson to final exam — built on the spec, grounded in real mark schemes."
+              default="Every specification point, taught and marked to the Edexcel mark scheme."
             />
           </p>
 
           <div className="mt-12 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
             <Link
-              href="/learn"
+              href="/past-papers"
               className="inline-flex items-center justify-center rounded-md bg-flask px-6 py-3 font-medium text-snow transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-flask/95 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
             >
-              <Editable id="home.hero.cta.primary" default="Start your journey →" />
+              <Editable
+                id="home.hero.cta.primary"
+                default="Watch a paper walkthrough →"
+              />
             </Link>
             <Link
-              href="/learn"
+              href="/intensive"
               className="inline-flex items-center justify-center rounded-md border border-ink/15 bg-transparent px-6 py-3 font-medium text-ink transition-all duration-200 ease-out hover:border-ink/40 hover:bg-ink/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
             >
-              <Editable id="home.hero.cta.secondary" default="Explore subjects" />
+              <Editable
+                id="home.hero.cta.secondary"
+                default="See the 12-week intensive →"
+              />
             </Link>
           </div>
 
@@ -89,7 +94,7 @@ export default function Home() {
           <p className="mt-8 max-w-[520px] text-sm leading-relaxed text-ink/55">
             <Editable
               id="home.hero.footnote"
-              default="Built for IB, IGCSE and A-Level students. Powered by real mark schemes and real exam papers."
+              default="Written by a Chemistry teacher — 8 years' experience, PGCE, examiner-level mark scheme knowledge."
             />
           </p>
         </div>
