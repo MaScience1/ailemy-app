@@ -41,7 +41,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Magic-link sign-ins pass ?next=/intensive; the default email-verification
+  // Magic-link sign-ins pass ?next=/intensive/dashboard (the gated cohort home,
+  // not the public /intensive marketing page); the default email-verification
   // flow passes nothing and lands on the dashboard welcome banner.
   if (next) {
     return NextResponse.redirect(new URL(next, origin));
