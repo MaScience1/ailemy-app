@@ -48,50 +48,79 @@ export default function Home() {
     <div className="bg-parchment text-ink">
       <SiteNav />
 
-      <section className="flex min-h-[80vh] items-center">
-        <div className="animate-fade-in mx-auto w-full max-w-7xl px-6 py-20 sm:px-10 sm:py-24">
-          <p className="font-mono text-xs uppercase tracking-[0.25em] text-ink/60">
-            IB <span className="text-signal/70">·</span> IGCSE{" "}
-            <span className="text-signal/70">·</span> A-LEVEL
-          </p>
+      {/*
+        Two-column hero at lg+: copy left, artefact right, columns vertically
+        centred. Below lg it collapses to one column in DOM order (copy, then
+        artefact). min-h is a fixed 640px rather than a viewport fraction so the
+        fold does not move with browser chrome.
+      */}
+      <section className="flex min-h-[640px] items-center">
+        <div className="animate-fade-in mx-auto grid w-full max-w-7xl items-center gap-6 px-6 py-10 sm:gap-8 sm:px-10 sm:py-12 lg:grid-cols-2 lg:gap-16">
+          <div>
+            <p className="font-mono text-xs uppercase tracking-[0.25em] text-ink/60">
+              EDEXCEL IAL <span className="text-signal/70">·</span> CHEMISTRY AS
+            </p>
 
-          <h1 className="font-display mt-10 max-w-[760px] text-5xl font-medium leading-[1.05] tracking-tight md:text-7xl">
-            <Editable
-              id="home.hero.title"
-              default="Your all-in-one science learning pathway."
-            />
-          </h1>
+            <h1 className="font-display mt-4 max-w-[760px] sm:mt-6 text-5xl font-medium leading-[1.05] tracking-tight md:text-7xl">
+              <Editable
+                id="home.hero.title"
+                default="Learn how the marks are awarded."
+              />
+            </h1>
 
-          <p className="mt-8 max-w-[620px] text-lg leading-[1.65] text-ink/70">
-            <Editable
-              id="home.hero.subtitle"
-              default="From first lesson to final exam — built on the spec, grounded in real mark schemes."
-            />
-          </p>
+            <p className="mt-4 max-w-[620px] text-lg sm:mt-6 leading-[1.65] text-ink/70">
+              <Editable
+                id="home.hero.subtitle"
+                default="Every specification point, taught and marked to the Edexcel mark scheme."
+              />
+            </p>
 
-          <div className="mt-12 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-            <Link
-              href="/learn"
-              className="inline-flex items-center justify-center rounded-md bg-flask px-6 py-3 font-medium text-snow transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-flask/95 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
-            >
-              <Editable id="home.hero.cta.primary" default="Start your journey →" />
-            </Link>
-            <Link
-              href="/learn"
-              className="inline-flex items-center justify-center rounded-md border border-ink/15 bg-transparent px-6 py-3 font-medium text-ink transition-all duration-200 ease-out hover:border-ink/40 hover:bg-ink/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
-            >
-              <Editable id="home.hero.cta.secondary" default="Explore subjects" />
-            </Link>
+            {/* Stacks full-width below md, side-by-side from md up. */}
+            <div className="mt-6 flex flex-col gap-3 sm:mt-8 md:flex-row md:items-center md:gap-4">
+              <Link
+                href="/past-papers"
+                className="inline-flex w-full items-center justify-center rounded-md bg-signal px-6 py-3 font-medium text-ink transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-signal/90 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink md:w-auto"
+              >
+                <Editable
+                  id="home.hero.cta.primary"
+                  default="Watch a paper walkthrough →"
+                />
+              </Link>
+              <Link
+                href="/intensive"
+                className="inline-flex w-full items-center justify-center rounded-md border border-ink/15 bg-transparent px-6 py-3 font-medium text-ink transition-all duration-200 ease-out hover:border-ink/40 hover:bg-ink/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink md:w-auto"
+              >
+                <Editable
+                  id="home.hero.cta.secondary"
+                  default="See the 12-week intensive →"
+                />
+              </Link>
+            </div>
+
+            <NewPageSlot />
+
+            <p className="mt-4 max-w-[520px] text-sm sm:mt-6 leading-relaxed text-ink/55">
+              <Editable
+                id="home.hero.footnote"
+                default="Written by a Chemistry teacher — 8 years' experience, PGCE, examiner-level mark scheme knowledge."
+              />
+            </p>
           </div>
 
-          <NewPageSlot />
-
-          <p className="mt-8 max-w-[520px] text-sm leading-relaxed text-ink/55">
-            <Editable
-              id="home.hero.footnote"
-              default="Built for IB, IGCSE and A-Level students. Powered by real mark schemes and real exam papers."
-            />
-          </p>
+          {/*
+            Artefact slot — intentionally an empty placeholder. No image, no
+            illustration, no stock asset: a neutral 4:3 box carrying a single
+            muted label, sized so the real marked-question artefact can drop in
+            later without the layout moving.
+          */}
+          <div
+            aria-hidden="true"
+            className="flex aspect-[4/3] w-full items-center justify-center rounded-xl border border-ink/15 bg-parchment-2 shadow-sm"
+          >
+            <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink-40">
+              marked question
+            </span>
+          </div>
         </div>
       </section>
 

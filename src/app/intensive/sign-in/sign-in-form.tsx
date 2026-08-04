@@ -31,7 +31,8 @@ export function SignInForm() {
     const { error: otpError } = await supabase.auth.signInWithOtp({
       email: email.trim(),
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/intensive`,
+        // Land on the cohort home, not the public marketing page at /intensive.
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/intensive/dashboard`,
       },
     });
 

@@ -11,7 +11,9 @@ import { SignInForm } from "./sign-in-form";
  */
 export default async function IntensiveSignInPage() {
   const access = await getIntensiveAccess();
-  if (access.state === "enrolled") redirect("/intensive");
+  // /intensive is the public marketing page; the cohort home is
+  // /intensive/dashboard, inside the (gated) group.
+  if (access.state === "enrolled") redirect("/intensive/dashboard");
 
   return (
     <div className="grid min-h-screen bg-parchment md:grid-cols-2">

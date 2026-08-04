@@ -9,11 +9,9 @@ import { Menu, X } from "lucide-react";
  * Site-wide top navigation. Used on the marketing landing page and on every
  * /learn/* route (via src/app/learn/layout.tsx).
  *
- * Anchor links use `/#hash` so they work cross-route: if you're on /, the
- * browser scrolls to the section; if you're on /learn, it navigates to /
- * first and then scrolls. The destination sections don't all exist yet
- * (#how-it-works, #for-schools, #about are placeholders) — that's intentional
- * per the brief; the links are wired so future pages don't break URLs.
+ * Every entry points at a real route. The earlier `/#how-it-works`,
+ * `/#for-schools` and `/#about` anchor placeholders were removed — they
+ * targeted sections that were never built, so they scrolled nowhere.
  *
  * Mobile: a hamburger toggles an absolute-positioned dropdown beneath the
  * nav. State closes automatically on pathname changes so the menu doesn't
@@ -23,11 +21,9 @@ import { Menu, X } from "lucide-react";
 type NavLink = { label: string; href: string };
 
 const NAV_LINKS: NavLink[] = [
-  { label: "Subjects", href: "/learn" },
+  { label: "Chemistry", href: "/learn" },
   { label: "Past Papers", href: "/past-papers" },
-  { label: "How it works", href: "/#how-it-works" },
-  { label: "For schools", href: "/#for-schools" },
-  { label: "About", href: "/#about" },
+  { label: "Intensive", href: "/intensive" },
 ];
 
 export function SiteNav() {
@@ -77,12 +73,6 @@ export function SiteNav() {
           >
             Login
           </Link>
-          <Link
-            href="/learn"
-            className="inline-flex items-center rounded-md bg-signal px-5 py-2.5 text-sm font-medium text-ink transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-signal/90 hover:shadow-sm"
-          >
-            Start your journey →
-          </Link>
         </div>
 
         {/* Mobile toggle */}
@@ -129,13 +119,6 @@ export function SiteNav() {
                 className="rounded-md border border-ink/15 px-4 py-2.5 text-center text-sm font-medium text-ink hover:bg-ink/[0.04]"
               >
                 Login
-              </Link>
-              <Link
-                href="/learn"
-                onClick={closeMenu}
-                className="rounded-md bg-signal px-4 py-2.5 text-center text-sm font-medium text-ink hover:bg-signal/90"
-              >
-                Start your journey →
               </Link>
             </div>
           </div>
