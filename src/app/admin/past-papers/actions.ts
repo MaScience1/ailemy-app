@@ -11,6 +11,10 @@ import {
 import {
   isUploadGroupId,
   readSubmittedPaperPath,
+  // TEMPORARY INSTRUMENTATION — remove with PAPER_PATH_DEBUG.
+  PAPERS_BUCKET as SHARED_PAPERS_BUCKET,
+  PAPER_PATH_RE_SOURCE,
+  diagnosePaperPath,
 } from "@/lib/storage/paper-uploads";
 
 const PAPERS_BUCKET = "papers";
@@ -50,10 +54,64 @@ function readFields(fd: FormData) {
   // path. Each is validated against the exact shape this app mints — a client
   // that chooses where it uploads must not be able to point a row at some
   // other object in the bucket. `null` on a field means "no file in this slot".
-  const paperPath = readSubmittedPaperPath(fd.get("paper_pdf_path"));
-  const msPath = readSubmittedPaperPath(fd.get("markscheme_pdf_path"));
-  const erPath = readSubmittedPaperPath(fd.get("examiner_report_pdf_path"));
+  const rawPaper = fd.get("paper_pdf_path");
+  const rawMs = fd.get("markscheme_pdf_path");
+  const rawEr = fd.get("examiner_report_pdf_path");
+
+  const paperPath = readSubmittedPaperPath(rawPaper);
+  const msPath = readSubmittedPaperPath(rawMs);
+  const erPath = readSubmittedPaperPath(rawEr);
   const upload_group_id = String(fd.get("upload_group_id") ?? "").trim();
+
+  // ===== TEMPORARY INSTRUMENTATION — remove once the rejection is understood.
+  // Grep PAPER_PATH_DEBUG to find every line of it.
+  //
+  // Logs the RAW form value as well as the parsed result: the parsed value is
+  // an {ok,path} object, so JSON.stringify of it alone would not reveal what
+  // actually arrived. FormData is not a plain object either — Object.keys(fd)
+  // is always [] — so the field list uses fd.keys().
+  try {
+    const raw = (v: FormDataEntryValue | null) =>
+      v === null
+        ? { present: false }
+        : typeof v === "string"
+          ? { present: true, type: "string", value: v, length: v.length }
+          : { present: true, type: "File", name: v.name, size: v.size };
+
+    console.error(
+      "PAPER_PATH_DEBUG",
+      JSON.stringify({
+        bucketLocal: PAPERS_BUCKET,
+        bucketShared: SHARED_PAPERS_BUCKET,
+        ruleSource: PAPER_PATH_RE_SOURCE,
+        fieldsPresent: [...fd.keys()],
+        paper: {
+          raw: raw(rawPaper),
+          parsed: paperPath,
+          diagnosis:
+            typeof rawPaper === "string" && rawPaper.trim()
+              ? diagnosePaperPath(rawPaper.trim())
+              : null,
+        },
+        markscheme: {
+          raw: raw(rawMs),
+          parsed: msPath,
+          diagnosis:
+            typeof rawMs === "string" && rawMs.trim()
+              ? diagnosePaperPath(rawMs.trim())
+              : null,
+        },
+        examinerReport: { raw: raw(rawEr), parsed: erPath },
+        uploadGroupId: {
+          value: upload_group_id,
+          valid: isUploadGroupId(upload_group_id),
+        },
+      }),
+    );
+  } catch (e) {
+    console.error("PAPER_PATH_DEBUG failed to serialise", e);
+  }
+  // ===== END TEMPORARY INSTRUMENTATION
 
   return {
     course_id,
