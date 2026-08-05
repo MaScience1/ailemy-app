@@ -50,8 +50,14 @@ export async function AdminOverlay() {
             ? "Edit mode is ON — click to return to the student view"
             : "Edit mode is OFF — click to show inline editing controls"
         }
+        // cursor-pointer because a <button> in a form otherwise shows the
+        // default arrow. active:scale-95 + hover:shadow-xl are the only motion:
+        // 150ms ease-out, shorter than the site's 200ms marketing idiom because
+        // press feedback should feel immediate rather than animated. Tailwind's
+        // bare `transition` already covers transform and box-shadow, so no
+        // transition-all is needed.
         className={
-          "inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium shadow-lg ring-1 transition " +
+          "inline-flex cursor-pointer items-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium shadow-lg ring-1 transition duration-150 ease-out hover:shadow-xl active:scale-95 " +
           (editMode
             ? "bg-flask text-snow ring-flask/40 hover:bg-flask/90"
             : "bg-ink text-parchment ring-ink/20 hover:bg-ink/90")
