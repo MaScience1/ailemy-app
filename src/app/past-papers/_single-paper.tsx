@@ -1,27 +1,41 @@
 import Link from "next/link";
+import { ClipboardCheck, Download, Play, ScrollText } from "lucide-react";
 
-import { PaperViewer } from "@/components/paper/PaperViewer";
 import type { PaperResult } from "@/lib/catalogue/past-paper-filters";
 import type { PaperInitial } from "@/app/admin/past-papers/_form";
 
 import { PaperRowControls } from "./_admin-controls";
-import { PaperDocLinks } from "./_doc-links";
+import { PaperPreview } from "./_paper-preview";
 
 /**
- * Single-result view for /past-papers.
+ * Result card for a single filtered paper (spec §1).
  *
- * Shown INSTEAD of the list when the active filters resolve to exactly one
- * paper. Zero results still get the list page's empty state and two-or-more
- * still get the list, so this is purely an additional branch.
+ * Shown INSTEAD of the list when the filters resolve to exactly one paper. Zero
+ * results keep the empty state and two-or-more keep the list.
  *
- * Server component — the buttons are links and the viewer is an iframe, so
- * nothing here needs a client boundary. The only client code is the admin
- * control strip, which renders solely in edit mode.
+ * The PDF is NOT rendered by default any more — §1 is explicit that the whole
+ * paper must not sit inside the results card, so it lives behind the "Preview
+ * paper" disclosure. This supersedes the inline-by-default viewer from 6e916b3.
+ *
+ * NO FABRICATED METADATA (§15.13): Duration and Total marks come from columns
+ * added by migration 0015 and are null both before that migration is applied
+ * and before the value has been entered. Every metadata row is omitted when its
+ * value is null rather than shown with a placeholder or a guess.
+ *
+ * Server component. The only client island is the preview disclosure, so a
+ * visitor who never opens it does not download pdf.js.
  */
 
-/** Shared geometry so the two pills are the same size to the pixel. */
-const PILL_BASE =
-  "inline-flex w-full items-center justify-center rounded-full border px-6 py-3 text-sm font-medium transition-all duration-200 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink";
+/** 90 -> "1 hour 30 minutes"; 45 -> "45 minutes". Null stays null. */
+function formatDuration(minutes: number | null): string | null {
+  if (minutes == null || minutes <= 0) return null;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  const parts: string[] = [];
+  if (h) parts.push(`${h} hour${h === 1 ? "" : "s"}`);
+  if (m) parts.push(`${m} minute${m === 1 ? "" : "s"}`);
+  return parts.join(" ");
+}
 
 export function SinglePaperView({
   paper,
@@ -35,101 +49,164 @@ export function SinglePaperView({
     optionsError: string | null;
   } | null;
 }) {
-  const pdfUrl = paper.questionPaperUrl;
+  const duration = formatDuration(paper.durationMinutes);
+  const unitLine = paper.unitName
+    ? paper.unitCode
+      ? `${paper.unitCode}: ${paper.unitName}`
+      : paper.unitName
+    : null;
+
+  // Rows are built as data so a null value drops out entirely rather than
+  // rendering an empty or invented field.
+  const facts: { label: string; value: string }[] = [
+    paper.paperCode ? { label: "Paper code", value: paper.paperCode } : null,
+    duration ? { label: "Duration", value: duration } : null,
+    paper.totalMarks != null
+      ? { label: "Total marks", value: String(paper.totalMarks) }
+      : null,
+  ].filter((f): f is { label: string; value: string } => f !== null);
 
   return (
-    <section
-      aria-label={`${paper.paperName} — question paper`}
-      className="mt-4"
-    >
-      <div className="rounded-lg border border-ink/10 bg-snow p-5 sm:p-8">
-        {/* Which paper am I looking at? Mirrors the list row's metadata line. */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
+    <section aria-label={`${paper.paperName} — paper details`} className="mt-4">
+      <div className="rounded-lg border border-ink/10 bg-snow p-6 shadow-sm sm:p-9">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
+          {/* LEFT — identity and facts */}
+          <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink/55">
                 {paper.boardName} · {paper.subjectName} · {paper.courseLevel}
               </p>
-              {paper.paperCode && (
-                <span className="font-mono rounded bg-ink/[0.06] px-1.5 py-0.5 text-[10px] font-medium text-ink/70">
-                  {paper.paperCode}
-                </span>
-              )}
               {paper.status !== "live" && (
                 <span className="font-mono rounded bg-flask/15 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-flask">
                   {paper.status}
                 </span>
               )}
             </div>
-            <h2 className="font-display mt-2 text-2xl font-medium tracking-tight">
-              {paper.session} {paper.year}
-              <span className="ml-2 text-base font-normal text-ink/55">
-                {paper.courseName}
-              </span>
+
+            <h2 className="font-display mt-3 text-2xl font-medium leading-tight tracking-tight sm:text-3xl">
+              {paper.courseName}
             </h2>
 
-            {/* The mark scheme, examiner report and walkthrough would otherwise
-                be unreachable here — this view replaces the list row that
-                carries them, and the pills below cover only the question paper.
-                Filtering by Document type = Mark scheme down to one result made
-                the very document filtered for impossible to open. */}
-            <PaperDocLinks paper={paper} showQuestionPaper={false} />
+            {unitLine && (
+              <p className="mt-2 text-base text-ink/70">{unitLine}</p>
+            )}
+
+            <p className="font-display mt-1 text-lg text-ink/60">
+              {paper.session} {paper.year}
+            </p>
+
+            {facts.length > 0 && (
+              <dl className="mt-6 flex flex-wrap gap-x-10 gap-y-3">
+                {facts.map((f) => (
+                  <div key={f.label}>
+                    <dt className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45">
+                      {f.label}
+                    </dt>
+                    <dd className="font-mono mt-1 text-sm text-ink/80">
+                      {f.value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            )}
           </div>
 
-          {/* Edit/Delete would otherwise be unreachable for a single result,
-              since this view replaces the list row that normally carries them.
-              Reuses the existing controls — no new write path. */}
-          {admin?.initial && (
-            <div className="shrink-0">
-              <PaperRowControls
-                paper={admin.initial}
-                courses={admin.courses}
-                units={admin.units}
-                optionsError={admin.optionsError}
-              />
+          {/* RIGHT — actions */}
+          <div className="w-full shrink-0 lg:w-[280px]">
+            <div className="flex flex-col gap-2.5">
+              {/* Goes straight to student mode for now. The next commit puts
+                  the student/teacher mode-selection modal behind this. */}
+              <Link
+                href={`/past-papers/${paper.slug}/test`}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-transparent bg-signal px-6 py-3 text-sm font-medium text-ink transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-signal/90 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
+              >
+                <Play className="h-4 w-4" aria-hidden="true" />
+                Start Test
+              </Link>
+
+              {paper.questionPaperUrl ? (
+                <a
+                  href={paper.questionPaperUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-ink/20 bg-transparent px-6 py-3 text-sm font-medium text-ink transition-all duration-200 ease-out hover:-translate-y-0.5 hover:border-ink/40 hover:bg-ink/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
+                >
+                  <Download className="h-4 w-4" aria-hidden="true" />
+                  Download PDF
+                </a>
+              ) : (
+                <span
+                  aria-disabled="true"
+                  className="inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-md border border-ink/10 bg-transparent px-6 py-3 text-sm font-medium text-ink/35"
+                >
+                  <Download className="h-4 w-4" aria-hidden="true" />
+                  Download PDF
+                </span>
+              )}
             </div>
-          )}
+
+            {/* Secondary documents — rendered only when they exist. */}
+            {(paper.markSchemeUrl || paper.examinerReportUrl) && (
+              <div className="mt-4 flex flex-col gap-2.5">
+                {paper.markSchemeUrl && (
+                  <SecondaryLink
+                    href={paper.markSchemeUrl}
+                    icon={<ScrollText className="h-3.5 w-3.5" aria-hidden="true" />}
+                    label="View Mark Scheme"
+                  />
+                )}
+                {paper.examinerReportUrl && (
+                  <SecondaryLink
+                    href={paper.examinerReportUrl}
+                    icon={<ClipboardCheck className="h-3.5 w-3.5" aria-hidden="true" />}
+                    label="View Examiner Report"
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Edit/Delete would otherwise be unreachable for a single result,
+                since this card replaces the list row that carries them. */}
+            {admin?.initial && (
+              <div className="mt-5 border-t border-ink/10 pt-4">
+                <PaperRowControls
+                  paper={admin.initial}
+                  courses={admin.courses}
+                  units={admin.units}
+                  optionsError={admin.optionsError}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Actions — centred stack, both pills full-width and identical size.
-            gap-2 is 8px. The primary carries a transparent border so it matches
-            the outlined secondary's box height exactly rather than sitting 2px
-            shorter. */}
-        <div className="mx-auto mt-6 flex w-full max-w-md flex-col gap-2">
-          <Link
-            href={`/past-papers/${paper.slug}/test`}
-            className={`${PILL_BASE} border-transparent bg-signal text-ink hover:-translate-y-0.5 hover:bg-signal/90 hover:shadow-md`}
-          >
-            Start test
-          </Link>
-
-          {pdfUrl ? (
-            <a
-              href={pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`${PILL_BASE} border-ink/15 bg-transparent text-ink hover:-translate-y-0.5 hover:border-ink/40 hover:bg-ink/[0.03]`}
-            >
-              Download as PDF
-            </a>
-          ) : (
-            <span
-              aria-disabled="true"
-              className={`${PILL_BASE} cursor-not-allowed border-ink/10 bg-transparent text-ink/35`}
-            >
-              Download as PDF
-            </span>
-          )}
-        </div>
-
-        <div className="mt-6">
-          <PaperViewer
-            mode="preview"
-            url={pdfUrl}
-            title={`${paper.courseName} — ${paper.session} ${paper.year} question paper`}
-          />
-        </div>
+        <PaperPreview
+          url={paper.questionPaperUrl}
+          title={`${paper.courseName} — ${paper.session} ${paper.year} question paper`}
+        />
       </div>
     </section>
+  );
+}
+
+function SecondaryLink({
+  href,
+  icon,
+  label,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-2 text-sm font-medium text-ink/65 underline-offset-4 transition-colors hover:text-ink hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
+    >
+      {icon}
+      {label}
+    </a>
   );
 }

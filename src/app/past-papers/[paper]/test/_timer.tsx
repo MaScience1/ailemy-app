@@ -17,8 +17,31 @@ import { Pause, Play } from "lucide-react";
  * real timed attempt.
  *
  * Starts PAUSED. The clock should not run because a page happened to load.
+ *
+ * NULL DURATION: this used to count down from a hardcoded 90 minutes for every
+ * paper, because the schema could not express an exam length. Migration 0015
+ * adds past_papers.duration_minutes; where it is still null the timer says so
+ * rather than inventing a length. A wrong exam duration is worse than no clock.
  */
-export function TestTimer({ durationMinutes }: { durationMinutes: number }) {
+export function TestTimer({
+  durationMinutes,
+}: {
+  durationMinutes: number | null;
+}) {
+  if (durationMinutes == null || durationMinutes <= 0) {
+    return (
+      <p
+        className="font-mono text-[11px] uppercase tracking-[0.18em] text-parchment/50"
+        title="Set a duration for this paper in the admin panel to enable the countdown."
+      >
+        Duration not recorded
+      </p>
+    );
+  }
+  return <Countdown durationMinutes={durationMinutes} />;
+}
+
+function Countdown({ durationMinutes }: { durationMinutes: number }) {
   const durationMs = durationMinutes * 60_000;
   const [remaining, setRemaining] = useState(durationMs);
   const [running, setRunning] = useState(false);

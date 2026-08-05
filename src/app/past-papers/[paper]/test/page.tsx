@@ -25,13 +25,6 @@ import { TestTimer } from "./_timer";
  * header is sticky in both modes, so the clock is never scrolled away.
  */
 
-/**
- * past_papers has NO exam-duration column yet — migration 0015 adds one but is
- * applied by hand. Until the data layer reads it, every paper counts down from
- * this constant.
- */
-const DEFAULT_DURATION_MINUTES = 90;
-
 export const dynamic = "force-dynamic";
 
 type Params = Promise<{ paper: string }>;
@@ -81,7 +74,7 @@ export default async function PaperTestPage({ params }: { params: Params }) {
           </p>
         </div>
 
-        <TestTimer durationMinutes={DEFAULT_DURATION_MINUTES} />
+        <TestTimer durationMinutes={paper.durationMinutes} />
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 p-4 sm:p-6 lg:flex-row">
