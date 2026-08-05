@@ -24,6 +24,16 @@ function readFields(fd: FormData) {
   const paper_code = String(fd.get("paper_code") ?? "").trim() || null;
   const walkthrough_mux_playback_id =
     String(fd.get("walkthrough_mux_playback_id") ?? "").trim() || null;
+  // Exam facts (migration 0015). Blank means "not recorded yet", which is a
+  // legitimate state — the results card omits the row and the test timer says
+  // so — hence null rather than a default.
+  const durationRaw = String(fd.get("duration_minutes") ?? "").trim();
+  const duration_minutes = durationRaw ? Number(durationRaw) : null;
+  const totalMarksRaw = String(fd.get("total_marks") ?? "").trim();
+  const total_marks = totalMarksRaw ? Number(totalMarksRaw) : null;
+
+  // The length of the walkthrough VIDEO — a different fact from
+  // duration_minutes above, and deliberately left alone.
   const walkthroughMinsRaw = String(fd.get("walkthrough_duration_minutes") ?? "").trim();
   const walkthrough_duration_minutes = walkthroughMinsRaw
     ? Number(walkthroughMinsRaw)
@@ -40,6 +50,8 @@ function readFields(fd: FormData) {
     year,
     session,
     paper_code,
+    duration_minutes,
+    total_marks,
     walkthrough_mux_playback_id,
     walkthrough_duration_minutes,
     sort_order,
@@ -62,6 +74,18 @@ function validate(fields: ReturnType<typeof readFields>): string | null {
     return `Session must be ${examSessionsSentence()}`;
   if (!fields.year || fields.year < 1900 || fields.year > 2200)
     return "Year must be a plausible integer";
+  // Optional, but if given must be a positive whole number. 0015 declares
+  // CHECK (x IS NULL OR x > 0) on both, so an out-of-range value would
+  // otherwise surface as a raw constraint-violation message. Number("abc") is
+  // NaN, which Postgres rejects too — caught here for the same reason.
+  for (const [label, value] of [
+    ["Exam duration (minutes)", fields.duration_minutes],
+    ["Total marks", fields.total_marks],
+  ] as const) {
+    if (value === null) continue;
+    if (!Number.isInteger(value) || value < 1)
+      return `${label} must be a whole number greater than zero, or left blank`;
+  }
   if (!["draft", "live", "in_progress", "coming_soon", "archived"].includes(fields.status))
     return "Invalid status";
   return null;
@@ -112,6 +136,8 @@ export async function createPastPaper(
         session: fields.session,
         paper_code: fields.paper_code,
         paper_name: fields.paper_name,
+        duration_minutes: fields.duration_minutes,
+        total_marks: fields.total_marks,
         walkthrough_mux_playback_id: fields.walkthrough_mux_playback_id,
         walkthrough_duration_minutes: fields.walkthrough_duration_minutes,
         status: fields.status,
@@ -223,6 +249,8 @@ export async function updatePastPaper(
       session: fields.session,
       paper_code: fields.paper_code,
       paper_name: fields.paper_name,
+      duration_minutes: fields.duration_minutes,
+      total_marks: fields.total_marks,
       walkthrough_mux_playback_id: fields.walkthrough_mux_playback_id,
       walkthrough_duration_minutes: fields.walkthrough_duration_minutes,
       status: fields.status,

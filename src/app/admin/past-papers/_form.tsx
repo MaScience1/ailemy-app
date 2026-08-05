@@ -39,7 +39,11 @@ export type PaperInitial = {
   markscheme_pdf_path: string | null;
   /** Optional: absent until migration 0012 is applied. */
   examiner_report_pdf_path?: string | null;
+  /** Length of the EXAM, from migration 0015. Not the walkthrough video. */
+  duration_minutes?: number | null;
+  total_marks?: number | null;
   walkthrough_mux_playback_id: string | null;
+  /** Length of the walkthrough VIDEO. Unrelated to duration_minutes. */
   walkthrough_duration_minutes: number | null;
   sort_order: number | null;
   status: string;
@@ -447,6 +451,45 @@ export function PastPaperForm({
           the public <code className="mx-1 rounded bg-slate-100 px-1">papers</code>
           bucket; URLs are constructed directly by the /past-papers pages.
         </p>
+      </fieldset>
+
+      {/*
+        The two facts about the EXAM itself, from migration 0015. Deliberately
+        its own fieldset above Walkthrough, because "duration" appears in both
+        and they mean different things: this one is how long the exam lasts and
+        drives the countdown on /past-papers/[paper]/test, while the walkthrough
+        duration below is the length of the Mux VIDEO. Conflating them was the
+        reason the test page hardcoded 90 minutes for every paper.
+      */}
+      <fieldset className="min-w-0 rounded-md border border-slate-200 p-4">
+        <legend className="px-1 text-xs font-medium uppercase tracking-wider text-slate-500">
+          Exam
+        </legend>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field
+            label="Exam duration (minutes)"
+            hint="optional — e.g. 90. Leave blank if not known; the test timer then says so rather than guessing."
+          >
+            <input
+              name="duration_minutes"
+              type="number"
+              min={1}
+              step={1}
+              defaultValue={initial?.duration_minutes ?? ""}
+              className={INPUT}
+            />
+          </Field>
+          <Field label="Total marks" hint="optional — e.g. 80">
+            <input
+              name="total_marks"
+              type="number"
+              min={1}
+              step={1}
+              defaultValue={initial?.total_marks ?? ""}
+              className={INPUT}
+            />
+          </Field>
+        </div>
       </fieldset>
 
       <fieldset className="min-w-0 rounded-md border border-slate-200 p-4">
