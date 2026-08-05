@@ -4,16 +4,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SignOutButton } from "./sign-out-button";
 
-type SearchParams = Promise<{ welcome?: string }>;
-
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
-  const params = await searchParams;
-  const showWelcome = params.welcome === "true";
-
+export default async function DashboardPage() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -65,16 +56,6 @@ export default async function DashboardPage({
           <SignOutButton />
         </div>
       </nav>
-
-      {showWelcome && (
-        <div className="border-b border-signal/40 bg-signal/15">
-          <div className="mx-auto w-full max-w-7xl px-6 py-3 sm:px-10">
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-ink/75">
-              Welcome to Ailemy. Your account is verified.
-            </p>
-          </div>
-        </div>
-      )}
 
       <main className="flex flex-1 items-start">
         <div className="mx-auto w-full max-w-7xl px-6 py-20 sm:px-10 sm:py-28">

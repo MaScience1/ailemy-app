@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
+import { postSignInTarget } from "@/lib/auth/safe-next";
 
 const FORM_INPUT_CLASS =
   "h-10 rounded-md border-ink/15 bg-snow text-ink focus-visible:border-flask focus-visible:ring-flask/30 md:text-sm";
@@ -15,7 +16,14 @@ const FORM_INPUT_CLASS =
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/dashboard";
+  // Defaults to "/" now, not "/dashboard". An explicit ?next= still wins, so a
+  // student bounced here from a gated page lands where they intended.
+  //
+  // postSignInTarget also VALIDATES it. This previously pushed the raw query
+  // value straight into router.push(), so /login?next=https://evil.com would
+  // navigate a freshly-authenticated user off-site. The callback route already
+  // guarded against that; this path did not.
+  const next = postSignInTarget(searchParams.get("next"));
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
