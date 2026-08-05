@@ -1,5 +1,7 @@
 import { FileWarning } from "lucide-react";
 
+import { cn } from "@/lib/utils";
+
 /**
  * Embedded PDF viewer for a past paper.
  *
@@ -23,19 +25,30 @@ import { FileWarning } from "lucide-react";
 export function PaperPdfViewer({
   url,
   title,
+  /**
+   * Sizing is a prop so the test workspace can run the viewer full-height
+   * without forking the component. Merged with cn() (tailwind-merge), which
+   * resolves conflicting height utilities properly — plain string concatenation
+   * would leave both `h-[65vh]` and `h-full` in the class list and let
+   * stylesheet order, not intent, decide the winner.
+   */
+  heightClass = "h-[65vh] max-h-[800px] md:h-[800px]",
   className = "",
 }: {
   url: string | null;
   title: string;
+  heightClass?: string;
   className?: string;
 }) {
-  // h-[65vh] on mobile keeps the viewer meaningfully tall without swallowing
-  // the whole screen; md:h-[800px] is the fixed desktop height.
-  const frame = `h-[65vh] max-h-[800px] md:h-[800px] overflow-hidden rounded-lg border border-ink/10 bg-snow ${className}`;
+  const frame = cn(
+    heightClass,
+    "overflow-hidden rounded-lg border border-ink/10 bg-snow",
+    className,
+  );
 
   if (!url) {
     return (
-      <div className={`${frame} flex items-center justify-center p-6`}>
+      <div className={cn(frame, "flex items-center justify-center p-6")}>
         <div className="max-w-sm text-center">
           <FileWarning className="mx-auto h-8 w-8 text-ink/40" aria-hidden="true" />
           <p className="font-display mt-4 text-lg font-medium tracking-tight">

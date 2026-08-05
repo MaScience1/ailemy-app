@@ -366,6 +366,104 @@ export function filtersToQueryString(f: Filters): string {
   return p.toString();
 }
 
+/** Shape one raw PostgREST row into the view model. */
+function mapPaperRow(r: RawPaperRow): PaperResult {
+  const c = r.course!;
+  const detailHref =
+    c.subject?.slug && c.pathway && c.slug
+      ? `/learn/${c.subject.slug}/${c.pathway}/${c.slug}/papers/${r.slug}`
+      : null;
+  return {
+    id: r.id,
+    slug: r.slug,
+    paperName: r.paper_name,
+    paperCode: r.paper_code,
+    session: r.session,
+    year: r.year,
+    status: r.status,
+    subjectName: c.subject?.name ?? "—",
+    subjectSlug: c.subject?.slug ?? "",
+    boardName: c.curriculum?.short_name || c.curriculum?.name || "—",
+    courseName: c.name,
+    courseSlug: c.slug,
+    courseLevel: c.level,
+    pathway: c.pathway,
+    questionPaperUrl: getPaperPublicUrl(r.paper_pdf_path),
+    markSchemeUrl: getPaperPublicUrl(r.markscheme_pdf_path),
+    examinerReportUrl: getPaperPublicUrl(r.examiner_report_pdf_path),
+    walkthroughPlaybackId: r.walkthrough_mux_playback_id,
+    walkthroughMinutes: r.walkthrough_duration_minutes,
+    detailHref,
+  };
+}
+
+/**
+ * Run a query with the examiner-report column, falling back once (permanently
+ * for the process) to the projection without it when migration 0012 has not
+ * been applied. Shared by every read here so the fallback cannot drift between
+ * call sites.
+ */
+async function withErFallback<T>(
+  run: (
+    withEr: boolean,
+  ) => PromiseLike<{ data: T | null; error: { code?: string; message?: string } | null }>,
+) {
+  let withEr = examinerReportColumnExists !== false;
+  let { data, error } = await run(withEr);
+
+  if (error && withEr && isMissingColumn(error)) {
+    examinerReportColumnExists = false;
+    withEr = false;
+    console.warn(
+      "[past-paper-filters] examiner_report_pdf_path missing (apply migration 0012); continuing without it",
+    );
+    ({ data, error } = await run(false));
+  } else if (!error && withEr) {
+    examinerReportColumnExists = true;
+  }
+
+  return { data, error, withEr };
+}
+
+/**
+ * One paper by slug, for /past-papers/[paper]/test.
+ *
+ * AMBIGUITY: past_papers declares UNIQUE (course_id, slug), NOT a global unique
+ * — two courses may legitimately share a slug. We therefore ask for two rows
+ * rather than using .maybeSingle(), which ERRORS on a second match and would
+ * turn a data condition into a 500. If more than one comes back we log it and
+ * take the newest, so the page still renders while the collision is visible in
+ * the logs.
+ */
+export async function getPaperBySlug(slug: string): Promise<PaperResult | null> {
+  const db = await getReader();
+
+  const { data, error } = await withErFallback<RawPaperRow[]>((withEr) =>
+    db
+      .from("past_papers")
+      .select(withEr ? PAPER_SELECT_WITH_ER : PAPER_SELECT)
+      .eq("slug", slug)
+      .order("year", { ascending: false })
+      .limit(2) as unknown as PromiseLike<{
+      data: RawPaperRow[] | null;
+      error: { code?: string; message?: string } | null;
+    }>,
+  );
+
+  if (error) {
+    console.error("[past-paper-filters] getPaperBySlug failed", error);
+    return null;
+  }
+
+  const rows = (data ?? []).filter((r) => r.course);
+  if (rows.length > 1) {
+    console.warn(
+      `[past-paper-filters] slug "${slug}" matches ${rows.length} papers across courses; using the newest. past_papers is unique on (course_id, slug), not slug alone.`,
+    );
+  }
+  return rows[0] ? mapPaperRow(rows[0]) : null;
+}
+
 /** Apply the filters and return matching papers, newest first. */
 export async function listFilteredPastPapers(
   filters: Filters,
@@ -399,21 +497,7 @@ export async function listFilteredPastPapers(
 
   // Try the projection that includes examiner_report_pdf_path unless a previous
   // request in this process already proved the column is absent.
-  let withEr = examinerReportColumnExists !== false;
-  let { data, error } = await run(withEr);
-
-  if (error && withEr && isMissingColumn(error)) {
-    // Migration 0012 has not been applied. Remember, and retry without it so
-    // the page still renders question papers and mark schemes.
-    examinerReportColumnExists = false;
-    withEr = false;
-    console.warn(
-      "[past-paper-filters] examiner_report_pdf_path missing (apply migration 0012); continuing without it",
-    );
-    ({ data, error } = await run(false));
-  } else if (!error && withEr) {
-    examinerReportColumnExists = true;
-  }
+  const { data, error, withEr } = await withErFallback(run);
 
   if (error) {
     console.error("[past-paper-filters] query failed", error);
@@ -426,35 +510,7 @@ export async function listFilteredPastPapers(
 
   return ((data ?? []) as unknown as RawPaperRow[])
     .filter((r) => r.course)
-    .map((r) => {
-      const c = r.course!;
-      const detailHref =
-        c.subject?.slug && c.pathway && c.slug
-          ? `/learn/${c.subject.slug}/${c.pathway}/${c.slug}/papers/${r.slug}`
-          : null;
-      return {
-        id: r.id,
-        slug: r.slug,
-        paperName: r.paper_name,
-        paperCode: r.paper_code,
-        session: r.session,
-        year: r.year,
-        status: r.status,
-        subjectName: c.subject?.name ?? "—",
-        subjectSlug: c.subject?.slug ?? "",
-        boardName: c.curriculum?.short_name || c.curriculum?.name || "—",
-        courseName: c.name,
-        courseSlug: c.slug,
-        courseLevel: c.level,
-        pathway: c.pathway,
-        questionPaperUrl: getPaperPublicUrl(r.paper_pdf_path),
-        markSchemeUrl: getPaperPublicUrl(r.markscheme_pdf_path),
-        examinerReportUrl: getPaperPublicUrl(r.examiner_report_pdf_path),
-        walkthroughPlaybackId: r.walkthrough_mux_playback_id,
-        walkthroughMinutes: r.walkthrough_duration_minutes,
-        detailHref,
-      };
-    });
+    .map(mapPaperRow);
 }
 
 /** True when at least one filter is active — drives the empty-state copy. */
