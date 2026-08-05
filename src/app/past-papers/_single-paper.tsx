@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { PaperPdfViewer } from "@/components/paper/PaperPdfViewer";
+import { PaperViewer } from "@/components/paper/PaperViewer";
 import type { PaperResult } from "@/lib/catalogue/past-paper-filters";
 import type { PaperInitial } from "@/app/admin/past-papers/_form";
 
@@ -123,7 +123,8 @@ export function SinglePaperView({
         </div>
 
         <div className="mt-6">
-          <PaperPdfViewer
+          <PaperViewer
+            mode="preview"
             url={pdfUrl}
             title={`${paper.courseName} — ${paper.session} ${paper.year} question paper`}
           />

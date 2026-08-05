@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
-import { PaperPdfViewer } from "@/components/paper/PaperPdfViewer";
+import { PaperViewer } from "@/components/paper/PaperViewer";
 import { getPaperBySlug } from "@/lib/catalogue/past-paper-filters";
 
 import { TestTimer } from "./_timer";
@@ -26,10 +26,9 @@ import { TestTimer } from "./_timer";
  */
 
 /**
- * past_papers has NO exam-duration column — 0007 stores only
- * walkthrough_duration_minutes, which is the length of the walkthrough VIDEO
- * and must not be confused for the length of the exam. Until a real
- * duration_minutes column exists, every paper counts down from this constant.
+ * past_papers has NO exam-duration column yet — migration 0015 adds one but is
+ * applied by hand. Until the data layer reads it, every paper counts down from
+ * this constant.
  */
 const DEFAULT_DURATION_MINUTES = 90;
 
@@ -86,12 +85,15 @@ export default async function PaperTestPage({ params }: { params: Params }) {
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col gap-4 p-4 sm:p-6 lg:flex-row">
-        {/* Paper — the primary focus, two-thirds of the workspace on desktop. */}
+        {/* Paper — the primary focus, two-thirds of the workspace on desktop.
+            Only the QUESTION paper URL is ever passed: PaperViewer takes a
+            single `url`, so there is no channel by which mark-scheme content
+            could reach student mode (spec §15.8). */}
         <div className="min-h-0 lg:h-full lg:w-2/3">
-          <PaperPdfViewer
+          <PaperViewer
             url={paper.questionPaperUrl}
             title={`${paper.courseName} — ${paper.session} ${paper.year} question paper`}
-            heightClass="h-[70vh] lg:h-full"
+            mode="student"
           />
         </div>
 
