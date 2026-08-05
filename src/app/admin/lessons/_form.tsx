@@ -122,7 +122,11 @@ export function LessonForm({
             name="slug"
             defaultValue={initial?.slug ?? ""}
             required
-            pattern="[a-z0-9-]+"
+            // Escaped hyphen — see the same field in past-papers/_form.tsx.
+            // HTML compiles `pattern` with the regex `v` flag, where a trailing
+            // unescaped `-` in a character class is a SyntaxError and silently
+            // disables constraint validation for the input.
+            pattern="[a-z0-9\-]+"
             className={INPUT}
           />
         </Field>
