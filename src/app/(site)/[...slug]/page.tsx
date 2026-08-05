@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
+import { getNavSession } from "@/lib/auth/nav-session";
 import { Breadcrumb } from "@/components/catalogue/breadcrumb";
 import { getEditContext } from "@/lib/admin/edit-mode";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -88,9 +89,11 @@ export default async function DynamicPage({ params }: { params: Params }) {
 
   const html = renderMarkdown(page.body_md);
 
+  const session = await getNavSession();
+
   return (
     <>
-      <SiteNav />
+      <SiteNav session={session} />
       <main className="min-h-screen bg-parchment text-ink">
         <div className="mx-auto w-full max-w-3xl px-6 py-16 sm:px-10 sm:py-24">
           <Breadcrumb crumbs={[{ label: page.title }]} />

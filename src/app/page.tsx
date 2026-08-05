@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
+import { getNavSession } from "@/lib/auth/nav-session";
 import { Editable } from "@/components/admin-inline/Editable";
 import { NewPageSlot } from "@/components/admin-inline/page-slots";
 
@@ -43,10 +44,12 @@ function SubjectCard({
   );
 }
 
-export default function Home() {
+export default async function Home() {
+  const session = await getNavSession();
+
   return (
     <div className="bg-parchment text-ink">
-      <SiteNav />
+      <SiteNav session={session} />
 
       {/*
         Single-column hero. min-h is a fixed 640px rather than a viewport

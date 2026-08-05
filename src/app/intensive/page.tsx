@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
+import { getNavSession } from "@/lib/auth/nav-session";
 import { Editable } from "@/components/admin-inline/Editable";
 
 /**
@@ -28,10 +29,12 @@ export const metadata: Metadata = {
     "A twelve-week Edexcel IAL Chemistry AS intensive: every specification point taught, and every answer marked against the real mark scheme.",
 };
 
-export default function IntensiveMarketingPage() {
+export default async function IntensiveMarketingPage() {
+  const session = await getNavSession();
+
   return (
     <div className="bg-parchment text-ink">
-      <SiteNav />
+      <SiteNav session={session} />
 
       <section className="flex min-h-[70vh] items-center">
         <div className="animate-fade-in mx-auto w-full max-w-7xl px-6 py-20 sm:px-10 sm:py-24">
