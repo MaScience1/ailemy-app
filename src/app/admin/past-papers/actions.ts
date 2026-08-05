@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 
 import { assertAdmin } from "@/lib/admin/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  examSessionsSentence,
+  isExamSession,
+} from "@/lib/catalogue/exam-sessions";
 
 const PAPERS_BUCKET = "papers";
 
@@ -50,6 +54,12 @@ function validate(fields: ReturnType<typeof readFields>): string | null {
     return "Slug must be lowercase letters, numbers and hyphens only";
   if (!fields.paper_name) return "Paper name is required";
   if (!fields.session) return "Session is required";
+  // The dropdown is UI friction, not a guard — a crafted or replayed POST
+  // reaches this action directly. The /past-papers filters match on the stored
+  // string, so a single off-list value silently splits one session's papers
+  // into two buckets. Rejecting here is the actual enforcement.
+  if (!isExamSession(fields.session))
+    return `Session must be ${examSessionsSentence()}`;
   if (!fields.year || fields.year < 1900 || fields.year > 2200)
     return "Year must be a plausible integer";
   if (!["draft", "live", "in_progress", "coming_soon", "archived"].includes(fields.status))
@@ -218,13 +228,37 @@ export async function updatePastPaper(
       status: fields.status,
       sort_order: fields.sort_order,
     };
+    // The form's per-slot "Remove" checkbox. Until now a path could only ever
+    // be set or left alone, never cleared, so a file mis-slotted into the wrong
+    // row was permanent.
+    //
+    // An upload WINS over a remove flag: if both arrive for the same slot the
+    // admin has picked a replacement, and honouring the remove would throw the
+    // new file away. The form hides Remove once a file is chosen, so this only
+    // guards a hand-crafted or replayed submission.
+    const removeFlag = (name: string) => fd.get(name) === "1";
+
     if (paper_pdf_path !== null) patch.paper_pdf_path = paper_pdf_path;
-    if (markscheme_pdf_path !== null) patch.markscheme_pdf_path = markscheme_pdf_path;
-    // Same reasoning as createPastPaper: omit the column unless a file was
-    // actually uploaded, so edits keep working before 0012 is applied.
+    else if (removeFlag("remove_paper_file")) patch.paper_pdf_path = null;
+
+    if (markscheme_pdf_path !== null)
+      patch.markscheme_pdf_path = markscheme_pdf_path;
+    else if (removeFlag("remove_markscheme_file"))
+      patch.markscheme_pdf_path = null;
+
+    // Same reasoning as createPastPaper: omit the column unless something is
+    // actually being written to it, so edits keep working before 0012 is
+    // applied. Clearing counts as writing, hence the removal branch.
     if (examiner_report_pdf_path) {
       patch.examiner_report_pdf_path = examiner_report_pdf_path;
+    } else if (removeFlag("remove_examiner_report_file")) {
+      patch.examiner_report_pdf_path = null;
     }
+
+    // NOTE: this clears the reference, not the object. The uploaded PDF stays
+    // in the papers bucket, so a mistaken removal is recoverable and a shared
+    // file cannot be pulled out from under another row. Bucket cleanup is a
+    // separate job.
 
     const { error: updateError } = await supabase
       .from("past_papers")

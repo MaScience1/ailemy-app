@@ -17,7 +17,31 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * NOT swallowed.
  */
 
-export type CourseOption = { id: string; label: string };
+/**
+ * The extra fields are OPTIONAL on purpose. Four places outside the admin panel
+ * redeclare this shape structurally as `{ id: string; label: string }`
+ * (past-papers/_admin-controls.tsx, _single-paper.tsx, page.tsx and
+ * admin/inline-data.ts). Making the new fields optional keeps every one of them
+ * assignable without edits, so enriching the option list for the admin form
+ * does not ripple into the past-papers front end.
+ *
+ * `label` stays exactly as it was — the flat "board · subject · name (level)"
+ * string — for any consumer that just wants one line of text.
+ */
+export type CourseOption = {
+  id: string;
+  label: string;
+  /** curricula.short_name, e.g. "Edexcel IAL" — groups the admin dropdown. */
+  boardShortName?: string;
+  /** curricula.name, e.g. "Cambridge IGCSE". Often the prefix a course name
+   *  actually carries, where short_name ("CIE IGCSE") is not. */
+  boardName?: string;
+  subjectName?: string;
+  /** courses.level, e.g. "AS", "A2", "GCSE". */
+  level?: string;
+  /** courses.name, e.g. "Edexcel IAL AS Chemistry". */
+  courseName?: string;
+};
 export type UnitOption = { id: string; label: string; parentId: string };
 
 export type PaperFormOptionsResult = {
@@ -82,6 +106,11 @@ export async function loadPaperFormOptions(): Promise<PaperFormOptionsResult> {
       }[]
     ).map((c) => [c.id, c.short_name || c.name]),
   );
+  const currFullName = new Map(
+    (
+      (curriculaRes.data ?? []) as { id: string; name: string }[]
+    ).map((c) => [c.id, c.name]),
+  );
 
   const courses: CourseOption[] = (
     (coursesRes.data ?? []) as {
@@ -96,6 +125,11 @@ export async function loadPaperFormOptions(): Promise<PaperFormOptionsResult> {
     label: `${currName.get(c.curriculum_id) ?? "?"} · ${
       subjectName.get(c.subject_id) ?? "?"
     } · ${c.name} (${c.level})`,
+    boardShortName: currName.get(c.curriculum_id),
+    boardName: currFullName.get(c.curriculum_id),
+    subjectName: subjectName.get(c.subject_id),
+    level: c.level,
+    courseName: c.name,
   }));
 
   const units: UnitOption[] = (
