@@ -403,7 +403,14 @@ export function PastPaperForm({
               setSlug(e.target.value);
             }}
             required
-            pattern="[a-z0-9-]+"
+            // The hyphen MUST be escaped. HTML compiles `pattern` with the
+            // regex `v` flag, under which an unescaped `-` at the end of a
+            // character class is a SyntaxError ("Invalid character class") —
+            // not a warning. Chrome then cannot run constraint validation on
+            // this input at all, so submission misbehaves and the failure
+            // surfaces somewhere else entirely. Moving the hyphen to the front
+            // does not help; only escaping does.
+            pattern="[a-z0-9\-]+"
             className={INPUT}
           />
         </Field>
