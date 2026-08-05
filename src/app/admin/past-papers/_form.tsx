@@ -1,10 +1,22 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useActionState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { EXAM_SESSIONS, isExamSession } from "@/lib/catalogue/exam-sessions";
+import { createClient } from "@/lib/supabase/client";
+import {
+  PAPERS_BUCKET,
+  type PaperFileKind,
+} from "@/lib/storage/paper-uploads";
 
 import { createPastPaper, updatePastPaper } from "./actions";
 
@@ -163,6 +175,28 @@ export function PastPaperForm({
   // An existing paper's slug is load-bearing (it is in URLs), so never
   // regenerate over it. Only a fresh, untouched create field auto-fills.
   const [slugTouched, setSlugTouched] = useState(mode === "edit");
+
+  // One id for every object this form writes. On edit it is the existing row id;
+  // on create it is minted here and becomes the row id, so the uploaded objects
+  // never have to be moved after the insert. useState's initialiser runs once,
+  // so a re-render cannot mint a second id and strand the first upload.
+  // Truthiness, NOT ??: blankPaper() in inline-data.ts returns id:"" for the
+  // inline "+ Add past paper" slide-over, and ?? only falls back on
+  // null/undefined — an empty id would be submitted as the upload group and
+  // rejected by the signing route.
+  const [uploadGroupId] = useState(
+    () => initial?.id || globalThis.crypto.randomUUID(),
+  );
+
+  // Submitting mid-upload would persist a path whose object does not exist yet,
+  // so the save button waits for every slot to settle.
+  const [busySlots, setBusySlots] = useState<Record<string, boolean>>({});
+  const setSlotBusy = useCallback((kind: string, busy: boolean) => {
+    setBusySlots((prev) =>
+      prev[kind] === busy ? prev : { ...prev, [kind]: busy },
+    );
+  }, []);
+  const uploadsInFlight = Object.values(busySlots).some(Boolean);
 
   const boundAction =
     mode === "create"
@@ -425,25 +459,34 @@ export function PastPaperForm({
         <legend className="px-1 text-xs font-medium uppercase tracking-wider text-slate-500">
           PDFs (public bucket)
         </legend>
+        {/* Ties the three objects to one prefix and, on create, becomes the row
+            id — so nothing has to be moved after the insert. */}
+        <input type="hidden" name="upload_group_id" value={uploadGroupId} />
         <div className="space-y-5">
           <FileRow
             label="Question paper"
             required
-            inputName="paper_file"
-            removeName="remove_paper_file"
+            kind="paper"
+            pathName="paper_pdf_path"
+            groupId={uploadGroupId}
             currentPath={initial?.paper_pdf_path ?? null}
+            onBusyChange={setSlotBusy}
           />
           <FileRow
             label="Mark scheme"
-            inputName="markscheme_file"
-            removeName="remove_markscheme_file"
+            kind="markscheme"
+            pathName="markscheme_pdf_path"
+            groupId={uploadGroupId}
             currentPath={initial?.markscheme_pdf_path ?? null}
+            onBusyChange={setSlotBusy}
           />
           <FileRow
             label="Examiner report (optional)"
-            inputName="examiner_report_file"
-            removeName="remove_examiner_report_file"
+            kind="examiner-report"
+            pathName="examiner_report_pdf_path"
+            groupId={uploadGroupId}
             currentPath={initial?.examiner_report_pdf_path ?? null}
+            onBusyChange={setSlotBusy}
           />
         </div>
         <p className="mt-4 text-xs text-slate-500">
@@ -547,14 +590,18 @@ export function PastPaperForm({
       <div className="flex items-center gap-2">
         <button
           type="submit"
-          disabled={isPending || Boolean(optionsError)}
+          // Blocked while a slot is still uploading: submitting mid-flight
+          // would persist a path whose object does not exist yet.
+          disabled={isPending || uploadsInFlight || Boolean(optionsError)}
           className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
         >
           {isPending
             ? "Saving…"
-            : mode === "create"
-              ? "Create past paper"
-              : "Save changes"}
+            : uploadsInFlight
+              ? "Uploading…"
+              : mode === "create"
+                ? "Create past paper"
+                : "Save changes"}
         </button>
         {showCancel && (
           <Link
@@ -570,29 +617,110 @@ export function PastPaperForm({
 }
 
 /**
- * One full-width PDF slot: bold label, file input, and the current filename on
- * its own truncating line with a Remove checkbox.
+ * One full-width PDF slot: bold label, file input, the current filename on its
+ * own truncating line, and a Remove control.
  *
- * Remove is a checkbox rather than a button because the surrounding form posts
- * to a server action — a button would need its own round trip, and an
- * unsubmitted "removed" state that a cancelled edit leaves behind is worse than
- * one that only takes effect on save.
+ * THE FILE NEVER TOUCHES A SERVERLESS FUNCTION. Picking a file immediately
+ * requests a signed upload URL from /api/admin/papers/upload-url and PUTs the
+ * bytes straight to Supabase Storage; the form then submits only the resulting
+ * object path. This replaces multipart-POSTing the PDF into the Server Action,
+ * which capped uploads at Next's 1 MB default body limit and, beyond that, at
+ * Vercel's non-configurable 4.5 MB request cap.
+ *
+ * ORPHANS: a successful upload followed by an abandoned form leaves the object
+ * stranded, because it is written before the row exists. That is inherent to
+ * direct upload and is accepted here — there is no cleanup job yet. Migration
+ * 0016 documents the path pattern and carries the sweep query.
+ *
+ * Remove is a checkbox no longer: with the path submitted directly, clearing a
+ * slot just means submitting an empty path, so the control clears local state.
  */
 function FileRow({
   label,
   required = false,
-  inputName,
-  removeName,
+  kind,
+  pathName,
+  groupId,
   currentPath,
+  onBusyChange,
 }: {
   label: string;
   required?: boolean;
-  inputName: string;
-  removeName: string;
+  kind: PaperFileKind;
+  pathName: string;
+  groupId: string;
   currentPath: string | null;
+  onBusyChange: (kind: string, busy: boolean) => void;
 }) {
-  const [remove, setRemove] = useState(false);
-  const [picked, setPicked] = useState<string | null>(null);
+  // The path that will actually be submitted: the stored one until the admin
+  // replaces or clears it.
+  const [path, setPath] = useState<string | null>(currentPath);
+  const [pickedName, setPickedName] = useState<string | null>(null);
+  const [status, setStatus] = useState<"idle" | "uploading" | "error">("idle");
+  const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    onBusyChange(kind, status === "uploading");
+  }, [status, kind, onBusyChange]);
+
+  async function handlePick(file: File | null) {
+    if (!file) return;
+    setError(null);
+    setPickedName(file.name);
+    setStatus("uploading");
+    try {
+      const res = await fetch("/api/admin/papers/upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind, groupId }),
+      });
+      if (!res.ok) {
+        throw new Error(
+          res.status === 404
+            ? "Not authorised to upload."
+            : `Could not prepare the upload (HTTP ${res.status}).`,
+        );
+      }
+      const { path: signedPath, token } = (await res.json()) as {
+        path: string;
+        token: string;
+      };
+
+      const supabase = createClient();
+      const { error: upErr } = await supabase.storage
+        .from(PAPERS_BUCKET)
+        // signedPath is passed VERBATIM — exactly what the route signed.
+        // storage-js prepends the bucket in _getFinalPath() for both
+        // createSignedUploadUrl and uploadToSignedUrl, so any adjustment here
+        // makes the PUT target a key the token does not authorise. The object
+        // key legitimately begins with "papers/" inside the "papers" bucket;
+        // that is the pre-existing scheme deletePastPaper and getPaperPublicUrl
+        // both depend on.
+        .uploadToSignedUrl(signedPath, token, file, {
+          contentType: file.type || "application/pdf",
+        });
+      if (upErr) throw new Error(upErr.message);
+
+      setPath(signedPath);
+      setStatus("idle");
+    } catch (e) {
+      setStatus("error");
+      setPickedName(null);
+      setError(e instanceof Error ? e.message : "Upload failed.");
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  function clearSlot() {
+    setPath(null);
+    setPickedName(null);
+    setError(null);
+    setStatus("idle");
+    if (inputRef.current) inputRef.current.value = "";
+  }
+
+  const filename = pickedName ?? (path ? path.split("/").pop() : null);
 
   return (
     <div className="w-full">
@@ -601,48 +729,50 @@ function FileRow({
         {required && <span className="ml-1 text-red-600">*</span>}
       </p>
 
+      {/* What the action actually reads. Validated server-side against the
+          minted path shape — a client that chooses where it uploads must not
+          be able to point a row at an arbitrary object. */}
+      <input type="hidden" name={pathName} value={path ?? ""} />
+
       <input
-        name={inputName}
+        ref={inputRef}
         type="file"
         accept="application/pdf"
-        onChange={(e) => setPicked(e.target.files?.[0]?.name ?? null)}
-        className="mt-1.5 block w-full text-sm text-slate-700 file:mr-3 file:rounded-md file:border file:border-slate-300 file:bg-white file:px-3 file:py-1.5 file:text-sm file:text-slate-700 hover:file:bg-slate-50"
+        disabled={status === "uploading"}
+        onChange={(e) => handlePick(e.target.files?.[0] ?? null)}
+        className="mt-1.5 block w-full text-sm text-slate-700 file:mr-3 file:rounded-md file:border file:border-slate-300 file:bg-white file:px-3 file:py-1.5 file:text-sm file:text-slate-700 hover:file:bg-slate-50 disabled:opacity-50"
       />
 
       <div className="mt-1.5 flex min-w-0 items-center gap-3">
         <span
-          // title carries the untruncated value — the whole point of this row
-          // is that a long storage path must not push anything else around.
-          title={picked ?? currentPath ?? undefined}
+          title={path ?? filename ?? undefined}
           className={`min-w-0 flex-1 truncate text-xs ${
-            remove && !picked
-              ? "text-slate-400 line-through"
-              : picked
-                ? "text-slate-800"
-                : currentPath
+            status === "error"
+              ? "text-red-600"
+              : status === "uploading"
+                ? "text-slate-500"
+                : path
                   ? "text-slate-600"
                   : "text-slate-400"
           }`}
         >
-          {picked
-            ? `New file: ${picked}`
-            : currentPath
-              ? currentPath
-              : "No file"}
+          {status === "uploading"
+            ? `Uploading ${pickedName ?? "file"}…`
+            : status === "error"
+              ? error
+              : path
+                ? path
+                : "No file"}
         </span>
 
-        {currentPath && !picked && (
-          <label className="flex shrink-0 cursor-pointer items-center gap-1.5 text-xs text-slate-600">
-            <input
-              type="checkbox"
-              name={removeName}
-              value="1"
-              checked={remove}
-              onChange={(e) => setRemove(e.target.checked)}
-              className="h-3.5 w-3.5 rounded border-slate-300"
-            />
+        {path && status !== "uploading" && (
+          <button
+            type="button"
+            onClick={clearSlot}
+            className="shrink-0 cursor-pointer rounded px-1.5 py-0.5 text-xs text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+          >
             Remove
-          </label>
+          </button>
         )}
       </div>
     </div>
