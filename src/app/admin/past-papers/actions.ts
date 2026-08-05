@@ -8,6 +8,10 @@ import {
   examSessionsSentence,
   isExamSession,
 } from "@/lib/catalogue/exam-sessions";
+import {
+  isUploadGroupId,
+  readSubmittedPaperPath,
+} from "@/lib/storage/paper-uploads";
 
 const PAPERS_BUCKET = "papers";
 
@@ -42,6 +46,15 @@ function readFields(fd: FormData) {
   const sort_order = sortOrderRaw ? Number(sortOrderRaw) : 0;
   const status = String(fd.get("status") ?? "live").trim();
 
+  // The browser now uploads straight to Storage and submits only the object
+  // path. Each is validated against the exact shape this app mints — a client
+  // that chooses where it uploads must not be able to point a row at some
+  // other object in the bucket. `null` on a field means "no file in this slot".
+  const paperPath = readSubmittedPaperPath(fd.get("paper_pdf_path"));
+  const msPath = readSubmittedPaperPath(fd.get("markscheme_pdf_path"));
+  const erPath = readSubmittedPaperPath(fd.get("examiner_report_pdf_path"));
+  const upload_group_id = String(fd.get("upload_group_id") ?? "").trim();
+
   return {
     course_id,
     unit_id,
@@ -52,6 +65,10 @@ function readFields(fd: FormData) {
     paper_code,
     duration_minutes,
     total_marks,
+    paperPath,
+    msPath,
+    erPath,
+    upload_group_id,
     walkthrough_mux_playback_id,
     walkthrough_duration_minutes,
     sort_order,
@@ -86,30 +103,18 @@ function validate(fields: ReturnType<typeof readFields>): string | null {
     if (!Number.isInteger(value) || value < 1)
       return `${label} must be a whole number greater than zero, or left blank`;
   }
+  // A malformed path means either a tampered submission or a bug in the upload
+  // flow. Either way it must never reach the row.
+  for (const [label, res] of [
+    ["Question paper", fields.paperPath],
+    ["Mark scheme", fields.msPath],
+    ["Examiner report", fields.erPath],
+  ] as const) {
+    if (!res.ok) return `${label}: unrecognised upload path — re-attach the file`;
+  }
   if (!["draft", "live", "in_progress", "coming_soon", "archived"].includes(fields.status))
     return "Invalid status";
   return null;
-}
-
-async function uploadIfPresent(
-  supabase: ReturnType<typeof createAdminClient>,
-  paperId: string,
-  file: File | null,
-  kind: "paper" | "markscheme" | "examiner-report",
-): Promise<string | null> {
-  if (!file || file.size === 0) return null;
-  const ext = file.name.includes(".") ? file.name.split(".").pop() : "pdf";
-  const safeExt = (ext ?? "pdf").toLowerCase().replace(/[^a-z0-9]/g, "");
-  const path = `papers/${paperId}/${kind}-${Date.now()}.${safeExt}`;
-  const buf = await file.arrayBuffer();
-  const { error } = await supabase.storage
-    .from(PAPERS_BUCKET)
-    .upload(path, new Uint8Array(buf), {
-      contentType: file.type || "application/pdf",
-      upsert: true,
-    });
-  if (error) throw new Error(`Upload failed (${kind}): ${error.message}`);
-  return path;
 }
 
 // ---------------------------------------------------------------------------
@@ -125,71 +130,43 @@ export async function createPastPaper(
     const err = validate(fields);
     if (err) return { ok: false, error: err };
 
+    // The row id IS the upload group id, so the objects the browser already
+    // wrote sit under a prefix that matches the row from the moment it exists.
+    // Falling back to a server-minted id keeps a submission without any files
+    // working even if the hidden field is missing.
+    const paperId = isUploadGroupId(fields.upload_group_id)
+      ? fields.upload_group_id
+      : crypto.randomUUID();
+
     const supabase = createAdminClient();
-    const { data: inserted, error: insertError } = await supabase
-      .from("past_papers")
-      .insert({
-        course_id: fields.course_id,
-        unit_id: fields.unit_id,
-        slug: fields.slug,
-        year: fields.year,
-        session: fields.session,
-        paper_code: fields.paper_code,
-        paper_name: fields.paper_name,
-        duration_minutes: fields.duration_minutes,
-        total_marks: fields.total_marks,
-        walkthrough_mux_playback_id: fields.walkthrough_mux_playback_id,
-        walkthrough_duration_minutes: fields.walkthrough_duration_minutes,
-        status: fields.status,
-        sort_order: fields.sort_order,
-      })
-      .select("id")
-      .single();
-    if (insertError || !inserted)
-      return { ok: false, error: insertError?.message ?? "Insert failed" };
-    const paperId = inserted.id as string;
 
-    const paperFile = fd.get("paper_file") as File | null;
-    const msFile = fd.get("markscheme_file") as File | null;
-    const erFile = fd.get("examiner_report_file") as File | null;
-    let paper_pdf_path: string | null = null;
-    let markscheme_pdf_path: string | null = null;
-    let examiner_report_pdf_path: string | null = null;
-    try {
-      paper_pdf_path = await uploadIfPresent(supabase, paperId, paperFile, "paper");
-      markscheme_pdf_path = await uploadIfPresent(
-        supabase,
-        paperId,
-        msFile,
-        "markscheme",
-      );
-      examiner_report_pdf_path = await uploadIfPresent(
-        supabase,
-        paperId,
-        erFile,
-        "examiner-report",
-      );
-    } catch (e) {
-      await supabase.from("past_papers").delete().eq("id", paperId);
-      return {
-        ok: false,
-        error: e instanceof Error ? e.message : "Upload failed",
-      };
-    }
+    // One INSERT now — the paths are already known, so there is no upload step
+    // between insert and update, and therefore no half-written row to unwind.
+    const row: Record<string, unknown> = {
+      id: paperId,
+      course_id: fields.course_id,
+      unit_id: fields.unit_id,
+      slug: fields.slug,
+      year: fields.year,
+      session: fields.session,
+      paper_code: fields.paper_code,
+      paper_name: fields.paper_name,
+      duration_minutes: fields.duration_minutes,
+      total_marks: fields.total_marks,
+      paper_pdf_path: fields.paperPath.ok ? fields.paperPath.path : null,
+      markscheme_pdf_path: fields.msPath.ok ? fields.msPath.path : null,
+      walkthrough_mux_playback_id: fields.walkthrough_mux_playback_id,
+      walkthrough_duration_minutes: fields.walkthrough_duration_minutes,
+      status: fields.status,
+      sort_order: fields.sort_order,
+    };
+    // Only send the examiner-report column when there is something to store, so
+    // a database without migration 0012 still accepts the other two slots.
+    const erValue = fields.erPath.ok ? fields.erPath.path : null;
+    if (erValue) row.examiner_report_pdf_path = erValue;
 
-    if (paper_pdf_path || markscheme_pdf_path || examiner_report_pdf_path) {
-      const paths: Record<string, string | null> = {
-        paper_pdf_path,
-        markscheme_pdf_path,
-      };
-      // Only send the examiner-report column when there is something to store,
-      // so a database that has not yet had migration 0012 applied still accepts
-      // question-paper / mark-scheme uploads instead of failing the whole write.
-      if (examiner_report_pdf_path) {
-        paths.examiner_report_pdf_path = examiner_report_pdf_path;
-      }
-      await supabase.from("past_papers").update(paths).eq("id", paperId);
-    }
+    const { error: insertError } = await supabase.from("past_papers").insert(row);
+    if (insertError) return { ok: false, error: insertError.message };
 
     revalidatePath("/admin/past-papers");
     revalidatePath("/past-papers");
@@ -214,33 +191,6 @@ export async function updatePastPaper(
     if (err) return { ok: false, error: err };
 
     const supabase = createAdminClient();
-    const paperFile = fd.get("paper_file") as File | null;
-    const msFile = fd.get("markscheme_file") as File | null;
-    const erFile = fd.get("examiner_report_file") as File | null;
-    let paper_pdf_path: string | null | undefined;
-    let markscheme_pdf_path: string | null | undefined;
-    let examiner_report_pdf_path: string | null | undefined;
-    try {
-      paper_pdf_path = await uploadIfPresent(supabase, paperId, paperFile, "paper");
-      markscheme_pdf_path = await uploadIfPresent(
-        supabase,
-        paperId,
-        msFile,
-        "markscheme",
-      );
-      examiner_report_pdf_path = await uploadIfPresent(
-        supabase,
-        paperId,
-        erFile,
-        "examiner-report",
-      );
-    } catch (e) {
-      return {
-        ok: false,
-        error: e instanceof Error ? e.message : "Upload failed",
-      };
-    }
-
     const patch: Record<string, unknown> = {
       course_id: fields.course_id,
       unit_id: fields.unit_id,
@@ -255,38 +205,32 @@ export async function updatePastPaper(
       walkthrough_duration_minutes: fields.walkthrough_duration_minutes,
       status: fields.status,
       sort_order: fields.sort_order,
+      paper_pdf_path: fields.paperPath.ok ? fields.paperPath.path : null,
+      markscheme_pdf_path: fields.msPath.ok ? fields.msPath.path : null,
     };
-    // The form's per-slot "Remove" checkbox. Until now a path could only ever
-    // be set or left alone, never cleared, so a file mis-slotted into the wrong
-    // row was permanent.
+
+    // The form pre-fills each slot with the stored path, so an untouched form
+    // resubmits what was already there and an empty field genuinely means the
+    // admin pressed Remove. That replaces the old remove_* checkboxes.
     //
-    // An upload WINS over a remove flag: if both arrive for the same slot the
-    // admin has picked a replacement, and honouring the remove would throw the
-    // new file away. The form hides Remove once a file is chosen, so this only
-    // guards a hand-crafted or replayed submission.
-    const removeFlag = (name: string) => fd.get(name) === "1";
-
-    if (paper_pdf_path !== null) patch.paper_pdf_path = paper_pdf_path;
-    else if (removeFlag("remove_paper_file")) patch.paper_pdf_path = null;
-
-    if (markscheme_pdf_path !== null)
-      patch.markscheme_pdf_path = markscheme_pdf_path;
-    else if (removeFlag("remove_markscheme_file"))
-      patch.markscheme_pdf_path = null;
-
-    // Same reasoning as createPastPaper: omit the column unless something is
-    // actually being written to it, so edits keep working before 0012 is
-    // applied. Clearing counts as writing, hence the removal branch.
-    if (examiner_report_pdf_path) {
-      patch.examiner_report_pdf_path = examiner_report_pdf_path;
-    } else if (removeFlag("remove_examiner_report_file")) {
-      patch.examiner_report_pdf_path = null;
+    // Examiner report is included whenever the form actually submitted the
+    // field, which is what makes "Remove" able to clear it. Keying on presence
+    // rather than on truthiness is the difference between clearing a slot and
+    // silently leaving the old path in place.
+    //
+    // This does mean the admin WRITE path now requires migration 0012. That is
+    // already applied here, and the read path in past-paper-filters.ts still
+    // degrades on its own; the alternative was a hidden "was it set" flag that
+    // the form would have had to invent.
+    const erValue = fields.erPath.ok ? fields.erPath.path : null;
+    if (fd.has("examiner_report_pdf_path")) {
+      patch.examiner_report_pdf_path = erValue;
     }
 
-    // NOTE: this clears the reference, not the object. The uploaded PDF stays
-    // in the papers bucket, so a mistaken removal is recoverable and a shared
-    // file cannot be pulled out from under another row. Bucket cleanup is a
-    // separate job.
+    // NOTE: clearing a slot drops the REFERENCE, not the object. The PDF stays
+    // in the bucket, so a mistaken removal is recoverable and a file shared by
+    // another row cannot be pulled out from under it. See migration 0016 for
+    // the orphan sweep.
 
     const { error: updateError } = await supabase
       .from("past_papers")

@@ -165,7 +165,12 @@ export async function loadPaperRows(
   const { data } = await supabase
     .from("past_papers")
     .select(
-      "id, course_id, unit_id, slug, year, session, paper_code, paper_name, paper_pdf_path, markscheme_pdf_path, walkthrough_mux_playback_id, walkthrough_duration_minutes, sort_order, status",
+      // examiner_report_pdf_path, duration_minutes and total_marks are NOT
+        // optional here. The inline editor renders the same PastPaperForm as
+        // /admin, and that form now submits every field it was given — so a
+        // column missing from this projection arrives empty and is written
+        // back as null, silently wiping it on save.
+        "id, course_id, unit_id, slug, year, session, paper_code, paper_name, paper_pdf_path, markscheme_pdf_path, examiner_report_pdf_path, duration_minutes, total_marks, walkthrough_mux_playback_id, walkthrough_duration_minutes, sort_order, status",
     )
     .in("id", ids);
 
