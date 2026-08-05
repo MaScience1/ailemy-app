@@ -1,4 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
+
+import { postSignInTarget } from "@/lib/auth/safe-next";
 import { NextResponse, type NextRequest } from "next/server";
 
 /**
@@ -87,12 +89,22 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // Authenticated user hitting /login or /signup → /dashboard
+  // Authenticated user hitting /login or /signup → they have no business on a
+  // sign-in page, so bounce them onward.
+  //
+  // Honours ?next=. This used to hardcode /dashboard AND clear the query
+  // string, so someone who followed a gated link, got sent to
+  // /login?next=/gated-page, and arrived already signed in (session refreshed
+  // in another tab, back button, a stale link) lost their destination and
+  // landed on the dashboard instead. Now an explicit next still wins, exactly
+  // as it does on the other two sign-in paths.
   if (user && (pathname === "/login" || pathname === "/signup")) {
-    const dashUrl = url.clone();
-    dashUrl.pathname = "/dashboard";
-    dashUrl.search = "";
-    return forwardCookies(NextResponse.redirect(dashUrl), supabaseResponse);
+    const target = url.clone();
+    const dest = postSignInTarget(url.searchParams.get("next"));
+    const [destPath, destQuery = ""] = dest.split("?");
+    target.pathname = destPath;
+    target.search = destQuery;
+    return forwardCookies(NextResponse.redirect(target), supabaseResponse);
   }
 
   // Pages outside the public set or protected set fall through — neutral pass.
