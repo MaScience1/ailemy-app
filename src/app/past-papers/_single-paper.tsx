@@ -1,11 +1,11 @@
-import Link from "next/link";
-import { ClipboardCheck, Download, Play, ScrollText } from "lucide-react";
+import { ClipboardCheck, Download, ScrollText } from "lucide-react";
 
 import type { PaperResult } from "@/lib/catalogue/past-paper-filters";
 import type { PaperInitial } from "@/app/admin/past-papers/_form";
 
 import { PaperRowControls } from "./_admin-controls";
 import { PaperPreview } from "./_paper-preview";
+import { StartTestModal } from "./_start-test-modal";
 
 /**
  * Result card for a single filtered paper (spec §1).
@@ -22,8 +22,9 @@ import { PaperPreview } from "./_paper-preview";
  * and before the value has been entered. Every metadata row is omitted when its
  * value is null rather than shown with a placeholder or a guess.
  *
- * Server component. The only client island is the preview disclosure, so a
- * visitor who never opens it does not download pdf.js.
+ * Server component. The only client islands are the mode-selection modal and
+ * the preview disclosure, so a visitor who does not interact downloads neither
+ * the dialog nor pdf.js.
  */
 
 /** 90 -> "1 hour 30 minutes"; 45 -> "45 minutes". Null stays null. */
@@ -114,15 +115,10 @@ export function SinglePaperView({
           {/* RIGHT — actions */}
           <div className="w-full shrink-0 lg:w-[280px]">
             <div className="flex flex-col gap-2.5">
-              {/* Goes straight to student mode for now. The next commit puts
-                  the student/teacher mode-selection modal behind this. */}
-              <Link
-                href={`/past-papers/${paper.slug}/test`}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-transparent bg-signal px-6 py-3 text-sm font-medium text-ink transition-all duration-200 ease-out hover:-translate-y-0.5 hover:bg-signal/90 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ink"
-              >
-                <Play className="h-4 w-4" aria-hidden="true" />
-                Start Test
-              </Link>
+              <StartTestModal
+                slug={paper.slug}
+                paperLabel={`${paper.courseName} · ${paper.session} ${paper.year}`}
+              />
 
               {paper.questionPaperUrl ? (
                 <a
