@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { ClipboardCheck, FileText, PlayCircle, ScrollText } from "lucide-react";
 
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
@@ -24,6 +23,8 @@ import type { PaperInitial } from "@/app/admin/past-papers/_form";
 
 import { FilterBar } from "./_filter-bar";
 import { AddPaperButton, PaperRowControls } from "./_admin-controls";
+import { PaperDocLinks } from "./_doc-links";
+import { SinglePaperView } from "./_single-paper";
 
 export const metadata: Metadata = {
   title: "Past Exam Papers · IB, IGCSE, A-Level · Ailemy",
@@ -85,6 +86,17 @@ export default async function PastPapersPage({
   // so a student's request never pays for them.
   const adminData = isAdmin ? await loadAdminFormData(papers) : null;
 
+  // Admin props for one paper, shared by the single-result view and the list.
+  const adminPropsFor = (paper: PaperResult) =>
+    adminData
+      ? {
+          initial: adminData.rows[paper.id],
+          courses: adminData.courses,
+          units: adminData.units,
+          optionsError: adminData.error,
+        }
+      : null;
+
   return (
     <>
       <SiteNav />
@@ -135,25 +147,21 @@ export default async function PastPapersPage({
             {papers.length} {papers.length === 1 ? "paper" : "papers"}
           </p>
 
+          {/* Zero results keep the empty state, two-or-more keep the list; a
+              single result is shown inline with its PDF instead of as a
+              one-item list, since there is nothing left to choose between. */}
           {papers.length === 0 ? (
             <EmptyState filtered={hasActiveFilters(filters)} />
+          ) : papers.length === 1 ? (
+            <SinglePaperView
+              paper={papers[0]}
+              admin={adminPropsFor(papers[0])}
+            />
           ) : (
             <ul className="mt-4 divide-y divide-ink/10 rounded-lg border border-ink/10 bg-snow">
               {papers.map((paper) => (
                 <li key={paper.id} className="p-5 sm:p-6">
-                  <PaperRow
-                    paper={paper}
-                    admin={
-                      adminData
-                        ? {
-                            initial: adminData.rows[paper.id],
-                            courses: adminData.courses,
-                            units: adminData.units,
-                            optionsError: adminData.error,
-                          }
-                        : null
-                    }
-                  />
+                  <PaperRow paper={paper} admin={adminPropsFor(paper)} />
                 </li>
               ))}
             </ul>
@@ -205,49 +213,7 @@ function PaperRow({
           </span>
         </h2>
 
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          {paper.questionPaperUrl && (
-            <DocLink
-              href={paper.questionPaperUrl}
-              icon={<FileText className="h-3.5 w-3.5" aria-hidden="true" />}
-              label="Question paper"
-            />
-          )}
-          {paper.markSchemeUrl && (
-            <DocLink
-              href={paper.markSchemeUrl}
-              icon={<ScrollText className="h-3.5 w-3.5" aria-hidden="true" />}
-              label="Mark scheme"
-            />
-          )}
-          {paper.examinerReportUrl && (
-            <DocLink
-              href={paper.examinerReportUrl}
-              icon={<ClipboardCheck className="h-3.5 w-3.5" aria-hidden="true" />}
-              label="Examiner report"
-            />
-          )}
-          {paper.walkthroughPlaybackId && paper.detailHref && (
-            <DocLink
-              href={paper.detailHref}
-              external={false}
-              icon={<PlayCircle className="h-3.5 w-3.5" aria-hidden="true" />}
-              label={
-                paper.walkthroughMinutes
-                  ? `Walkthrough · ${paper.walkthroughMinutes} min`
-                  : "Walkthrough"
-              }
-            />
-          )}
-          {!paper.questionPaperUrl &&
-            !paper.markSchemeUrl &&
-            !paper.examinerReportUrl &&
-            !paper.walkthroughPlaybackId && (
-              <span className="text-xs text-ink/45">
-                No documents attached yet.
-              </span>
-            )}
-        </div>
+        <PaperDocLinks paper={paper} />
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
@@ -269,35 +235,6 @@ function PaperRow({
         )}
       </div>
     </div>
-  );
-}
-
-function DocLink({
-  href,
-  label,
-  icon,
-  external = true,
-}: {
-  href: string;
-  label: string;
-  icon: React.ReactNode;
-  external?: boolean;
-}) {
-  const cls =
-    "inline-flex items-center gap-1.5 rounded-md border border-ink/15 bg-parchment px-2.5 py-1 text-xs font-medium text-ink transition hover:border-flask hover:text-flask";
-  if (external) {
-    return (
-      <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>
-        {icon}
-        {label}
-      </a>
-    );
-  }
-  return (
-    <Link href={href} className={cls}>
-      {icon}
-      {label}
-    </Link>
   );
 }
 
