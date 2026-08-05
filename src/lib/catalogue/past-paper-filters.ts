@@ -79,6 +79,11 @@ export type PaperResult = {
   courseSlug: string;
   courseLevel: string;
   pathway: string | null;
+  unitName: string | null;
+  unitCode: string | null;
+  /** Length of the EXAM. Null until recorded — never the walkthrough length. */
+  durationMinutes: number | null;
+  totalMarks: number | null;
   questionPaperUrl: string | null;
   markSchemeUrl: string | null;
   examinerReportUrl: string | null;
@@ -98,8 +103,13 @@ type RawPaperRow = {
   paper_pdf_path: string | null;
   markscheme_pdf_path: string | null;
   examiner_report_pdf_path?: string | null;
+  duration_minutes?: number | null;
+  total_marks?: number | null;
   walkthrough_mux_playback_id: string | null;
   walkthrough_duration_minutes: number | null;
+  // Left join — past_papers.unit_id is nullable, so NO !inner here. Adding one
+  // would silently drop every paper that has not been mapped to a unit.
+  unit: { id: string; name: string; code: string | null } | null;
   course: {
     id: string;
     slug: string;
@@ -115,6 +125,7 @@ const PAPER_COLUMNS_BASE = `
   id, slug, paper_name, paper_code, session, year, status, sort_order,
   paper_pdf_path, markscheme_pdf_path,
   walkthrough_mux_playback_id, walkthrough_duration_minutes,
+  unit:units(id, name, code),
   course:courses!inner(
     id, slug, name, level, pathway,
     curriculum:curricula!inner(id, short_name, name),
@@ -123,31 +134,100 @@ const PAPER_COLUMNS_BASE = `
 `;
 
 /**
- * Two projections: one including examiner_report_pdf_path (migration 0012) and
- * one without it.
+ * Columns that exist only after a hand-applied migration.
  *
- * Migrations here are applied by hand, and main auto-deploys, so this code can
- * legitimately be live against a database where 0012 has not run yet. Asking
- * PostgREST for a column that does not exist fails the WHOLE request (42703),
- * which would take /past-papers down entirely rather than just hiding one link.
- * So we try the full projection and fall back once, permanently for the
- * process, if the column is missing.
+ * Migrations here are applied by hand and main auto-deploys, so this code can
+ * legitimately run against a database where a migration has not landed yet.
+ * Asking PostgREST for a column that does not exist fails the WHOLE request
+ * (42703), which would take /past-papers down entirely rather than degrade one
+ * field. So each group is probed independently and dropped from the projection
+ * permanently (for the process) once proven absent.
+ *
+ * INDEPENDENT, not ordered: 0012 is applied on this database and 0015 may not
+ * be. A single "compatibility level" would wrongly disable the examiner report
+ * in order to cope with a missing duration column.
  */
-const PAPER_SELECT_WITH_ER = PAPER_COLUMNS_BASE.replace(
-  "paper_pdf_path, markscheme_pdf_path,",
-  "paper_pdf_path, markscheme_pdf_path, examiner_report_pdf_path,",
-);
-const PAPER_SELECT = PAPER_COLUMNS_BASE;
+const OPTIONAL_COLUMN_GROUPS = {
+  examinerReport: {
+    columns: "examiner_report_pdf_path",
+    migration: "0012",
+  },
+  durationAndMarks: {
+    columns: "duration_minutes, total_marks",
+    migration: "0015",
+  },
+} as const;
 
-/** null = not yet probed; true/false = whether 0012 has been applied. */
-let examinerReportColumnExists: boolean | null = null;
+type OptionalGroup = keyof typeof OPTIONAL_COLUMN_GROUPS;
 
-/** PostgREST code for "column does not exist". */
-function isMissingColumn(error: { code?: string; message?: string } | null) {
-  return (
-    error?.code === "42703" ||
-    /examiner_report_pdf_path/.test(error?.message ?? "")
+/** null = not yet probed; true/false = whether that migration has been applied. */
+const optionalGroupExists: Record<OptionalGroup, boolean | null> = {
+  examinerReport: null,
+  durationAndMarks: null,
+};
+
+const ALL_GROUPS = Object.keys(OPTIONAL_COLUMN_GROUPS) as OptionalGroup[];
+
+/** Projection including every optional group not yet proven absent. */
+function buildPaperSelect(): string {
+  const extra = ALL_GROUPS.filter((g) => optionalGroupExists[g] !== false)
+    .map((g) => OPTIONAL_COLUMN_GROUPS[g].columns)
+    .join(", ");
+  return PAPER_COLUMNS_BASE.replace(
+    "paper_pdf_path, markscheme_pdf_path,",
+    extra
+      ? `paper_pdf_path, markscheme_pdf_path, ${extra},`
+      : "paper_pdf_path, markscheme_pdf_path,",
   );
+}
+
+/** Which optional group does this 42703 name, if any? */
+function missingGroup(
+  error: { code?: string; message?: string } | null,
+): OptionalGroup | null {
+  const msg = error?.message ?? "";
+  if (error?.code !== "42703" && !/does not exist/.test(msg)) return null;
+  for (const g of ALL_GROUPS) {
+    for (const col of OPTIONAL_COLUMN_GROUPS[g].columns.split(",")) {
+      if (msg.includes(col.trim())) return g;
+    }
+  }
+  return null;
+}
+
+/**
+ * Run a query with the widest projection still believed valid, stepping down
+ * one optional group at a time on 42703. Bounded by the number of groups, so it
+ * cannot loop.
+ */
+async function withOptionalColumns<T>(
+  run: (
+    select: string,
+  ) => PromiseLike<{
+    data: T | null;
+    error: { code?: string; message?: string } | null;
+  }>,
+) {
+  for (let attempt = 0; attempt <= ALL_GROUPS.length; attempt++) {
+    const res = await run(buildPaperSelect());
+
+    if (!res.error) {
+      // Success proves every column in that projection exists.
+      for (const g of ALL_GROUPS) {
+        if (optionalGroupExists[g] === null) optionalGroupExists[g] = true;
+      }
+      return res;
+    }
+
+    const missing = missingGroup(res.error);
+    if (!missing) return res;
+
+    optionalGroupExists[missing] = false;
+    console.warn(
+      `[past-paper-filters] ${OPTIONAL_COLUMN_GROUPS[missing].columns} missing (apply migration ${OPTIONAL_COLUMN_GROUPS[missing].migration}); continuing without it`,
+    );
+  }
+  return run(buildPaperSelect());
 }
 
 // The !inner on subject/curriculum is REQUIRED, not cosmetic. With a plain
@@ -366,25 +446,102 @@ export function filtersToQueryString(f: Filters): string {
   return p.toString();
 }
 
+/** Shape one raw PostgREST row into the view model. */
+function mapPaperRow(r: RawPaperRow): PaperResult {
+  const c = r.course!;
+  const detailHref =
+    c.subject?.slug && c.pathway && c.slug
+      ? `/learn/${c.subject.slug}/${c.pathway}/${c.slug}/papers/${r.slug}`
+      : null;
+  return {
+    id: r.id,
+    slug: r.slug,
+    paperName: r.paper_name,
+    paperCode: r.paper_code,
+    session: r.session,
+    year: r.year,
+    status: r.status,
+    subjectName: c.subject?.name ?? "—",
+    subjectSlug: c.subject?.slug ?? "",
+    boardName: c.curriculum?.short_name || c.curriculum?.name || "—",
+    courseName: c.name,
+    courseSlug: c.slug,
+    courseLevel: c.level,
+    pathway: c.pathway,
+    unitName: r.unit?.name ?? null,
+    unitCode: r.unit?.code ?? null,
+    // `?? null` rather than a default: absent (migration not applied) and
+    // "not recorded yet" must both read as null so the card omits the row
+    // instead of inventing a duration.
+    durationMinutes: r.duration_minutes ?? null,
+    totalMarks: r.total_marks ?? null,
+    questionPaperUrl: getPaperPublicUrl(r.paper_pdf_path),
+    markSchemeUrl: getPaperPublicUrl(r.markscheme_pdf_path),
+    examinerReportUrl: getPaperPublicUrl(r.examiner_report_pdf_path),
+    walkthroughPlaybackId: r.walkthrough_mux_playback_id,
+    walkthroughMinutes: r.walkthrough_duration_minutes,
+    detailHref,
+  };
+}
+
+/**
+ * One paper by slug, for /past-papers/[paper]/test.
+ *
+ * AMBIGUITY: past_papers declares UNIQUE (course_id, slug), NOT a global unique
+ * — two courses may legitimately share a slug. We therefore ask for two rows
+ * rather than using .maybeSingle(), which ERRORS on a second match and would
+ * turn a data condition into a 500. If more than one comes back we log it and
+ * take the newest, so the page still renders while the collision is visible in
+ * the logs.
+ */
+export async function getPaperBySlug(slug: string): Promise<PaperResult | null> {
+  const db = await getReader();
+
+  const { data, error } = await withOptionalColumns<RawPaperRow[]>((select) =>
+    db
+      .from("past_papers")
+      .select(select)
+      .eq("slug", slug)
+      .order("year", { ascending: false })
+      .limit(2) as unknown as PromiseLike<{
+      data: RawPaperRow[] | null;
+      error: { code?: string; message?: string } | null;
+    }>,
+  );
+
+  if (error) {
+    console.error("[past-paper-filters] getPaperBySlug failed", error);
+    return null;
+  }
+
+  const rows = (data ?? []).filter((r) => r.course);
+  if (rows.length > 1) {
+    console.warn(
+      `[past-paper-filters] slug "${slug}" matches ${rows.length} papers across courses; using the newest. past_papers is unique on (course_id, slug), not slug alone.`,
+    );
+  }
+  return rows[0] ? mapPaperRow(rows[0]) : null;
+}
+
 /** Apply the filters and return matching papers, newest first. */
 export async function listFilteredPastPapers(
   filters: Filters,
 ): Promise<PaperResult[]> {
   const db = await getReader();
 
-  const run = async (withEr: boolean) => {
-    let q = db
-      .from("past_papers")
-      .select(withEr ? PAPER_SELECT_WITH_ER : PAPER_SELECT);
+  const run = async (select: string) => {
+    let q = db.from("past_papers").select(select);
 
     if (filters.year && /^\d{4}$/.test(filters.year)) {
       q = q.eq("year", Number(filters.year));
     }
     if (filters.doc === "qp") q = q.not("paper_pdf_path", "is", null);
     if (filters.doc === "ms") q = q.not("markscheme_pdf_path", "is", null);
-    // Only filter on the examiner-report column when we know it exists;
-    // otherwise the request would 400 rather than simply matching nothing.
-    if (filters.doc === "er" && withEr) {
+    // Only filter on the examiner-report column when it is still believed to
+    // exist; otherwise the request would 400 rather than simply matching
+    // nothing. `!== false` (not `=== true`) so the first, unprobed request
+    // still tries it.
+    if (filters.doc === "er" && optionalGroupExists.examinerReport !== false) {
       q = q.not("examiner_report_pdf_path", "is", null);
     }
 
@@ -397,23 +554,7 @@ export async function listFilteredPastPapers(
       .order("sort_order", { ascending: true });
   };
 
-  // Try the projection that includes examiner_report_pdf_path unless a previous
-  // request in this process already proved the column is absent.
-  let withEr = examinerReportColumnExists !== false;
-  let { data, error } = await run(withEr);
-
-  if (error && withEr && isMissingColumn(error)) {
-    // Migration 0012 has not been applied. Remember, and retry without it so
-    // the page still renders question papers and mark schemes.
-    examinerReportColumnExists = false;
-    withEr = false;
-    console.warn(
-      "[past-paper-filters] examiner_report_pdf_path missing (apply migration 0012); continuing without it",
-    );
-    ({ data, error } = await run(false));
-  } else if (!error && withEr) {
-    examinerReportColumnExists = true;
-  }
+  const { data, error } = await withOptionalColumns(run);
 
   if (error) {
     console.error("[past-paper-filters] query failed", error);
@@ -422,39 +563,13 @@ export async function listFilteredPastPapers(
 
   // Asked for examiner reports on a database that cannot store them yet:
   // the honest answer is "none", not "here is everything".
-  if (filters.doc === "er" && !withEr) return [];
+  if (filters.doc === "er" && optionalGroupExists.examinerReport === false) {
+    return [];
+  }
 
   return ((data ?? []) as unknown as RawPaperRow[])
     .filter((r) => r.course)
-    .map((r) => {
-      const c = r.course!;
-      const detailHref =
-        c.subject?.slug && c.pathway && c.slug
-          ? `/learn/${c.subject.slug}/${c.pathway}/${c.slug}/papers/${r.slug}`
-          : null;
-      return {
-        id: r.id,
-        slug: r.slug,
-        paperName: r.paper_name,
-        paperCode: r.paper_code,
-        session: r.session,
-        year: r.year,
-        status: r.status,
-        subjectName: c.subject?.name ?? "—",
-        subjectSlug: c.subject?.slug ?? "",
-        boardName: c.curriculum?.short_name || c.curriculum?.name || "—",
-        courseName: c.name,
-        courseSlug: c.slug,
-        courseLevel: c.level,
-        pathway: c.pathway,
-        questionPaperUrl: getPaperPublicUrl(r.paper_pdf_path),
-        markSchemeUrl: getPaperPublicUrl(r.markscheme_pdf_path),
-        examinerReportUrl: getPaperPublicUrl(r.examiner_report_pdf_path),
-        walkthroughPlaybackId: r.walkthrough_mux_playback_id,
-        walkthroughMinutes: r.walkthrough_duration_minutes,
-        detailHref,
-      };
-    });
+    .map(mapPaperRow);
 }
 
 /** True when at least one filter is active — drives the empty-state copy. */
