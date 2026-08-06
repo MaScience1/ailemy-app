@@ -25,7 +25,11 @@ import type { PaperInitial } from "@/app/admin/past-papers/_form";
 import { FilterBar } from "./_filter-bar";
 import { AddPaperButton, PaperRowControls } from "./_admin-controls";
 import { PaperDocLinks } from "./_doc-links";
-import { SinglePaperView } from "./_single-paper";
+import {
+  SinglePaperView,
+  formatDuration,
+  formatUnitLine,
+} from "./_single-paper";
 
 export const metadata: Metadata = {
   title: "Past Exam Papers · IB, IGCSE, A-Level · Ailemy",
@@ -188,6 +192,8 @@ function PaperRow({
   } | null;
 }) {
   const isDraft = paper.status !== "live";
+  const unitLine = formatUnitLine(paper.unitCode, paper.unitName);
+  const duration = formatDuration(paper.durationMinutes);
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -214,6 +220,33 @@ function PaperRow({
             {paper.courseName}
           </span>
         </h2>
+
+        {/* Unit — from the units row the list query already left-joins, so no
+            extra fetch per card. Truncated to one line: a full unit title runs
+            well past the card width and would otherwise wrap into the row
+            below. `title` keeps the whole string reachable on hover. */}
+        {unitLine && (
+          <p className="mt-1 truncate text-sm text-ink/70" title={unitLine}>
+            {unitLine}
+          </p>
+        )}
+
+        {/* Exam metadata. Each item renders only when its field is non-null —
+            both columns arrived in migration 0015 and stay null until someone
+            records them, so a partly-filled paper shows a shorter row rather
+            than an empty label. Nothing renders when neither is set. */}
+        {(duration || paper.totalMarks != null) && (
+          <p className="font-mono mt-1.5 text-xs text-ink/60">
+            {duration}
+            {duration && paper.totalMarks != null && (
+              <span className="mx-2 text-ink/30" aria-hidden="true">
+                ·
+              </span>
+            )}
+            {paper.totalMarks != null &&
+              `${paper.totalMarks} mark${paper.totalMarks === 1 ? "" : "s"}`}
+          </p>
+        )}
 
         <PaperDocLinks paper={paper} />
       </div>
