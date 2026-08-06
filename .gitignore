@@ -40,6 +40,11 @@ yarn-error.log*
 # output of scripts/bulk-import-papers.ts
 bulk-import-report.json
 
+# bytecode from scripts/watermark2.py, written whenever the batch script
+# imports it
+__pycache__/
+*.pyc
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
