@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
+  ClipboardCheck,
   ClipboardList,
   Download,
   FileText,
@@ -87,6 +88,7 @@ export default async function PaperDetailPage({
 
   const paperUrl = getPaperPublicUrl(paper.paper_pdf_path);
   const markschemeUrl = getPaperPublicUrl(paper.markscheme_pdf_path);
+  const examinerReportUrl = getPaperPublicUrl(paper.examiner_report_pdf_path);
   const pathway = PATHWAY_COPY[pathwaySlug];
 
   const courseHref = `/learn/${subjectSlug}/${pathwaySlug}/${courseSlug}`;
@@ -139,17 +141,30 @@ export default async function PaperDetailPage({
                 emptyMessage="Question paper PDF will appear here once uploaded."
               />
 
-              {paper.markscheme_pdf_path && (
-                <DownloadCard
-                  href={markschemeUrl}
-                  title="Download mark scheme"
-                  subtitle="Examiner-issued"
-                  icon={
-                    <ClipboardList className="h-5 w-5" aria-hidden="true" />
-                  }
-                  emptyMessage="Mark scheme PDF will appear here once uploaded."
-                />
-              )}
+              {/* The two optional documents are ALWAYS rendered: when absent
+                  they show the muted, non-clickable state rather than
+                  vanishing, so the set of documents a paper can have is
+                  legible from the page itself and a gap reads as "not yet"
+                  rather than as "this paper never has one".
+
+                  The mark scheme previously disappeared when null, which made
+                  its own emptyMessage unreachable — the row is now consistent
+                  with the examiner report below it. */}
+              <DownloadCard
+                href={markschemeUrl}
+                title="Download mark scheme"
+                emptyTitle="Mark scheme — not yet available"
+                subtitle="Examiner-issued"
+                icon={<ClipboardList className="h-5 w-5" aria-hidden="true" />}
+              />
+
+              <DownloadCard
+                href={examinerReportUrl}
+                title="Download examiner report"
+                emptyTitle="Examiner report — not yet available"
+                subtitle="PDF"
+                icon={<ClipboardCheck className="h-5 w-5" aria-hidden="true" />}
+              />
 
               <Link
                 href={practiceHref}
@@ -214,15 +229,25 @@ export default async function PaperDetailPage({
 function DownloadCard({
   href,
   title,
+  /**
+   * Heading for the empty state, when "not yet available" reads better than the
+   * imperative used on the live card. Used by the two OPTIONAL documents; the
+   * question paper keeps the default (`title`) because its absence is a data
+   * error rather than a normal state, and there it earns the fuller
+   * explanation that `emptyMessage` gives.
+   */
+  emptyTitle,
   subtitle,
   icon,
   emptyMessage,
 }: {
   href: string | null;
   title: string;
+  emptyTitle?: string;
   subtitle: string;
   icon: React.ReactNode;
-  emptyMessage: string;
+  /** Omit when the heading already says it — see the examiner report card. */
+  emptyMessage?: string;
 }) {
   if (!href) {
     return (
@@ -234,14 +259,14 @@ function DownloadCard({
           <span className="text-ink/40">{icon}</span>
           <div>
             <p className="font-display text-base font-medium tracking-tight text-ink/75">
-              {title}
+              {emptyTitle ?? title}
             </p>
             <p className="font-mono mt-0.5 text-[10px] uppercase tracking-[0.2em]">
               Awaiting upload
             </p>
           </div>
         </div>
-        <p className="mt-3 text-xs text-ink/55">{emptyMessage}</p>
+        {emptyMessage && <p className="mt-3 text-xs text-ink/55">{emptyMessage}</p>}
       </div>
     );
   }
