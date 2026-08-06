@@ -2,7 +2,11 @@
 -- 0017_student_profile_and_enrolment.sql
 -- Ailemy — student profile expansion + per-course enrolment grades.
 --
--- FINAL DRAFT FOR APPROVAL — NOT APPLIED.
+-- APPLIED TO PRODUCTION 2026-08-06, by hand via the Supabase SQL Editor.
+-- Verified live: all nine new student_courses columns and all ten new profiles
+-- columns respond. Do not re-run casually — section 4 rewrites the table under
+-- ACCESS EXCLUSIVE. It is re-runnable if you must (every step is guarded), but
+-- read section 4 first.
 --
 -- Decisions incorporated:
 --   * Guardians: NO new table. cohort_enrolments.parent_name / parent_contact
