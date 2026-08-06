@@ -40,13 +40,9 @@
 -- Additive and re-runnable: REVOKE of an already-absent privilege and GRANT of
 -- an already-present one are both no-ops.
 --
--- ⚠ ONE DELIBERATE OMISSION — `country`.
--- The column list below is exactly the one requested. It does NOT include
--- `country`, which the draft block in 0017:414 did include. country is
--- ordinary user-supplied profile data of the same kind as `city`, so leaving
--- it out means a user can no longer edit their own country. That is the safe
--- direction to err in and is easily reversed — add `country,` to the GRANT
--- below — but it is a decision, not an oversight, and is recorded here as one.
+-- `country` IS INCLUDED, matching the draft block in 0017:414. It is ordinary
+-- user-supplied profile data of the same kind as `city` — descriptive, carries
+-- no authorisation or entitlement — so a user editing their own is expected.
 --
 -- NOT ADDRESSED HERE. INSERT is still table-wide, so in principle a user could
 -- create a row with role already set. That path is closed in practice: the row
@@ -100,6 +96,7 @@ GRANT UPDATE (
   full_name,
   age_band,
   gender,
+  country,
   city,
   timezone,
   curriculum_id,
@@ -115,7 +112,6 @@ GRANT UPDATE (
 --   role             authorisation-bearing
 --   founding_member  entitlement-bearing
 --   plan             billing-bearing
---   country          see the omission note in the header — decision, not slip
 --   created_at       history
 --   updated_at       maintained by the touch_profiles trigger (0001:314)
 --
@@ -142,8 +138,8 @@ COMMIT;
 --      AND grantee      = 'authenticated'
 --      AND privilege_type = 'UPDATE';
 --
--- (b) Exactly the eleven columns are updatable. Expect these and no others:
---     age_band, city, curriculum_id, full_name, gender, language,
+-- (b) Exactly the twelve columns are updatable. Expect these and no others:
+--     age_band, city, country, curriculum_id, full_name, gender, language,
 --     notification_preferences, region, school_name, theme_preference, timezone
 --
 --   SELECT column_name
@@ -191,8 +187,8 @@ COMMIT;
 --
 -- NOTE: the REVOKE above does not clear column-level grants; revoke those
 -- explicitly if a true restoration matters:
---   REVOKE UPDATE (full_name, age_band, gender, city, timezone, curriculum_id,
---                  school_name, language, region, theme_preference,
---                  notification_preferences)
+--   REVOKE UPDATE (full_name, age_band, gender, country, city, timezone,
+--                  curriculum_id, school_name, language, region,
+--                  theme_preference, notification_preferences)
 --     ON public.profiles FROM authenticated;
 -- ----------------------------------------------------------------------------
