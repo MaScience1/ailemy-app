@@ -67,29 +67,6 @@ const PAPER_PATH_RE = new RegExp(
   "i",
 );
 
-// TEMPORARY INSTRUMENTATION — remove with the rest of PAPER_PATH_DEBUG.
-// Exported so the create action can log the exact rule it is enforcing, rather
-// than a rule someone assumes it is enforcing.
-export const PAPER_PATH_RE_SOURCE = PAPER_PATH_RE.source;
-
-/**
- * TEMPORARY INSTRUMENTATION — remove with the rest of PAPER_PATH_DEBUG.
- * Says WHICH guard rejected a value, not merely that one did.
- */
-export function diagnosePaperPath(value: string) {
-  return {
-    hasDotDot: value.includes(".."),
-    hasDoubleSlash: value.includes("//"),
-    regexMatches: PAPER_PATH_RE.test(value),
-    startsWithBucket: value.startsWith(`${PAPERS_BUCKET}/`),
-    segments: value.split("/").length,
-    // Anything outside printable ASCII is invisible in a log line otherwise.
-    nonAscii: [...value]
-      .map((c, i) => ({ i, c, cp: c.codePointAt(0) ?? -1 }))
-      .filter(({ cp }) => cp < 32 || cp > 126),
-  };
-}
-
 export function isValidPaperPath(value: string): boolean {
   // Reject traversal outright rather than relying on the regex alone, so the
   // intent is legible and a future loosening of the pattern cannot reintroduce it.
