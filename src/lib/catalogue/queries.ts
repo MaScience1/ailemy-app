@@ -711,10 +711,19 @@ export async function getPastPapersHubData(): Promise<PastPapersHubData> {
 // PAST PAPERS
 // ---------------------------------------------------------------------------
 
+// examiner_report_pdf_path arrived in migration 0012. Naming it here makes
+// these three queries HARD-REQUIRE that migration: PostgREST answers 42703 for
+// the whole request when a selected column is missing, so an un-migrated
+// database would lose the paper pages entirely rather than just the new row.
+// That is the same bargain the admin write path already accepted (see the note
+// in admin/past-papers/actions.ts) and 0012 is applied on every environment
+// this ships to. The independent-fallback machinery in past-paper-filters.ts
+// exists because /past-papers must survive a partly-migrated database; these
+// /learn queries never had it and are not gaining it here.
 const PAST_PAPER_SELECT = `
   id, course_id, unit_id, slug, year, session, paper_code, paper_name,
-  paper_pdf_path, markscheme_pdf_path, walkthrough_mux_playback_id,
-  walkthrough_duration_minutes, status, sort_order
+  paper_pdf_path, markscheme_pdf_path, examiner_report_pdf_path,
+  walkthrough_mux_playback_id, walkthrough_duration_minutes, status, sort_order
 `;
 
 /** All live past papers for a course, ordered by sort_order. */

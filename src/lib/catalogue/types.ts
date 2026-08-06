@@ -132,6 +132,7 @@ export type PastPaper = {
   paper_name: string;
   paper_pdf_path: string | null;
   markscheme_pdf_path: string | null;
+  examiner_report_pdf_path: string | null;
   walkthrough_mux_playback_id: string | null;
   walkthrough_duration_minutes: number | null;
   status: ContentStatus;

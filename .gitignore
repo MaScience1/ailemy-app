@@ -37,6 +37,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# output of scripts/bulk-import-papers.ts
+bulk-import-report.json
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
