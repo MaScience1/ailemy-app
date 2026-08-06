@@ -46,17 +46,33 @@ export function formatDuration(minutes: number | null): string | null {
 }
 
 /**
- * "Unit 1: Structure, Bonding and Introduction to Organic Chemistry", or just
- * the name when the unit has no code. Null when the paper has no unit — the
- * units join is a LEFT join, so that is the ordinary case for an unmapped
- * paper, not an error.
+ * The full unit title, e.g. "Unit 1: Structure, Bonding and Introduction to
+ * Organic Chemistry". Null when the paper has no unit — the units join is a
+ * LEFT join, so an unmapped paper is ordinary, not an error.
+ *
+ * units.code is NOT part of this. Measured against the 12 rows in the table,
+ * that column holds an exam-board paper code — "WCH11", "WBI12" — while
+ * units.name already begins "Unit N:". Prefixing the code produced
+ * "WCH11: Unit 1: Structure, …", doubling the label with a value the card
+ * already shows in its own paper-code badge.
  */
-export function formatUnitLine(
-  unitCode: string | null,
-  unitName: string | null,
-): string | null {
+export function formatUnitTitle(unitName: string | null): string | null {
+  return unitName || null;
+}
+
+/**
+ * The short unit label for the list card: "Unit 1" … "Unit 6".
+ *
+ * Parsed out of units.name because nothing else carries it — see above, the
+ * code column is a paper code. All 12 current rows match /^Unit \d+/; a name
+ * that does not (another board's units, when they arrive) falls back to the
+ * full name rather than to nothing, so the card never silently drops a unit it
+ * simply could not abbreviate.
+ */
+export function formatUnitLabel(unitName: string | null): string | null {
   if (!unitName) return null;
-  return unitCode ? `${unitCode}: ${unitName}` : unitName;
+  const m = unitName.match(/^\s*(Unit\s+\d+)/i);
+  return m ? m[1].replace(/\s+/g, " ") : unitName;
 }
 
 export function SinglePaperView({
@@ -72,7 +88,7 @@ export function SinglePaperView({
   } | null;
 }) {
   const duration = formatDuration(paper.durationMinutes);
-  const unitLine = formatUnitLine(paper.unitCode, paper.unitName);
+  const unitLine = formatUnitTitle(paper.unitName);
 
   // Rows are built as data so a null value drops out entirely rather than
   // rendering an empty or invented field.

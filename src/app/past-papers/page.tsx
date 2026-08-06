@@ -28,7 +28,7 @@ import { PaperDocLinks } from "./_doc-links";
 import {
   SinglePaperView,
   formatDuration,
-  formatUnitLine,
+  formatUnitLabel,
 } from "./_single-paper";
 
 export const metadata: Metadata = {
@@ -192,8 +192,13 @@ function PaperRow({
   } | null;
 }) {
   const isDraft = paper.status !== "live";
-  const unitLine = formatUnitLine(paper.unitCode, paper.unitName);
-  const duration = formatDuration(paper.durationMinutes);
+  const meta = [
+    formatUnitLabel(paper.unitName),
+    formatDuration(paper.durationMinutes),
+    paper.totalMarks != null
+      ? `${paper.totalMarks} mark${paper.totalMarks === 1 ? "" : "s"}`
+      : null,
+  ].filter((v): v is string => Boolean(v));
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -221,30 +226,31 @@ function PaperRow({
           </span>
         </h2>
 
-        {/* Unit — from the units row the list query already left-joins, so no
-            extra fetch per card. Truncated to one line: a full unit title runs
-            well past the card width and would otherwise wrap into the row
-            below. `title` keeps the whole string reachable on hover. */}
-        {unitLine && (
-          <p className="mt-1 truncate text-sm text-ink/70" title={unitLine}>
-            {unitLine}
-          </p>
-        )}
+        {/* Unit, duration and marks — one metadata line, each item only when
+            its field is non-null, separated by the same middle dot the eyebrow
+            above uses.
 
-        {/* Exam metadata. Each item renders only when its field is non-null —
-            both columns arrived in migration 0015 and stay null until someone
-            records them, so a partly-filled paper shows a shorter row rather
-            than an empty label. Nothing renders when neither is set. */}
-        {(duration || paper.totalMarks != null) && (
-          <p className="font-mono mt-1.5 text-xs text-ink/60">
-            {duration}
-            {duration && paper.totalMarks != null && (
-              <span className="mx-2 text-ink/30" aria-hidden="true">
-                ·
+            The unit is the SHORT form ("Unit 1"), parsed from units.name: the
+            full title runs past the card width, and units.code is a paper code
+            ("WCH11") rather than a unit number, so it cannot supply this. All
+            of it comes from the units row the list query already left-joins —
+            no extra fetch per card.
+
+            duration_minutes and total_marks arrived in migration 0015 and stay
+            null until recorded, so a partly-filled paper shows a shorter line
+            and a paper with none of the three shows no line at all. */}
+        {meta.length > 0 && (
+          <p className="font-mono mt-1.5 truncate text-xs text-ink/60">
+            {meta.map((item, i) => (
+              <span key={item}>
+                {i > 0 && (
+                  <span className="mx-2 text-ink/30" aria-hidden="true">
+                    ·
+                  </span>
+                )}
+                {item}
               </span>
-            )}
-            {paper.totalMarks != null &&
-              `${paper.totalMarks} mark${paper.totalMarks === 1 ? "" : "s"}`}
+            ))}
           </p>
         )}
 
