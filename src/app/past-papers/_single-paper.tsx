@@ -27,15 +27,36 @@ import { StartTestModal } from "./_start-test-modal";
  * the dialog nor pdf.js.
  */
 
-/** 90 -> "1 hour 30 minutes"; 45 -> "45 minutes". Null stays null. */
-function formatDuration(minutes: number | null): string | null {
+/**
+ * 90 -> "1 h 30 min"; 45 -> "45 min"; 120 -> "2 h". Null stays null.
+ *
+ * Exported so the list card in page.tsx reuses this rather than growing a
+ * second copy that could drift. The compact form replaces the previous
+ * "1 hour 30 minutes": it now also has to sit inline in the list row next to
+ * the mark total, where the long form dominated the line.
+ */
+export function formatDuration(minutes: number | null): string | null {
   if (minutes == null || minutes <= 0) return null;
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   const parts: string[] = [];
-  if (h) parts.push(`${h} hour${h === 1 ? "" : "s"}`);
-  if (m) parts.push(`${m} minute${m === 1 ? "" : "s"}`);
+  if (h) parts.push(`${h} h`);
+  if (m) parts.push(`${m} min`);
   return parts.join(" ");
+}
+
+/**
+ * "Unit 1: Structure, Bonding and Introduction to Organic Chemistry", or just
+ * the name when the unit has no code. Null when the paper has no unit — the
+ * units join is a LEFT join, so that is the ordinary case for an unmapped
+ * paper, not an error.
+ */
+export function formatUnitLine(
+  unitCode: string | null,
+  unitName: string | null,
+): string | null {
+  if (!unitName) return null;
+  return unitCode ? `${unitCode}: ${unitName}` : unitName;
 }
 
 export function SinglePaperView({
@@ -51,11 +72,7 @@ export function SinglePaperView({
   } | null;
 }) {
   const duration = formatDuration(paper.durationMinutes);
-  const unitLine = paper.unitName
-    ? paper.unitCode
-      ? `${paper.unitCode}: ${paper.unitName}`
-      : paper.unitName
-    : null;
+  const unitLine = formatUnitLine(paper.unitCode, paper.unitName);
 
   // Rows are built as data so a null value drops out entirely rather than
   // rendering an empty or invented field.
