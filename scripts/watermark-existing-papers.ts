@@ -664,11 +664,20 @@ async function main() {
 
       // Never upload something we have not re-read. This catches a truncated
       // or malformed write before it can replace a good object in the bucket.
+      //
+      // These conditions END THE RUN rather than skipping the file. A stamp
+      // that lands wrong is a fault in the geometry or the source, not bad luck
+      // with one PDF, and continuing would spray the same fault across the rest
+      // of the bucket before anyone read the log.
       const after = await inspectPdf(dst);
-      if (!after.already_correct) {
-        throw new Error(
-          `verification failed: ${after.correct_pages}/${after.pages} pages carry a correct stamp`,
+      if (after.correct_pages !== after.pages) {
+        console.error(
+          `\n✖ VERIFICATION FAILED — ${target.path}\n` +
+            `    before : pages ${before.pages}  correct ${before.correct_pages}  misplaced ${before.misplaced_pages}  above ${before.above_cropbox_pages}\n` +
+            `    after  : pages ${after.pages}  correct ${after.correct_pages}  misplaced ${after.misplaced_pages}  above ${after.above_cropbox_pages}\n` +
+            `    correct (${after.correct_pages}) != pages (${after.pages}). Nothing uploaded for this file.`,
         );
+        fail("aborting the whole run.");
       }
 
       // ---- GATE 3: page count. A local file with a different page count than
@@ -697,7 +706,12 @@ async function main() {
       }
       const bytes = await readFile(dst);
       if (bytes.length < 1024 || bytes.subarray(0, 5).toString() !== "%PDF-") {
-        throw new Error(`output does not look like a PDF (${bytes.length} bytes)`);
+        console.error(
+          `\n✖ OUTPUT REJECTED — ${target.path}\n` +
+            `    ${bytes.length} bytes, header ${JSON.stringify(bytes.subarray(0, 5).toString())}\n` +
+            `    Expected >=1024 bytes and a %PDF- header. Nothing uploaded for this file.`,
+        );
+        fail("aborting the whole run.");
       }
 
       const { error: upErr } = await db.storage
@@ -709,7 +723,14 @@ async function main() {
       if (upErr) throw new Error(`upload: ${upErr.message}`);
 
       tally.stamped++;
-      console.log(`${head}\n    -> stamped ${after.pages} page(s) and re-uploaded in place (${bytes.length} bytes)`);
+      console.log(
+        `${label}\n` +
+        `    ${target.slug} · ${target.column.replace("_pdf_path", "")}` +
+        (target.local ? ` · ${relative(options.fromLocal!, target.local)}` : "") + `\n` +
+        `    before : pages ${before.pages}  correct ${before.correct_pages}  misplaced ${before.misplaced_pages}  above ${before.above_cropbox_pages}\n` +
+        `    after  : pages ${after.pages}  correct ${after.correct_pages}  misplaced ${after.misplaced_pages}  above ${after.above_cropbox_pages}\n` +
+        `    -> uploaded in place, ${bytes.length} bytes`,
+      );
     } catch (err) {
       tally.failed++;
       const message = (err as Error).message;
