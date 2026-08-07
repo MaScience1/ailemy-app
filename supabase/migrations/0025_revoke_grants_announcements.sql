@@ -1,0 +1,82 @@
+-- ============================================================================
+-- 0025_revoke_grants_announcements.sql
+--
+-- ⚠ APPLIED BY HAND TO PRODUCTION 2026-08-07. DO NOT RE-RUN AGAINST PRODUCTION
+-- — this file exists so a rebuild from migrations matches what is already live.
+-- REVOKE is idempotent, so re-running is harmless, but there is nothing here
+-- left to apply.
+--
+-- ⚠ NUMBERED 0025, NOT 0024. It was applied as "0024" but 0024 in this folder
+-- is 0024_role_infrastructure.sql, an unapplied draft that creates
+-- public.user_roles. Renaming that file was not done here — another workstream
+-- owns it and may be mid-review. The two touch different tables so relative
+-- order is irrelevant to correctness; only the numbering reads oddly, in that
+-- an applied migration sits after an unapplied one. Renumber if you prefer.
+--
+-- WHY THIS EXISTS
+--
+-- 0019 revoked TRUNCATE, TRIGGER and REFERENCES from anon and authenticated
+-- across every table in public — but it enumerated pg_tables AT THE MOMENT IT
+-- RAN. public.announcements was created three migrations later by 0022, so it
+-- was never in that set and inherited the blanket privileges that Supabase's
+-- default privileges hand to new tables. Verified against the live catalog:
+-- both roles held TRUNCATE, TRIGGER and REFERENCES on announcements.
+--
+-- This is a RECURRING failure, not a one-off. 0019 fixed a snapshot; every
+-- table created after it re-opens the same hole. The convention note added to
+-- AGENTS.md alongside this file is the actual fix — a new CREATE TABLE
+-- migration must revoke these three itself, because no sweeping migration will
+-- ever retroactively cover a table that does not exist yet.
+--
+-- WHAT THESE THREE PRIVILEGES ACTUALLY ALLOW, and why a client should hold none
+-- of them:
+--
+--   TRUNCATE   empties the table outright, and unlike DELETE it is not
+--              filtered by RLS — a row-security policy cannot save a table
+--              from TRUNCATE.
+--   TRIGGER    lets the grantee attach a trigger, i.e. run arbitrary code
+--              inside every future write by anyone.
+--   REFERENCES lets the grantee create a foreign key onto the table, which
+--              constrains what the owner may subsequently delete.
+--
+-- None has a legitimate client caller. SELECT is untouched.
+-- ============================================================================
+
+BEGIN;
+
+REVOKE TRUNCATE, TRIGGER, REFERENCES ON public.announcements FROM anon, authenticated;
+
+COMMIT;
+
+-- ============================================================================
+-- VERIFICATION (read-only)
+--
+-- Expect exactly one row — authenticated / SELECT. Any TRUNCATE, TRIGGER or
+-- REFERENCES row, or any row for anon, means this did not take:
+--
+--   SELECT grantee, privilege_type
+--     FROM information_schema.role_table_grants
+--    WHERE table_schema = 'public' AND table_name = 'announcements'
+--      AND grantee IN ('anon', 'authenticated')
+--    ORDER BY grantee, privilege_type;
+--
+-- THE SAME SWEEP, ACROSS EVERY TABLE — run this after ANY migration that
+-- creates a table. It is the check the convention note exists to make routine,
+-- and it currently reports nothing, which is the desired state:
+--
+--   SELECT table_name, grantee, privilege_type
+--     FROM information_schema.role_table_grants
+--    WHERE table_schema = 'public'
+--      AND grantee IN ('anon', 'authenticated')
+--      AND privilege_type IN ('TRUNCATE', 'TRIGGER', 'REFERENCES')
+--    ORDER BY table_name, grantee, privilege_type;
+--
+-- ⚠ 0024_role_infrastructure.sql WILL FAIL THAT SWEEP when applied. It creates
+-- public.user_roles and grants SELECT to authenticated, but does not revoke
+-- these three, so user_roles will inherit them exactly as announcements did.
+-- Add the revoke to that file before running it.
+--
+-- ROLLBACK — restores privileges no client has any use for. Included only for
+-- completeness:
+--   GRANT TRUNCATE, TRIGGER, REFERENCES ON public.announcements TO anon, authenticated;
+-- ============================================================================
