@@ -51,10 +51,54 @@
  * ============================================================================
  */
 
-import { readdir, readFile, writeFile } from "node:fs/promises";
+import { execFile } from "node:child_process";
+import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { promisify } from "node:util";
 import { basename, join, relative, resolve, sep } from "node:path";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+
+const execFileAsync = promisify(execFile);
+
+/**
+ * The stamp is applied by scripts/watermark2.py — the SAME implementation
+ * watermark-existing-papers.ts drives, shelled out per file rather than ported,
+ * so the CropBox anchoring and /Rotate handling exist in exactly one place.
+ *
+ * Locked spec: "Ailemy.com", top-right, anchored to the CropBox (MediaBox only
+ * where a page has no CropBox), text ending 35.00pt inside the right edge,
+ * baseline 18.00pt below the top edge, 10.5pt Helvetica, grey 0.72, identical
+ * on every page including the cover, no logo, rotated pages mapped through the
+ * page rotation matrix so the mark reads horizontally in the visual top-right.
+ */
+const WATERMARK_PY = resolve("scripts/watermark2.py");
+
+type StampInspection = {
+  pages: number;
+  correct_pages: number;
+  misplaced_pages: number;
+  above_cropbox_pages: number;
+  already_correct: boolean;
+};
+
+async function inspectStamp(file: string): Promise<StampInspection> {
+  const { stdout } = await execFileAsync("python3", [WATERMARK_PY, file, "--inspect"], {
+    maxBuffer: 32 * 1024 * 1024,
+  });
+  return JSON.parse(stdout) as StampInspection;
+}
+
+/**
+ * Stamp `src` to `dst` and refuse to return unless every page carries the mark
+ * at the current anchor. Nothing reaches the bucket unverified.
+ */
+async function stampForUpload(src: string, dst: string): Promise<StampInspection> {
+  await execFileAsync("python3", [WATERMARK_PY, src, dst, "--force"], {
+    maxBuffer: 32 * 1024 * 1024,
+  });
+  return inspectStamp(dst);
+}
 
 // The path scheme and its validator are IMPORTED, never re-implemented. The
 // brief asked for keys "matching isValidPaperPath exactly" and a second copy of
@@ -69,56 +113,113 @@ import {
 // CONFIGURATION — read this before running with --commit
 // ============================================================================
 
-/**
- * Paper code -> which unit it is, and which course that unit must belong to.
- *
- * This is the brief's mapping, written out literally. It is a CHECK, not a
- * lookup: the real course_id/unit_id always come from the database (see
- * loadCatalogue). If the database ever disagrees with this table, the run
- * aborts rather than guessing which of the two is right.
- */
-const PAPER_CODES = {
-  WCH11: { unitNumber: 1, courseSlug: "edexcel-ial-as-chemistry", level: "AS" },
-  WCH12: { unitNumber: 2, courseSlug: "edexcel-ial-as-chemistry", level: "AS" },
-  WCH13: { unitNumber: 3, courseSlug: "edexcel-ial-as-chemistry", level: "AS" },
-  WCH14: { unitNumber: 4, courseSlug: "edexcel-ial-a2-chemistry", level: "A2" },
-  WCH15: { unitNumber: 5, courseSlug: "edexcel-ial-a2-chemistry", level: "A2" },
-  WCH16: { unitNumber: 6, courseSlug: "edexcel-ial-a2-chemistry", level: "A2" },
-} as const;
+type PaperCodeInfo = {
+  unitNumber: number;
+  courseSlug: string;
+  level: string;
+};
 
-type PaperCode = keyof typeof PAPER_CODES;
+type UnitMetadata = {
+  durationMinutes: number;
+  totalMarks: number;
+  /**
+   * TRUE only when the value is corroborated by rows already in past_papers —
+   * never when it is merely my recollection of the specification. Committing
+   * any unverified row requires --allow-unverified-metadata, because this
+   * script writes hundreds of rows at a time and a wrong mark total is
+   * invisible once it is in.
+   */
+  verified: boolean;
+};
 
-/**
- * Exam duration and mark total, keyed by unit number.
- *
- * `verified: true` means the value is corroborated by rows an admin already
- * entered by hand in past_papers — it is not my guess. `verified: false` means
- * it comes from the Edexcel specification as I recall it and NOTHING in the
- * database confirms it. Committing any unverified row requires
- * --allow-unverified-metadata, because this script writes hundreds of rows at a
- * time and a wrong mark total is invisible once it is in.
- *
- * Corroboration at the time of writing (10 existing rows):
- *   unit 1 -> 90/80   4 rows agree
- *   unit 2 -> 90/80   3 rows agree
- *   unit 4 -> 105/90  2 rows agree
- *   unit 5 -> 105/90  confirmed by the author 2026-08-06. The existing
- *                     unit-5-january-2021 row says 58 marks; that is a typo in
- *                     THAT ROW and wants correcting by hand. Nothing here
- *                     updates a row that already exists.
- *   units 3, 6        no rows exist yet, and no WCH13/WCH16 papers are on disk,
- *                     so these two entries are unexercised so far.
- */
-const UNIT_METADATA: Record<
-  number,
-  { durationMinutes: number; totalMarks: number; verified: boolean }
-> = {
-  1: { durationMinutes: 90, totalMarks: 80, verified: true },
-  2: { durationMinutes: 90, totalMarks: 80, verified: true },
-  3: { durationMinutes: 80, totalMarks: 50, verified: false },
-  4: { durationMinutes: 105, totalMarks: 90, verified: true },
-  5: { durationMinutes: 105, totalMarks: 90, verified: true },
-  6: { durationMinutes: 80, totalMarks: 50, verified: false },
+type SubjectConfig = {
+  /** Shown in the run header. */
+  label: string;
+  /**
+   * Paper code -> which unit it is, and which course that unit must belong to.
+   *
+   * A CHECK, not a lookup: the real course_id/unit_id always come from the
+   * database (see loadCatalogue). If the database ever disagrees with this
+   * table the run aborts rather than guessing which of the two is right.
+   */
+  paperCodes: Record<string, PaperCodeInfo>;
+  unitMetadata: Record<number, UnitMetadata>;
+};
+
+const SUBJECTS: Record<string, SubjectConfig> = {
+  chemistry: {
+    label: "Edexcel IAL Chemistry",
+    paperCodes: {
+      WCH11: { unitNumber: 1, courseSlug: "edexcel-ial-as-chemistry", level: "AS" },
+      WCH12: { unitNumber: 2, courseSlug: "edexcel-ial-as-chemistry", level: "AS" },
+      WCH13: { unitNumber: 3, courseSlug: "edexcel-ial-as-chemistry", level: "AS" },
+      WCH14: { unitNumber: 4, courseSlug: "edexcel-ial-a2-chemistry", level: "A2" },
+      WCH15: { unitNumber: 5, courseSlug: "edexcel-ial-a2-chemistry", level: "A2" },
+      WCH16: { unitNumber: 6, courseSlug: "edexcel-ial-a2-chemistry", level: "A2" },
+    },
+    /**
+     * Corroboration, from the 71 Chemistry rows now in past_papers:
+     *   unit 1 -> 90/80   many rows agree
+     *   unit 2 -> 90/80   many rows agree
+     *   unit 4 -> 105/90  many rows agree
+     *   unit 5 -> 105/90  confirmed by the author 2026-08-06
+     *   units 3, 6        no rows, and no WCH13/WCH16 papers on disk — still
+     *                     unexercised, hence still unverified.
+     */
+    unitMetadata: {
+      1: { durationMinutes: 90, totalMarks: 80, verified: true },
+      2: { durationMinutes: 90, totalMarks: 80, verified: true },
+      3: { durationMinutes: 80, totalMarks: 50, verified: false },
+      4: { durationMinutes: 105, totalMarks: 90, verified: true },
+      5: { durationMinutes: 105, totalMarks: 90, verified: true },
+      6: { durationMinutes: 80, totalMarks: 50, verified: false },
+    },
+  },
+
+  biology: {
+    label: "Edexcel IAL Biology",
+    paperCodes: {
+      WBI11: { unitNumber: 1, courseSlug: "edexcel-ial-as-biology", level: "AS" },
+      WBI12: { unitNumber: 2, courseSlug: "edexcel-ial-as-biology", level: "AS" },
+      WBI13: { unitNumber: 3, courseSlug: "edexcel-ial-as-biology", level: "AS" },
+      WBI14: { unitNumber: 4, courseSlug: "edexcel-ial-a2-biology", level: "A2" },
+      WBI15: { unitNumber: 5, courseSlug: "edexcel-ial-a2-biology", level: "A2" },
+      WBI16: { unitNumber: 6, courseSlug: "edexcel-ial-a2-biology", level: "A2" },
+    },
+    /**
+     * VERIFIED against the question papers themselves, then confirmed by the
+     * author 2026-08-07. Not corroborated by past_papers — there are still no
+     * Biology rows — so the evidence is the covers, which is stronger anyway.
+     *
+     * Every Edexcel cover states both fields. Read off page 1 of ALL 90 Biology
+     * question papers in the archive, both values are unanimous within each
+     * unit with no year-to-year variation:
+     *
+     *   unit 1  WBI11  20 papers  "Time: 1 hour 30 minutes"  "…is 80"
+     *   unit 2  WBI12  19 papers  "Time: 1 hour 30 minutes"  "…is 80"
+     *   unit 3  WBI13   9 papers  "Time 1 hour 20 minutes"   "…is 50"
+     *   unit 4  WBI14  17 papers  "Time: 1 hour 45 minutes"  "…is 90"
+     *   unit 5  WBI15  16 papers  "Time: 1 hour 45 minutes"  "…is 90"
+     *   unit 6  WBI16   9 papers  "Time 1 hour 20 minutes"   "…is 50"
+     *
+     * NOTE ON UNITS 3 AND 6: 1 hour 20 minutes is 80 MINUTES, and the paper is
+     * out of 50 MARKS. The two numbers are easy to transpose because the other
+     * units pair 80 with marks rather than minutes — 80/50 here means duration
+     * 80, marks 50, and the author confirmed that reading explicitly.
+     *
+     * The earlier draft of this table guessed these by analogy with Chemistry.
+     * Five of six guesses happened to be right; unit 3's duration was not, and
+     * would have gone in as 80 marks. That is why the gate exists.
+     */
+    unitMetadata: {
+      1: { durationMinutes: 90, totalMarks: 80, verified: true },
+      2: { durationMinutes: 90, totalMarks: 80, verified: true },
+      3: { durationMinutes: 80, totalMarks: 50, verified: true },
+      4: { durationMinutes: 105, totalMarks: 90, verified: true },
+      5: { durationMinutes: 105, totalMarks: 90, verified: true },
+      6: { durationMinutes: 80, totalMarks: 50, verified: true },
+    },
+  },
 };
 
 /**
@@ -143,16 +244,19 @@ const MAX_YEAR = 2025;
 /**
  * Directory names skipped wholesale, matched per path segment.
  *
- * The real tree numbers its folders for sort order — "1 - SAM", "2 - January" —
- * so the comparison strips a leading "<n> - " before matching, and ignores case
- * and surrounding space (several of these folders have a trailing space).
- * Without that this list silently matches nothing.
+ * The real trees number their folders for sort order — "1 - SAM",
+ * "2 - January" — and Finder has left its own marks: Biology's is
+ * "1 - SAM copy". So the comparison strips a leading "<n> - " AND a trailing
+ * " copy"/" copy 2" before matching, and ignores case and surrounding space
+ * (several of these folders have a trailing space). Without that this list
+ * silently matches nothing and the rule only appears to work.
  */
 const SKIP_DIRECTORIES = ["SAM"];
 
 function normaliseSegment(segment: string): string {
   return segment
     .replace(/^\s*\d+\s*[-–—.]\s*/, "")
+    .replace(/\s+copy(\s+\d+)?\s*$/i, "")
     .trim()
     .toLowerCase();
 }
@@ -170,6 +274,8 @@ const NAME_DASH = "–";
 
 type Options = {
   root: string;
+  subject: string;
+  config: SubjectConfig;
   commit: boolean;
   includeYears: Set<number>;
   rateMs: number;
@@ -180,12 +286,16 @@ type Options = {
 };
 
 const USAGE = `
-bulk-import-papers — import Edexcel IAL Chemistry PDFs into Supabase
+bulk-import-papers — import Edexcel IAL past-paper PDFs into Supabase
 
   node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON \\
     scripts/bulk-import-papers.ts --root=<folder> [options]
 
   --root=<path>                 Folder to walk. Required.
+  --subject=<${Object.keys(SUBJECTS).join("|")}>  Which subject's papers live under --root.
+                                Default chemistry. Decides the paper codes
+                                accepted, the course/unit mapping, and the
+                                duration/marks table.
   --commit                      Actually upload and insert. Without this the
                                 script is a dry run and writes nothing.
   --include-year=2026[,2027]    Allow a year above ${MAX_YEAR}. Repeatable.
@@ -219,6 +329,7 @@ function parseArgs(argv: string[]): Options {
 
   const known = new Set([
     "root",
+    "subject",
     "commit",
     "dry-run",
     "include-year",
@@ -234,6 +345,13 @@ function parseArgs(argv: string[]): Options {
 
   const root = flags.get("root")?.[0];
   if (!root) fail(`--root is required.\n${USAGE}`);
+
+  // Chemistry stays the default so every command already in use keeps working.
+  const subject = (flags.get("subject")?.[0] || "chemistry").toLowerCase();
+  const config = SUBJECTS[subject];
+  if (!config) {
+    fail(`--subject must be one of: ${Object.keys(SUBJECTS).join(", ")} (got "${subject}")`);
+  }
 
   const includeYears = new Set<number>();
   for (const raw of flags.get("include-year") ?? []) {
@@ -264,6 +382,8 @@ function parseArgs(argv: string[]): Options {
 
   return {
     root: resolve(root),
+    subject,
+    config,
     commit: flags.has("commit"),
     includeYears,
     rateMs,
@@ -333,11 +453,13 @@ type ParsedFile = {
   absPath: string;
   relPath: string;
   fileName: string;
-  code: PaperCode;
+  code: string;
   entry: string;
   month: string;
   year: number;
   kind: FileKind;
+  /** True for a browser/Finder duplicate such as "…_QU (1).pdf". */
+  duplicateSuffix: boolean;
   /** Identity of the exam sitting: everything before the QU/MS/ER suffix. */
   pairKey: string;
 };
@@ -352,7 +474,23 @@ type FileKind = "QU" | "MS" | "ER";
 
 type Skip = { path: string; reason: string };
 
-const FILENAME_RE = /^(WCH1[1-6])_(\d{2})_(\d{2})(\d{2})_(QU|MS|ER)\.pdf$/i;
+/**
+ * Filename rule for one subject: <CODE>_<entry>_<MMYY>_<QU|MS|ER>.pdf
+ *
+ * The trailing " (1)" group is the suffix a browser adds when the same file is
+ * downloaded twice, and Finder keeps it on copy. It has to be tolerated: in the
+ * Biology tree 29 of the question-paper/mark-scheme slots exist ONLY under a
+ * suffixed name, so refusing them silently drops 15 whole papers. It is safe to
+ * tolerate because the suffix is captured and, where a sitting somehow offers
+ * both forms, planRows prefers the clean one rather than calling it ambiguous.
+ */
+function buildFilenameRe(config: SubjectConfig): RegExp {
+  const codes = Object.keys(config.paperCodes).join("|");
+  return new RegExp(
+    `^(${codes})_(\\d{2})_(\\d{2})(\\d{2})_(QU|MS|ER)(?: \\((\\d+)\\))?\\.pdf$`,
+    "i",
+  );
+}
 
 async function walk(dir: string, out: string[] = []): Promise<string[]> {
   const entries = await readdir(dir, { withFileTypes: true });
@@ -370,6 +508,7 @@ function parseFile(
   absPath: string,
   root: string,
   options: Options,
+  filenameRe: RegExp,
   skips: Skip[],
 ): ParsedFile | null {
   const relPath = relative(root, absPath);
@@ -387,16 +526,20 @@ function parseFile(
 
   if (!fileName.toLowerCase().endsWith(".pdf")) return note("not a PDF");
 
-  const match = FILENAME_RE.exec(fileName);
+  const match = filenameRe.exec(fileName);
   if (!match) {
-    return note("filename does not match WCH1n_<entry>_<MMYY>_<QU|MS|ER>.pdf");
+    const codes = Object.keys(options.config.paperCodes);
+    return note(
+      `filename does not match <${codes[0]}…${codes[codes.length - 1]}>_<entry>_<MMYY>_<QU|MS|ER>.pdf`,
+    );
   }
 
-  const code = match[1].toUpperCase() as PaperCode;
+  const code = match[1].toUpperCase();
   const entry = match[2];
   const month = match[3];
   const year = 2000 + Number(match[4]);
   const kind = match[5].toUpperCase() as FileKind;
+  const duplicateSuffix = match[6] !== undefined;
 
   if (!SESSION_BY_MONTH[month]) {
     return note(`month "${month}" is not a known exam session`);
@@ -414,6 +557,7 @@ function parseFile(
     month,
     year,
     kind,
+    duplicateSuffix,
     pairKey: `${code}_${entry}_${month}${match[4]}`,
   };
 }
@@ -426,16 +570,19 @@ type Resolved = { unitId: string; courseId: string };
 
 /**
  * Turn every paper code the run actually needs into real ids, and abort if any
- * of it is missing or contradicts PAPER_CODES.
+ * of it is missing or contradicts the subject's paperCodes table.
  *
- * units.code holds exactly "WCH11".."WCH16", so the unit resolves directly and
- * carries its own course_id — no guessing from names. The brief's mapping is
- * then asserted against what came back.
+ * units.code holds exactly the paper code — "WCH11".."WCH16" for Chemistry,
+ * "WBI11".."WBI16" for Biology — so the unit resolves directly and carries its
+ * own course_id, with no guessing from names. The declared mapping is then
+ * asserted against what came back: course slug, level, and the unit number
+ * parsed out of units.name must all agree, or the run stops.
  */
 async function loadCatalogue(
   db: SupabaseClient,
-  needed: Set<PaperCode>,
-): Promise<Map<PaperCode, Resolved>> {
+  needed: Set<string>,
+  config: SubjectConfig,
+): Promise<Map<string, Resolved>> {
   const { data, error } = await db
     .from("units")
     .select("id, code, name, course:courses(id, slug, level)")
@@ -465,11 +612,15 @@ async function loadCatalogue(
     byCode.set(key, row);
   }
 
-  const resolved = new Map<PaperCode, Resolved>();
+  const resolved = new Map<string, Resolved>();
   const problems: string[] = [];
 
   for (const code of needed) {
-    const expected = PAPER_CODES[code];
+    const expected = config.paperCodes[code];
+    if (!expected) {
+      problems.push(`${code}: not a paper code this subject declares`);
+      continue;
+    }
     const row = byCode.get(code);
     if (!row) {
       problems.push(`${code}: no unit row with that code`);
@@ -519,7 +670,7 @@ type PlannedRow = {
   id: string;
   courseId: string;
   unitId: string;
-  code: PaperCode;
+  code: string;
   unitNumber: number;
   entry: string;
   slug: string;
@@ -544,16 +695,34 @@ function slugify(session: string): string {
 }
 
 /**
+ * Of several files claiming the same slot, take the one with a clean name.
+ *
+ * "…_QU.pdf" always beats "…_QU (1).pdf". Only when every candidate is a
+ * duplicate — which is the common case in the Biology tree, where 29 slots have
+ * no clean copy at all — does a suffixed file get used, and then the single
+ * remaining one is unambiguous. Returns null when the choice is genuinely
+ * undecidable, i.e. two or more equally-clean names.
+ */
+function pickOne(candidates: ParsedFile[]): ParsedFile | null {
+  if (candidates.length === 0) return null;
+  if (candidates.length === 1) return candidates[0];
+  const clean = candidates.filter((f) => !f.duplicateSuffix);
+  if (clean.length === 1) return clean[0];
+  return null;
+}
+
+/**
  * Pair QU with MS, drop anything unpaired, and shape the rows.
  *
  * Pairing is global rather than per-directory: the pair key carries the paper
  * code, entry and MMYY, which identifies a sitting on its own, so a mark scheme
- * filed under the wrong year folder still finds its paper. A key holding two
- * QUs (or two MSs) is refused rather than resolved by picking one.
+ * filed under the wrong year folder still finds its paper. A slot that stays
+ * ambiguous after pickOne is refused rather than resolved by guessing.
  */
 function planRows(
   files: ParsedFile[],
-  catalogue: Map<PaperCode, Resolved>,
+  catalogue: Map<string, Resolved>,
+  config: SubjectConfig,
   skips: Skip[],
   now: () => number,
 ): PlannedRow[] {
@@ -589,25 +758,22 @@ function planRows(
       }
       continue;
     }
-    if (group.QU.length > 1 || group.MS.length > 1) {
+    const questionPaper = pickOne(group.QU);
+    const markScheme = pickOne(group.MS);
+    if (!questionPaper || !markScheme) {
       for (const f of all) {
         skips.push({
           path: f.relPath,
-          reason: `ambiguous — ${group.QU.length} QU and ${group.MS.length} MS share the key ${pairKey}`,
+          reason: `ambiguous — ${group.QU.length} QU and ${group.MS.length} MS share the key ${pairKey}, none clearly canonical`,
         });
       }
       continue;
     }
 
-    const questionPaper = group.QU[0];
-    const markScheme = group.MS[0];
-
     // The examiner report is optional, so an ambiguous one costs only itself:
     // the paper still imports, just without an ER rather than not at all.
-    let examinerReport: ParsedFile | null = null;
-    if (group.ER.length === 1) {
-      examinerReport = group.ER[0];
-    } else if (group.ER.length > 1) {
+    const examinerReport = pickOne(group.ER);
+    if (!examinerReport && group.ER.length > 0) {
       for (const f of group.ER) {
         skips.push({
           path: f.relPath,
@@ -618,8 +784,8 @@ function planRows(
     const resolved = catalogue.get(questionPaper.code);
     if (!resolved) continue; // loadCatalogue already aborted on anything missing.
 
-    const { unitNumber } = PAPER_CODES[questionPaper.code];
-    const meta = UNIT_METADATA[unitNumber];
+    const { unitNumber } = config.paperCodes[questionPaper.code];
+    const meta = config.unitMetadata[unitNumber];
     if (!meta) {
       for (const f of all) {
         skips.push({ path: f.relPath, reason: `no duration/marks configured for unit ${unitNumber}` });
@@ -731,6 +897,116 @@ async function dropExisting(
   });
 }
 
+
+/**
+ * Dry-run audit: the full per-row picture, plus the gates that must hold before
+ * a single byte is written. Every one of these ABORTS the run rather than
+ * skipping the row — an import that silently drops papers is worse than one
+ * that stops and says why.
+ */
+async function auditRows(
+  db: SupabaseClient,
+  rows: PlannedRow[],
+  config: SubjectConfig,
+  subject: string,
+): Promise<number> {
+  // Existing (course_id, slug) pairs, to catch a duplicate before it is made.
+  const { data: existing, error: exErr } = await db
+    .from("past_papers")
+    .select("slug, course_id, paper_code");
+  if (exErr) fail(`could not read past_papers for the duplicate check: ${exErr.message}`);
+  const taken = new Set(
+    ((existing ?? []) as { slug: string; course_id: string }[]).map(
+      (r) => `${r.course_id}::${r.slug}`,
+    ),
+  );
+
+  const blocked: { row: PlannedRow; reasons: string[] }[] = [];
+
+  console.log("\nPER-ROW DETAIL — every source file, and the row it would create\n");
+  for (const [i, row] of rows.entries()) {
+    const reasons: string[] = [];
+
+    // Gate: %PDF- header on every source file.
+    const files: [string, ParsedFile | null, string][] = [
+      ["question paper", row.questionPaper, row.paperPath],
+      ["mark scheme", row.markScheme, row.markschemePath],
+      ["examiner report", row.examinerReport, row.examinerReportPath ?? ""],
+    ];
+    const pageCounts: Record<string, number | string> = {};
+    for (const [kind, file] of files) {
+      if (!file) continue;
+      const fd = await readFile(file.absPath);
+      if (fd.subarray(0, 5).toString() !== "%PDF-") {
+        reasons.push(`${kind}: missing %PDF- header (${JSON.stringify(fd.subarray(0, 5).toString())})`);
+      }
+      try {
+        pageCounts[kind] = (await inspectStamp(file.absPath)).pages;
+      } catch (e) {
+        pageCounts[kind] = "unreadable";
+        reasons.push(`${kind}: unreadable — ${(e as Error).message.split("\n")[0]}`);
+      }
+    }
+
+    // Gate: the paper code must be one this subject declares.
+    if (!config.paperCodes[row.code]) {
+      reasons.push(`paper code ${row.code} is not declared for --subject=${subject}`);
+    }
+
+    // Gate: duration and marks must be real, not placeholders. A value that is
+    // present but unverified is treated as missing: it is a guess, and a wrong
+    // mark total is invisible once several hundred rows carry it.
+    const meta = config.unitMetadata[row.unitNumber];
+    if (!meta) reasons.push(`no duration/marks configured for unit ${row.unitNumber}`);
+    else if (!meta.durationMinutes || !meta.totalMarks) {
+      reasons.push(`unit ${row.unitNumber}: duration_minutes or total_marks is empty`);
+    } else if (!meta.verified) {
+      reasons.push(
+        `unit ${row.unitNumber}: duration_minutes=${meta.durationMinutes} / total_marks=${meta.totalMarks} are UNVERIFIED placeholders`,
+      );
+    }
+
+    // Gate: no duplicate against an existing row.
+    if (taken.has(`${row.courseId}::${row.slug}`)) {
+      reasons.push(`duplicate — a past_papers row already exists for this course and slug ${row.slug}`);
+    }
+
+    console.log(
+      `[${i + 1}/${rows.length}] ${row.slug}\n` +
+      `    sources : ${row.questionPaper.relPath}  (${pageCounts["question paper"] ?? "-"}p)\n` +
+      `              ${row.markScheme.relPath}  (${pageCounts["mark scheme"] ?? "-"}p)\n` +
+      (row.examinerReport
+        ? `              ${row.examinerReport.relPath}  (${pageCounts["examiner report"] ?? "-"}p)\n`
+        : `              (no examiner report)\n`) +
+      `    parsed  : ${row.paperCode}   ${row.session}   ${row.year}   unit ${row.unitNumber}\n` +
+      `    storage : ${row.paperPath}\n` +
+      `              ${row.markschemePath}\n` +
+      (row.examinerReportPath ? `              ${row.examinerReportPath}\n` : "") +
+      `    row     : slug=${row.slug}  paper_code=${row.paperCode}  session=${row.session}  year=${row.year}\n` +
+      `              paper_name=${JSON.stringify(row.paperName)}\n` +
+      `              duration_minutes=${row.durationMinutes}  total_marks=${row.totalMarks}` +
+      `  (${meta?.verified ? "verified" : "UNVERIFIED"})\n` +
+      `    -> ${reasons.length ? "BLOCKED — " + reasons.join("; ") : "ready"}`,
+    );
+
+    if (reasons.length) blocked.push({ row, reasons });
+  }
+
+  if (blocked.length) {
+    const byReason = new Map<string, number>();
+    for (const b of blocked)
+      for (const r of b.reasons) {
+        const k = r.replace(/unit \d+/, "unit N").replace(/slug \S+/, "slug …");
+        byReason.set(k, (byReason.get(k) ?? 0) + 1);
+      }
+    console.error(`\n✖ ABORT — ${blocked.length} of ${rows.length} row(s) are blocked:\n`);
+    for (const [reason, n] of [...byReason].sort((a, b) => b[1] - a[1])) {
+      console.error(`    ${n} × ${reason}`);
+    }
+  }
+  return blocked.length;
+}
+
 // ============================================================================
 // IMPORT
 // ============================================================================
@@ -758,10 +1034,47 @@ async function importOne(
   row: PlannedRow,
   status: string,
 ): Promise<"inserted" | "conflict"> {
+  // Stamp BEFORE upload. The bytes that reach the bucket are the stamped ones;
+  // the local originals are never modified.
+  const work = await mkdtemp(join(tmpdir(), "ailemy-import-"));
+  // Each of these conditions ENDS THE RUN rather than skipping the file. A
+  // stamp landing wrong is a fault in the geometry or the source, not bad luck
+  // with one PDF, and continuing would spread it across the rest of the import
+  // before anyone read the log. Nothing has been uploaded at this point, so the
+  // abort leaves the bucket untouched.
+  const stampLog: string[] = [];
+  const stampTo = async (srcPath: string, tag: string) => {
+    const out = join(work, `${tag}.pdf`);
+    const insp = await stampForUpload(srcPath, out);
+    const bytes = await readFile(out);
+    const bad: string[] = [];
+    if (insp.correct_pages !== insp.pages)
+      bad.push(`correct ${insp.correct_pages} != pages ${insp.pages}`);
+    if (insp.misplaced_pages) bad.push(`misplaced ${insp.misplaced_pages}`);
+    if (insp.above_cropbox_pages) bad.push(`above CropBox ${insp.above_cropbox_pages}`);
+    if (bytes.length < 1024) bad.push(`${bytes.length} bytes (< 1KB)`);
+    if (bytes.subarray(0, 5).toString() !== "%PDF-")
+      bad.push(`header ${JSON.stringify(bytes.subarray(0, 5).toString())}`);
+
+    if (bad.length) {
+      console.error(
+        `\n✖ STAMP VERIFICATION FAILED — ${row.slug} · ${tag}\n` +
+          `    source : ${srcPath}\n` +
+          `    pages ${insp.pages}  correct ${insp.correct_pages}  misplaced ${insp.misplaced_pages}  above ${insp.above_cropbox_pages}  bytes ${bytes.length}\n` +
+          `    ${bad.join("; ")}\n` +
+          `    Nothing was uploaded for this row.`,
+      );
+      await rm(work, { recursive: true, force: true });
+      fail("aborting the whole run.");
+    }
+    stampLog.push(`${tag} ${insp.pages}p correct=${insp.correct_pages} mis=${insp.misplaced_pages} above=${insp.above_cropbox_pages} ${bytes.length}B`);
+    return bytes;
+  };
+
   const [paperBytes, markschemeBytes, examinerReportBytes] = await Promise.all([
-    readFile(row.questionPaper.absPath),
-    readFile(row.markScheme.absPath),
-    row.examinerReport ? readFile(row.examinerReport.absPath) : null,
+    stampTo(row.questionPaper.absPath, "paper"),
+    stampTo(row.markScheme.absPath, "markscheme"),
+    row.examinerReport ? stampTo(row.examinerReport.absPath, "examiner-report") : null,
   ]);
 
   const uploaded: string[] = [];
@@ -803,11 +1116,14 @@ async function importOne(
       }
       throw new Error(`insert ${row.slug}: ${error.message} (${error.code})`);
     }
+    console.log(`      ${stampLog.join("\n      ")}`);
     return "inserted";
   } catch (err) {
     // Never leave objects behind for a row that does not exist.
     await removeObjects(db, uploaded);
     throw err;
+  } finally {
+    await rm(work, { recursive: true, force: true });
   }
 }
 
@@ -902,7 +1218,8 @@ async function main() {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  console.log(`\nRoot   : ${options.root}`);
+  console.log(`\nSubject: ${options.config.label}  (--subject=${options.subject})`);
+  console.log(`Root   : ${options.root}`);
   console.log(`Mode   : ${options.commit ? "COMMIT — writes to Supabase" : "DRY RUN — writes nothing"}`);
   console.log(`Status : ${options.status}`);
   if (options.includeYears.size) {
@@ -921,8 +1238,9 @@ async function main() {
 
   const skips: Skip[] = [];
   const parsed: ParsedFile[] = [];
+  const filenameRe = buildFilenameRe(options.config);
   for (const path of allPaths.sort()) {
-    const file = parseFile(path, options.root, options, skips);
+    const file = parseFile(path, options.root, options, filenameRe, skips);
     if (file) parsed.push(file);
   }
   console.log(`\nFound ${allPaths.length} file(s); ${parsed.length} match the paper naming scheme.`);
@@ -934,7 +1252,7 @@ async function main() {
 
   // ---- resolve ------------------------------------------------------------
   const needed = new Set(parsed.map((f) => f.code));
-  const catalogue = await loadCatalogue(db, needed);
+  const catalogue = await loadCatalogue(db, needed, options.config);
   console.log(
     `Resolved ${catalogue.size} paper code(s) against the catalogue: ${[...needed].sort().join(", ")}`,
   );
@@ -945,7 +1263,7 @@ async function main() {
   // in a run unique even when the loop runs inside one millisecond.
   const now = () => Date.now() + counter++;
 
-  let rows = planRows(parsed, catalogue, skips, now);
+  let rows = planRows(parsed, catalogue, options.config, skips, now);
   rows = await dropExisting(db, rows, skips);
   if (options.limit !== null && rows.length > options.limit) {
     const dropped = rows.slice(options.limit);
@@ -976,21 +1294,37 @@ async function main() {
     const units = [...new Set(unverified.map((r) => r.unitNumber))].sort();
     console.log(
       `\n⚠  ${unverified.length} row(s) carry UNVERIFIED duration/marks (marked "?" above).` +
-        `\n   Unit(s) ${units.join(", ")} have no corroborating row in past_papers — the values` +
-        `\n   come from UNIT_METADATA at the top of this script and nothing has checked them.` +
-        `\n   Confirm them against the specification before committing.`,
+        `\n   Unit(s) ${units.join(", ")} have no corroborating row in past_papers — the values come` +
+        `\n   from SUBJECTS.${options.subject}.unitMetadata at the top of this script and nothing` +
+        `\n   has checked them. Confirm them against the specification before committing.`,
     );
     if (options.commit && !options.allowUnverified) {
       printSkips(skips);
       fail(
-        "Refusing to commit unverified metadata. Either correct UNIT_METADATA, " +
-          "or re-run with --allow-unverified-metadata once you have checked it.",
+        `Refusing to commit unverified metadata. Either correct ` +
+          `SUBJECTS.${options.subject}.unitMetadata, or re-run with ` +
+          `--allow-unverified-metadata once you have checked it.`,
       );
     }
   }
 
   // ---- dry run stops here -------------------------------------------------
   if (!options.commit) {
+    const blockedCount = await auditRows(db, rows, options.config, options.subject);
+    printSkips(skips);
+    console.log(
+      `\nSUMMARY  files found ${allPaths.length}` +
+      `  |  parseable ${parsed.length}` +
+      `  |  rows planned ${rows.length}` +
+      `  |  ready to import ${rows.length - blockedCount}` +
+      `  |  blocked ${blockedCount}`,
+    );
+    console.log("\nDRY RUN — nothing was stamped, uploaded or inserted.");
+    await writeReport(options, rows, skips, "dry-run");
+    if (blockedCount) process.exitCode = 1;
+    return;
+  }
+  if (false) {
     printSkips(skips);
     console.log("\nDRY RUN — nothing was uploaded and nothing was inserted.");
     console.log("Re-run with --commit to write.\n");
@@ -1041,6 +1375,7 @@ async function writeReport(
 ) {
   const report = {
     mode,
+    subject: options.subject,
     root: options.root,
     committed: options.commit,
     planned: rows.map((r) => ({
