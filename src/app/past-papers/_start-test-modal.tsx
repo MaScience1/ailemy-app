@@ -31,11 +31,19 @@ import {
 
 export function StartTestModal({
   slug,
+  courseSlug,
   paperLabel,
 }: {
   slug: string;
+  /**
+   * Required: a paper slug is unique only within a course. Both modes below
+   * carry it so /test and /classroom can resolve by (course, slug) rather than
+   * by slug alone, which would serve whichever subject happened to sort first.
+   */
+  courseSlug: string;
   paperLabel: string;
 }) {
+  const q = `?course=${encodeURIComponent(courseSlug)}`;
   const [open, setOpen] = useState(false);
 
   return (
@@ -73,7 +81,7 @@ export function StartTestModal({
 
           <div className="mt-8 grid gap-4 md:grid-cols-2 md:gap-6">
             <ModeCard
-              href={`/past-papers/${slug}/test`}
+              href={`/past-papers/${slug}/test${q}`}
               icon={<Timer className="h-5 w-5" aria-hidden="true" />}
               heading="Take the test"
               description="Complete the paper independently with a timer, question navigation and saved answers."
@@ -88,7 +96,7 @@ export function StartTestModal({
             />
 
             <ModeCard
-              href={`/past-papers/${slug}/classroom`}
+              href={`/past-papers/${slug}/classroom${q}`}
               icon={<Presentation className="h-5 w-5" aria-hidden="true" />}
               heading="Teach this paper"
               description="Present the paper to a class and work through each question using classroom annotation tools."

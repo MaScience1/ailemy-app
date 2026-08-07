@@ -768,28 +768,6 @@ export async function getPastPaperByCourseAndSlug(
   return data as unknown as PastPaper | null;
 }
 
-/**
- * Global lookup by slug only. Used by the /api/papers/[slug] route handler
- * called from the client-side practice page. Assumes paper slugs are de-facto
- * globally unique in practice (paper codes are descriptive: 'wch11-january-2024').
- * If a future collision surfaces we'll move the API route to a 2-segment path.
- */
-export async function getPastPaperBySlugOnly(
-  slug: string,
-): Promise<PastPaper | null> {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("past_papers")
-    .select(PAST_PAPER_SELECT)
-    .eq("slug", slug)
-    .maybeSingle();
-
-  if (error) {
-    console.error("[catalogue] getPastPaperBySlugOnly failed", error);
-    return null;
-  }
-  return data as unknown as PastPaper | null;
-}
 
 /**
  * Compare two spec point codes like "1.1", "1.10", "2.3". Lexicographic

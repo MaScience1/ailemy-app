@@ -30,14 +30,27 @@ import { getPaperBySlug } from "@/lib/catalogue/past-paper-filters";
 export const dynamic = "force-dynamic";
 
 type Params = Promise<{ paper: string }>;
+/**
+ * ?course=<course-slug>. A paper slug is unique only within a course — both
+ * Chemistry and Biology have a "unit-1-january-2019" — so without it the
+ * lookup cannot tell which subject's paper was asked for and refuses.
+ */
+type Search = Promise<Record<string, string | string[] | undefined>>;
+
+function courseParam(sp: Record<string, string | string[] | undefined>) {
+  const v = sp.course;
+  return (Array.isArray(v) ? v[0] : v) || undefined;
+}
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Params;
+  searchParams: Search;
 }): Promise<Metadata> {
   const { paper: slug } = await params;
-  const paper = await getPaperBySlug(slug);
+  const paper = await getPaperBySlug(slug, courseParam(await searchParams));
   if (!paper) return { title: "Paper not found · Ailemy" };
   return {
     title: `Classroom · ${paper.session} ${paper.year} · ${paper.courseName} · Ailemy`,
@@ -48,11 +61,13 @@ export async function generateMetadata({
 
 export default async function PaperClassroomPage({
   params,
+  searchParams,
 }: {
   params: Params;
+  searchParams: Search;
 }) {
   const { paper: slug } = await params;
-  const paper = await getPaperBySlug(slug);
+  const paper = await getPaperBySlug(slug, courseParam(await searchParams));
   if (!paper) notFound();
 
   return (

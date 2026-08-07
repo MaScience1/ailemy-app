@@ -60,7 +60,7 @@ export default function PracticePage({ params }: { params: Params }) {
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`/api/papers/${paperSlug}`)
+    fetch(`/api/papers/${paperSlug}?course=${encodeURIComponent(course)}`)
       .then((res) => {
         if (!res.ok) throw new Error(`Paper not found (HTTP ${res.status})`);
         return res.json();
@@ -76,7 +76,7 @@ export default function PracticePage({ params }: { params: Params }) {
     return () => {
       cancelled = true;
     };
-  }, [paperSlug]);
+  }, [paperSlug, course]);
 
   function handleClear() {
     const editor = editorRef.current;

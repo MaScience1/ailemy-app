@@ -150,6 +150,7 @@ export function SinglePaperView({
             <div className="flex flex-col gap-2.5">
               <StartTestModal
                 slug={paper.slug}
+                courseSlug={paper.courseSlug}
                 paperLabel={`${paper.courseName} · ${paper.session} ${paper.year}`}
               />
 

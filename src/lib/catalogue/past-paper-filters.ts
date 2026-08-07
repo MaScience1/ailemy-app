@@ -494,7 +494,10 @@ function mapPaperRow(r: RawPaperRow): PaperResult {
  * take the newest, so the page still renders while the collision is visible in
  * the logs.
  */
-export async function getPaperBySlug(slug: string): Promise<PaperResult | null> {
+export async function getPaperBySlug(
+  slug: string,
+  courseSlug?: string,
+): Promise<PaperResult | null> {
   const db = await getReader();
 
   const { data, error } = await withOptionalColumns<RawPaperRow[]>((select) =>
@@ -503,7 +506,7 @@ export async function getPaperBySlug(slug: string): Promise<PaperResult | null> 
       .select(select)
       .eq("slug", slug)
       .order("year", { ascending: false })
-      .limit(2) as unknown as PromiseLike<{
+      .limit(4) as unknown as PromiseLike<{
       data: RawPaperRow[] | null;
       error: { code?: string; message?: string } | null;
     }>,
@@ -515,10 +518,31 @@ export async function getPaperBySlug(slug: string): Promise<PaperResult | null> 
   }
 
   const rows = (data ?? []).filter((r) => r.course);
+
+  // A slug is unique only WITHIN a course. Chemistry and Biology both have a
+  // "unit-1-january-2019", so the course has to take part in the lookup.
+  if (courseSlug) {
+    const scoped = rows.filter((r) => r.course?.slug === courseSlug);
+    if (scoped.length > 1) {
+      // Impossible while UNIQUE (course_id, slug) holds; refuse rather than pick.
+      console.error(
+        `[past-paper-filters] slug "${slug}" matches ${scoped.length} papers within course "${courseSlug}" — the unique constraint is not holding.`,
+      );
+      return null;
+    }
+    return scoped[0] ? mapPaperRow(scoped[0]) : null;
+  }
+
+  // No course given and the slug is ambiguous. Previously this took "the
+  // newest", which silently served one subject's paper under another's link —
+  // a student opening a Biology paper got the Chemistry one, with no error
+  // anywhere. Refusing is the only safe answer: the caller must say which
+  // course it means.
   if (rows.length > 1) {
-    console.warn(
-      `[past-paper-filters] slug "${slug}" matches ${rows.length} papers across courses; using the newest. past_papers is unique on (course_id, slug), not slug alone.`,
+    console.error(
+      `[past-paper-filters] slug "${slug}" matches ${rows.length} papers across courses and no course was supplied; refusing to guess. Pass courseSlug.`,
     );
+    return null;
   }
   return rows[0] ? mapPaperRow(rows[0]) : null;
 }
