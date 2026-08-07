@@ -176,6 +176,62 @@ const SUBJECTS: Record<string, SubjectConfig> = {
     },
   },
 
+  physics: {
+    label: "Edexcel IAL Physics",
+    paperCodes: {
+      WPH11: { unitNumber: 1, courseSlug: "edexcel-ial-as-physics", level: "AS" },
+      WPH12: { unitNumber: 2, courseSlug: "edexcel-ial-as-physics", level: "AS" },
+      WPH13: { unitNumber: 3, courseSlug: "edexcel-ial-as-physics", level: "AS" },
+      WPH14: { unitNumber: 4, courseSlug: "edexcel-ial-a2-physics", level: "A2" },
+      WPH15: { unitNumber: 5, courseSlug: "edexcel-ial-a2-physics", level: "A2" },
+      WPH16: { unitNumber: 6, courseSlug: "edexcel-ial-a2-physics", level: "A2" },
+    },
+    /**
+     * VERIFIED for units 1, 2, 4 and 5 — read off the question papers and
+     * confirmed by the author 2026-08-07. Every Edexcel cover states both
+     * fields; across all 76 Physics question papers in the archive each is
+     * unanimous within its unit, with no year-to-year variation:
+     *
+     *   unit 1  WPH11  21 papers  "Time: 1 hour 30 minutes"  "…is 80"
+     *   unit 2  WPH12  20 papers  "Time: 1 hour 30 minutes"  "…is 80"
+     *   unit 4  WPH14  18 papers  "Time: 1 hour 45 minutes"  "…is 90"
+     *   unit 5  WPH15  17 papers  "Time: 1 hour 45 minutes"  "…is 90"
+     *
+     * One paper needed care: WPH15_01_0625_QU.pdf carries a two-page
+     * Clarification Notice about question 19(b) before the cover, so its
+     * values are on page 3. They match the other sixteen.
+     *
+     * UNITS 3 AND 6 STAY UNVERIFIED. There are no WPH13 or WPH16 papers on
+     * disk, so there is nothing to read them off — exactly the position
+     * WCH13/WCH16 are in. The numbers below are carried over from the other
+     * practical units and are guesses. --commit refuses any row that uses
+     * them, which is the point.
+     */
+    /* superseded — see the block above.
+     *
+     * The cover sweep read these off every Physics question paper on disk and
+     * found each field unanimous within its unit:
+     *   unit 1  WPH11  21 papers  "Time: 1 hour 30 minutes"  "…is 80"
+     *   unit 2  WPH12  20 papers  "Time: 1 hour 30 minutes"  "…is 80"
+     *   unit 4  WPH14  18 papers  "Time: 1 hour 45 minutes"  "…is 90"
+     *   unit 5  WPH15  17 papers  "Time: 1 hour 45 minutes"  "…is 90"
+     * Units 3 and 6 have NO papers on disk at all, so their numbers below are
+     * pure guesses carried over from the other practical units.
+     *
+     * The sweep is evidence, not confirmation. These stay `verified: false`
+     * until the author says so, exactly as Biology's did — that gate is what
+     * caught Biology unit 3's duration being wrong.
+     */
+    unitMetadata: {
+      1: { durationMinutes: 90, totalMarks: 80, verified: true },
+      2: { durationMinutes: 90, totalMarks: 80, verified: true },
+      3: { durationMinutes: 80, totalMarks: 50, verified: false },
+      4: { durationMinutes: 105, totalMarks: 90, verified: true },
+      5: { durationMinutes: 105, totalMarks: 90, verified: true },
+      6: { durationMinutes: 80, totalMarks: 50, verified: false },
+    },
+  },
+
   biology: {
     label: "Edexcel IAL Biology",
     paperCodes: {
