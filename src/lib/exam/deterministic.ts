@@ -35,11 +35,32 @@ export type PointVerdict = {
   evidence: string;
 };
 
+/**
+ * The canonical reason for tariff this marker cannot reach.
+ *
+ * One constant, not a phrase retyped at each site, because it is shown to
+ * students and appears in review queues — two wordings would read as two
+ * different situations.
+ */
+export const WORKING_NOT_CAPTURED = "working not captured — needs review";
+
 export type DeterministicResult =
   | {
       markable: true;
       awarded: number;
-      outOf: number;
+      /**
+       * THE DENOMINATOR SHOWN TO THE STUDENT. Only the tariff this marker
+       * actually assessed — never the whole question.
+       *
+       * A correct 20(b)(iii) reads "2/2 confirmed, 4 marks need review", not
+       * "2/6". Showing 2/6 would present unassessable marks as marks lost,
+       * which is a worse lie than showing no mark at all.
+       */
+      assessedOutOf: number;
+      /** Tariff excluded from BOTH numerator and denominator. */
+      unassessedMarks: number;
+      /** WORKING_NOT_CAPTURED, or null when nothing was excluded. */
+      unassessedReason: string | null;
       points: PointVerdict[];
       /** 'deterministic' — the only confidence Tier 1 ever claims. */
       confidence: "deterministic";
@@ -97,7 +118,9 @@ export function markMcq(
     return {
       markable: true,
       awarded: 0,
-      outOf: maxMarks,
+      assessedOutOf: maxMarks,
+      unassessedMarks: 0,
+      unassessedReason: null,
       confidence: "deterministic",
       points: [{ pointCode: point.pointCode, awarded: false, evidence: "No option was selected." }],
     };
@@ -108,7 +131,11 @@ export function markMcq(
   return {
     markable: true,
     awarded: correct ? maxMarks : 0,
-    outOf: maxMarks,
+    // An MCQ has no working to assess: a wrong option is definitively wrong,
+    // so the whole tariff is assessed and a zero here is a real zero.
+    assessedOutOf: maxMarks,
+    unassessedMarks: 0,
+    unassessedReason: null,
     confidence: "deterministic",
     points: [
       {
@@ -210,13 +237,15 @@ export function markNumeric(
     tolerance: number | null;
     acceptedValues: string[] | null;
     /**
-     * Marks awarded when the final answer matches, as the SCHEME STATES IT.
-     * null means the scheme is silent — award the final point only and report
-     * the method marks as unmarked. Never a boolean: a boolean awards the full
-     * tariff on a scheme that only granted part of it. See 0031.
+     * Marks awarded when the final answer matches, TRANSCRIBED PER QUESTION
+     * from that question's own mark scheme.
      *
-     * The caller has already capped this at maxMarks; capped again here so the
-     * pure function is correct on its own terms rather than on trust.
+     * ⚠ THERE IS NO DEFAULT AND THERE MUST NOT BE ONE. Pearson's usual shape
+     * is 1 mark for the answer, 1 for the unit, the rest for working — but
+     * 20(a) contradicts it outright ("Correct answer with no working scores
+     * (4)"), so any rule this layer invented would be wrong on a real question
+     * in this very paper. null therefore means "not transcribed", and the
+     * question is reported unmarkable rather than marked by a guess.
      */
     marksOnCorrectAnswer: number | null;
     requiresUnit: boolean;
@@ -224,13 +253,18 @@ export function markNumeric(
   criteria: { pointCode: string; criterion: string }[],
 ): DeterministicResult {
   if (!spec.expectedValue) {
-    // 0031's whole purpose. Without a transcribed answer there is nothing
-    // trustworthy to compare against — see that migration for why parsing it
-    // out of the guidance prose at runtime is not an acceptable substitute.
     return {
       markable: false,
       reason:
         "No expected answer has been recorded for this question, so it was not marked automatically.",
+    };
+  }
+  if (spec.marksOnCorrectAnswer === null) {
+    // Deliberately not "award 1 and hope". See marksOnCorrectAnswer above.
+    return {
+      markable: false,
+      reason:
+        "How many marks a correct answer earns hasn't been recorded for this question, so it needs review.",
     };
   }
 
@@ -239,30 +273,47 @@ export function markNumeric(
     return { markable: false, reason: "This question has no mark scheme." };
   }
 
-  if (!response || response.kind !== "numeric" || !response.value.trim()) {
+  // Multi-mark numeric questions carry method marks this app cannot see: the
+  // editor captured one value, not the student's working. That is what makes
+  // a mismatch unassessable rather than wrong — transferred error might have
+  // earned most of the tariff on paper.
+  const hasUnseeableWorking = maxMarks > 1;
+
+  const answered =
+    response !== null && response.kind === "numeric" && response.value.trim().length > 0;
+
+  if (!answered) {
+    if (hasUnseeableWorking) {
+      return {
+        markable: false,
+        reason: `Nothing was entered for this question and ${WORKING_NOT_CAPTURED}.`,
+      };
+    }
     return {
       markable: true,
       awarded: 0,
-      outOf: maxMarks,
+      assessedOutOf: maxMarks,
+      unassessedMarks: 0,
+      unassessedReason: null,
       confidence: "deterministic",
       points: [{ pointCode: finalPoint.pointCode, awarded: false, evidence: "No answer was given." }],
     };
   }
 
-  const student = parseNumber(response.value);
+  const given = response as { kind: "numeric"; value: string; unit?: string };
+  const student = parseNumber(given.value);
   if (student === null) {
-    // Unreadable is NOT wrong. A human should look rather than a parser
-    // deciding a student who wrote "approx 307" scored zero.
+    // Unreadable is NOT wrong — a human should look, rather than a parser
+    // deciding that "approx 307" scored zero.
     return {
       markable: false,
-      reason: `"${response.value.trim()}" could not be read as a number, so this was left for a human to mark.`,
+      reason: `"${given.value.trim()}" could not be read as a number, so this was left for a human to mark.`,
     };
   }
 
   const candidates = [spec.expectedValue, ...(spec.acceptedValues ?? [])]
     .map((v) => ({ raw: v, num: parseNumber(v) }))
     .filter((c): c is { raw: string; num: number } => c.num !== null);
-
   if (candidates.length === 0) {
     return {
       markable: false,
@@ -272,64 +323,75 @@ export function markNumeric(
 
   const hit = candidates.find((c) => withinTolerance(student, c.num, spec.tolerance));
 
-  // Unit is checked only where the scheme requires one. A percentage yield is
-  // dimensionless: demanding a unit there would fail a correct answer, which
-  // is why `numeric` and `numeric_with_unit` are separate answer types.
+  // Unit is checked only where the scheme requires one — a percentage yield is
+  // dimensionless, and demanding a unit there would fail a correct answer.
   let unitOk = true;
   let unitNote = "";
   if (spec.requiresUnit && spec.expectedUnit) {
-    const given = normaliseUnit(response.unit ?? "");
-    const want = normaliseUnit(spec.expectedUnit);
-    unitOk = given === want;
+    const wanted = normaliseUnit(spec.expectedUnit);
+    const supplied = normaliseUnit(given.unit ?? "");
+    unitOk = supplied === wanted;
     unitNote = unitOk
       ? ""
-      : given
-        ? ` The unit should be ${spec.expectedUnit}, not ${response.unit}.`
+      : supplied
+        ? ` The unit should be ${spec.expectedUnit}, not ${given.unit}.`
         : ` No unit was given; it should be ${spec.expectedUnit}.`;
   }
 
-  const correct = Boolean(hit) && unitOk;
+  const shown = `${given.value.trim()}${given.unit ? " " + given.unit : ""}`;
 
-  // THE MARK-COUNT GUARD, in both directions.
-  //
-  // The student typed one value, so only the final point can be judged from
-  // it. Awarding more than that requires the scheme to have SAID how many —
-  // and to have said a number, not a yes. `Math.min(..., maxMarks)` is the
-  // second half of the clamp the caller also applies: a transcription of "4"
-  // onto a 3-mark question must never award 4.
-  const stated = spec.marksOnCorrectAnswer;
-  const awardable = stated === null ? 1 : Math.max(0, Math.min(stated, maxMarks));
-  const awarded = correct ? awardable : 0;
+  if (!hit || !unitOk) {
+    // MISMATCH.
+    if (hasUnseeableWorking) {
+      // NEVER a confirmed zero. Award nothing at all — not even a correct
+      // unit — because without the working there is no way to tell whether
+      // transferred error carried most of the marks. A confirmed 0 here would
+      // be this marker asserting something it cannot know.
+      return {
+        markable: false,
+        reason: `Your answer (${shown}) doesn't match the expected one, and ${WORKING_NOT_CAPTURED}. Your method may still have earned marks.`,
+      };
+    }
+    // One mark, no working to assess: a genuine zero.
+    return {
+      markable: true,
+      awarded: 0,
+      assessedOutOf: maxMarks,
+      unassessedMarks: 0,
+      unassessedReason: null,
+      confidence: "deterministic",
+      points: [
+        {
+          pointCode: finalPoint.pointCode,
+          awarded: false,
+          evidence: `You answered ${shown}. The expected answer is ${spec.expectedValue}${spec.expectedUnit ? " " + spec.expectedUnit : ""}.${unitNote}`,
+        },
+      ],
+    };
+  }
+
+  // MATCH. Award exactly what this question's scheme states, capped against
+  // the tariff — a transcription of "4" onto a 3-mark question must not award
+  // 4. The caller applies the same cap; doing it here too keeps the pure
+  // function correct on its own terms rather than on trust.
+  const awarded = Math.max(0, Math.min(spec.marksOnCorrectAnswer, maxMarks));
+  const unassessed = maxMarks - awarded;
 
   const points: PointVerdict[] = [
     {
       pointCode: finalPoint.pointCode,
-      awarded: correct,
-      evidence: correct
-        ? `You answered ${response.value.trim()}${response.unit ? " " + response.unit : ""}, which matches ${hit!.raw}.`
-        : `You answered ${response.value.trim()}${response.unit ? " " + response.unit : ""}. The expected answer is ${spec.expectedValue}${spec.expectedUnit ? " " + spec.expectedUnit : ""}.${unitNote}`,
+      awarded: true,
+      evidence: `You answered ${shown}, which matches ${hit.raw}${spec.expectedUnit ? " " + spec.expectedUnit : ""}.`,
     },
   ];
-
-  // Method points the award did not cover are reported as unmarked rather
-  // than failed — the student may well have earned them on paper, and this
-  // marker cannot see the paper. 20(b)(iii) is the live case: its scheme
-  // states no figure, so five of its six marks land here.
-  if (awardable < criteria.length && criteria.length > 1) {
-    for (const c of criteria.slice(0, -1)) {
-      points.unshift({
-        pointCode: c.pointCode,
-        awarded: false,
-        evidence:
-          "Method mark — not awarded automatically, because only your final answer was captured.",
-      });
-    }
-  }
 
   return {
     markable: true,
     awarded,
-    outOf: maxMarks,
+    // The remainder is excluded from the denominator, not counted as lost.
+    assessedOutOf: awarded,
+    unassessedMarks: unassessed,
+    unassessedReason: unassessed > 0 ? WORKING_NOT_CAPTURED : null,
     confidence: "deterministic",
     points,
   };

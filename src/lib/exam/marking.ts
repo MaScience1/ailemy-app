@@ -177,6 +177,16 @@ export type MarkedQuestion = {
   maxMarks: number;
   /** null when nothing could be marked. NEVER a silent zero. */
   awardedMarks: number | null;
+  /**
+   * The denominator SHOWN — only the tariff actually assessed. A correct
+   * 20(b)(iii) reads "n/n confirmed" with the rest flagged for review, never
+   * "n/6", because the unassessed marks were not lost.
+   */
+  assessedOutOf: number | null;
+  /** Tariff excluded from both numerator and denominator. */
+  unassessedMarks: number;
+  /** WORKING_NOT_CAPTURED, or null. */
+  unassessedReason: string | null;
   tier: "deterministic" | "ai" | "unmarkable";
   /** 'requires_review' on every AI-marked question, without exception. */
   confidence: "deterministic" | "requires_review" | null;
@@ -193,8 +203,11 @@ export type MarkingSummary = {
   /** Marks from Tier 2. Provisional — never added to the confirmed total. */
   provisionalAwarded: number;
   provisionalAvailable: number;
-  /** Tariff of questions nothing could mark. */
-  unmarkedAvailable: number;
+  /**
+   * Tariff nobody could assess — whole unmarkable questions PLUS the
+   * remainder of partially-assessed ones. Never in the confirmed denominator.
+   */
+  needsReviewAvailable: number;
   questions: MarkedQuestion[];
 };
 
@@ -329,6 +342,9 @@ export async function markAttempt(
         answerType: q.answer_type,
         maxMarks: qa.max_marks,
         awardedMarks: null,
+        assessedOutOf: null,
+        unassessedMarks: qa.max_marks,
+        unassessedReason: null,
         tier,
         confidence: null,
         points: [],
@@ -383,6 +399,9 @@ export async function markAttempt(
           answerType: q.answer_type,
           maxMarks: qa.max_marks,
           awardedMarks: null,
+          assessedOutOf: null,
+          unassessedMarks: qa.max_marks,
+          unassessedReason: result.reason,
           tier,
           confidence: null,
           points: [],
@@ -399,10 +418,15 @@ export async function markAttempt(
         answerType: q.answer_type,
         maxMarks: qa.max_marks,
         awardedMarks: awarded,
+        assessedOutOf: result.assessedOutOf,
+        unassessedMarks: result.unassessedMarks,
+        unassessedReason: result.unassessedReason,
         tier,
         confidence: "deterministic",
         points: result.points,
-        note: null,
+        note: result.unassessedReason
+          ? `${result.unassessedMarks} mark${result.unassessedMarks === 1 ? "" : "s"} on this question could not be assessed — ${result.unassessedReason}.`
+          : null,
       });
       continue;
     }
@@ -417,6 +441,9 @@ export async function markAttempt(
         answerType: q.answer_type,
         maxMarks: qa.max_marks,
         awardedMarks: 0,
+        assessedOutOf: qa.max_marks,
+        unassessedMarks: 0,
+        unassessedReason: null,
         tier,
         confidence: "requires_review",
         points: [],
@@ -447,6 +474,9 @@ export async function markAttempt(
         answerType: q.answer_type,
         maxMarks: qa.max_marks,
         awardedMarks: null,
+        assessedOutOf: null,
+        unassessedMarks: qa.max_marks,
+        unassessedReason: aiResult.error,
         tier,
         confidence: null,
         points: [],
@@ -471,6 +501,9 @@ export async function markAttempt(
       answerType: q.answer_type,
       maxMarks: qa.max_marks,
       awardedMarks: awarded,
+      assessedOutOf: qa.max_marks,
+      unassessedMarks: 0,
+      unassessedReason: null,
       tier,
       confidence: "requires_review",
       points,
@@ -480,17 +513,19 @@ export async function markAttempt(
 
   const confirmed = marked.filter((m) => m.confidence === "deterministic");
   const provisional = marked.filter((m) => m.confidence === "requires_review");
-  const unmarked = marked.filter((m) => m.awardedMarks === null);
 
   return {
     ok: true,
     data: {
       attemptId,
       confirmedAwarded: sum(confirmed.map((m) => m.awardedMarks ?? 0)),
-      confirmedAvailable: sum(confirmed.map((m) => m.maxMarks)),
+      // assessedOutOf, NOT maxMarks. Tariff this marker could not reach is
+      // excluded from the denominator as well as the numerator: counting it
+      // would present unassessable marks as marks the student lost.
+      confirmedAvailable: sum(confirmed.map((m) => m.assessedOutOf ?? 0)),
       provisionalAwarded: sum(provisional.map((m) => m.awardedMarks ?? 0)),
-      provisionalAvailable: sum(provisional.map((m) => m.maxMarks)),
-      unmarkedAvailable: sum(unmarked.map((m) => m.maxMarks)),
+      provisionalAvailable: sum(provisional.map((m) => m.assessedOutOf ?? 0)),
+      needsReviewAvailable: sum(marked.map((m) => m.unassessedMarks)),
       questions: marked,
     },
   };

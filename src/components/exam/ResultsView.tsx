@@ -81,7 +81,8 @@ export function ResultsView({
             </p>
             <p className="mt-3 text-sm leading-relaxed text-ink/70">
               Marked by exact comparison against the examiner&apos;s mark scheme.
-              These marks are final.
+              These marks are final. The denominator counts only what could be
+              assessed — not the whole paper.
             </p>
           </div>
 
@@ -114,13 +115,23 @@ export function ResultsView({
           )}
         </section>
 
-        {/* Deliberately NOT summed with the above. */}
-        {summary.unmarkedAvailable > 0 && (
+        {/* Deliberately NOT summed with either total above, and deliberately
+            NOT in the denominator of the confirmed card. These marks were not
+            lost — nothing could reach them. */}
+        {summary.needsReviewAvailable > 0 && (
           <p className="mt-4 text-sm leading-relaxed text-ink/55">
-            A further <strong className="text-ink/75">{summary.unmarkedAvailable} marks</strong>{" "}
-            couldn&apos;t be marked — those questions need a diagram, a graph or
-            an equation editor that isn&apos;t built yet. They are not counted
-            against you.
+            A further{" "}
+            <strong className="text-ink/75">
+              {summary.needsReviewAvailable} mark
+              {summary.needsReviewAvailable === 1 ? "" : "s"}
+            </strong>{" "}
+            couldn&apos;t be assessed — mostly method marks, because your
+            working isn&apos;t captured on screen, plus question types that need
+            an editor Ailemy doesn&apos;t have yet.{" "}
+            <strong className="text-ink/75">
+              These are not counted against you
+            </strong>{" "}
+            and are not part of the totals above.
           </p>
         )}
 
@@ -169,12 +180,20 @@ function QuestionResult({ question: q }: { question: MarkedQuestion }) {
             className={`font-mono text-sm ${unmarked ? "text-ink/35" : provisional ? "text-ink/55" : "text-ink"}`}
           >
             {unmarked ? "—" : q.awardedMarks}
-            <span className="text-ink/40">/{q.maxMarks}</span>
+            {/* assessedOutOf, not maxMarks: a 2-of-6 question that was marked
+                correctly reads 2/2, with the other 4 flagged below. */}
+            <span className="text-ink/40">/{unmarked ? q.maxMarks : q.assessedOutOf}</span>
           </span>
         </div>
       </div>
 
       {q.note && <p className="mt-3 text-sm leading-relaxed text-ink/55">{q.note}</p>}
+
+      {!unmarked && q.unassessedMarks > 0 && (
+        <p className="font-mono mt-2 text-[10px] uppercase tracking-[0.18em] text-ink/45">
+          + {q.unassessedMarks} mark{q.unassessedMarks === 1 ? "" : "s"} not assessed
+        </p>
+      )}
 
       {q.points.length > 0 && (
         <ul className="mt-4 space-y-2.5 border-t border-ink/10 pt-4">

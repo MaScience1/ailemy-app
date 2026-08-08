@@ -357,25 +357,33 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       parentQuestionNumber: "20(b)",
       displayOrder: 250,
       marks: 6,
-      answerType: "numeric_with_unit",
+      // `numeric`, NOT numeric_with_unit, and the two decisions are one:
+      // marksOnCorrectAnswer is 1 because the stem already supplies the unit
+      // ("Calculate the mass, in kg"), so there is no separate unit mark to
+      // earn — and a question with no unit mark must not ask for a unit it
+      // cannot credit. Compare 20(a), where the unit is NOT given in the stem.
+      answerType: "numeric",
       commandWord: "Calculate",
       topic: "Multi-step mass calculation",
       // MS p15 · M6 guidance: "307 (kg)"
       //          M6 accept:   "Allow 306 (kg)" -> acceptedValues
+      //          M6 criterion: "calculation of mass (kg) of carbon dioxide/
+      //                        passenger and to 3SF" — ONE point, not two
       //
-      // ⚠ marksOnCorrectAnswer IS DELIBERATELY OMITTED. This scheme contains
-      // no "correct answer scores N" line — only "Allow TE throughout", which
-      // is a transferred-error rule about the METHOD marks, not a statement
-      // that the answer alone earns them. So a correct 307 kg earns the final
-      // point and M1-M5 are reported as unmarked. That under-reports a student
-      // who did the work on paper, and it is the honest reading: this marker
-      // cannot see the paper. Setting 6 here would award marks the examiner
-      // never said could be awarded.
+      // marksOnCorrectAnswer: 1, set by the examiner. This scheme carries NO
+      // "correct answer scores N" override, so Pearson's default shape applies
+      // — and the stem already gives the unit, so the usual unit mark is not
+      // available here. The remaining 5 are method marks this app cannot see:
+      // the editor captured one value, not the working.
+      //
+      // ⚠ The 1 and the `numeric` answer type above are the same decision. Do
+      // not raise this to 2 without also restoring numeric_with_unit, or the
+      // marker would award a unit mark for a unit it never collected.
       expectedAnswer: {
         value: "307",
-        unit: "kg",
         acceptedValues: ["306"],
         tolerance: 0.005,
+        marksOnCorrectAnswer: 1,
       },
       questionText:
         "Kerosene is used as aeroplane fuel. A jet plane can carry a maximum of 800 passengers and uses 11 400 dm3 of fuel per hour.\n" +
