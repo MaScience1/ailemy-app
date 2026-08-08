@@ -108,6 +108,10 @@ import {
   type QuestionSet,
 } from "../src/lib/exam/question-set.ts";
 import { WCH11_01_2025_MAY_JUNE } from "./exam-seed/wch11-01-2025-may-june.ts";
+import {
+  verifyRequiredColumns,
+  type RequiredColumn,
+} from "./exam-seed/schema-probe.ts";
 
 // ============================================================================
 // FIXTURES
@@ -285,21 +289,19 @@ type QuestionRow = {
 };
 
 /**
- * Columns this script writes that do not exist in migration 0028.
+ * Every table and column this script writes that migration 0028 did not create.
  *
- * Without this check the failure is a PostgREST error naming a column, thrown
- * mid-run after some rows are already written, and the obvious reading of it
- * is "the script is broken" rather than "0029 has not been applied". Checked
- * up front so the message says which migration to run.
+ * Checked up front so a missing migration reads as "apply 0031", not as a
+ * PostgREST error thrown halfway through a write.
  */
-const REQUIRED_0029_COLUMNS: Array<{ table: string; column: string }> = [
-  { table: "paper_questions", column: "question_text" },
-  { table: "mark_scheme_items", column: "guidance" },
-  { table: "mark_scheme_items", column: "accept" },
-  { table: "mark_scheme_items", column: "reject" },
+const REQUIRED_COLUMNS: RequiredColumn[] = [
+  { table: "paper_questions", column: "question_text", migration: "0029" },
+  { table: "mark_scheme_items", column: "guidance", migration: "0029" },
+  { table: "mark_scheme_items", column: "accept", migration: "0029" },
+  { table: "mark_scheme_items", column: "reject", migration: "0029" },
   // 0031 — a separate, staff-only table.
-  { table: "question_expected_answers", column: "expected_value" },
-  { table: "question_expected_answers", column: "marks_on_correct_answer" },
+  { table: "question_expected_answers", column: "expected_value", migration: "0031" },
+  { table: "question_expected_answers", column: "marks_on_correct_answer", migration: "0031" },
 ];
 
 /** What the plan says will happen to one fixture question. */
@@ -370,27 +372,21 @@ async function verifyPaper(
 }
 
 /**
- * Prove every 0029 column exists before writing anything.
+ * Prove every table and column this script writes exists, before writing.
  *
- * Selecting a single column with `head: true` and `limit(0)` fetches no rows
- * and no data; PostgREST resolves the column name against its schema cache
- * and 42703s if it is missing. That is the cheapest possible existence probe
- * and it works on an empty table.
+ * ⚠ The probe lives in ./exam-seed/schema-probe.ts and is a REAL GET. The
+ * original guard here used `.select(col, {head:true, count:"exact"}).limit(0)`,
+ * which does NOT surface PGRST205 — it passed a table that did not exist, the
+ * seed then ran, and it died mid-write on the exact error this function was
+ * written to prevent, leaving a partially-seeded database. See that module,
+ * and schema-probe.test.ts, which asserts a non-existent table trips it.
  */
 async function verifySchema(db: SupabaseClient): Promise<void> {
-  const missing: string[] = [];
-  for (const { table, column } of REQUIRED_0029_COLUMNS) {
-    const { error } = await db
-      .from(table)
-      .select(column, { head: true, count: "exact" })
-      .limit(0);
-    if (error) missing.push(`${table}.${column} — ${error.message}`);
-  }
-  if (missing.length > 0) {
-    fail(
-      `this script writes columns added by migrations 0029 and 0031, and the database does not have them:\n  - ${missing.join("\n  - ")}\n\nApply supabase/migrations/0029_question_text_and_mark_scheme_split.sql and 0031_expected_answers.sql first. Nothing was written.`,
-    );
-  }
+  const verdict = await verifyRequiredColumns(db, REQUIRED_COLUMNS);
+  if (verdict.ok) return;
+  fail(
+    `the database is missing schema this script writes:\n  - ${verdict.failures.join("\n  - ")}\n\nNothing was written.`,
+  );
 }
 
 async function loadExistingQuestions(
@@ -1008,7 +1004,7 @@ async function main() {
   heading("2. Schema");
   await verifySchema(db);
   console.log(
-    `  ${GREEN}✓${RESET} migration 0029 applied — question_text, guidance, accept, reject all present`,
+    `  ${GREEN}✓${RESET} 0029 + 0031 applied — every column this script writes resolves`,
   );
 
   heading("3. Paper identity");
