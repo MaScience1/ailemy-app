@@ -82,6 +82,19 @@ export type PaperExamMeta = {
    * marks must be told so before they start, not discover it at question 11.
    */
   isPartial: boolean;
+  /**
+   * True when we could not find out. NOT the same as "this paper has nothing
+   * seeded", and the difference is the whole reason this field exists.
+   *
+   * The failure branch used to return the same all-zero shape as an unseeded
+   * paper, so a database outage told every visitor the paper had no
+   * interactive mode — and the sit route, which guards on `hasQuestions`,
+   * turned it into a 404 for a paper that is live and fully seeded. A failure
+   * presented as a fact about the data, which is exactly what it is not.
+   *
+   * Callers MUST branch on this BEFORE branching on `hasQuestions`.
+   */
+  unavailable: boolean;
 };
 
 type QuestionRow = {
@@ -90,7 +103,13 @@ type QuestionRow = {
   marks: number | null;
 };
 
-/** The answer for a paper with nothing seeded. Also the safe failure result. */
+/**
+ * The answer for a paper with nothing seeded.
+ *
+ * It is NO LONGER also the failure result — that was the bug. The two shapes
+ * were identical, so nothing downstream could tell "nothing here" from "we
+ * couldn't look". The failure branch now sets `unavailable: true`.
+ */
 const EMPTY: PaperExamMeta = {
   hasQuestions: false,
   questionCount: 0,
@@ -98,6 +117,7 @@ const EMPTY: PaperExamMeta = {
   seededMarks: 0,
   paperTotalMarks: null,
   isPartial: false,
+  unavailable: false,
 };
 
 /**
@@ -121,15 +141,16 @@ export async function getPaperExamMeta(
     .eq("paper_id", paperId);
 
   if (error) {
-    // Degrade to "not sittable" rather than throwing. A failed count must not
-    // take down the paper page: the downloads and the walkthrough on it work
-    // perfectly well without this, and the mode screen renders an honest
-    // "no questions" state. The error is logged because a persistent failure
-    // here looks identical to an unseeded paper from the outside.
+    // Still does not throw — the downloads and the walkthrough on the paper
+    // page work perfectly well without this, and a failed count must not take
+    // the page down with it. But it no longer returns the SAME shape as an
+    // unseeded paper: `unavailable` is what lets the interactive routes say
+    // "we couldn't check" instead of "there is nothing here", and stops the
+    // sit route 404ing a paper that is live and seeded.
     console.error(
-      `[getPaperExamMeta] count failed for paper ${paperId}: ${error.message}`,
+      `[getPaperExamMeta] count failed for paper ${paperId}: ${error.code ?? "?"}: ${error.message}`,
     );
-    return { ...EMPTY, paperTotalMarks };
+    return { ...EMPTY, paperTotalMarks, unavailable: true };
   }
 
   const rows = (data ?? []) as QuestionRow[];
@@ -153,5 +174,6 @@ export async function getPaperExamMeta(
     seededMarks,
     paperTotalMarks,
     isPartial: paperTotalMarks !== null && seededMarks < paperTotalMarks,
+    unavailable: false,
   };
 }

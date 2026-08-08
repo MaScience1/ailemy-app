@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Pathway } from "./pathways";
+
 import type {
   CourseWithCounts,
   CourseWithRelations,
@@ -11,6 +12,46 @@ import type {
   Subject,
   Unit,
 } from "./types";
+
+/**
+ * A catalogue read that failed.
+ *
+ * ============================================================================
+ * ⚠ WHY THESE THROW INSTEAD OF RETURNING null
+ * ============================================================================
+ * Every function in this file used to catch its error, log it, and return the
+ * same value it returns when a row genuinely is not there — `null`, or `[]`.
+ * Callers cannot distinguish those, and they do not try: the pattern
+ * throughout the app is
+ *
+ *   const paper = await getPastPaperByCourseAndSlug(...);
+ *   if (!paper) notFound();
+ *
+ * so a database outage rendered as "this paper does not exist". That is a
+ * claim about the catalogue made on the strength of a failed query, and it is
+ * the same lie one layer up from the exam-feature swallows fixed alongside
+ * this: an error must never be presented as a fact about the data.
+ *
+ * Throwing is the whole fix, and it needs no caller changes. Every route under
+ * /learn already has an error.tsx boundary — at the segment, subject, pathway,
+ * course, lesson and lessons levels — and they already render the honest
+ * thing: "Something went wrong. We couldn't load this. Try again." A thrown
+ * error reaches that; a `null` never could.
+ *
+ * ⚠ AND NOW `null` MEANS EXACTLY ONE THING. After this, a null return is
+ * "no such row", with no second meaning hiding inside it. Do not reintroduce
+ * a catch that returns null or [] on error — that is the defect, not the
+ * safety net it looks like.
+ *
+ * NOT for "not found". A missing row is not an error and must keep returning
+ * null so the caller can render its own 404.
+ */
+export class CatalogueUnavailableError extends Error {
+  constructor(operation: string, cause: { code?: string; message: string }) {
+    super(`[catalogue] ${operation}: ${cause.code ?? "?"}: ${cause.message}`);
+    this.name = "CatalogueUnavailableError";
+  }
+}
 
 /** Columns to always select for a course row. Keeps queries in sync. */
 const COURSE_SELECT = `
@@ -62,10 +103,7 @@ export async function listSubjects(): Promise<SubjectWithCounts[]> {
     )
     .order("sort_order", { ascending: true });
 
-  if (error) {
-    console.error("[catalogue] listSubjects failed", error);
-    return [];
-  }
+  if (error) throw new CatalogueUnavailableError("listSubjects", error);
 
   type CoursesShape = {
     lessons: { status: string | null }[] | null;
@@ -96,10 +134,7 @@ export async function getSubjectBySlug(slug: string): Promise<Subject | null> {
     .eq("slug", slug)
     .maybeSingle();
 
-  if (error) {
-    console.error("[catalogue] getSubjectBySlug failed", error);
-    return null;
-  }
+  if (error) throw new CatalogueUnavailableError("getSubjectBySlug", error);
   return data;
 }
 
@@ -114,10 +149,7 @@ export async function listCoursesForSubject(
     .eq("subject_id", subjectId)
     .order("sort_order", { ascending: true });
 
-  if (error) {
-    console.error("[catalogue] listCoursesForSubject failed", error);
-    return [];
-  }
+  if (error) throw new CatalogueUnavailableError("listCoursesForSubject", error);
   return (data ?? []) as unknown as CourseWithRelations[];
 }
 
@@ -138,10 +170,7 @@ export async function listCoursesForSubjectAndPathway(
     .eq("pathway", pathway)
     .order("sort_order", { ascending: true });
 
-  if (error) {
-    console.error("[catalogue] listCoursesForSubjectAndPathway failed", error);
-    return [];
-  }
+  if (error) throw new CatalogueUnavailableError("listCoursesForSubjectAndPathway", error);
 
   type Row = CourseWithRelations & {
     lessons: { status: string | null }[] | null;
@@ -189,10 +218,7 @@ export async function getPathwayStatusForSubject(
     igcse: empty(),
   };
 
-  if (error) {
-    console.error("[catalogue] getPathwayStatusForSubject failed", error);
-    return counts;
-  }
+  if (error) throw new CatalogueUnavailableError("getPathwayStatusForSubject", error);
 
   type Row = {
     pathway: Pathway | null;
@@ -229,13 +255,7 @@ export async function getCourseBySubjectPathwayAndSlug(
     .eq("subject.slug", subjectSlug)
     .maybeSingle();
 
-  if (error) {
-    console.error(
-      "[catalogue] getCourseBySubjectPathwayAndSlug failed",
-      error,
-    );
-    return null;
-  }
+  if (error) throw new CatalogueUnavailableError("getCourseBySubjectPathwayAndSlug", error);
   return data as unknown as CourseWithRelations | null;
 }
 
@@ -254,10 +274,7 @@ export async function getCourseBySlug(
     .eq("slug", slug)
     .maybeSingle();
 
-  if (error) {
-    console.error("[catalogue] getCourseBySlug failed", error);
-    return null;
-  }
+  if (error) throw new CatalogueUnavailableError("getCourseBySlug", error);
   return data as unknown as CourseWithRelations | null;
 }
 
@@ -270,10 +287,7 @@ export async function listUnitsForCourse(courseId: string): Promise<Unit[]> {
     .eq("course_id", courseId)
     .order("sort_order", { ascending: true });
 
-  if (error) {
-    console.error("[catalogue] listUnitsForCourse failed", error);
-    return [];
-  }
+  if (error) throw new CatalogueUnavailableError("listUnitsForCourse", error);
   return data ?? [];
 }
 
@@ -299,10 +313,7 @@ export async function listLessonsForCourse(
     .eq("course_id", courseId)
     .order("lesson_number", { ascending: true, nullsFirst: false });
 
-  if (error) {
-    console.error("[catalogue] listLessonsForCourse failed", error);
-    return [];
-  }
+  if (error) throw new CatalogueUnavailableError("listLessonsForCourse", error);
 
   type Row = {
     id: string;
@@ -370,10 +381,7 @@ export async function getLessonByCourseAndSlug(
     .eq("course.slug", courseSlug)
     .maybeSingle();
 
-  if (error) {
-    console.error("[catalogue] getLessonByCourseAndSlug failed", error);
-    return null;
-  }
+  if (error) throw new CatalogueUnavailableError("getLessonByCourseAndSlug", error);
   if (!data) return null;
 
   type SpecPointRow = {
@@ -513,17 +521,23 @@ export async function getCourseChoiceData(
     supabase.from("past_papers").select("status").eq("course_id", course.id),
   ]);
 
-  if (lessonsRes.error) {
-    console.error("[catalogue] choice-hub lessons fetch failed", lessonsRes.error);
-  }
-  if (unitsRes.error) {
-    console.error("[catalogue] choice-hub units fetch failed", unitsRes.error);
-  }
-  if (papersRes.error) {
-    // past_papers may not exist yet in a freshly-migrated DB — degrade
-    // gracefully to zero papers rather than crash the page.
-    console.error("[catalogue] choice-hub papers fetch failed", papersRes.error);
-  }
+  // These three logged and continued, so every count below fell through to
+  // zero and the hub told the student the course had no lessons, no units and
+  // no papers. Three separate claims about the catalogue, all made because a
+  // query failed.
+  //
+  // ⚠ The papers branch carried "past_papers may not exist yet in a
+  // freshly-migrated DB — degrade gracefully to zero papers rather than crash
+  // the page". That reasoning is exactly the trap: a missing table returns
+  // PGRST205 and an ordinary outage returns something else, and the branch
+  // could not tell them apart — so it treated every failure as "the table
+  // isn't there yet". past_papers has existed since well before 0028, which
+  // depends on it, and it is seeded. A rebuild that genuinely lacks it should
+  // fail loudly on the first page that reads it, not quietly report an empty
+  // catalogue for as long as nobody notices.
+  if (lessonsRes.error) throw new CatalogueUnavailableError("getCourseChoiceData lessons", lessonsRes.error);
+  if (unitsRes.error) throw new CatalogueUnavailableError("getCourseChoiceData units", unitsRes.error);
+  if (papersRes.error) throw new CatalogueUnavailableError("getCourseChoiceData papers", papersRes.error);
 
   type StatusRow = { status: string | null };
   const lessons = (lessonsRes.data ?? []) as StatusRow[];
@@ -618,10 +632,7 @@ export async function getPastPapersHubData(): Promise<PastPapersHubData> {
     )
     .order("sort_order", { ascending: true });
 
-  if (error) {
-    console.error("[catalogue] getPastPapersHubData failed", error);
-    return { subjects: [], totalPapers: 0, curriculaWithPapers: 0 };
-  }
+  if (error) throw new CatalogueUnavailableError("getPastPapersHubData", error);
 
   type RawCurriculum = { id: string; short_name: string | null };
   type RawCourse = {
@@ -738,10 +749,7 @@ export async function listPastPapersForCourse(
     .eq("course_id", courseId)
     .order("sort_order", { ascending: true });
 
-  if (error) {
-    console.error("[catalogue] listPastPapersForCourse failed", error);
-    return [];
-  }
+  if (error) throw new CatalogueUnavailableError("listPastPapersForCourse", error);
   return (data ?? []) as unknown as PastPaper[];
 }
 
@@ -762,10 +770,7 @@ export async function getPastPaperByCourseAndSlug(
     .eq("slug", slug)
     .maybeSingle();
 
-  if (error) {
-    console.error("[catalogue] getPastPaperByCourseAndSlug failed", error);
-    return null;
-  }
+  if (error) throw new CatalogueUnavailableError("getPastPaperByCourseAndSlug", error);
   return data as unknown as PastPaper | null;
 }
 

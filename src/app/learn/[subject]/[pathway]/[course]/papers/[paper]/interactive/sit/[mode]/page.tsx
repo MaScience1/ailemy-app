@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Hourglass, Timer, Wand2 } from "lucide-react";
 
 import { Breadcrumb } from "@/components/catalogue/breadcrumb";
+import { ExamUnavailable } from "@/components/exam/ExamUnavailable";
 import { StartExamButton } from "@/components/exam/StartExamButton";
 import { PATHWAY_COPY, isPathway } from "@/lib/catalogue/pathways";
 import {
@@ -134,13 +135,28 @@ export default async function SitModePage({ params }: { params: Params }) {
   // means the URL cannot be shared into a dead end even though the mode screen
   // never offers it.
   const examMeta = await getPaperExamMeta(paper.id, paper.total_marks ?? null);
-  if (!examMeta.hasQuestions) notFound();
 
   const config = MODES[mode];
   const Icon = config.icon;
   const pathway = PATHWAY_COPY[pathwaySlug];
   const courseHref = `/learn/${subjectSlug}/${pathwaySlug}/${courseSlug}`;
   const paperHref = `${courseHref}/papers/${paperSlug}`;
+
+  // ⚠ `unavailable` BEFORE `hasQuestions`, always. They used to be the same
+  // all-zero shape, so a failed count 404'd a paper that is live and fully
+  // seeded — a claim about the data made on the strength of an outage.
+  if (examMeta.unavailable) {
+    return (
+      <div style={getSubjectThemeStyle(subject)}>
+        <ExamUnavailable
+          title="We couldn't check this paper"
+          message="Something went wrong looking up which questions are ready to sit, so this isn't being shown — the paper itself is fine."
+          backHref={paperHref}
+        />
+      </div>
+    );
+  }
+  if (!examMeta.hasQuestions) notFound();
 
   // ── EXAM MODE IS BUILT ──────────────────────────────────────────────────
   // Practice mode falls through to the placeholder below, unchanged.
@@ -152,7 +168,25 @@ export default async function SitModePage({ params }: { params: Params }) {
 
     // Sitting a paper writes rows owned by a user, so there has to be one.
     // Signed-out visitors get a sign-in prompt rather than a failing button.
-    const openAttemptId = user ? await findOpenAttempt(paper.id, "exam") : null;
+    const open = user ? await findOpenAttempt(paper.id, "exam") : null;
+
+    // ⚠ A LOOKUP FAILURE MUST NOT BECOME "no attempt in progress". That is
+    // what this used to do, and the screen would then offer "Start the paper"
+    // — creating a SECOND attempt at a sitting the student was midway
+    // through, leaving the first stranded. Refusing to render the button is
+    // the only safe answer when we cannot tell.
+    if (open && !open.ok) {
+      return (
+        <div style={getSubjectThemeStyle(subject)}>
+          <ExamUnavailable
+            title="We couldn't check your progress"
+            message="Something went wrong looking up whether you already have this paper in progress, so we're not offering to start it — that could have left you with two sittings."
+            backHref={paperHref}
+          />
+        </div>
+      );
+    }
+    const openAttemptId = open?.ok ? open.data : null;
 
     return (
       <div style={getSubjectThemeStyle(subject)}>

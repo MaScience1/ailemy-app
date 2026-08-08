@@ -98,6 +98,49 @@ export type AttemptResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: string };
 
+/**
+ * The result of a lookup that can fail in TWO genuinely different ways.
+ *
+ * ============================================================================
+ * ⚠ WHY `not_found` AND `unavailable` MUST STAY SEPARATE
+ * ============================================================================
+ * These functions used to return `null` for both, and every caller turned that
+ * into a 404 or an empty screen. So a transient database error told a student
+ * their submitted paper did not exist, and a failed response read rendered a
+ * resumed attempt with every answer blank — which reads as lost work, and is
+ * worse than it looks: the next autosave tick would then overwrite the real
+ * stored answer with the empty one the student was shown.
+ *
+ * ============================================================================
+ * ⚠ AND WHY `not_found` MUST STAY AMBIGUOUS
+ * ============================================================================
+ * `not_found` deliberately covers BOTH "no such attempt" and "not yours". RLS
+ * makes those indistinguishable and that is the correct answer to give: a
+ * probe for someone else's attempt id should look exactly like a typo.
+ *
+ * Adding `unavailable` does not weaken that. RLS denies by returning ZERO
+ * ROWS, never an error, and a signed-in student holds SELECT on every table
+ * read here — so `unavailable` cannot be produced by asking for something that
+ * is not yours. It only ever means the database failed to answer. Do not
+ * introduce a branch that returns `unavailable` on a permission problem, or
+ * this becomes an existence oracle.
+ */
+export type Lookup<T> =
+  | { ok: true; data: T }
+  | { ok: false; reason: "not_found" }
+  | { ok: false; reason: "unavailable"; detail: string };
+
+/** Log the code, tell the caller it broke. The student never sees `detail`. */
+function unavailable(label: string, error: { code?: string; message: string }): {
+  ok: false;
+  reason: "unavailable";
+  detail: string;
+} {
+  const detail = `${label}: ${error.code ?? "?"}: ${error.message}`;
+  console.error(`[attempts] ${detail}`);
+  return { ok: false, reason: "unavailable", detail };
+}
+
 // ============================================================================
 // CREATE
 // ============================================================================
@@ -152,11 +195,19 @@ export async function createAttempt(
   return { ok: true, data: data as string };
 }
 
-/** The caller's most recent unsubmitted attempt at a paper, if any. */
+/**
+ * The caller's most recent unsubmitted attempt at a paper, if any.
+ *
+ * `data: null` means there genuinely isn't one. An error is NOT that — it used
+ * to be folded into the same null, which told the caller "no attempt in
+ * progress" and offered a fresh start; taking it would have created a SECOND
+ * attempt at a paper the student was midway through, with the first one
+ * stranded and unfinishable.
+ */
 export async function findOpenAttempt(
   paperId: string,
   mode: "exam" | "practice",
-): Promise<string | null> {
+): Promise<Lookup<string | null>> {
   const db = await createClient();
   const { data, error } = await db
     .from("exam_attempts")
@@ -169,8 +220,9 @@ export async function findOpenAttempt(
 
   // RLS scopes this to the caller's own rows; no student_id filter is needed
   // and adding one would imply the policy might not be doing its job.
-  if (error || !data || data.length === 0) return null;
-  return (data[0] as { id: string }).id;
+  if (error) return unavailable("findOpenAttempt", error);
+  if (!data || data.length === 0) return { ok: true, data: null };
+  return { ok: true, data: (data[0] as { id: string }).id };
 }
 
 // ============================================================================
@@ -195,13 +247,19 @@ type QuestionRow = {
  * business holding any of it, and the shape of this function is the first
  * place that would go wrong.
  *
- * Returns null when the attempt does not exist OR is not the caller's — RLS
- * makes those indistinguishable, which is the correct answer to give: a probe
- * for someone else's attempt id should look exactly like a typo.
+ * Returns `not_found` when the attempt does not exist OR is not the caller's —
+ * RLS makes those indistinguishable, which is the correct answer to give: a
+ * probe for someone else's attempt id should look exactly like a typo.
+ *
+ * ⚠ EVERY READ BELOW FAILS THE WHOLE LOOKUP RATHER THAN DEGRADING. There is no
+ * useful partial version of this screen: a player missing its questions shows
+ * "?" for every number, and a player missing its responses shows a resumed
+ * attempt as blank — which a student reads as lost work, and which the next
+ * autosave would then make true.
  */
 export async function getAttemptForPlayer(
   attemptId: string,
-): Promise<PlayerAttempt | null> {
+): Promise<Lookup<PlayerAttempt>> {
   const db = await createClient();
 
   const { data: attempt, error: attemptError } = await db
@@ -210,7 +268,10 @@ export async function getAttemptForPlayer(
     .eq("id", attemptId)
     .maybeSingle();
 
-  if (attemptError || !attempt) return null;
+  // Order matters: an ERROR is ours, an absent row is theirs. Checking the
+  // error first is what stops an outage being reported as "no such attempt".
+  if (attemptError) return unavailable("exam_attempts", attemptError);
+  if (!attempt) return { ok: false, reason: "not_found" };
   const a = attempt as {
     id: string;
     paper_id: string;
@@ -224,28 +285,48 @@ export async function getAttemptForPlayer(
     .from("question_attempts")
     .select("id, question_id, max_marks, flagged")
     .eq("exam_attempt_id", attemptId);
-  if (qaError || !qaRows) return null;
+  if (qaError) return unavailable("question_attempts", qaError);
+  if (!qaRows) return unavailable("question_attempts", { message: "no rows returned" });
 
   // EVERY question on the paper, containers included — the leaves need their
   // ancestors' stems for context, and those have no question_attempts row.
-  const { data: allQuestions } = await db
+  const { data: allQuestions, error: questionsError } = await db
     .from("paper_questions")
     .select(
       "id, parent_question_id, question_number, question_text, answer_type, command_word, display_order",
     )
     .eq("paper_id", a.paper_id);
+  if (questionsError) return unavailable("paper_questions", questionsError);
 
   const byId = new Map<string, QuestionRow>(
     ((allQuestions ?? []) as QuestionRow[]).map((q) => [q.id, q]),
   );
 
-  const { data: responses } = await db
+  // Every attempt row must resolve to a question. One that does not would
+  // render as question "?" with no text and answerType "other" — a broken
+  // question presented as a real one. 0030 creates these rows from
+  // paper_questions in the same transaction, so a miss is corruption or a
+  // truncated read, and neither should reach a student mid-exam.
+  const orphan = (qaRows as { question_id: string }[]).find((qa) => !byId.has(qa.question_id));
+  if (orphan) {
+    return unavailable("paper_questions", {
+      message: `question_attempt references question ${orphan.question_id}, which was not returned for paper ${a.paper_id}`,
+    });
+  }
+
+  const { data: responses, error: responsesError } = await db
     .from("student_responses")
     .select("question_attempt_id, response_payload")
     .in(
       "question_attempt_id",
       (qaRows as { id: string }[]).map((r) => r.id),
     );
+  // ⚠ THE ONE THAT MATTERS MOST. Swallowed, this renders a resumed attempt
+  // with every answer blank — indistinguishable from work that was never
+  // saved, and the next debounced save would write that blank over the real
+  // stored answer. An empty ARRAY is fine and normal (nothing answered yet);
+  // an ERROR is not, and the two must never be conflated again.
+  if (responsesError) return unavailable("student_responses", responsesError);
 
   const responseByAttempt = new Map<string, ResponsePayload>(
     ((responses ?? []) as {
@@ -302,13 +383,16 @@ export async function getAttemptForPlayer(
     .map((entry) => entry.question);
 
   return {
-    id: a.id,
-    paperId: a.paper_id,
-    mode: a.mode === "exam" ? "exam" : "practice",
-    startedAt: a.started_at,
-    submittedAt: a.submitted_at,
-    totalAvailable: a.total_available,
-    questions,
+    ok: true,
+    data: {
+      id: a.id,
+      paperId: a.paper_id,
+      mode: a.mode === "exam" ? "exam" : "practice",
+      startedAt: a.started_at,
+      submittedAt: a.submitted_at,
+      totalAvailable: a.total_available,
+      questions,
+    },
   };
 }
 
@@ -414,11 +498,21 @@ export async function submitAttempt(
 
   // No row updated means it was already submitted, or is not the caller's.
   // Both are reported the same way, for the same reason getAttemptForPlayer
-  // returns null in both cases.
+  // gives `not_found` in both cases.
   if (!data || data.length === 0) {
     const existing = await getAttemptForPlayer(attemptId);
-    if (existing?.submittedAt) {
-      return { ok: true, data: { submittedAt: existing.submittedAt } };
+    if (existing.ok && existing.data.submittedAt) {
+      return { ok: true, data: { submittedAt: existing.data.submittedAt } };
+    }
+    // An `unavailable` here means we could not find out whether the submit
+    // landed. Saying "could not be submitted" would be a guess, and the wrong
+    // one to make: a student told that will try again, and a second submit on
+    // an attempt that DID submit is refused by 0030's one-way trigger.
+    if (!existing.ok && existing.reason === "unavailable") {
+      return {
+        ok: false,
+        error: "We couldn't confirm whether that was submitted. Reload the page to check before trying again.",
+      };
     }
     return { ok: false, error: "That attempt could not be submitted." };
   }

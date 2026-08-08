@@ -201,6 +201,46 @@ export type QuestionInput = {
   commandWord?: string;
   topic?: string;
   specPoint?: string;
+  /**
+   * The final answer a deterministic marker compares against (migration 0031).
+   *
+   * Transcribed by hand from the mark scheme, NOT parsed out of `guidance` at
+   * runtime: on 22(c) that paragraph contains 10, 58, 0.17241, 161.5, 27.844
+   * and 3.591, and picking the right one by pattern is guesswork that marks
+   * correct students wrong. Absent means "not markable automatically", which
+   * the marker reports honestly rather than guessing around.
+   */
+  expectedAnswer?: {
+    /** A string, always: "0.0172" and "1.72e-2" differ in significant figures. */
+    value: string;
+    /** Omit where the scheme requires no unit — a percentage yield has none. */
+    unit?: string;
+    /** RELATIVE, e.g. 0.005 = ±0.5%. Omit for exact match. */
+    tolerance?: number;
+    /** Alternates the scheme explicitly allows ("Allow 306 (kg)"). */
+    acceptedValues?: string[];
+    /**
+     * Marks awarded when the final answer matches, AS THE SCHEME STATES IT.
+     *
+     *   20(a)  "Correct answer with no working scores (4)"     -> 4
+     *   22(c)  "Correct answer with SOME WORKING scores 3"     -> null
+     *
+     * ⚠ REQUIRED, AND `number | null` RATHER THAN OPTIONAL, ON PURPOSE.
+     *
+     * null means "this scheme states no figure we can act on" — a decision
+     * somebody made while reading the mark scheme. Omitting the field used to
+     * mean the same thing, which made a deliberate ruling and a half-finished
+     * transcription look identical in the database, and the marking layer then
+     * showed the student the same sentence for both. Requiring the key makes
+     * the ruling a keystroke: forget it and the build fails.
+     *
+     * 22(c) is the case that forced it. "With SOME WORKING" is a condition
+     * this app cannot test, because it captures no working — so those 3 marks
+     * go to review rather than being awarded on a bare answer. See the note
+     * beside `marksOnCorrectAnswer` in deterministic.ts, and 0031.
+     */
+    marksOnCorrectAnswer: number | null;
+  };
   regions?: QuestionRegionInput[];
   markScheme?: MarkSchemeItemInput[];
   examinerInsights?: ExaminerInsightInput[];

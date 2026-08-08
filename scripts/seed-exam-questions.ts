@@ -108,6 +108,10 @@ import {
   type QuestionSet,
 } from "../src/lib/exam/question-set.ts";
 import { WCH11_01_2025_MAY_JUNE } from "./exam-seed/wch11-01-2025-may-june.ts";
+import {
+  verifyRequiredColumns,
+  type RequiredColumn,
+} from "./exam-seed/schema-probe.ts";
 
 // ============================================================================
 // FIXTURES
@@ -285,18 +289,19 @@ type QuestionRow = {
 };
 
 /**
- * Columns this script writes that do not exist in migration 0028.
+ * Every table and column this script writes that migration 0028 did not create.
  *
- * Without this check the failure is a PostgREST error naming a column, thrown
- * mid-run after some rows are already written, and the obvious reading of it
- * is "the script is broken" rather than "0029 has not been applied". Checked
- * up front so the message says which migration to run.
+ * Checked up front so a missing migration reads as "apply 0031", not as a
+ * PostgREST error thrown halfway through a write.
  */
-const REQUIRED_0029_COLUMNS: Array<{ table: string; column: string }> = [
-  { table: "paper_questions", column: "question_text" },
-  { table: "mark_scheme_items", column: "guidance" },
-  { table: "mark_scheme_items", column: "accept" },
-  { table: "mark_scheme_items", column: "reject" },
+const REQUIRED_COLUMNS: RequiredColumn[] = [
+  { table: "paper_questions", column: "question_text", migration: "0029" },
+  { table: "mark_scheme_items", column: "guidance", migration: "0029" },
+  { table: "mark_scheme_items", column: "accept", migration: "0029" },
+  { table: "mark_scheme_items", column: "reject", migration: "0029" },
+  // 0031 — a separate, staff-only table.
+  { table: "question_expected_answers", column: "expected_value", migration: "0031" },
+  { table: "question_expected_answers", column: "marks_on_correct_answer", migration: "0031" },
 ];
 
 /** What the plan says will happen to one fixture question. */
@@ -367,27 +372,21 @@ async function verifyPaper(
 }
 
 /**
- * Prove every 0029 column exists before writing anything.
+ * Prove every table and column this script writes exists, before writing.
  *
- * Selecting a single column with `head: true` and `limit(0)` fetches no rows
- * and no data; PostgREST resolves the column name against its schema cache
- * and 42703s if it is missing. That is the cheapest possible existence probe
- * and it works on an empty table.
+ * ⚠ The probe lives in ./exam-seed/schema-probe.ts and is a REAL GET. The
+ * original guard here used `.select(col, {head:true, count:"exact"}).limit(0)`,
+ * which does NOT surface PGRST205 — it passed a table that did not exist, the
+ * seed then ran, and it died mid-write on the exact error this function was
+ * written to prevent, leaving a partially-seeded database. See that module,
+ * and schema-probe.test.ts, which asserts a non-existent table trips it.
  */
 async function verifySchema(db: SupabaseClient): Promise<void> {
-  const missing: string[] = [];
-  for (const { table, column } of REQUIRED_0029_COLUMNS) {
-    const { error } = await db
-      .from(table)
-      .select(column, { head: true, count: "exact" })
-      .limit(0);
-    if (error) missing.push(`${table}.${column} — ${error.message}`);
-  }
-  if (missing.length > 0) {
-    fail(
-      `this script writes columns added by migration 0029, and the database does not have them:\n  - ${missing.join("\n  - ")}\n\nApply supabase/migrations/0029_question_text_and_mark_scheme_split.sql first. Nothing was written.`,
-    );
-  }
+  const verdict = await verifyRequiredColumns(db, REQUIRED_COLUMNS);
+  if (verdict.ok) return;
+  fail(
+    `the database is missing schema this script writes:\n  - ${verdict.failures.join("\n  - ")}\n\nNothing was written.`,
+  );
 }
 
 async function loadExistingQuestions(
@@ -552,6 +551,30 @@ function buildQuestionPayload(
 }
 
 /**
+ * 0031 — the deterministic marker's comparison target.
+ *
+ * A SEPARATE TABLE, not columns on paper_questions. paper_questions is
+ * student-readable for live papers, so an expected_value column there is the
+ * answer key served to the browser. Returns [] when the fixture records no
+ * expected answer, which is a legitimate state — see 20(b)(iii).
+ */
+function buildExpectedAnswerRows(questionId: string, q: QuestionInput) {
+  const e = q.expectedAnswer;
+  if (!e) return [];
+  return [
+    {
+      question_id: questionId,
+      expected_value: e.value,
+      expected_unit: e.unit ?? null,
+      answer_tolerance: e.tolerance ?? null,
+      accepted_values: e.acceptedValues ?? null,
+      marks_on_correct_answer: e.marksOnCorrectAnswer ?? null,
+      updated_at: new Date().toISOString(),
+    },
+  ];
+}
+
+/**
  * accepted_alternatives is deliberately NOT built. 0029 replaced it with
  * guidance / accept / reject and left the column in place only so its DROP can
  * be its own migration; writing it would give that migration data to lose.
@@ -641,6 +664,7 @@ function printWritePlan(set: QuestionSet, plan: PlanRow[]) {
     { table: "paper_questions", rows: [] },
     { table: "question_regions", rows: [] },
     { table: "mark_scheme_items", rows: [] },
+    { table: "question_expected_answers", rows: [] },
     { table: "examiner_report_insights", rows: [] },
     { table: "model_answers", rows: [] },
   ];
@@ -654,6 +678,9 @@ function printWritePlan(set: QuestionSet, plan: PlanRow[]) {
 
     const qid = existing?.id ?? PLACEHOLDER;
     byName.get("mark_scheme_items")!.rows.push(...buildMarkSchemeRows(qid, question));
+    byName
+      .get("question_expected_answers")!
+      .rows.push(...buildExpectedAnswerRows(qid, question));
     for (const { table, rows } of buildKeylessRows(qid, question)) {
       byName.get(table)!.rows.push(...rows);
     }
@@ -734,6 +761,7 @@ type Stats = {
   questionsUpdated: number;
   questionsUnchanged: number;
   markSchemePoints: number;
+  expectedAnswers: number;
   regions: number;
   insights: number;
   modelAnswers: number;
@@ -752,6 +780,7 @@ async function applyPlan(
     questionsUpdated: 0,
     questionsUnchanged: 0,
     markSchemePoints: 0,
+    expectedAnswers: 0,
     regions: 0,
     insights: 0,
     modelAnswers: 0,
@@ -853,6 +882,18 @@ async function applyPlan(
           },
         );
       }
+    }
+
+    // --- expected answer: real unique key on question_id, so upsert -------
+    const expectedRows = buildExpectedAnswerRows(questionId, q);
+    if (expectedRows.length > 0) {
+      const { error: eaError } = await db
+        .from("question_expected_answers")
+        .upsert(expectedRows, { onConflict: "question_id" });
+      if (eaError) {
+        throw new Error(`expected answer for ${q.questionNumber}: ${eaError.message}`);
+      }
+      stats.expectedAnswers += 1;
     }
 
     // --- keyless child tables --------------------------------------------
@@ -963,7 +1004,7 @@ async function main() {
   heading("2. Schema");
   await verifySchema(db);
   console.log(
-    `  ${GREEN}✓${RESET} migration 0029 applied — question_text, guidance, accept, reject all present`,
+    `  ${GREEN}✓${RESET} 0029 + 0031 applied — every column this script writes resolves`,
   );
 
   heading("3. Paper identity");
@@ -1067,6 +1108,7 @@ async function main() {
   heading("8. Done");
   console.log(`  questions   ${stats.questionsInserted} inserted, ${stats.questionsUpdated} updated, ${stats.questionsUnchanged} unchanged`);
   console.log(`  mark scheme ${stats.markSchemePoints} point(s) upserted`);
+  console.log(`  expected    ${stats.expectedAnswers} answer(s) upserted (staff-only table)`);
   console.log(`  regions     ${stats.regions}`);
   console.log(`  insights    ${stats.insights}`);
   console.log(`  model answ. ${stats.modelAnswers}`);
