@@ -28,10 +28,44 @@ import type { ResponsePayload } from "./attempts";
 // VERDICTS
 // ============================================================================
 
+/**
+ * ============================================================================
+ * ⚠ THE ONE DELIBERATE EXCEPTION TO THE MARK-SCHEME BOUNDARY
+ * ============================================================================
+ * `evidence` REACHES THE BROWSER, and Tier 1 builds it from the expected
+ * answer: "You chose C. The correct answer is A." and "You answered 250. The
+ * expected answer is 307 kg." Those sentences are derived from
+ * question_expected_answers and mark_scheme_items — tables 0031 and 0028
+ * deliberately place behind policies no student can satisfy.
+ *
+ * THIS IS ALLOWED, ON THESE TERMS, AND IT MUST NOT WIDEN:
+ *
+ *   ALLOWED   The correct FINAL ANSWER — a value, a unit, an option letter —
+ *             in evidence shown AFTER SUBMISSION. Telling a student what the
+ *             answer was is the entire purpose of a feedback screen.
+ *
+ *   NEVER     criterion text, accept[], reject[], or guidance prose. Not in
+ *             evidence, not in a note, not in a field of any type this module
+ *             returns. Those are the examiner's marking instructions, and a
+ *             student holding them is holding the mark scheme.
+ *
+ * What keeps the "after submission" half true is not this comment: markAttempt
+ * refuses an unsubmitted attempt outright, and the results route redirects one
+ * back to the player. Both must stay. If a screen is ever added that shows
+ * per-point feedback DURING a sitting, this exception does not extend to it —
+ * it would hand a student the answer to a question they are still answering.
+ *
+ * Tier 2 is narrower and stays narrower: ai-marker.ts requires the model to
+ * quote the STUDENT'S OWN WORDS, so mark-scheme text has no route into an AI
+ * evidence string either.
+ */
 export type PointVerdict = {
   pointCode: string;
   awarded: boolean;
-  /** Why, in one line, quoting what was compared. Shown to the student. */
+  /**
+   * Why, in one line, quoting what was compared. SHOWN TO THE STUDENT — see
+   * the boundary note above before putting anything new in here.
+   */
   evidence: string;
 };
 
