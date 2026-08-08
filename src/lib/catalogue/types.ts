@@ -130,6 +130,16 @@ export type PastPaper = {
   session: string;
   paper_code: string | null;
   paper_name: string;
+  /**
+   * As printed on the paper cover. Nullable because a paper can be catalogued
+   * before its cover has been read — the bulk importer refuses to guess these
+   * two and leaves them null rather than inventing a plausible number.
+   *
+   * NOTE the near-collision: `walkthrough_duration_minutes` below is the
+   * length of the examiner VIDEO. This one is how long the exam lasts.
+   */
+  duration_minutes: number | null;
+  total_marks: number | null;
   paper_pdf_path: string | null;
   markscheme_pdf_path: string | null;
   examiner_report_pdf_path: string | null;

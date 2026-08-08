@@ -722,6 +722,7 @@ export async function getPastPapersHubData(): Promise<PastPapersHubData> {
 // /learn queries never had it and are not gaining it here.
 const PAST_PAPER_SELECT = `
   id, course_id, unit_id, slug, year, session, paper_code, paper_name,
+  duration_minutes, total_marks,
   paper_pdf_path, markscheme_pdf_path, examiner_report_pdf_path,
   walkthrough_mux_playback_id, walkthrough_duration_minutes, status, sort_order
 `;
