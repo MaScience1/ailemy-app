@@ -77,12 +77,32 @@ export function PaperViewer({
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const shellRef = useRef<HTMLDivElement | null>(null);
-  // Held in refs, not state: these are pdf.js handles, not render inputs.
-  // In pdf.js v6 teardown lives on the LOADING TASK, not on the document —
-  // PDFDocumentProxy has cleanup() but no destroy() — so both are kept.
-  const docRef = useRef<PDFDocumentProxy | null>(null);
-  const loadingTaskRef = useRef<PDFDocumentLoadingTask | null>(null);
+  // A ref, correctly: the in-flight render is not a render input, it is
+  // something to cancel. Contrast the document below.
   const renderTaskRef = useRef<RenderTask | null>(null);
+
+  /**
+   * ⚠ STATE, NOT A REF, AND THAT IS THE WHOLE POINT.
+   *
+   * This was a ref, so the render effect below could not depend on it. The
+   * effect keyed on [page, width, status] and read `docRef.current`, which
+   * meant nothing re-ran when the document actually ARRIVED — and under
+   * React's double-invoked effects the first run could set `status` to
+   * "ready", its cleanup then null the ref, and the second run's
+   * `setStatus("ready")` be a no-op because the value had not changed. The
+   * effect never re-ran, `docRef.current` stayed null, and every render bailed
+   * on the early return.
+   *
+   * The result was a canvas correctly sized and NEVER PAINTED: a student saw a
+   * blank white exam paper under a working "Page 1 of 24" counter, with no
+   * error anywhere, because from the component's point of view the document
+   * had loaded. Verified by sampling the canvas pixels — 0 ink — not by
+   * looking at it.
+   *
+   * As state, it is a dependency. When the document arrives the effect re-runs
+   * because the value changed, which is the guarantee a ref cannot give.
+   */
+  const [doc, setDoc] = useState<PDFDocumentProxy | null>(null);
 
   const [numPages, setNumPages] = useState(0);
   const [page, setPage] = useState(1);
@@ -92,24 +112,59 @@ export function PaperViewer({
   const [width, setWidth] = useState(0);
 
   // --- Track the available width so pages render fit-to-width and stay sharp.
+  //
+  // ⚠ MEASURED SYNCHRONOUSLY ON MOUNT, then observed for CHANGES ONLY.
+  //
+  // This used to rely on ResizeObserver's initial observation to produce the
+  // first width. The spec says observe() delivers one, but that is a promise
+  // about a callback on some future frame, and it is not honoured everywhere:
+  // in the browser the admin region mapper was verified in, a fresh observer
+  // on an already-laid-out 896px element never fired at all.
+  //
+  // The consequence here is worse than in an admin tool. `width` stays 0, the
+  // render effect below bails on `width <= 0`, and the canvas keeps its
+  // `hidden` class — so a student gets a silent, permanently blank exam paper.
+  // No error state, no spinner, nothing to report: `status` is "ready",
+  // because the DOCUMENT loaded fine. It is only the measurement that never
+  // happened, and there is no code path that could notice.
+  //
+  // Reading the box on mount makes first paint immediate and demotes the
+  // observer from a dependency to an optimisation for later resizes.
+  //
+  // The ref is on a padding-free wrapper inside the padded scroll container,
+  // so getBoundingClientRect and contentRect measure the SAME box. Mixing them
+  // would resize the page by the padding the first time a resize did fire.
   useEffect(() => {
     const el = shellRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(([entry]) => {
-      setWidth(Math.floor(entry.contentRect.width));
-    });
+    const measure = (w: number) => {
+      // Never write a 0: a transiently-unlaid-out element must not blank a
+      // page that is already rendering correctly.
+      if (w > 0) setWidth(Math.floor(w));
+    };
+    measure(el.getBoundingClientRect().width);
+    const ro = new ResizeObserver(([entry]) => measure(entry.contentRect.width));
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
 
   // --- Load the document once per URL.
+  //
+  // ⚠ THE LOADING TASK IS A LOCAL, NOT A REF. It used to live in a ref that
+  // every run shared, so run A's cleanup destroyed whatever task was in it —
+  // which, after a re-run, was run B's. B then resolved against a destroyed
+  // task or never resolved at all. Each run now owns and tears down exactly
+  // the task it created.
   useEffect(() => {
     if (!url) {
       setStatus("idle");
+      setDoc(null);
       return;
     }
     let cancelled = false;
+    let task: PDFDocumentLoadingTask | null = null;
     setStatus("loading");
+    setDoc(null);
 
     (async () => {
       try {
@@ -120,16 +175,15 @@ export function PaperViewer({
           import.meta.url,
         ).toString();
 
-        const loadingTask = pdfjs.getDocument({ url });
-        loadingTaskRef.current = loadingTask;
-        const doc = await loadingTask.promise;
+        task = pdfjs.getDocument({ url });
+        const loaded = await task.promise;
         if (cancelled) {
-          void loadingTask.destroy();
+          void task.destroy();
           return;
         }
-        docRef.current = doc;
-        setNumPages(doc.numPages);
-        setPage((p) => Math.min(Math.max(1, p), doc.numPages));
+        setNumPages(loaded.numPages);
+        setPage((p) => Math.min(Math.max(1, p), loaded.numPages));
+        setDoc(loaded);
         setStatus("ready");
       } catch (e) {
         if (cancelled) return;
@@ -144,17 +198,16 @@ export function PaperViewer({
       cancelled = true;
       renderTaskRef.current?.cancel();
       renderTaskRef.current = null;
-      docRef.current = null;
-      void loadingTaskRef.current?.destroy();
-      loadingTaskRef.current = null;
+      void task?.destroy();
     };
   }, [url]);
 
   // --- Render the current page whenever it, or the available width, changes.
   useEffect(() => {
-    const doc = docRef.current;
     const canvas = canvasRef.current;
-    if (status !== "ready" || !doc || !canvas || width <= 0) return;
+    // `doc` is in the dependency list below, so this runs the moment the
+    // document arrives. No status check: holding a document IS being ready.
+    if (!doc || !canvas || width <= 0) return;
 
     let cancelled = false;
     (async () => {
@@ -197,7 +250,7 @@ export function PaperViewer({
     return () => {
       cancelled = true;
     };
-  }, [page, width, status]);
+  }, [doc, page, width]);
 
   const go = useCallback(
     (delta: number) =>
@@ -225,10 +278,13 @@ export function PaperViewer({
   return (
     <div className={frame}>
       <div
-        ref={shellRef}
         className="min-h-0 flex-1 overflow-auto bg-parchment-2 p-3 sm:p-4"
         aria-label={config.label}
       >
+        {/* The measured box. Padding-free and always rendered, so the width
+            read on mount is the same box the observer reports later, and the
+            ref is never null on a state the effect cannot re-run for. */}
+        <div ref={shellRef} className="w-full">
         {status === "error" ? (
           <div className="flex h-full items-center justify-center p-6">
             <Notice
@@ -255,6 +311,7 @@ export function PaperViewer({
             />
           </div>
         )}
+        </div>
       </div>
 
       {config.showPageNav && status === "ready" && numPages > 0 && (
