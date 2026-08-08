@@ -203,6 +203,16 @@ export function PaperViewer({
   }, [url]);
 
   // --- Render the current page whenever it, or the available width, changes.
+  //
+  // ⚠ VERIFYING THIS IN AN AUTOMATED BROWSER: pdf.js drives its chunked render
+  // off requestAnimationFrame, and a tab whose document.visibilityState is
+  // "hidden" never fires one. The render task is created and its promise
+  // simply never settles, so the canvas stays a single flat colour with the
+  // page counter showing — identical to a real rendering bug, and it survives
+  // a reload. Check `document.visibilityState` and whether a bare
+  // requestAnimationFrame callback runs BEFORE concluding anything about this
+  // component; forcing a composite (a screenshot) completes the render.
+  // An hour was spent bisecting a bug that was the harness.
   useEffect(() => {
     const canvas = canvasRef.current;
     // `doc` is in the dependency list below, so this runs the moment the
