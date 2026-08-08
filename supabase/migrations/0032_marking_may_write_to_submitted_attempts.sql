@@ -192,9 +192,14 @@ COMMIT;
 --   v_marking_ok    boolean := false;
 --   v_flag_blocked  boolean := false;
 -- BEGIN
---   SELECT id INTO v_user  FROM auth.users LIMIT 1;
---   SELECT id INTO v_paper FROM public.past_papers WHERE status = 'live' LIMIT 1;
---   SELECT id INTO v_q     FROM public.paper_questions WHERE paper_id = v_paper LIMIT 1;
+--   SELECT id INTO v_user FROM auth.users LIMIT 1;
+--   -- Pick the QUESTION first and derive its paper. Most live papers have no
+--   -- questions seeded, so choosing a paper first usually finds nothing and
+--   -- the test reports INCONCLUSIVE when the schema is in fact fine.
+--   SELECT q.id, q.paper_id INTO v_q, v_paper
+--     FROM public.paper_questions q
+--     JOIN public.past_papers p ON p.id = q.paper_id AND p.status = 'live'
+--    LIMIT 1;
 --   IF v_user IS NULL OR v_q IS NULL THEN
 --     RAISE EXCEPTION 'INCONCLUSIVE: need one auth user and one seeded live paper';
 --   END IF;
