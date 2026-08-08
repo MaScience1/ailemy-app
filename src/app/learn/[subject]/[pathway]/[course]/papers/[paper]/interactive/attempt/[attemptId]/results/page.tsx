@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
-import { ResultsView } from "@/components/exam/ResultsView";
+import { MarkingUnavailable, ResultsView } from "@/components/exam/ResultsView";
 import { isPathway } from "@/lib/catalogue/pathways";
 import {
   getCourseBySubjectPathwayAndSlug,
@@ -70,7 +70,16 @@ export default async function ResultsPage({ params }: { params: Params }) {
   // Tier 2 is wired here and nowhere else — one explicit argument, so the
   // marker in use is visible at the call site rather than buried in an import.
   const result = await markAttempt(attemptId, claudeMarker);
-  if (!result.ok) notFound();
+  // NOT notFound(). Ownership was already proved above, so a failure here is
+  // ours — a database read that errored, not a paper that does not exist. A
+  // 404 would tell the student their submitted work is gone.
+  if (!result.ok) {
+    return (
+      <div style={getSubjectThemeStyle(subject)}>
+        <MarkingUnavailable message={result.error} paperHref={paperHref} />
+      </div>
+    );
+  }
 
   return (
     <div style={getSubjectThemeStyle(subject)}>

@@ -208,6 +208,12 @@ export type MarkingSummary = {
    * remainder of partially-assessed ones. Never in the confirmed denominator.
    */
   needsReviewAvailable: number;
+  /**
+   * Questions whose mark was computed but could not be written to the
+   * database. NOT zero means the screen is under-reporting and the student
+   * must be told so — never silently.
+   */
+  persistenceFailures: number;
   questions: MarkedQuestion[];
 };
 
@@ -262,49 +268,71 @@ export async function markAttempt(
   // --- privileged from here -----------------------------------------------
   const db = createAdminClient();
 
-  const { data: qaRows } = await db
+  // ⚠ EVERY READ BELOW IS CHECKED. They were not, and `const { data } = await`
+  // silently discarded the error object on all five: a failed read of
+  // question_expected_answers would have left `expected` null and turned every
+  // numeric question into "not markable" — a plausible-looking results page
+  // produced by an outage. That is the same failure mode as the swallowed
+  // write in persist(), and it is exactly how PGRST205 hid earlier today.
+  //
+  // These are not per-question degradations. Each of these tables feeds every
+  // question, so a failure means the whole paper would be mismarked. Marking
+  // is idempotent and re-runs on every page load, so refusing outright and
+  // asking the student to reload loses nothing.
+  const qaRes = await db
     .from("question_attempts")
     .select("id, question_id, max_marks")
     .eq("exam_attempt_id", attemptId);
-  if (!qaRows?.length) return { ok: false, error: "This attempt has no questions." };
+  const qaFail = readFailed("question_attempts", qaRes.error);
+  if (qaFail) return qaFail;
+  if (!qaRes.data?.length) return { ok: false, error: "This attempt has no questions." };
 
-  const qas = qaRows as { id: string; question_id: string; max_marks: number }[];
+  const qas = qaRes.data as { id: string; question_id: string; max_marks: number }[];
 
-  const { data: questions } = await db
+  const questionsRes = await db
     .from("paper_questions")
     .select(
       "id, question_number, question_text, answer_type, command_word",
     )
     .in("id", qas.map((r) => r.question_id));
-  const qById = new Map(((questions ?? []) as QuestionRow[]).map((q) => [q.id, q]));
+  const questionsFail = readFailed("paper_questions", questionsRes.error);
+  if (questionsFail) return questionsFail;
+  const qById = new Map(((questionsRes.data ?? []) as QuestionRow[]).map((q) => [q.id, q]));
 
   // Read privileged: question_expected_answers has no policy a student can
   // satisfy, which is the point — see 0031.
-  const { data: expected } = await db
+  const expectedRes = await db
     .from("question_expected_answers")
     .select(
       "question_id, expected_value, expected_unit, answer_tolerance, accepted_values, marks_on_correct_answer",
     )
     .in("question_id", qas.map((r) => r.question_id));
+  const expectedFail = readFailed("question_expected_answers", expectedRes.error);
+  if (expectedFail) return expectedFail;
   const expectedByQ = new Map(
-    ((expected ?? []) as ExpectedAnswerRow[]).map((e) => [e.question_id, e]),
+    ((expectedRes.data ?? []) as ExpectedAnswerRow[]).map((e) => [e.question_id, e]),
   );
 
-  const { data: responses } = await db
+  const responsesRes = await db
     .from("student_responses")
     .select("question_attempt_id, response_payload")
     .in("question_attempt_id", qas.map((r) => r.id));
+  const responsesFail = readFailed("student_responses", responsesRes.error);
+  if (responsesFail) return responsesFail;
   const responseByQa = new Map(
-    ((responses ?? []) as { question_attempt_id: string; response_payload: ResponsePayload }[]).map(
+    ((responsesRes.data ?? []) as { question_attempt_id: string; response_payload: ResponsePayload }[]).map(
       (r) => [r.question_attempt_id, r.response_payload],
     ),
   );
 
-  const { data: scheme } = await db
+  const schemeRes = await db
     .from("mark_scheme_items")
     .select("question_id, point_code, criterion, guidance, accept, reject, display_order")
     .in("question_id", qas.map((r) => r.question_id))
     .order("display_order", { ascending: true });
+  const schemeFail = readFailed("mark_scheme_items", schemeRes.error);
+  if (schemeFail) return schemeFail;
+  const scheme = schemeRes.data;
   const schemeByQ = new Map<string, typeof scheme extends null ? never : NonNullable<typeof scheme>>();
   for (const item of (scheme ?? []) as {
     question_id: string;
@@ -321,6 +349,41 @@ export async function markAttempt(
   }
 
   const marked: MarkedQuestion[] = [];
+  let persistenceFailures = 0;
+
+  /**
+   * The mark was computed and could not be stored, so it is not shown.
+   *
+   * Discarding a correct mark is the deliberate choice here. The alternative —
+   * showing it anyway — is what produced a green results page over six failed
+   * writes: a number on this screen has to mean a number in the database, or
+   * it means nothing at all.
+   */
+  const persistFailed = (
+    qa: { id: string; max_marks: number },
+    q: QuestionRow,
+    tier: "deterministic" | "ai",
+    error: unknown,
+  ): MarkedQuestion => {
+    persistenceFailures += 1;
+    console.error(
+      `[marking] ${q.question_number}: mark computed but NOT SAVED — ${error instanceof Error ? error.message : String(error)}`,
+    );
+    return {
+      questionAttemptId: qa.id,
+      questionNumber: q.question_number,
+      answerType: q.answer_type,
+      maxMarks: qa.max_marks,
+      awardedMarks: null,
+      assessedOutOf: null,
+      unassessedMarks: qa.max_marks,
+      unassessedReason: "the mark could not be saved",
+      tier,
+      confidence: null,
+      points: [],
+      note: "This question was marked, but the mark couldn't be saved, so it isn't being shown. Reloading this page will try again.",
+    };
+  };
 
   for (const qa of qas) {
     const q = qById.get(qa.question_id);
@@ -411,7 +474,12 @@ export async function markAttempt(
       }
 
       const awarded = clamp(result.awarded, qa.max_marks, q.question_number);
-      await persist(db, qa.id, awarded, "deterministic", result.points, null, null);
+      try {
+        await persist(db, qa.id, awarded, "deterministic", result.points, null, null);
+      } catch (error) {
+        marked.push(persistFailed(qa, q, tier, error));
+        continue;
+      }
       marked.push({
         questionAttemptId: qa.id,
         questionNumber: q.question_number,
@@ -434,7 +502,12 @@ export async function markAttempt(
     // --- Tier 2 -----------------------------------------------------------
     const text = response && response.kind === "text" ? response.text.trim() : "";
     if (!text) {
-      await persist(db, qa.id, 0, "requires_review", [], MARKING_MODEL, PROMPT_VERSION);
+      try {
+        await persist(db, qa.id, 0, "requires_review", [], MARKING_MODEL, PROMPT_VERSION);
+      } catch (error) {
+        marked.push(persistFailed(qa, q, tier, error));
+        continue;
+      }
       marked.push({
         questionAttemptId: qa.id,
         questionNumber: q.question_number,
@@ -494,7 +567,12 @@ export async function markAttempt(
 
     // 'requires_review' is hardcoded, not derived from anything the model
     // returned. A model cannot promote its own marking to authoritative.
-    await persist(db, qa.id, awarded, "requires_review", points, MARKING_MODEL, PROMPT_VERSION);
+    try {
+      await persist(db, qa.id, awarded, "requires_review", points, MARKING_MODEL, PROMPT_VERSION);
+    } catch (error) {
+      marked.push(persistFailed(qa, q, tier, error));
+      continue;
+    }
     marked.push({
       questionAttemptId: qa.id,
       questionNumber: q.question_number,
@@ -526,8 +604,33 @@ export async function markAttempt(
       provisionalAwarded: sum(provisional.map((m) => m.awardedMarks ?? 0)),
       provisionalAvailable: sum(provisional.map((m) => m.assessedOutOf ?? 0)),
       needsReviewAvailable: sum(marked.map((m) => m.unassessedMarks)),
+      persistenceFailures,
       questions: marked,
     },
+  };
+}
+
+/**
+ * A read that failed, reported rather than absorbed.
+ *
+ * Returns the caller's error result, or null when there was no error — so the
+ * call site reads `const fail = readFailed(...); if (fail) return fail;` and a
+ * forgotten check is visible as a missing line rather than as an absent
+ * destructured field.
+ *
+ * The student sees one sentence with no Postgres in it; the code goes to the
+ * server log, because "PGRST205" and "42501" mean opposite things and the
+ * difference is invisible without it.
+ */
+function readFailed(
+  label: string,
+  error: { code?: string; message: string } | null,
+): { ok: false; error: string } | null {
+  if (!error) return null;
+  console.error(`[marking] read ${label}: ${error.code ?? "?"}: ${error.message}`);
+  return {
+    ok: false,
+    error: "Your paper couldn't be marked just now. Nothing has been lost — please try again shortly.",
   };
 }
 
@@ -552,6 +655,31 @@ function clamp(awarded: number, maxMarks: number, questionNumber: string): numbe
 
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
 
+/**
+ * A write that did not land.
+ *
+ * ⚠ THIS THROWS. IT USED TO console.error AND RETURN.
+ *
+ * That version reported success on writes the database refused. 0030's
+ * question_attempts trigger blocked every awarded_marks write to a submitted
+ * attempt — which is every attempt this function is ever called on — so all
+ * six writes on a real sitting failed, every awarded_marks stayed NULL, and
+ * the results screen rendered a clean set of marks from the in-memory summary
+ * on top of an empty column. A check that reports a pass when it should report
+ * a fail is worse than no check: nothing looked wrong for as long as nobody
+ * queried the table directly.
+ *
+ * So: persistence failure is now loud, the caller renders the affected
+ * question as NOT MARKED, and the mark it computed is discarded rather than
+ * shown. A number on that screen must mean a number in the database.
+ */
+class PersistError extends Error {
+  constructor(table: string, code: string, detail: string) {
+    super(`${table}: ${code}: ${detail}`);
+    this.name = "PersistError";
+  }
+}
+
 async function persist(
   db: ReturnType<typeof createAdminClient>,
   questionAttemptId: string,
@@ -562,23 +690,45 @@ async function persist(
   promptVersion: string | null,
 ): Promise<void> {
   if (points.length > 0) {
-    const { error } = await db.from("marking_results").upsert(
-      points.map((p) => ({
-        question_attempt_id: questionAttemptId,
-        point_code: p.pointCode,
-        awarded: p.awarded,
-        evidence: p.evidence,
-        model_version: modelVersion,
-        prompt_version: promptVersion,
-      })),
-      { onConflict: "question_attempt_id,point_code" },
-    );
-    if (error) console.error(`[marking] marking_results: ${error.message}`);
+    const { data, error } = await db
+      .from("marking_results")
+      .upsert(
+        points.map((p) => ({
+          question_attempt_id: questionAttemptId,
+          point_code: p.pointCode,
+          awarded: p.awarded,
+          evidence: p.evidence,
+          model_version: modelVersion,
+          prompt_version: promptVersion,
+        })),
+        { onConflict: "question_attempt_id,point_code" },
+      )
+      .select("point_code");
+    if (error) throw new PersistError("marking_results", error.code ?? "?", error.message);
+    // An upsert that matches no row returns no error. Row count is the only
+    // proof the write happened — see the note on `.select("id")` below.
+    if ((data?.length ?? 0) !== points.length) {
+      throw new PersistError(
+        "marking_results",
+        "row_count",
+        `wrote ${data?.length ?? 0} of ${points.length} points`,
+      );
+    }
   }
 
-  const { error } = await db
+  // ⚠ .select("id") IS LOAD-BEARING. Without it PostgREST returns neither rows
+  // nor an error when the filter matches nothing, so an update against a
+  // deleted or invisible row is indistinguishable from one that worked.
+  // updated_at is not sent: 0028's touch_question_attempts trigger sets it,
+  // and sending it would need an UPDATE privilege on a column students should
+  // not hold — see 0032.
+  const { data, error } = await db
     .from("question_attempts")
-    .update({ awarded_marks: awarded, confidence, updated_at: new Date().toISOString() })
-    .eq("id", questionAttemptId);
-  if (error) console.error(`[marking] question_attempts: ${error.message}`);
+    .update({ awarded_marks: awarded, confidence })
+    .eq("id", questionAttemptId)
+    .select("id");
+  if (error) throw new PersistError("question_attempts", error.code ?? "?", error.message);
+  if ((data?.length ?? 0) !== 1) {
+    throw new PersistError("question_attempts", "row_count", `updated ${data?.length ?? 0} rows, expected 1`);
+  }
 }

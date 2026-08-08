@@ -69,6 +69,33 @@ export function ResultsView({
           </p>
         </header>
 
+        {/* ── SAVE FAILURE ────────────────────────────────────────────────
+            Loud, above the score, and never suppressed. The totals below are
+            genuinely lower than what was computed, and a student comparing
+            them against their own answers deserves to know why rather than
+            concluding the marker is wrong. */}
+        {summary.persistenceFailures > 0 && (
+          <div className="mt-10 flex gap-3 rounded-lg border border-ink/25 bg-snow p-5 sm:p-6">
+            <CircleAlert className="mt-0.5 h-4 w-4 shrink-0 text-ink/70" aria-hidden="true" />
+            <div>
+              <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-ink/60">
+                Some marks weren&apos;t saved
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-ink/70">
+                {summary.persistenceFailures} question
+                {summary.persistenceFailures === 1 ? " was" : "s were"} marked,
+                but the {summary.persistenceFailures === 1 ? "result" : "results"}{" "}
+                couldn&apos;t be stored — so{" "}
+                {summary.persistenceFailures === 1 ? "it isn't" : "they aren't"}{" "}
+                shown below and{" "}
+                {summary.persistenceFailures === 1 ? "isn't" : "aren't"} in the
+                totals. Your answers are safe. Reloading this page will try
+                again.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* ── SCORE ───────────────────────────────────────────────────────── */}
         <section className="mt-10 grid gap-4 sm:grid-cols-2">
           <div className="rounded-lg border border-ink/10 bg-signal p-6 sm:p-8">
@@ -146,6 +173,44 @@ export function ResultsView({
             ))}
           </ol>
         </section>
+      </div>
+    </main>
+  );
+}
+
+/**
+ * Marking could not run at all.
+ *
+ * Shown INSTEAD of a 404. Ownership was already proved by the time this
+ * renders, so the attempt exists and is theirs — telling a student their
+ * submitted paper cannot be found would be a lie about their work, not a
+ * message about our outage.
+ */
+export function MarkingUnavailable({
+  message,
+  paperHref,
+}: {
+  message: string;
+  paperHref: string;
+}) {
+  return (
+    <main className="min-h-screen bg-parchment text-ink">
+      <div className="mx-auto w-full max-w-2xl px-6 py-10 sm:px-10 sm:py-16">
+        <Link
+          href={paperHref}
+          className="font-mono inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.2em] text-ink/55 transition-colors hover:text-ink"
+        >
+          <ArrowLeft className="h-3 w-3" aria-hidden="true" />
+          Back to the paper
+        </Link>
+        <h1 className="font-display mt-8 text-3xl font-medium leading-[1.1] tracking-tight md:text-4xl">
+          Your paper couldn&apos;t be marked
+        </h1>
+        <p className="mt-4 text-base leading-relaxed text-ink/70">{message}</p>
+        <p className="mt-4 text-sm leading-relaxed text-ink/55">
+          Your answers were submitted and are safe. Marking runs afresh every
+          time this page loads, so nothing needs to be redone.
+        </p>
       </div>
     </main>
   );
