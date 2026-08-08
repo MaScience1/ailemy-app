@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Hourglass, Timer, Wand2 } from "lucide-react";
 
 import { Breadcrumb } from "@/components/catalogue/breadcrumb";
+import { StartExamButton } from "@/components/exam/StartExamButton";
 import { PATHWAY_COPY, isPathway } from "@/lib/catalogue/pathways";
 import {
   getCourseBySubjectPathwayAndSlug,
@@ -11,26 +12,35 @@ import {
   getSubjectBySlug,
 } from "@/lib/catalogue/queries";
 import { getSubjectThemeStyle } from "@/lib/catalogue/subject-theme";
+import { findOpenAttempt } from "@/lib/exam/attempts";
 import { getPaperExamMeta } from "@/lib/exam/paper-exam-meta";
+import { createClient } from "@/lib/supabase/server";
+
+import { createAttemptAction } from "../actions";
 
 /**
- * The exam player's front door — which is all it is, for now.
+ * The front door for both sit modes. They are at different stages, so this file
+ * branches rather than pretending they are the same:
  *
- * This page exists so the routing skeleton is REAL: the mode screen links to
- * URLs that resolve, validate their mode, 404 on a bad one, and load the same
- * paper the player will load. Step 3 replaces the body of this file with the
- * player and changes nothing about how it is reached.
+ *   exam      BUILT. A start/resume screen. Creating an attempt is an explicit
+ *             click, never a side effect of loading this page — otherwise a
+ *             refresh, a back button or a link preflight would each start a new
+ *             sitting. The player itself lives at ../../attempt/[attemptId].
  *
- * It says plainly that it is not built. It does not fake a loading state, show
- * a disabled question, or imply the feature is a moment away — a placeholder
- * that pretends is worse than no link at all, because it costs the reader time
- * before it disappoints them.
+ *   practice  NOT BUILT. Keeps the honest placeholder: it does not fake a
+ *             loading state or imply the feature is a moment away.
+ *
+ * Both still validate the mode, 404 on an unknown one, and 404 for a paper with
+ * nothing seeded — so neither URL can be shared into a dead end.
  */
 
 const MODES = {
   exam: {
     name: "Exam mode",
-    eyebrow: "Timed · no help",
+    // NOT "Timed · no help" — there is no timer yet, and the bullet list on
+    // this very screen says so. An eyebrow that contradicts the page is worse
+    // than a plain one.
+    eyebrow: "Answer · submit",
     icon: Timer,
     blurb:
       "The clock runs, the mark scheme stays shut, and everything is marked at the end — as close to the real thing as a screen gets.",
@@ -77,6 +87,14 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { mode } = await params;
   if (!isMode(mode)) return { title: "Not found · Ailemy" };
+  if (mode === "exam") {
+    return {
+      title: "Exam mode · Ailemy",
+      description:
+        "Answer every question in the paper and submit. Your answers save as you type.",
+      robots: { index: false, follow: false },
+    };
+  }
   return {
     title: `${MODES[mode].name} — coming next · Ailemy`,
     description: `${MODES[mode].name} is being built. ${MODES[mode].blurb}`,
@@ -123,6 +141,160 @@ export default async function SitModePage({ params }: { params: Params }) {
   const pathway = PATHWAY_COPY[pathwaySlug];
   const courseHref = `/learn/${subjectSlug}/${pathwaySlug}/${courseSlug}`;
   const paperHref = `${courseHref}/papers/${paperSlug}`;
+
+  // ── EXAM MODE IS BUILT ──────────────────────────────────────────────────
+  // Practice mode falls through to the placeholder below, unchanged.
+  if (mode === "exam") {
+    const db = await createClient();
+    const {
+      data: { user },
+    } = await db.auth.getUser();
+
+    // Sitting a paper writes rows owned by a user, so there has to be one.
+    // Signed-out visitors get a sign-in prompt rather than a failing button.
+    const openAttemptId = user ? await findOpenAttempt(paper.id, "exam") : null;
+
+    return (
+      <div style={getSubjectThemeStyle(subject)}>
+        <main className="min-h-screen bg-parchment text-ink">
+          <div className="mx-auto w-full max-w-3xl px-6 py-10 sm:px-10 sm:py-16">
+            <Breadcrumb
+              crumbs={[
+                { label: "Learn", href: "/learn" },
+                { label: subject.name, href: `/learn/${subject.slug}` },
+                {
+                  label: pathway.name,
+                  href: `/learn/${subject.slug}/${pathwaySlug}`,
+                },
+                { label: course.name, href: courseHref },
+                { label: paper.paper_name, href: paperHref },
+                { label: config.name },
+              ]}
+            />
+
+            <div className="mt-10 rounded-lg border border-ink/10 bg-snow p-7 sm:p-10">
+              <span
+                className="flex h-11 w-11 items-center justify-center rounded-md"
+                style={{
+                  backgroundColor:
+                    "color-mix(in srgb, var(--subject-accent) 12%, transparent)",
+                  color: "var(--subject-accent)",
+                }}
+              >
+                <Icon className="h-5 w-5" aria-hidden="true" />
+              </span>
+
+              <p className="font-mono mt-7 text-[10px] uppercase tracking-[0.25em] text-ink/50">
+                {config.eyebrow}
+              </p>
+              <h1 className="font-display mt-2 text-3xl font-medium leading-[1.1] tracking-tight sm:text-5xl">
+                {paper.paper_name}
+              </h1>
+
+              <dl className="font-mono mt-6 flex flex-wrap gap-x-6 gap-y-2 text-[11px] uppercase tracking-[0.18em] text-ink/55">
+                <div>
+                  <dt className="sr-only">Questions</dt>
+                  <dd>
+                    {examMeta.answerableCount} question
+                    {examMeta.answerableCount === 1 ? "" : "s"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="sr-only">Marks</dt>
+                  <dd>
+                    {examMeta.seededMarks} mark
+                    {examMeta.seededMarks === 1 ? "" : "s"}
+                    {examMeta.isPartial && examMeta.paperTotalMarks !== null && (
+                      <span className="text-ink/40">
+                        {" "}
+                        of {examMeta.paperTotalMarks}
+                      </span>
+                    )}
+                  </dd>
+                </div>
+              </dl>
+
+              {/* Honest about what this is NOT yet, before they commit time. */}
+              <ul className="mt-8 space-y-2.5">
+                {[
+                  "Your answers save as you type and survive a refresh",
+                  "There is no timer yet — take as long as you like",
+                  "Nothing is marked yet; submitting records that you're done",
+                  "Some question types can't be answered on screen yet and are marked as such",
+                ].map((item) => (
+                  <li
+                    key={item}
+                    className="flex gap-3 text-sm leading-relaxed text-ink/70"
+                  >
+                    <span
+                      className="mt-[0.55rem] h-1 w-1 shrink-0 rounded-full"
+                      style={{ backgroundColor: "var(--subject-accent)" }}
+                      aria-hidden="true"
+                    />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-9 border-t border-ink/10 pt-7">
+                {!user ? (
+                  <>
+                    <p className="text-sm leading-relaxed text-ink/65">
+                      Sitting a paper saves your answers to your account, so
+                      you&apos;ll need to sign in first.
+                    </p>
+                    <Link
+                      href={`/login?next=${encodeURIComponent(`${paperHref}/interactive/sit/exam`)}`}
+                      className="font-mono mt-4 inline-flex items-center gap-2 rounded-md border border-ink/15 bg-signal px-5 py-3 text-[11px] uppercase tracking-[0.2em] text-ink transition-all hover:-translate-y-0.5 hover:shadow-md"
+                    >
+                      Sign in to start
+                    </Link>
+                  </>
+                ) : openAttemptId ? (
+                  <>
+                    <p className="text-sm leading-relaxed text-ink/65">
+                      You already have this paper open. Pick up where you left
+                      off — starting again would leave the first one behind.
+                    </p>
+                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                      <Link
+                        href={`${paperHref}/interactive/attempt/${openAttemptId}`}
+                        className="font-mono inline-flex items-center gap-2 rounded-md border border-ink/15 bg-signal px-5 py-3 text-[11px] uppercase tracking-[0.2em] text-ink transition-all hover:-translate-y-0.5 hover:shadow-md"
+                      >
+                        Resume
+                      </Link>
+                      <StartExamButton
+                        paperId={paper.id}
+                        attemptHrefBase={`${paperHref}/interactive/attempt`}
+                        onCreate={createAttemptAction}
+                        label="Start again"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <StartExamButton
+                    paperId={paper.id}
+                    attemptHrefBase={`${paperHref}/interactive/attempt`}
+                    onCreate={createAttemptAction}
+                  />
+                )}
+              </div>
+            </div>
+
+            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
+              <Link
+                href={`${paperHref}/interactive`}
+                className="font-mono inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.2em] text-ink/55 transition-colors hover:text-ink"
+              >
+                <ArrowLeft className="h-3 w-3" aria-hidden="true" />
+                Choose another mode
+              </Link>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div style={getSubjectThemeStyle(subject)}>

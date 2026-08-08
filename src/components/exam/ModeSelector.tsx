@@ -157,7 +157,8 @@ export function ModeSelector({
                 href={sitExamHref}
                 icon={<Timer className="h-4 w-4" aria-hidden="true" />}
                 name="Exam mode"
-                detail="Timed, no help. Marked at the end, like the real thing."
+                detail="Answer every question and submit. No timer or marking yet."
+                ready
               />
               <SitMode
                 href={sitPracticeHref}
@@ -187,11 +188,14 @@ function SitMode({
   icon,
   name,
   detail,
+  ready = false,
 }: {
   href: string;
   icon: React.ReactNode;
   name: string;
   detail: string;
+  /** True once the mode actually opens something. Exam mode does; practice does not. */
+  ready?: boolean;
 }) {
   return (
     <Link
@@ -208,8 +212,17 @@ function SitMode({
         {detail}
       </span>
       <span className="font-mono mt-1 inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] text-ink/45 transition-colors group-hover/mode:text-snow/55">
-        <Hourglass className="h-3 w-3" aria-hidden="true" />
-        Coming next
+        {ready ? (
+          <>
+            <ArrowRight className="h-3 w-3" aria-hidden="true" />
+            Start
+          </>
+        ) : (
+          <>
+            <Hourglass className="h-3 w-3" aria-hidden="true" />
+            Coming next
+          </>
+        )}
       </span>
     </Link>
   );
