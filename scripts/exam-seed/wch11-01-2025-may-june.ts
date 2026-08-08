@@ -231,15 +231,24 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       parentQuestionNumber: "20",
       displayOrder: 210,
       marks: 4,
-      answerType: "numeric_with_unit",
+      answerType: "numeric",
       commandWord: "Calculate",
       topic: "The ideal gas equation",
+      // `numeric`, NOT numeric_with_unit. MS p14 lists four points — convert,
+      // convert, substitute, evaluate — and NONE of them is a unit mark, so a
+      // unit field here could only ever cost marks. The stem supplies the
+      // quantity anyway ("Calculate the moles"), exactly as 20(b)(iii)'s
+      // supplies "in kg". Same shape, same ruling.
       // MS p14 · M4 guidance: "n = 0.0172 mol"
       //          M4 guidance: "Correct answer with no working scores (4)" -> 4
       //          M4 accept:   "Ignore SF except 1 SF" -> a tolerance, not exact
+      //
+      // `unit` is deliberately absent: the answer type is `numeric`, so no
+      // unit is collected and none may be required. marksOnCorrectAnswer
+      // stays 4 — this is the paper's one explicit "no working" override, and
+      // it is why no general answer-plus-unit rule can exist in the marker.
       expectedAnswer: {
         value: "0.0172",
-        unit: "mol",
         tolerance: 0.005,
         marksOnCorrectAnswer: 4,
       },
@@ -631,12 +640,20 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // No unit: a percentage yield is dimensionless, which is why this is
       // `numeric` and not `numeric_with_unit`.
       // MS p23 · M3 guidance: "1/ 27.844 x 100 = 3.591%"
-      //          M3 guidance: "Correct answer with some working scores 3" -> 3
       //          M3 accept:   "Ignore SF except for 1 SF" -> a tolerance
+      //
+      // ⚠ marksOnCorrectAnswer IS DELIBERATELY OMITTED, and the omission is
+      // the ruling. The scheme says "Correct answer with some working scores
+      // 3" — note "with SOME working", where 20(a) four questions earlier says
+      // "with NO working". The wording differs on purpose, and this app
+      // captures no working at all, so the condition can never be satisfied.
+      //
+      // A correct 3.591 therefore reports 0 confirmed with all 3 marks needing
+      // review. Setting 3 here would award the full tariff on a bare answer
+      // the examiner conditions on evidence we do not have.
       expectedAnswer: {
         value: "3.591",
         tolerance: 0.01,
-        marksOnCorrectAnswer: 3,
       },
       questionText:
         "Calculate the percentage yield if 1.00 g of trichlorobutane is produced from 10.0 g butane using the overall equation shown.\n" +

@@ -213,6 +213,18 @@ function normaliseUnit(raw: string): string {
  */
 const FLOAT_SLACK = 1e-9;
 
+/**
+ * NO SIGNIFICANT-FIGURES RULE EXISTS HERE, AND ONE MUST NOT BE ADDED.
+ *
+ * WCH11/01 makes every SF instruction conditional on working this app does not
+ * capture: 20(b)(iii) says "If all six operations have not been carried out
+ * ignore SF", and 20(a) and 22(c) both say "Ignore SF except 1 SF" — a rule
+ * that penalises only a 1-s.f. answer, not any answer with the wrong count.
+ * A strict gate would fail 306.64 and 306.5 on 20(b)(iii), which this scheme
+ * would accept. Tolerance is the whole comparison; revisit only if working
+ * capture ever lands.
+ */
+
 function withinTolerance(
   student: number,
   expected: number,
