@@ -297,6 +297,9 @@ const REQUIRED_0029_COLUMNS: Array<{ table: string; column: string }> = [
   { table: "mark_scheme_items", column: "guidance" },
   { table: "mark_scheme_items", column: "accept" },
   { table: "mark_scheme_items", column: "reject" },
+  // 0031 — a separate, staff-only table.
+  { table: "question_expected_answers", column: "expected_value" },
+  { table: "question_expected_answers", column: "marks_on_correct_answer" },
 ];
 
 /** What the plan says will happen to one fixture question. */
@@ -385,7 +388,7 @@ async function verifySchema(db: SupabaseClient): Promise<void> {
   }
   if (missing.length > 0) {
     fail(
-      `this script writes columns added by migration 0029, and the database does not have them:\n  - ${missing.join("\n  - ")}\n\nApply supabase/migrations/0029_question_text_and_mark_scheme_split.sql first. Nothing was written.`,
+      `this script writes columns added by migrations 0029 and 0031, and the database does not have them:\n  - ${missing.join("\n  - ")}\n\nApply supabase/migrations/0029_question_text_and_mark_scheme_split.sql and 0031_expected_answers.sql first. Nothing was written.`,
     );
   }
 }
@@ -548,13 +551,31 @@ function buildQuestionPayload(
     command_word: q.commandWord ?? null,
     topic: q.topic ?? null,
     spec_point: q.specPoint ?? null,
-    // 0031 — the deterministic marker's comparison target.
-    expected_value: q.expectedAnswer?.value ?? null,
-    expected_unit: q.expectedAnswer?.unit ?? null,
-    answer_tolerance: q.expectedAnswer?.tolerance ?? null,
-    accepted_values: q.expectedAnswer?.acceptedValues ?? null,
-    full_marks_on_correct_answer: q.expectedAnswer?.fullMarksOnCorrectAnswer ?? false,
   };
+}
+
+/**
+ * 0031 — the deterministic marker's comparison target.
+ *
+ * A SEPARATE TABLE, not columns on paper_questions. paper_questions is
+ * student-readable for live papers, so an expected_value column there is the
+ * answer key served to the browser. Returns [] when the fixture records no
+ * expected answer, which is a legitimate state — see 20(b)(iii).
+ */
+function buildExpectedAnswerRows(questionId: string, q: QuestionInput) {
+  const e = q.expectedAnswer;
+  if (!e) return [];
+  return [
+    {
+      question_id: questionId,
+      expected_value: e.value,
+      expected_unit: e.unit ?? null,
+      answer_tolerance: e.tolerance ?? null,
+      accepted_values: e.acceptedValues ?? null,
+      marks_on_correct_answer: e.marksOnCorrectAnswer ?? null,
+      updated_at: new Date().toISOString(),
+    },
+  ];
 }
 
 /**
@@ -647,6 +668,7 @@ function printWritePlan(set: QuestionSet, plan: PlanRow[]) {
     { table: "paper_questions", rows: [] },
     { table: "question_regions", rows: [] },
     { table: "mark_scheme_items", rows: [] },
+    { table: "question_expected_answers", rows: [] },
     { table: "examiner_report_insights", rows: [] },
     { table: "model_answers", rows: [] },
   ];
@@ -660,6 +682,9 @@ function printWritePlan(set: QuestionSet, plan: PlanRow[]) {
 
     const qid = existing?.id ?? PLACEHOLDER;
     byName.get("mark_scheme_items")!.rows.push(...buildMarkSchemeRows(qid, question));
+    byName
+      .get("question_expected_answers")!
+      .rows.push(...buildExpectedAnswerRows(qid, question));
     for (const { table, rows } of buildKeylessRows(qid, question)) {
       byName.get(table)!.rows.push(...rows);
     }
@@ -740,6 +765,7 @@ type Stats = {
   questionsUpdated: number;
   questionsUnchanged: number;
   markSchemePoints: number;
+  expectedAnswers: number;
   regions: number;
   insights: number;
   modelAnswers: number;
@@ -758,6 +784,7 @@ async function applyPlan(
     questionsUpdated: 0,
     questionsUnchanged: 0,
     markSchemePoints: 0,
+    expectedAnswers: 0,
     regions: 0,
     insights: 0,
     modelAnswers: 0,
@@ -859,6 +886,18 @@ async function applyPlan(
           },
         );
       }
+    }
+
+    // --- expected answer: real unique key on question_id, so upsert -------
+    const expectedRows = buildExpectedAnswerRows(questionId, q);
+    if (expectedRows.length > 0) {
+      const { error: eaError } = await db
+        .from("question_expected_answers")
+        .upsert(expectedRows, { onConflict: "question_id" });
+      if (eaError) {
+        throw new Error(`expected answer for ${q.questionNumber}: ${eaError.message}`);
+      }
+      stats.expectedAnswers += 1;
     }
 
     // --- keyless child tables --------------------------------------------
@@ -1073,6 +1112,7 @@ async function main() {
   heading("8. Done");
   console.log(`  questions   ${stats.questionsInserted} inserted, ${stats.questionsUpdated} updated, ${stats.questionsUnchanged} unchanged`);
   console.log(`  mark scheme ${stats.markSchemePoints} point(s) upserted`);
+  console.log(`  expected    ${stats.expectedAnswers} answer(s) upserted (staff-only table)`);
   console.log(`  regions     ${stats.regions}`);
   console.log(`  insights    ${stats.insights}`);
   console.log(`  model answ. ${stats.modelAnswers}`);

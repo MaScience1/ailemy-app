@@ -220,11 +220,18 @@ export type QuestionInput = {
     /** Alternates the scheme explicitly allows ("Allow 306 (kg)"). */
     acceptedValues?: string[];
     /**
-     * TRUE only where the mark scheme SAYS a correct answer takes the whole
-     * tariff. 20(b)(iii) is six method marks and the editor collects one
-     * value — without this a correct student scores 1/6. See 0031.
+     * Marks awarded when the final answer matches, AS THE SCHEME STATES IT.
+     *
+     *   20(a)  "Correct answer with no working scores (4)"  -> 4
+     *   22(c)  "Correct answer with some working scores 3"  -> 3
+     *
+     * OMIT where the scheme says nothing. Omitted means per-point marking:
+     * the final point only, with the method marks reported as unmarked. That
+     * under-reports, which is visible and correctable — a boolean here would
+     * have awarded the full tariff on a scheme that never granted it, which
+     * over-marks silently. See 0031.
      */
-    fullMarksOnCorrectAnswer?: boolean;
+    marksOnCorrectAnswer?: number;
   };
   regions?: QuestionRegionInput[];
   markScheme?: MarkSchemeItemInput[];

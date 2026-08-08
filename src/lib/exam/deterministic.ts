@@ -209,7 +209,16 @@ export function markNumeric(
     expectedUnit: string | null;
     tolerance: number | null;
     acceptedValues: string[] | null;
-    fullMarksOnCorrectAnswer: boolean;
+    /**
+     * Marks awarded when the final answer matches, as the SCHEME STATES IT.
+     * null means the scheme is silent — award the final point only and report
+     * the method marks as unmarked. Never a boolean: a boolean awards the full
+     * tariff on a scheme that only granted part of it. See 0031.
+     *
+     * The caller has already capped this at maxMarks; capped again here so the
+     * pure function is correct on its own terms rather than on trust.
+     */
+    marksOnCorrectAnswer: number | null;
     requiresUnit: boolean;
   },
   criteria: { pointCode: string; criterion: string }[],
@@ -281,12 +290,16 @@ export function markNumeric(
 
   const correct = Boolean(hit) && unitOk;
 
-  // THE UNDER-MARKING GUARD. On a multi-point question the student typed one
-  // value, so only the final point can be judged from it. Awarding
-  // `maxMarks` requires the mark scheme to have said so — see
-  // full_marks_on_correct_answer in 0031.
-  const awardable = spec.fullMarksOnCorrectAnswer ? maxMarks : 1;
-  const awarded = correct ? Math.min(awardable, maxMarks) : 0;
+  // THE MARK-COUNT GUARD, in both directions.
+  //
+  // The student typed one value, so only the final point can be judged from
+  // it. Awarding more than that requires the scheme to have SAID how many —
+  // and to have said a number, not a yes. `Math.min(..., maxMarks)` is the
+  // second half of the clamp the caller also applies: a transcription of "4"
+  // onto a 3-mark question must never award 4.
+  const stated = spec.marksOnCorrectAnswer;
+  const awardable = stated === null ? 1 : Math.max(0, Math.min(stated, maxMarks));
+  const awarded = correct ? awardable : 0;
 
   const points: PointVerdict[] = [
     {
@@ -298,10 +311,11 @@ export function markNumeric(
     },
   ];
 
-  // Method points on a question whose scheme does NOT grant full marks for a
-  // bare answer are reported as unmarked rather than failed — the student may
-  // well have earned them on paper, and this marker cannot see that.
-  if (!spec.fullMarksOnCorrectAnswer && criteria.length > 1) {
+  // Method points the award did not cover are reported as unmarked rather
+  // than failed — the student may well have earned them on paper, and this
+  // marker cannot see the paper. 20(b)(iii) is the live case: its scheme
+  // states no figure, so five of its six marks land here.
+  if (awardable < criteria.length && criteria.length > 1) {
     for (const c of criteria.slice(0, -1)) {
       points.unshift({
         pointCode: c.pointCode,

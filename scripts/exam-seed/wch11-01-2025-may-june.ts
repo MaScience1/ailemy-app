@@ -142,8 +142,9 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       answerType: "mcq",
       commandWord: "Which row shows",
       topic: "Atomic structure", // examiner report: "Question 1 (atomic structure)"
-      // "The only correct answer is B"
-      expectedAnswer: { value: "B", fullMarksOnCorrectAnswer: true },
+      // MS p5 · "The only correct answer is B (neutron number 44, electron
+      // number 36)". An MCQ's answer IS its single mark.
+      expectedAnswer: { value: "B", marksOnCorrectAnswer: 1 },
       questionText:
         "Which row shows the numbers of neutrons and electrons in a bromide ion 79Br- ?\n" +
         "\n" +
@@ -183,8 +184,8 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       answerType: "mcq",
       commandWord: "What volume",
       topic: "Moles and gas volumes",
-      // "The only correct answer is A (0.072 dm3)"
-      expectedAnswer: { value: "A", fullMarksOnCorrectAnswer: true },
+      // MS p5 · "The only correct answer is A (0.072 dm3)"
+      expectedAnswer: { value: "A", marksOnCorrectAnswer: 1 },
       questionText:
         "What volume of sulfur dioxide gas reacts completely with 50 cm3 of 0.12 mol dm-3 sodium hydroxide solution?\n" +
         "\n" +
@@ -233,12 +234,14 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       answerType: "numeric_with_unit",
       commandWord: "Calculate",
       topic: "The ideal gas equation",
-      // M4 guidance: "n = 0.0172 mol" · "Correct answer with no working scores (4)"
+      // MS p14 · M4 guidance: "n = 0.0172 mol"
+      //          M4 guidance: "Correct answer with no working scores (4)" -> 4
+      //          M4 accept:   "Ignore SF except 1 SF" -> a tolerance, not exact
       expectedAnswer: {
         value: "0.0172",
         unit: "mol",
         tolerance: 0.005,
-        fullMarksOnCorrectAnswer: true,
+        marksOnCorrectAnswer: 4,
       },
       questionText:
         "According to data from 2021, there are 415 ppm of carbon dioxide in the atmosphere by volume.\n" +
@@ -357,14 +360,22 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       answerType: "numeric_with_unit",
       commandWord: "Calculate",
       topic: "Multi-step mass calculation",
-      // M6 guidance: "307 (kg)" · accept "Allow 306 (kg)", "Allow TE throughout".
-      // fullMarks: six method marks, one value collected — see 0031.
+      // MS p15 · M6 guidance: "307 (kg)"
+      //          M6 accept:   "Allow 306 (kg)" -> acceptedValues
+      //
+      // ⚠ marksOnCorrectAnswer IS DELIBERATELY OMITTED. This scheme contains
+      // no "correct answer scores N" line — only "Allow TE throughout", which
+      // is a transferred-error rule about the METHOD marks, not a statement
+      // that the answer alone earns them. So a correct 307 kg earns the final
+      // point and M1-M5 are reported as unmarked. That under-reports a student
+      // who did the work on paper, and it is the honest reading: this marker
+      // cannot see the paper. Setting 6 here would award marks the examiner
+      // never said could be awarded.
       expectedAnswer: {
         value: "307",
         unit: "kg",
         acceptedValues: ["306"],
         tolerance: 0.005,
-        fullMarksOnCorrectAnswer: true,
       },
       questionText:
         "Kerosene is used as aeroplane fuel. A jet plane can carry a maximum of 800 passengers and uses 11 400 dm3 of fuel per hour.\n" +
@@ -611,10 +622,13 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // M3 guidance: "1/ 27.844 x 100 = 3.591%" · "Correct answer with some working scores 3".
       // No unit: a percentage yield is dimensionless, which is why this is
       // `numeric` and not `numeric_with_unit`.
+      // MS p23 · M3 guidance: "1/ 27.844 x 100 = 3.591%"
+      //          M3 guidance: "Correct answer with some working scores 3" -> 3
+      //          M3 accept:   "Ignore SF except for 1 SF" -> a tolerance
       expectedAnswer: {
         value: "3.591",
         tolerance: 0.01,
-        fullMarksOnCorrectAnswer: true,
+        marksOnCorrectAnswer: 3,
       },
       questionText:
         "Calculate the percentage yield if 1.00 g of trichlorobutane is produced from 10.0 g butane using the overall equation shown.\n" +

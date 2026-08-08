@@ -2,91 +2,78 @@
 -- 0031_expected_answers.sql
 -- STATUS: NOT APPLIED
 -- ----------------------------------------------------------------------------
--- Five nullable columns on paper_questions, holding the FINAL ANSWER a
--- deterministic marker compares against:
+-- One new table, public.question_expected_answers: the final answer a
+-- deterministic marker compares against, one row per markable question.
 --
---   expected_value                text     "0.0172" / "B" / "3.591"
---   expected_unit                 text     "mol", NULL where none is required
---   answer_tolerance              numeric  relative, e.g. 0.005 = ±0.5%
---   accepted_values               text[]   alternates the scheme allows
---   full_marks_on_correct_answer  boolean  see below
---
--- Additive only. No table, no constraint on existing columns, no policy, no
--- grant, no trigger. paper_questions keeps exactly the RLS it has today.
+-- ⚠ THIS FILE REPLACES AN EARLIER DRAFT THAT WAS WRONG IN TWO WAYS. Both are
+-- recorded here rather than quietly corrected, because both are mistakes worth
+-- not repeating.
 --
 -- ============================================================================
--- WHY — TIER 1 CANNOT BE DETERMINISTIC WITHOUT THIS
+-- DEFECT 1 (SECURITY) — THE ANSWERS WERE PUT WHERE STUDENTS CAN READ THEM
 -- ============================================================================
--- Deterministic marking needs to know what the right answer IS. Look at where
--- that currently lives for 20(a):
+-- The first draft added expected_value, expected_unit, answer_tolerance and
+-- accepted_values as columns on public.paper_questions.
 --
---   criterion : "evaluation"
---   guidance  : "n = 0.0172 mol
---                TE on M1 and M2 but no TE from M3 to M4
---                Correct answer with no working scores (4)"
+-- paper_questions carries paper_questions_read from 0028:
 --
--- The number is inside a prose paragraph, in a column whose whole purpose is
--- that it is examiner prose. Extracting "0.0172" from it means a regex over
--- free text — and a regex that is 95% right is not deterministic marking, it
--- is a mark scheme with a silent failure rate. On 22(c) the same paragraph
--- contains 10, 58, 0.17241, 161.5, 27.844 and 3.591; picking the right one by
--- pattern is guesswork, and getting it wrong marks a correct student wrong.
+--   FOR SELECT TO authenticated USING (
+--     has_role('teacher') OR has_role('marker') OR has_role('admin')
+--     OR EXISTS (SELECT 1 FROM past_papers p
+--                 WHERE p.id = paper_id AND p.status = 'live'))
 --
--- So the value is transcribed once, by a human, into a column meant to hold
--- it. `guidance` stays exactly as it is — this does not replace it, it stops
--- the marker having to parse it.
+-- — any signed-in student may read every column of every question on a live
+-- paper. So `expected_value` would have been THE ANSWER TO THE QUESTION,
+-- readable straight from the browser with the publishable key, mid-exam:
 --
--- MCQ IS THE EXCEPTION AND STAYS PARSED. Its criterion is a fixed sentence —
--- "The only correct answer is B (…)" — and the marker reads the letter out of
--- it. That is a stable contract rather than prose mining, and the extractor
--- refuses (marking nothing) rather than guessing if the sentence ever changes.
--- Populating expected_value for MCQ rows anyway is still recommended, and the
--- marker prefers it when present.
+--   supabase.from('paper_questions').select('question_number, expected_value')
 --
--- ============================================================================
--- full_marks_on_correct_answer — THE COLUMN THAT PREVENTS UNDER-MARKING
--- ============================================================================
--- This is the one that matters most, and it is not a convenience flag.
+-- No exploit required, no privilege escalation, nothing to bypass — the answer
+-- key would simply have been part of the question row. It is mark-scheme
+-- content, and 0028 already decided where mark-scheme content lives: a table
+-- with no policy a student can satisfy.
 --
--- 20(b)(iii) is worth SIX marks across six method points, M1–M6. The player's
--- numeric editor collects ONE value. A student who works the whole thing out
--- correctly on paper and types "307" has demonstrably earned all six — but a
--- marker comparing one value against one point can only ever justify one mark.
--- Reporting 1/6 to that student is not caution, it is a wrong mark, and it is
--- the exact failure a "deterministic, high confidence" tier must not produce.
+-- The general lesson, which cost nothing to state and would have cost a great
+-- deal to learn later: WHERE a column lives is a security decision, not an
+-- ergonomic one. "It is about the question, so it goes on the question" is
+-- exactly the reasoning that put it there.
 --
--- Edexcel says so explicitly, in the guidance already transcribed:
---   20(a)      "Correct answer with no working scores (4)"
---   22(c)      "Correct answer with some working scores 3"
---   20(b)(iii) "Allow TE throughout" + a final-answer point
---
--- So the scheme itself declares when a correct final answer takes the whole
--- tariff. This column records that declaration instead of leaving the marker
--- to infer it. TRUE means a matching final answer awards the question's full
--- marks; FALSE (the default) means it awards at most the final point, and the
--- rest are left unmarked for a human rather than guessed at.
---
--- Defaulting to FALSE is deliberate: a question nobody has reviewed under-
--- reports rather than over-reports, and an unmarked mark is visible while a
--- wrongly-awarded one is not.
+-- So it is a separate table with mark_scheme_items' RLS, verbatim: SELECT for
+-- staff roles only, no auth.uid() branch anywhere, nothing granted to anon.
+-- The verification block at the bottom proves it from a student session.
 --
 -- ============================================================================
--- WHY TOLERANCE IS RELATIVE, AND WHY IT IS NULLABLE
+-- DEFECT 2 (ARITHMETIC) — A BOOLEAN CANNOT EXPRESS THE MARK SCHEME
 -- ============================================================================
--- Absolute tolerance cannot span a paper where answers run from 0.0172 mol to
--- 245,310,000 g — a ±0.001 window is meaningless at one end and absurd at the
--- other. Relative scales correctly across both.
+-- The first draft had full_marks_on_correct_answer boolean. What the schemes
+-- actually say, transcribed:
 --
--- NULL means "no tolerance": the answer must match after normalisation. That
--- is the right default for an MCQ letter and for any answer where the scheme
--- gives an exact figure and no latitude. A missing tolerance is never treated
--- as "any value is fine".
+--   20(a)       "Correct answer with no working scores (4)"     4 of 4
+--   22(c)       "Correct answer with some working scores 3"     3 of 3
+--   20(b)(iii)  ...no such statement at all...                  see below
 --
--- SIGNIFICANT FIGURES ARE NOT MODELLED HERE. Where the scheme demands them
--- ("Give your answer to three significant figures"), the accepted forms are
--- listed in accepted_values — 20(b)(iii) accepts both 307 and 306, which is a
--- set, not a rounding rule. Inferring a sig-fig policy from a tolerance would
--- get "Ignore SF except 1 SF" wrong in both directions.
+-- A boolean happens to be right for the first two only because their stated
+-- figure equals their tariff. The moment a scheme says "scores 4" on a 6-mark
+-- question, a boolean awards 6 — it OVER-MARKS, silently, in the tier whose
+-- whole claim is exactness. And the boolean has no way to say "the scheme is
+-- silent", so 20(b)(iii) was set true and a correct answer took all 6 marks
+-- the examiner never said it could.
+--
+-- marks_on_correct_answer integer says what the scheme says:
+--
+--   an integer  award exactly this many when the final answer matches
+--   NULL        the scheme is silent — fall through to per-point marking
+--
+-- NULL is the default and the honest state. Under it a correct 20(b)(iii)
+-- earns the final point only, and the five method marks are reported as
+-- UNMARKED rather than failed — the student may well have earned them on
+-- paper, and this marker cannot see the paper. Under-reporting is visible and
+-- correctable; over-marking is neither.
+--
+-- The application enforces marks_on_correct_answer <= max_marks alongside its
+-- existing awarded <= max_marks clamp, because max_marks is snapshotted per
+-- attempt on question_attempts and a CHECK here cannot reach it. The CHECK
+-- below still catches the absurd cases the database CAN see.
 -- ============================================================================
 
 BEGIN;
@@ -96,34 +83,78 @@ BEGIN
   IF to_regclass('public.paper_questions') IS NULL THEN
     RAISE EXCEPTION 'ABORTING: public.paper_questions does not exist. Apply 0028 first.';
   END IF;
+  IF to_regclass('public.has_role') IS NULL AND
+     NOT EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+                  WHERE n.nspname = 'public' AND p.proname = 'has_role') THEN
+    RAISE EXCEPTION 'ABORTING: public.has_role() is missing. Apply 0027 first.';
+  END IF;
 END $$;
 
-ALTER TABLE public.paper_questions
-  ADD COLUMN IF NOT EXISTS expected_value               text,
-  ADD COLUMN IF NOT EXISTS expected_unit                text,
-  ADD COLUMN IF NOT EXISTS answer_tolerance             numeric,
-  ADD COLUMN IF NOT EXISTS accepted_values              text[],
-  ADD COLUMN IF NOT EXISTS full_marks_on_correct_answer boolean NOT NULL DEFAULT false;
+-- ----------------------------------------------------------------------------
+-- The table
+-- ----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.question_expected_answers (
+  id                       uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  question_id              uuid NOT NULL REFERENCES public.paper_questions(id) ON DELETE CASCADE,
+  expected_value           text NOT NULL,
+  expected_unit            text,
+  answer_tolerance         numeric,
+  accepted_values          text[],
+  marks_on_correct_answer  integer,
+  created_at               timestamptz NOT NULL DEFAULT now(),
+  updated_at               timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT qea_tolerance_nonneg
+    CHECK (answer_tolerance IS NULL OR answer_tolerance >= 0),
+  CONSTRAINT qea_marks_nonneg
+    CHECK (marks_on_correct_answer IS NULL OR marks_on_correct_answer >= 0),
+  -- One expected answer per question: the editors collect exactly one final
+  -- value, so a second row could only ever contradict the first.
+  UNIQUE (question_id)
+);
 
--- A negative tolerance is meaningless and would silently widen every window.
--- Guarded here rather than in the application because the application is not
--- the only thing that will ever write this column.
-ALTER TABLE public.paper_questions
-  DROP CONSTRAINT IF EXISTS paper_questions_tolerance_nonneg;
-ALTER TABLE public.paper_questions
-  ADD CONSTRAINT paper_questions_tolerance_nonneg
-  CHECK (answer_tolerance IS NULL OR answer_tolerance >= 0);
+CREATE INDEX IF NOT EXISTS idx_qea_question ON public.question_expected_answers(question_id);
 
-COMMENT ON COLUMN public.paper_questions.expected_value IS
-  'The final answer a deterministic marker compares against, as a STRING — "0.0172", "B". Transcribed by a human from the mark scheme, never parsed out of guidance at runtime. String, not numeric: 0.0172 and 1.72e-2 are the same number and different answers, and significant figures are part of what is marked.';
-COMMENT ON COLUMN public.paper_questions.expected_unit IS
-  'Required unit, or NULL where the scheme demands none. A dimensionless answer (a percentage yield) must be NULL, not an empty string — an empty string would fail a student who left the unit box blank correctly.';
-COMMENT ON COLUMN public.paper_questions.answer_tolerance IS
-  'RELATIVE tolerance: 0.005 accepts within ±0.5%. NULL means exact match after normalisation, never "anything goes".';
-COMMENT ON COLUMN public.paper_questions.accepted_values IS
-  'Alternate final answers the scheme explicitly allows — 20(b)(iii) permits both 307 and 306. Compared with the same tolerance as expected_value.';
-COMMENT ON COLUMN public.paper_questions.full_marks_on_correct_answer IS
-  'TRUE when the mark scheme states a correct final answer takes the whole tariff ("Correct answer with no working scores (4)"). FALSE — the default — awards at most the final point and leaves the method marks unmarked rather than guessed. See migration 0031 for why this column exists.';
+COMMENT ON TABLE public.question_expected_answers IS
+  'The final answer Tier 1 marking compares against. MARK-SCHEME CONTENT — staff-readable only, exactly like mark_scheme_items. Never move these columns onto paper_questions: that table is student-readable for live papers, and this is the answer key.';
+COMMENT ON COLUMN public.question_expected_answers.expected_value IS
+  'A STRING, always — "0.0172" and "1.72e-2" are the same number and different answers, and significant figures are part of what is marked.';
+COMMENT ON COLUMN public.question_expected_answers.expected_unit IS
+  'NULL where the scheme requires no unit. A percentage yield is dimensionless; an empty string here would fail a student who correctly left the unit blank.';
+COMMENT ON COLUMN public.question_expected_answers.answer_tolerance IS
+  'RELATIVE: 0.005 accepts within ±0.5%. NULL means exact match after normalisation, never "anything goes".';
+COMMENT ON COLUMN public.question_expected_answers.accepted_values IS
+  'Alternates the scheme explicitly allows — 20(b)(iii) permits 306 as well as 307.';
+COMMENT ON COLUMN public.question_expected_answers.marks_on_correct_answer IS
+  'Marks awarded when the final answer matches, as the SCHEME STATES IT ("Correct answer with no working scores (4)" -> 4). NULL means the scheme is silent: fall through to per-point marking and report the method marks as unmarked. Never a boolean — see migration 0031.';
+
+-- ----------------------------------------------------------------------------
+-- RLS — mark_scheme_items' policy, verbatim
+-- ----------------------------------------------------------------------------
+-- NOT ONE BRANCH MENTIONS auth.uid(). There is no expression a student can
+-- satisfy, which is the same guarantee 0028 gives mark_scheme_items,
+-- model_answers and examiner_report_insights.
+ALTER TABLE public.question_expected_answers ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS question_expected_answers_read ON public.question_expected_answers;
+CREATE POLICY question_expected_answers_read
+  ON public.question_expected_answers FOR SELECT TO authenticated
+  USING (public.has_role('teacher') OR public.has_role('marker') OR public.has_role('admin'));
+
+DROP POLICY IF EXISTS question_expected_answers_write ON public.question_expected_answers;
+CREATE POLICY question_expected_answers_write
+  ON public.question_expected_answers FOR ALL TO authenticated
+  USING      (public.has_role('marker') OR public.has_role('admin'))
+  WITH CHECK (public.has_role('marker') OR public.has_role('admin'));
+
+-- ----------------------------------------------------------------------------
+-- Grants — anon gets nothing, and the three dangerous privileges go
+-- ----------------------------------------------------------------------------
+-- Per AGENTS.md: Supabase's default privileges hand anon and authenticated
+-- TRUNCATE, TRIGGER and REFERENCES on every newly created table, and 0019's
+-- sweep only fixed the tables that existed when it ran.
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.question_expected_answers TO authenticated;
+REVOKE ALL ON public.question_expected_answers FROM anon;
+REVOKE TRUNCATE, TRIGGER, REFERENCES ON public.question_expected_answers FROM anon, authenticated;
 
 COMMIT;
 
@@ -131,36 +162,58 @@ COMMIT;
 -- ============================================================================
 -- VERIFICATION — run after applying
 -- ============================================================================
--- (a) Five columns, correct types. Expect 5 rows.
+-- (a) The three dangerous privileges. MUST return zero rows. This is the
+--     standing AGENTS.md check and this migration creates a table, so it is
+--     mandatory rather than optional.
 --
---   SELECT column_name, data_type, is_nullable, column_default
---     FROM information_schema.columns
+--   SELECT table_name, grantee, privilege_type
+--     FROM information_schema.role_table_grants
+--    WHERE table_schema = 'public' AND grantee IN ('anon','authenticated')
+--      AND privilege_type IN ('TRUNCATE','TRIGGER','REFERENCES')
+--    ORDER BY table_name, grantee, privilege_type;
+--
+-- (b) anon holds NOTHING on the new table. MUST return zero rows.
+--
+--   SELECT privilege_type FROM information_schema.role_table_grants
+--    WHERE table_schema = 'public' AND table_name = 'question_expected_answers'
+--      AND grantee = 'anon';
+--
+-- (c) No policy on the new table mentions auth.uid(). MUST return zero rows —
+--     a student-satisfiable branch here is the whole defect this file fixes.
+--
+--   SELECT policyname, qual FROM pg_policies
+--    WHERE schemaname = 'public' AND tablename = 'question_expected_answers'
+--      AND (qual LIKE '%auth.uid%' OR with_check LIKE '%auth.uid%');
+--
+-- (d) RLS is on. Expect rowsecurity = true.
+--
+--   SELECT relname, relrowsecurity FROM pg_class
+--    WHERE relnamespace = 'public'::regnamespace
+--      AND relname = 'question_expected_answers';
+--
+-- (e) THE ONE THAT MATTERS — prove it from a student session, not from the
+--     catalogue. Sign in as an ordinary student (no user_roles row) with the
+--     publishable key and run:
+--
+--       select * from question_expected_answers
+--
+--     MUST return 0 rows. A catalogue that looks right and a session that
+--     returns rows is the failure this check exists to catch.
+--
+-- (f) paper_questions did NOT gain answer columns. MUST return zero rows.
+--
+--   SELECT column_name FROM information_schema.columns
 --    WHERE table_schema = 'public' AND table_name = 'paper_questions'
 --      AND column_name IN ('expected_value','expected_unit','answer_tolerance',
---                          'accepted_values','full_marks_on_correct_answer')
---    ORDER BY column_name;
---   -- full_marks_on_correct_answer must be NOT NULL with default false
+--                          'accepted_values','full_marks_on_correct_answer');
 --
--- (b) The tolerance guard exists. Expect 1 row.
---
---   SELECT conname FROM pg_constraint
---    WHERE conrelid = 'public.paper_questions'::regclass
---      AND conname = 'paper_questions_tolerance_nonneg';
---
--- (c) Nothing else moved — 20 policies, as 0028 created them.
+-- (g) 0028's twenty policies are untouched; this file adds two more.
 --
 --   SELECT count(*) FROM pg_policies WHERE schemaname = 'public'
 --    AND tablename IN ('paper_questions','question_regions','mark_scheme_items',
 --                      'examiner_report_insights','model_answers','exam_attempts',
 --                      'question_attempts','student_responses','marking_results');
 --   -- expect 20
---
--- (d) The standing AGENTS.md check. MUST return zero rows.
---
---   SELECT table_name, grantee, privilege_type
---     FROM information_schema.role_table_grants
---    WHERE table_schema = 'public' AND grantee IN ('anon','authenticated')
---      AND privilege_type IN ('TRUNCATE','TRIGGER','REFERENCES');
 -- ============================================================================
 
 
@@ -168,18 +221,10 @@ COMMIT;
 -- ROLLBACK
 -- ============================================================================
 --   BEGIN;
---   ALTER TABLE public.paper_questions
---     DROP CONSTRAINT IF EXISTS paper_questions_tolerance_nonneg;
---   ALTER TABLE public.paper_questions
---     DROP COLUMN IF EXISTS expected_value,
---     DROP COLUMN IF EXISTS expected_unit,
---     DROP COLUMN IF EXISTS answer_tolerance,
---     DROP COLUMN IF EXISTS accepted_values,
---     DROP COLUMN IF EXISTS full_marks_on_correct_answer;
+--   DROP TABLE IF EXISTS public.question_expected_answers;
 --   COMMIT;
 --
--- Deterministic marking of numeric answers stops working the moment these are
--- gone — the marker reports "not markable" rather than falling back to prose
--- parsing, so the failure is visible rather than silent. Revert the fixture
--- and the marker alongside.
+-- Deterministic marking of numeric answers stops working the moment this is
+-- gone — the marker reports "not markable" rather than falling back to parsing
+-- guidance prose, so the failure is visible rather than silent.
 -- ============================================================================
