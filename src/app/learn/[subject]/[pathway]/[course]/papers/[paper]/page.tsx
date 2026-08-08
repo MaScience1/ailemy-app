@@ -93,7 +93,13 @@ export default async function PaperDetailPage({
 
   const courseHref = `/learn/${subjectSlug}/${pathwaySlug}/${courseSlug}`;
   const examQuestionsHref = `${courseHref}/exam-questions`;
-  const practiceHref = `${courseHref}/papers/${paperSlug}/practice`;
+  /**
+   * "Try interactively" now opens the mode-selection screen rather than
+   * dropping straight into the whiteboard. The whiteboard itself is unchanged
+   * and still lives at .../practice — the mode screen's "Teach this paper"
+   * routes there, so the old flow is one extra click away, never gone.
+   */
+  const interactiveHref = `${courseHref}/papers/${paperSlug}/interactive`;
 
   return (
     <div style={getSubjectThemeStyle(subject)}>
@@ -167,7 +173,7 @@ export default async function PaperDetailPage({
               />
 
               <Link
-                href={practiceHref}
+                href={interactiveHref}
                 className="group/practice flex items-center justify-between gap-4 rounded-lg border border-ink/10 bg-signal p-5 text-ink transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-md"
               >
                 <div>
@@ -178,8 +184,8 @@ export default async function PaperDetailPage({
                     Try interactively
                   </p>
                   <p className="mt-1 text-xs text-ink/65">
-                    Open the paper next to a whiteboard, work through every
-                    question, save your annotations.
+                    Teach it with a class on the whiteboard, or sit it and have
+                    Ailemy mark your answers.
                   </p>
                 </div>
                 <ArrowRight
