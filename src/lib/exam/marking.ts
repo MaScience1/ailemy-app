@@ -204,11 +204,16 @@ type QuestionRow = {
   question_text: string | null;
   answer_type: string;
   command_word: string | null;
-  expected_value: string | null;
+};
+
+/** 0031 — a separate, staff-only table. Never columns on paper_questions. */
+type ExpectedAnswerRow = {
+  question_id: string;
+  expected_value: string;
   expected_unit: string | null;
   answer_tolerance: number | null;
   accepted_values: string[] | null;
-  full_marks_on_correct_answer: boolean;
+  marks_on_correct_answer: number | null;
 };
 
 /**
@@ -255,10 +260,22 @@ export async function markAttempt(
   const { data: questions } = await db
     .from("paper_questions")
     .select(
-      "id, question_number, question_text, answer_type, command_word, expected_value, expected_unit, answer_tolerance, accepted_values, full_marks_on_correct_answer",
+      "id, question_number, question_text, answer_type, command_word",
     )
     .in("id", qas.map((r) => r.question_id));
   const qById = new Map(((questions ?? []) as QuestionRow[]).map((q) => [q.id, q]));
+
+  // Read privileged: question_expected_answers has no policy a student can
+  // satisfy, which is the point — see 0031.
+  const { data: expected } = await db
+    .from("question_expected_answers")
+    .select(
+      "question_id, expected_value, expected_unit, answer_tolerance, accepted_values, marks_on_correct_answer",
+    )
+    .in("question_id", qas.map((r) => r.question_id));
+  const expectedByQ = new Map(
+    ((expected ?? []) as ExpectedAnswerRow[]).map((e) => [e.question_id, e]),
+  );
 
   const { data: responses } = await db
     .from("student_responses")
@@ -324,15 +341,40 @@ export async function markAttempt(
       const simple = criteria.map((c) => ({ pointCode: c.point_code, criterion: c.criterion }));
       const result: DeterministicResult =
         q.answer_type === "mcq"
-          ? markMcq(response, qa.max_marks, q.expected_value, simple)
-          : markNumeric(response, qa.max_marks, {
-              expectedValue: q.expected_value,
-              expectedUnit: q.expected_unit,
-              tolerance: q.answer_tolerance,
-              acceptedValues: q.accepted_values,
-              fullMarksOnCorrectAnswer: q.full_marks_on_correct_answer,
-              requiresUnit: q.answer_type === "numeric_with_unit",
-            }, simple);
+          ? markMcq(
+              response,
+              qa.max_marks,
+              expectedByQ.get(qa.question_id)?.expected_value ?? null,
+              simple,
+            )
+          : markNumeric(
+              response,
+              qa.max_marks,
+              (() => {
+                const e = expectedByQ.get(qa.question_id) ?? null;
+                // marks_on_correct_answer is capped against the tariff
+                // snapshotted on THIS attempt, which a database CHECK cannot
+                // reach — max_marks lives on question_attempts. A stated
+                // figure above the tariff is a transcription error, and it is
+                // reported rather than silently honoured.
+                let stated = e?.marks_on_correct_answer ?? null;
+                if (stated !== null && stated > qa.max_marks) {
+                  console.error(
+                    `[marking] ${q.question_number}: marks_on_correct_answer ${stated} exceeds max_marks ${qa.max_marks}; capping. Fix the transcription.`,
+                  );
+                  stated = qa.max_marks;
+                }
+                return {
+                  expectedValue: e?.expected_value ?? null,
+                  expectedUnit: e?.expected_unit ?? null,
+                  tolerance: e?.answer_tolerance ?? null,
+                  acceptedValues: e?.accepted_values ?? null,
+                  marksOnCorrectAnswer: stated,
+                  requiresUnit: q.answer_type === "numeric_with_unit",
+                };
+              })(),
+              simple,
+            );
 
       if (!result.markable) {
         marked.push({

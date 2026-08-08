@@ -10,6 +10,7 @@ import {
 } from "@/lib/catalogue/queries";
 import { getSubjectThemeStyle } from "@/lib/catalogue/subject-theme";
 import { getAttemptForPlayer } from "@/lib/exam/attempts";
+import { claudeMarker } from "@/lib/exam/ai-marker";
 import { markAttempt } from "@/lib/exam/marking";
 
 /**
@@ -66,7 +67,9 @@ export default async function ResultsPage({ params }: { params: Params }) {
     redirect(`${paperHref}/interactive/attempt/${attemptId}`);
   }
 
-  const result = await markAttempt(attemptId);
+  // Tier 2 is wired here and nowhere else — one explicit argument, so the
+  // marker in use is visible at the call site rather than buried in an import.
+  const result = await markAttempt(attemptId, claudeMarker);
   if (!result.ok) notFound();
 
   return (
