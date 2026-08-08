@@ -223,6 +223,8 @@ type QuestionRow = {
   question_text: string | null;
   answer_type: string;
   command_word: string | null;
+  /** The paper's own sequence. The ONLY correct order to render results in. */
+  display_order: number;
 };
 
 /** 0031 — a separate, staff-only table. Never columns on paper_questions. */
@@ -256,7 +258,18 @@ export async function markAttempt(
     .eq("id", attemptId)
     .maybeSingle();
 
-  if (ownErr || !owned) {
+  // An ERROR is ours; an absent row is theirs. Checked separately, and in this
+  // order, because folding them together told a student their submitted paper
+  // did not exist whenever this read failed. Not-found and not-yours DO stay
+  // folded together — that pair is deliberate, for the reason below.
+  if (ownErr) {
+    console.error(`[marking] ownership read: ${ownErr.code ?? "?"}: ${ownErr.message}`);
+    return {
+      ok: false,
+      error: "We couldn't open your paper just now. Nothing has been lost — please try again shortly.",
+    };
+  }
+  if (!owned) {
     // Not found and not-yours are the same answer, for the same reason
     // getAttemptForPlayer gives it: a probe should look like a typo.
     return { ok: false, error: "That attempt could not be found." };
@@ -292,12 +305,22 @@ export async function markAttempt(
   const questionsRes = await db
     .from("paper_questions")
     .select(
-      "id, question_number, question_text, answer_type, command_word",
+      "id, question_number, question_text, answer_type, command_word, display_order",
     )
     .in("id", qas.map((r) => r.question_id));
   const questionsFail = readFailed("paper_questions", questionsRes.error);
   if (questionsFail) return questionsFail;
   const qById = new Map(((questionsRes.data ?? []) as QuestionRow[]).map((q) => [q.id, q]));
+
+  // ⚠ PAPER ORDER, EXPLICITLY. question_attempts has no ordering of its own,
+  // and PostgREST returns heap order — which is stable only while nothing is
+  // updated. The moment marking started actually writing awarded_marks (0032),
+  // updated rows moved and the results screen listed 22(c) above question 1.
+  // getAttemptForPlayer already sorts by display_order for the same reason;
+  // this is the same rule, applied to the same rows, one screen later.
+  qas.sort(
+    (a, b) => (qById.get(a.question_id)?.display_order ?? 0) - (qById.get(b.question_id)?.display_order ?? 0),
+  );
 
   // Read privileged: question_expected_answers has no policy a student can
   // satisfy, which is the point — see 0031.

@@ -178,44 +178,6 @@ export function ResultsView({
   );
 }
 
-/**
- * Marking could not run at all.
- *
- * Shown INSTEAD of a 404. Ownership was already proved by the time this
- * renders, so the attempt exists and is theirs — telling a student their
- * submitted paper cannot be found would be a lie about their work, not a
- * message about our outage.
- */
-export function MarkingUnavailable({
-  message,
-  paperHref,
-}: {
-  message: string;
-  paperHref: string;
-}) {
-  return (
-    <main className="min-h-screen bg-parchment text-ink">
-      <div className="mx-auto w-full max-w-2xl px-6 py-10 sm:px-10 sm:py-16">
-        <Link
-          href={paperHref}
-          className="font-mono inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.2em] text-ink/55 transition-colors hover:text-ink"
-        >
-          <ArrowLeft className="h-3 w-3" aria-hidden="true" />
-          Back to the paper
-        </Link>
-        <h1 className="font-display mt-8 text-3xl font-medium leading-[1.1] tracking-tight md:text-4xl">
-          Your paper couldn&apos;t be marked
-        </h1>
-        <p className="mt-4 text-base leading-relaxed text-ink/70">{message}</p>
-        <p className="mt-4 text-sm leading-relaxed text-ink/55">
-          Your answers were submitted and are safe. Marking runs afresh every
-          time this page loads, so nothing needs to be redone.
-        </p>
-      </div>
-    </main>
-  );
-}
-
 function QuestionResult({ question: q }: { question: MarkedQuestion }) {
   const provisional = q.confidence === "requires_review";
   const unmarked = q.awardedMarks === null;

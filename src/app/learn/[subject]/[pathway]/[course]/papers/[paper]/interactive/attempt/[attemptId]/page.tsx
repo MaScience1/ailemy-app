@@ -9,6 +9,7 @@ import {
   getSubjectBySlug,
 } from "@/lib/catalogue/queries";
 import { getSubjectThemeStyle } from "@/lib/catalogue/subject-theme";
+import { ExamUnavailable } from "@/components/exam/ExamUnavailable";
 import { getAttemptForPlayer } from "@/lib/exam/attempts";
 import { getPaperPublicUrl } from "@/lib/storage/papers";
 
@@ -68,10 +69,27 @@ export default async function AttemptPage({ params }: { params: Params }) {
   const paper = await getPastPaperByCourseAndSlug(course.id, paperSlug);
   if (!paper) notFound();
 
-  const attempt = await getAttemptForPlayer(attemptId);
-  // Null covers "no such attempt" and "not yours" identically — see the note
-  // on getAttemptForPlayer for why they are not distinguished.
-  if (!attempt) notFound();
+  const paperHref = `/learn/${subjectSlug}/${pathwaySlug}/${courseSlug}/papers/${paperSlug}`;
+
+  const lookup = await getAttemptForPlayer(attemptId);
+  // `not_found` covers "no such attempt" and "not yours" identically — see the
+  // note on getAttemptForPlayer for why they are not distinguished. An
+  // `unavailable` is OURS, and must not be shown as either: a 404 here would
+  // tell a student mid-exam that their sitting does not exist, and rendering a
+  // partial attempt would show their saved answers as blank.
+  if (!lookup.ok) {
+    if (lookup.reason === "not_found") notFound();
+    return (
+      <div style={getSubjectThemeStyle(subject)}>
+        <ExamUnavailable
+          title="We couldn't open your paper"
+          message="Something went wrong loading this sitting, so it isn't being shown — your answers are saved and are not affected."
+          backHref={paperHref}
+        />
+      </div>
+    );
+  }
+  const attempt = lookup.data;
 
   // An attempt id from a DIFFERENT paper would otherwise render this paper's
   // title over another paper's questions. Cheap to check, confusing to miss.
@@ -79,7 +97,6 @@ export default async function AttemptPage({ params }: { params: Params }) {
 
   // Practice mode has no player yet; an attempt created for it would land on a
   // half-built screen. Send it back to the placeholder that says so.
-  const paperHref = `/learn/${subjectSlug}/${pathwaySlug}/${courseSlug}/papers/${paperSlug}`;
   if (attempt.mode !== "exam") {
     redirect(`${paperHref}/interactive/sit/practice`);
   }

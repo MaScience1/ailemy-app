@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 
-import { MarkingUnavailable, ResultsView } from "@/components/exam/ResultsView";
+import { ExamUnavailable } from "@/components/exam/ExamUnavailable";
+import { ResultsView } from "@/components/exam/ResultsView";
 import { isPathway } from "@/lib/catalogue/pathways";
 import {
   getCourseBySubjectPathwayAndSlug,
@@ -56,10 +57,23 @@ export default async function ResultsPage({ params }: { params: Params }) {
   const paper = await getPastPaperByCourseAndSlug(course.id, paperSlug);
   if (!paper) notFound();
 
-  const attempt = await getAttemptForPlayer(attemptId);
-  if (!attempt || attempt.paperId !== paper.id) notFound();
-
   const paperHref = `/learn/${subjectSlug}/${pathwaySlug}/${courseSlug}/papers/${paperSlug}`;
+
+  const lookup = await getAttemptForPlayer(attemptId);
+  if (!lookup.ok) {
+    if (lookup.reason === "not_found") notFound();
+    return (
+      <div style={getSubjectThemeStyle(subject)}>
+        <ExamUnavailable
+          title="We couldn't load your marked paper"
+          message="Something went wrong reading this sitting, so no marks are being shown — rather than showing you a total we can't stand behind."
+          backHref={paperHref}
+        />
+      </div>
+    );
+  }
+  const attempt = lookup.data;
+  if (attempt.paperId !== paper.id) notFound();
 
   // An unsubmitted attempt has no results — send them back to finish it,
   // rather than showing a page of zeros that reads like a bad score.
@@ -76,7 +90,11 @@ export default async function ResultsPage({ params }: { params: Params }) {
   if (!result.ok) {
     return (
       <div style={getSubjectThemeStyle(subject)}>
-        <MarkingUnavailable message={result.error} paperHref={paperHref} />
+        <ExamUnavailable
+          title="Your paper couldn't be marked"
+          message={result.error}
+          backHref={paperHref}
+        />
       </div>
     );
   }

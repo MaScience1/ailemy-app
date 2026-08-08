@@ -284,9 +284,18 @@ export function ExamPlayer({
                 Submitted
               </p>
               <p className="mt-1 text-sm text-ink/60">
-                Your answers are locked. Marking isn&apos;t built yet — this is
-                where your results will appear.
+                Your answers are locked and can no longer be changed.
               </p>
+              {/* This said "marking isn't built yet" until marking was built.
+                  A student who submits and is told there is nothing to see has
+                  no reason to look for the results screen that now exists. */}
+              <Link
+                href={`${paperHref}/interactive/attempt/${attempt.id}/results`}
+                className="font-mono mt-3 inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.2em] text-ink transition-colors hover:text-ink/60"
+              >
+                See how your marks were awarded
+                <ArrowRight className="h-3 w-3" aria-hidden="true" />
+              </Link>
             </div>
           </div>
         )}

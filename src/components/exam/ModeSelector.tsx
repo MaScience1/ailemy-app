@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   ChevronDown,
+  CircleAlert,
   Hourglass,
   Lock,
   PenLine,
@@ -170,7 +171,14 @@ export function ModeSelector({
           )}
         </div>
       ) : (
-        <NotSittableYet />
+        /* ⚠ THREE STATES, NOT TWO. `unavailable` is checked first because it
+           used to be indistinguishable from "nothing seeded" — the failure
+           branch of getPaperExamMeta returned the same all-zero shape — so a
+           database outage told every visitor this paper had never been broken
+           into questions. The teach card and the downloads above are
+           unaffected and still render, which is why this degrades here rather
+           than taking the page down. */
+        <NotSittableYet unavailable={meta.unavailable} />
       )}
     </div>
   );
@@ -237,12 +245,23 @@ function SitMode({
  * what still works. A greyed-out control invites clicking and then fails
  * silently; this explains itself instead.
  */
-function NotSittableYet() {
+/**
+ * @param unavailable True when the lookup FAILED, as opposed to succeeding and
+ *   finding nothing. The two produce different sentences on purpose: "this
+ *   paper hasn't been broken into questions yet" is a statement about the
+ *   catalogue, and saying it because a query errored is telling a student
+ *   something false about work that may well be finished and waiting.
+ */
+function NotSittableYet({ unavailable = false }: { unavailable?: boolean }) {
   return (
     <div className="flex flex-col gap-8 rounded-lg border border-dashed border-ink/20 bg-snow/50 p-6 sm:p-8">
       <div>
         <span className="flex h-11 w-11 items-center justify-center rounded-md bg-ink/[0.06] text-ink/35">
-          <Lock className="h-5 w-5" aria-hidden="true" />
+          {unavailable ? (
+            <CircleAlert className="h-5 w-5" aria-hidden="true" />
+          ) : (
+            <Lock className="h-5 w-5" aria-hidden="true" />
+          )}
         </span>
         <p className="font-mono mt-6 text-[10px] uppercase tracking-[0.25em] text-ink/40">
           For students
@@ -251,13 +270,13 @@ function NotSittableYet() {
           Sit this paper
         </h3>
         <p className="mt-3 max-w-sm text-sm leading-relaxed text-ink/50">
-          This paper hasn&apos;t been broken into questions yet, so there is
-          nothing for Ailemy to mark. Download it above, or open the whiteboard
-          and work through it by hand.
+          {unavailable
+            ? "We couldn't check which questions are ready to sit, so this isn't being offered right now. Reloading the page will try again — the paper itself is fine, and everything else here still works."
+            : "This paper hasn't been broken into questions yet, so there is nothing for Ailemy to mark. Download it above, or open the whiteboard and work through it by hand."}
         </p>
       </div>
       <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink/40">
-        Not yet available
+        {unavailable ? "Temporarily unavailable" : "Not yet available"}
       </p>
     </div>
   );
