@@ -201,6 +201,31 @@ export type QuestionInput = {
   commandWord?: string;
   topic?: string;
   specPoint?: string;
+  /**
+   * The final answer a deterministic marker compares against (migration 0031).
+   *
+   * Transcribed by hand from the mark scheme, NOT parsed out of `guidance` at
+   * runtime: on 22(c) that paragraph contains 10, 58, 0.17241, 161.5, 27.844
+   * and 3.591, and picking the right one by pattern is guesswork that marks
+   * correct students wrong. Absent means "not markable automatically", which
+   * the marker reports honestly rather than guessing around.
+   */
+  expectedAnswer?: {
+    /** A string, always: "0.0172" and "1.72e-2" differ in significant figures. */
+    value: string;
+    /** Omit where the scheme requires no unit — a percentage yield has none. */
+    unit?: string;
+    /** RELATIVE, e.g. 0.005 = ±0.5%. Omit for exact match. */
+    tolerance?: number;
+    /** Alternates the scheme explicitly allows ("Allow 306 (kg)"). */
+    acceptedValues?: string[];
+    /**
+     * TRUE only where the mark scheme SAYS a correct answer takes the whole
+     * tariff. 20(b)(iii) is six method marks and the editor collects one
+     * value — without this a correct student scores 1/6. See 0031.
+     */
+    fullMarksOnCorrectAnswer?: boolean;
+  };
   regions?: QuestionRegionInput[];
   markScheme?: MarkSchemeItemInput[];
   examinerInsights?: ExaminerInsightInput[];

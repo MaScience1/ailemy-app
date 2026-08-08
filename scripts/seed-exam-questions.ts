@@ -548,6 +548,12 @@ function buildQuestionPayload(
     command_word: q.commandWord ?? null,
     topic: q.topic ?? null,
     spec_point: q.specPoint ?? null,
+    // 0031 — the deterministic marker's comparison target.
+    expected_value: q.expectedAnswer?.value ?? null,
+    expected_unit: q.expectedAnswer?.unit ?? null,
+    answer_tolerance: q.expectedAnswer?.tolerance ?? null,
+    accepted_values: q.expectedAnswer?.acceptedValues ?? null,
+    full_marks_on_correct_answer: q.expectedAnswer?.fullMarksOnCorrectAnswer ?? false,
   };
 }
 

@@ -228,7 +228,9 @@ export function ExamPlayer({
     const result = await onSubmit(attempt.id);
     setSubmitting(false);
     if (result.ok) {
-      window.location.reload();
+      // Straight to the marked paper. A reload would land them back on a
+      // read-only player with no indication that anything had been marked.
+      window.location.assign(`${window.location.pathname.replace(/\/$/, "")}/results`);
     } else {
       setSaveError(result.error);
       setConfirmingSubmit(false);

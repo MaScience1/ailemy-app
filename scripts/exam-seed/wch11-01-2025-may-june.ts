@@ -142,6 +142,8 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       answerType: "mcq",
       commandWord: "Which row shows",
       topic: "Atomic structure", // examiner report: "Question 1 (atomic structure)"
+      // "The only correct answer is B"
+      expectedAnswer: { value: "B", fullMarksOnCorrectAnswer: true },
       questionText:
         "Which row shows the numbers of neutrons and electrons in a bromide ion 79Br- ?\n" +
         "\n" +
@@ -181,6 +183,8 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       answerType: "mcq",
       commandWord: "What volume",
       topic: "Moles and gas volumes",
+      // "The only correct answer is A (0.072 dm3)"
+      expectedAnswer: { value: "A", fullMarksOnCorrectAnswer: true },
       questionText:
         "What volume of sulfur dioxide gas reacts completely with 50 cm3 of 0.12 mol dm-3 sodium hydroxide solution?\n" +
         "\n" +
@@ -229,6 +233,13 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       answerType: "numeric_with_unit",
       commandWord: "Calculate",
       topic: "The ideal gas equation",
+      // M4 guidance: "n = 0.0172 mol" · "Correct answer with no working scores (4)"
+      expectedAnswer: {
+        value: "0.0172",
+        unit: "mol",
+        tolerance: 0.005,
+        fullMarksOnCorrectAnswer: true,
+      },
       questionText:
         "According to data from 2021, there are 415 ppm of carbon dioxide in the atmosphere by volume.\n" +
         "\n" +
@@ -346,6 +357,15 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       answerType: "numeric_with_unit",
       commandWord: "Calculate",
       topic: "Multi-step mass calculation",
+      // M6 guidance: "307 (kg)" · accept "Allow 306 (kg)", "Allow TE throughout".
+      // fullMarks: six method marks, one value collected — see 0031.
+      expectedAnswer: {
+        value: "307",
+        unit: "kg",
+        acceptedValues: ["306"],
+        tolerance: 0.005,
+        fullMarksOnCorrectAnswer: true,
+      },
       questionText:
         "Kerosene is used as aeroplane fuel. A jet plane can carry a maximum of 800 passengers and uses 11 400 dm3 of fuel per hour.\n" +
         "\n" +
@@ -588,6 +608,14 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       answerType: "numeric",
       commandWord: "Calculate",
       topic: "Percentage yield",
+      // M3 guidance: "1/ 27.844 x 100 = 3.591%" · "Correct answer with some working scores 3".
+      // No unit: a percentage yield is dimensionless, which is why this is
+      // `numeric` and not `numeric_with_unit`.
+      expectedAnswer: {
+        value: "3.591",
+        tolerance: 0.01,
+        fullMarksOnCorrectAnswer: true,
+      },
       questionText:
         "Calculate the percentage yield if 1.00 g of trichlorobutane is produced from 10.0 g butane using the overall equation shown.\n" +
         "\n" +
