@@ -81,8 +81,40 @@ t("accepted alternate 306 → 6/6", r.markable && r.awarded===6);
 const spec6NoFull={...spec6,marksOnCorrectAnswer:null};
 r = markNumeric({kind:"numeric",value:"307",unit:"kg"},6,spec6NoFull,c6);
 t("scheme silent (null) → not_markable, NEVER a default award of 1", !r.markable, r);
-t("...reason names the missing transcription rather than guessing",
-  !r.markable && /hasn't been recorded/.test(r.reason), r.reason);
+t("...reason names the working, not a missing transcription",
+  !r.markable && /depend on your working/.test(r.reason), r.reason);
+
+console.log("\n── TWO DIFFERENT NULLS: 'not transcribed' vs 'deliberately null' ──");
+// Both produce markable:false, and for a while both produced the SAME
+// sentence — "hasn't been recorded". That reads as a gap in our data entry.
+// For 22(c) it is the opposite: the question WAS read, and the ruling was
+// that the scheme conditions its 3 marks on working this app cannot see.
+// A reviewer told "not recorded" goes looking for a transcription that is
+// already complete and correct.
+{
+  // NOT TRANSCRIBED — no row in question_expected_answers at all.
+  const untranscribed = {expectedValue:null,expectedUnit:null,tolerance:null,
+    acceptedValues:null,marksOnCorrectAnswer:null,requiresUnit:false};
+  const rNone:any = markNumeric({kind:"numeric",value:"3.591"},3,untranscribed,c6);
+  t("no expected answer → not markable", !rNone.markable);
+  t("...says it isn't set up yet (our backlog)",
+    !rNone.markable && /hasn't been set up for automatic marking/.test(rNone.reason), rNone.reason);
+  t("...does NOT blame the student's working",
+    !rNone.markable && !/working/.test(rNone.reason), rNone.reason);
+
+  // DELIBERATELY NULL — 22(c). A row exists, the value is transcribed, and
+  // marks_on_correct_answer is null because "with SOME working" is untestable.
+  const spec22c = {expectedValue:"3.591",expectedUnit:null,tolerance:0.01,
+    acceptedValues:null,marksOnCorrectAnswer:null,requiresUnit:false};
+  const rRuled:any = markNumeric({kind:"numeric",value:"3.591"},3,spec22c,c6);
+  t("22(c) correct answer → still not markable (0 confirmed of 3)", !rRuled.markable);
+  t("...explains the WORKING is what's missing",
+    !rRuled.markable && /depend on your working/.test(rRuled.reason), rRuled.reason);
+  t("...does NOT claim anything is unrecorded",
+    !rRuled.markable && !/recorded|set up/.test(rRuled.reason), rRuled.reason);
+
+  t("THE TWO MESSAGES DIFFER", rNone.reason !== rRuled.reason);
+}
 
 console.log("\n── DEFECT 2 GUARD: a stated figure below the tariff must not round up ──");
 {
@@ -108,7 +140,8 @@ t("3.59 within 1% → awarded", r.markable && r.awarded>0);
 
 console.log("\n── no expected answer recorded (0031 not applied / not populated) ──");
 r = markNumeric({kind:"numeric",value:"307"},6,{...spec6,expectedValue:null},c6);
-t("→ NOT markable, never guesses from prose", !r.markable && /No expected answer/.test(r.reason), r);
+t("→ NOT markable, never guesses from prose",
+  !r.markable && /hasn't been set up for automatic marking/.test(r.reason), r);
 
 console.log("\n── tier routing ──");
 t("mcq → deterministic", tierFor("mcq")==="deterministic");

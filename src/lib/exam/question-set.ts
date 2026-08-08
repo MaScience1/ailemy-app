@@ -222,16 +222,24 @@ export type QuestionInput = {
     /**
      * Marks awarded when the final answer matches, AS THE SCHEME STATES IT.
      *
-     *   20(a)  "Correct answer with no working scores (4)"  -> 4
-     *   22(c)  "Correct answer with some working scores 3"  -> 3
+     *   20(a)  "Correct answer with no working scores (4)"     -> 4
+     *   22(c)  "Correct answer with SOME WORKING scores 3"     -> null
      *
-     * OMIT where the scheme says nothing. Omitted means per-point marking:
-     * the final point only, with the method marks reported as unmarked. That
-     * under-reports, which is visible and correctable — a boolean here would
-     * have awarded the full tariff on a scheme that never granted it, which
-     * over-marks silently. See 0031.
+     * ⚠ REQUIRED, AND `number | null` RATHER THAN OPTIONAL, ON PURPOSE.
+     *
+     * null means "this scheme states no figure we can act on" — a decision
+     * somebody made while reading the mark scheme. Omitting the field used to
+     * mean the same thing, which made a deliberate ruling and a half-finished
+     * transcription look identical in the database, and the marking layer then
+     * showed the student the same sentence for both. Requiring the key makes
+     * the ruling a keystroke: forget it and the build fails.
+     *
+     * 22(c) is the case that forced it. "With SOME WORKING" is a condition
+     * this app cannot test, because it captures no working — so those 3 marks
+     * go to review rather than being awarded on a bare answer. See the note
+     * beside `marksOnCorrectAnswer` in deterministic.ts, and 0031.
      */
-    marksOnCorrectAnswer?: number;
+    marksOnCorrectAnswer: number | null;
   };
   regions?: QuestionRegionInput[];
   markScheme?: MarkSchemeItemInput[];

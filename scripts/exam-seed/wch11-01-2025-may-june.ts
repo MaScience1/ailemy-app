@@ -642,11 +642,17 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // MS p23 · M3 guidance: "1/ 27.844 x 100 = 3.591%"
       //          M3 accept:   "Ignore SF except for 1 SF" -> a tolerance
       //
-      // ⚠ marksOnCorrectAnswer IS DELIBERATELY OMITTED, and the omission is
-      // the ruling. The scheme says "Correct answer with some working scores
-      // 3" — note "with SOME working", where 20(a) four questions earlier says
-      // "with NO working". The wording differs on purpose, and this app
-      // captures no working at all, so the condition can never be satisfied.
+      // ⚠ marksOnCorrectAnswer IS EXPLICITLY null, and the null is the ruling.
+      // The scheme says "Correct answer with some working scores 3" — note
+      // "with SOME working", where 20(a) four questions earlier says "with NO
+      // working". The wording differs on purpose, and this app captures no
+      // working at all, so the condition can never be satisfied.
+      //
+      // Written as `null` rather than left out: an omission would be
+      // indistinguishable from a question nobody has finished transcribing,
+      // and the student would be told the marks "haven't been recorded" when
+      // in fact they have been read and ruled on. The field is required for
+      // exactly this reason — see question-set.ts.
       //
       // A correct 3.591 therefore reports 0 confirmed with all 3 marks needing
       // review. Setting 3 here would award the full tariff on a bare answer
@@ -654,6 +660,7 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       expectedAnswer: {
         value: "3.591",
         tolerance: 0.01,
+        marksOnCorrectAnswer: null,
       },
       questionText:
         "Calculate the percentage yield if 1.00 g of trichlorobutane is produced from 10.0 g butane using the overall equation shown.\n" +

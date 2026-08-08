@@ -264,19 +264,37 @@ export function markNumeric(
   },
   criteria: { pointCode: string; criterion: string }[],
 ): DeterministicResult {
+  // ── TWO DIFFERENT NULLS, AND THE STUDENT MUST NOT SEE THEM AS ONE ────────
+  //
+  // NOT YET TRANSCRIBED: no row exists in question_expected_answers, so
+  // expectedValue is null. Nobody has read this question's mark scheme into
+  // the database yet. That is our backlog, not a fact about the question.
   if (!spec.expectedValue) {
     return {
       markable: false,
       reason:
-        "No expected answer has been recorded for this question, so it was not marked automatically.",
+        "This question hasn't been set up for automatic marking yet, so it needs review.",
     };
   }
+  // DELIBERATELY NULL: a row EXISTS — someone transcribed this question — and
+  // chose to record no figure, because the scheme grants those marks only on
+  // a condition this app cannot test. 22(c) is the case: "Correct answer with
+  // SOME WORKING scores 3", where 20(a) four questions earlier says "with NO
+  // working". The difference is the examiner's, and it is load-bearing.
+  //
+  // So the message is about the working, not about a missing record. Saying
+  // "hasn't been recorded" here would send a reviewer hunting for a
+  // transcription that is already correct and complete.
+  //
+  // The two states are distinguishable only because the seed fixture types
+  // marksOnCorrectAnswer as `number | null` REQUIRED — omitting it is a
+  // compile error, so a null in the database is always a keystroke somebody
+  // made on purpose. Do not make that field optional again.
   if (spec.marksOnCorrectAnswer === null) {
-    // Deliberately not "award 1 and hope". See marksOnCorrectAnswer above.
     return {
       markable: false,
       reason:
-        "How many marks a correct answer earns hasn't been recorded for this question, so it needs review.",
+        "The marks for this question depend on your working, which we can't see yet — so it's gone for review rather than being marked here.",
     };
   }
 

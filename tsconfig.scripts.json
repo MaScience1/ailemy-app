@@ -1,0 +1,35 @@
+// Typechecking for scripts/, which the root tsconfig excludes.
+//
+// ============================================================================
+// WHY THE ROOT CONFIG EXCLUDES scripts/, AND WHY THAT NEEDED FIXING
+// ============================================================================
+// Node 26 runs .ts directly by stripping types, and it requires imports to
+// carry the real ".ts" extension. The root config uses moduleResolution
+// "bundler", which rejects those extensions — so scripts/ was excluded and
+// went UNCHECKED ENTIRELY.
+//
+// That turned every type in scripts/ into decoration. The seed fixture is the
+// one place a human transcribes a mark scheme by hand, and it is exactly where
+// a missing field matters: question-set.ts requires
+// `marksOnCorrectAnswer: number | null` so that omitting it is a compile
+// error, which is what makes "deliberately null" distinguishable from "nobody
+// has transcribed this yet" in the marking layer. With scripts/ unchecked,
+// that requirement enforced nothing on the only file it was written for.
+//
+// So: same strictness, `allowImportingTsExtensions` so the .ts imports Node
+// needs are legal here, and noEmit because nothing is compiled — the runtime
+// strips types itself.
+//
+//   npx tsc --noEmit -p tsconfig.scripts.json
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "types": ["node"]
+  },
+  "include": ["scripts/**/*.ts"],
+  "exclude": ["node_modules"]
+}
