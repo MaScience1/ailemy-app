@@ -5,6 +5,11 @@ import { createClient } from "@/lib/supabase/server";
 
 import type { ResponsePayload } from "./attempts";
 import {
+  describeReconciliation,
+  reconcileMarking,
+  type MarkingReconciliation,
+} from "./reconcile";
+import {
   markMcq,
   markNumeric,
   tierFor,
@@ -64,6 +69,8 @@ import {
  * marker changes, old results stay attributable to the old one rather than
  * silently inheriting the new one's reputation.
  */
+export type { MarkingReconciliation } from "./reconcile";
+
 export const MARKING_MODEL = "claude-opus-5";
 export const PROMPT_VERSION = "wch11-marker-v1";
 
@@ -214,8 +221,18 @@ export type MarkingSummary = {
    * must be told so — never silently.
    */
   persistenceFailures: number;
+  /**
+   * Proof that nothing was dropped. See MarkingReconciliation.
+   *
+   * markAttempt refuses to return a summary whose buckets do not add up, so
+   * reading this is confirmation rather than an invitation to re-check — but
+   * an audit should assert on it anyway, because an assertion that lives only
+   * inside the thing being audited is not independent evidence.
+   */
+  reconciliation: MarkingReconciliation;
   questions: MarkedQuestion[];
 };
+
 
 type QuestionRow = {
   id: string;
@@ -373,6 +390,9 @@ export async function markAttempt(
 
   const marked: MarkedQuestion[] = [];
   let persistenceFailures = 0;
+  // Rows this run wrote AND read back — persist() asserts the row count, so
+  // this counts landings, not attempts.
+  let persistedRows = 0;
 
   /**
    * The mark was computed and could not be stored, so it is not shown.
@@ -410,7 +430,25 @@ export async function markAttempt(
 
   for (const qa of qas) {
     const q = qById.get(qa.question_id);
-    if (!q) continue;
+    // ⚠ `continue` HERE WAS A SILENT DROP: the question vanished from the
+    // results entirely — not shown as unmarked, not counted, not logged. Ten
+    // questions in, nine out, and the screen looked complete. That is the
+    // failure shape this whole file has been chasing, so it is now the one
+    // thing that stops the run: an input we cannot account for means the
+    // output cannot be trusted to be about this attempt.
+    //
+    // It should be unreachable — getAttemptForPlayer proves the same invariant
+    // one screen earlier, and 0030 creates these rows from paper_questions in
+    // a single transaction. Unreachable is exactly when to assert.
+    if (!q) {
+      console.error(
+        `[marking] question_attempt ${qa.id} references question ${qa.question_id}, absent from paper_questions. Refusing to mark a partial paper.`,
+      );
+      return {
+        ok: false,
+        error: "Your paper couldn't be marked just now. Nothing has been lost — please try again shortly.",
+      };
+    }
     const criteria = (schemeByQ.get(qa.question_id) ?? []) as unknown as {
       point_code: string;
       criterion: string;
@@ -499,6 +537,7 @@ export async function markAttempt(
       const awarded = clamp(result.awarded, qa.max_marks, q.question_number);
       try {
         await persist(db, qa.id, awarded, "deterministic", result.points, null, null);
+        persistedRows += 1;
       } catch (error) {
         marked.push(persistFailed(qa, q, tier, error));
         continue;
@@ -527,6 +566,7 @@ export async function markAttempt(
     if (!text) {
       try {
         await persist(db, qa.id, 0, "requires_review", [], MARKING_MODEL, PROMPT_VERSION);
+        persistedRows += 1;
       } catch (error) {
         marked.push(persistFailed(qa, q, tier, error));
         continue;
@@ -592,6 +632,7 @@ export async function markAttempt(
     // returned. A model cannot promote its own marking to authoritative.
     try {
       await persist(db, qa.id, awarded, "requires_review", points, MARKING_MODEL, PROMPT_VERSION);
+      persistedRows += 1;
     } catch (error) {
       marked.push(persistFailed(qa, q, tier, error));
       continue;
@@ -615,6 +656,29 @@ export async function markAttempt(
   const confirmed = marked.filter((m) => m.confidence === "deterministic");
   const provisional = marked.filter((m) => m.confidence === "requires_review");
 
+  const check = reconcileMarking({
+    questionsIn: qas.length,
+    responsesIn: responseByQa.size,
+    marked,
+    persisted: persistedRows,
+    persistFailed: persistenceFailures,
+  });
+
+  // ⚠ THE RUN FAILS RATHER THAN RETURNING A SUMMARY THAT DOES NOT ADD UP.
+  // A short summary is precisely how a dropped question hides: the screen
+  // renders, the totals look plausible, and the only evidence is a question
+  // that is missing from a page nobody is counting.
+  if (!check.ok) {
+    console.error(
+      `[marking] RECONCILIATION FAILED for attempt ${attemptId}: ${check.problem}. ${describeReconciliation(check.reconciliation)}`,
+    );
+    return {
+      ok: false,
+      error: "Your paper couldn't be marked just now. Nothing has been lost — please try again shortly.",
+    };
+  }
+  const reconciliation = check.reconciliation;
+
   return {
     ok: true,
     data: {
@@ -628,6 +692,7 @@ export async function markAttempt(
       provisionalAvailable: sum(provisional.map((m) => m.assessedOutOf ?? 0)),
       needsReviewAvailable: sum(marked.map((m) => m.unassessedMarks)),
       persistenceFailures,
+      reconciliation,
       questions: marked,
     },
   };
