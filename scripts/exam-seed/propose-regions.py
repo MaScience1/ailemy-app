@@ -55,6 +55,41 @@ BOTTOM_MARGIN = 60.0
 PAD_TOP = 6.0
 PAD_BOTTOM = 4.0
 
+# End-of-question furniture. These lines belong to the PAPER, not to the
+# question above them, and a box that swallows them claims the marks tally is
+# part of the answer space. 23(c)(ii) ran to the page bottom and took
+# "(Total for Question 23 = 21 marks)", "TOTAL FOR SECTION B" and "TOTAL FOR
+# PAPER" with it.
+END_FURNITURE = re.compile(
+    r"^\(?\s*total\s+for\s+(question|section)|^total\s+for\s+paper"
+    r"|^use\s+this\s+space\s+for\s+any\s+rough\s+working",
+    re.I,
+)
+
+
+def is_answer_rule(line) -> bool:
+    """A dotted rule a student writes on.
+
+    Present as TEXT on some pages of this paper — a run of periods — and absent
+    entirely on others, where the answer space is simply blank area inside the
+    page border. Both are handled: this finds the former, and a question with
+    neither falls back to the page bound and keeps the lower confidence that
+    says so.
+    """
+    t = line["t"]
+    return len(t) >= 8 and (t.count(".") / len(t)) > 0.8
+
+
+def vector_rules(page):
+    """Wide, near-horizontal drawn strokes — the other way this paper rules a
+    page. p12 draws the line under 20(b)(iv) rather than typing dots."""
+    out = []
+    for path in page.get_drawings():
+        r = path["rect"]
+        if r.height < 3 and r.width > 200:
+            out.append(r.y1)
+    return out
+
 
 def norm(s: str) -> str:
     return re.sub(r"\s+", " ", s or "").strip()
@@ -229,8 +264,44 @@ def main():
                 bottom = min(next_top, pg["h"] - BOTTOM_MARGIN)
                 confidence = 0.9  # both edges anchored on real text
             else:
-                bottom = pg["h"] - BOTTOM_MARGIN
-                confidence = 0.72  # bounded by the page, not by a sibling
+                # No sibling below, so the box would run to the page bound and
+                # swallow whatever the template prints at the foot of the
+                # question. Trim to where the ANSWER SPACE actually ends.
+                page_bound = pg["h"] - BOTTOM_MARGIN
+                anchor_y = a["line"]["bbox"][3]
+
+                # 1. End-of-question furniture is not part of the answer.
+                furniture_top = None
+                for l in pg["lines"]:
+                    if not l["horizontal"] or l["bbox"][1] <= anchor_y:
+                        continue
+                    if END_FURNITURE.match(l["t"]):
+                        furniture_top = l["bbox"][1]
+                        break
+
+                ceiling = min(furniture_top - PAD_BOTTOM, page_bound) if furniture_top else page_bound
+
+                # 2. The last rule the student can write on, above that.
+                last_rule = None
+                for l in pg["lines"]:
+                    if l["horizontal"] and is_answer_rule(l) and anchor_y < l["bbox"][3] <= ceiling:
+                        last_rule = max(last_rule or 0, l["bbox"][3])
+                for y1 in vector_rules(doc[pg["n"] - 1]):
+                    if anchor_y < y1 <= ceiling:
+                        last_rule = max(last_rule or 0, y1)
+
+                if last_rule is not None:
+                    bottom = min(last_rule + PAD_BOTTOM, ceiling)
+                    confidence = 0.8  # ends on a real answer line
+                elif furniture_top is not None:
+                    bottom = ceiling
+                    confidence = 0.8  # ends where the question's content does
+                else:
+                    # Genuinely blank working space to the page bound — Q20(a)
+                    # is a 4-mark calculation with no ruled lines at all. The
+                    # position is anchored; the extent is still a guess.
+                    bottom = page_bound
+                    confidence = 0.72
 
         x0 = max(0.0, min(x0c, a["line"]["bbox"][0]) - 4.0)
         x1 = min(pg["w"], x1c + 4.0)

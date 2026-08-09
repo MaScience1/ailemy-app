@@ -109,8 +109,15 @@
  *
  *   confidence 0.9   both edges anchored on real text (a sibling bounds it)
  *              0.85  a container's stem, grown to hold exactly its own text
- *              0.72  bounded below by the page, not by a sibling — the extent
- *                    is a guess even though the position is not
+ *              0.8   no sibling below, so the box is trimmed to where the
+ *                    ANSWER SPACE ends — the last dotted rule a student writes
+ *                    on, or the point where the paper's own "(Total for
+ *                    Question N …)" furniture begins. Both edges real, but the
+ *                    lower one is inferred from the template rather than from
+ *                    another question.
+ *              0.72  neither: genuinely blank working space running to the page
+ *                    bound. Q20(a) is a 4-mark calculation with no ruled lines
+ *                    at all — position anchored, extent still a guess.
  *
  *   approved_by / approved_at stay NULL. 0028 is explicit that approved_at
  *   IS NULL means PROPOSED, not accepted, and approval is a human act against
@@ -206,7 +213,7 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // scripts/exam-seed/propose-regions.py. confidence is set because a
       // machine placed it; approval remains a human act in the admin mapper.
       regions: [
-        { pageNumber: 2, x: 38.52, y: 381.44, width: 507.9, height: 400.45, confidence: 0.72 },
+        { pageNumber: 2, x: 38.52, y: 381.44, width: 507.9, height: 202.26, confidence: 0.8 },
       ],
       parentQuestionNumber: null,
       displayOrder: 20,
@@ -534,7 +541,7 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // scripts/exam-seed/propose-regions.py. confidence is set because a
       // machine placed it; approval remains a human act in the admin mapper.
       regions: [
-        { pageNumber: 12, x: 71.12, y: 53.94, width: 443.11, height: 727.95, confidence: 0.72 },
+        { pageNumber: 12, x: 71.12, y: 53.94, width: 443.11, height: 375.07, confidence: 0.8 },
       ],
       parentQuestionNumber: "20(b)",
       displayOrder: 260,
@@ -635,7 +642,7 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // scripts/exam-seed/propose-regions.py. confidence is set because a
       // machine placed it; approval remains a human act in the admin mapper.
       regions: [
-        { pageNumber: 14, x: 56.94, y: 53.94, width: 477.01, height: 727.95, confidence: 0.72 },
+        { pageNumber: 14, x: 56.94, y: 53.94, width: 477.01, height: 603.34, confidence: 0.8 },
       ],
       parentQuestionNumber: "21(c)",
       displayOrder: 320,
@@ -724,7 +731,7 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // scripts/exam-seed/propose-regions.py. confidence is set because a
       // machine placed it; approval remains a human act in the admin mapper.
       regions: [
-        { pageNumber: 17, x: 55.93, y: 53.94, width: 458.3, height: 727.95, confidence: 0.72 },
+        { pageNumber: 17, x: 55.93, y: 53.94, width: 458.3, height: 710.96, confidence: 0.8 },
       ],
       parentQuestionNumber: "22",
       displayOrder: 410,
@@ -861,7 +868,7 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // scripts/exam-seed/propose-regions.py. confidence is set because a
       // machine placed it; approval remains a human act in the admin mapper.
       regions: [
-        { pageNumber: 22, x: 38.52, y: 486.61, width: 515.79, height: 295.28, confidence: 0.72 },
+        { pageNumber: 22, x: 38.52, y: 486.61, width: 515.79, height: 230.46, confidence: 0.8 },
       ],
       parentQuestionNumber: "23(c)",
       displayOrder: 520,
