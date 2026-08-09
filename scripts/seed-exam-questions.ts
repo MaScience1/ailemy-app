@@ -243,20 +243,62 @@ async function loadEnv(): Promise<{ url: string; serviceKey: string }> {
 // THE JOURNAL
 // ============================================================================
 
-type UndoEntry = {
-  label: string;
-  undo: () => Promise<void>;
-};
+type UndoEntry =
+  | { kind: "reversible"; label: string; undo: () => Promise<void> }
+  /**
+   * A write that was never snapshotted, so it CANNOT be rolled back — recorded
+   * so the failure report is complete, not because there is anything to run.
+   */
+  | { kind: "irreversible"; label: string; why: string };
+
+/**
+ * What actually happened when the run was rolled back.
+ *
+ * ⚠ THREE OUTCOMES, NOT TWO, AND THE DIFFERENCE IS THE WHOLE POINT.
+ *
+ * This used to be `{ undone, failed }`, and the irreversible entries were
+ * stubs whose undo threw on purpose — so they landed in `failed` and the run
+ * printed "THE DATABASE IS PARTIALLY SEEDED. 6 compensation(s) could not be
+ * applied" on a rollback where nothing had been lost. A false alarm on the one
+ * report you most need to trust, and the reader has no way to tell it from the
+ * real thing.
+ *
+ *   undone         rolled back cleanly. Nothing to say.
+ *   failed         an undo was attempted AND ERRORED. This is the alarming
+ *                  one: the database is genuinely part-written and a human has
+ *                  to look.
+ *   irreversible   no undo existed. The write stands. Whether that matters
+ *                  depends on what it overwrote, which the journal cannot
+ *                  know — so it is reported plainly and NOT counted as a
+ *                  failure.
+ */
+type Compensation = { undone: number; failed: string[]; irreversible: string[] };
 
 class Journal {
   private readonly entries: UndoEntry[] = [];
 
   record(label: string, undo: () => Promise<void>) {
-    this.entries.push({ label, undo });
+    this.entries.push({ kind: "reversible", label, undo });
+  }
+
+  /**
+   * Declare a write that cannot be undone, and say why.
+   *
+   * Deliberately NOT `record(label, () => { throw ... })`. That shape is what
+   * made an unreversible-by-design write indistinguishable from a broken
+   * rollback.
+   */
+  recordIrreversible(label: string, why: string) {
+    this.entries.push({ kind: "irreversible", label, why });
   }
 
   get size() {
     return this.entries.length;
+  }
+
+  /** How many entries could actually be rolled back if it came to it. */
+  get reversibleSize() {
+    return this.entries.filter((e) => e.kind === "reversible").length;
   }
 
   /**
@@ -264,11 +306,16 @@ class Journal {
    * because the point of this method is to tell you the true state of the
    * database, and a throw here would hide the remaining entries.
    */
-  async compensate(): Promise<{ undone: number; failed: string[] }> {
+  async compensate(): Promise<Compensation> {
     const failed: string[] = [];
+    const irreversible: string[] = [];
     let undone = 0;
     for (let i = this.entries.length - 1; i >= 0; i--) {
       const entry = this.entries[i];
+      if (entry.kind === "irreversible") {
+        irreversible.push(`${entry.label} — ${entry.why}`);
+        continue;
+      }
       try {
         await entry.undo();
         undone += 1;
@@ -278,7 +325,7 @@ class Journal {
         );
       }
     }
-    return { undone, failed };
+    return { undone, failed, irreversible };
   }
 }
 
@@ -1134,11 +1181,9 @@ async function applyPlan(
       // text is not snapshotted. Recorded here so the failure report is
       // truthful rather than silent.
       if (row.existing) {
-        journal.record(
-          `${YELLOW}CANNOT UNDO${RESET} mark-scheme upsert on pre-existing question ${q.questionNumber} (${rows.length} point(s)) — previous criterion text was not snapshotted`,
-          async () => {
-            throw new Error("no snapshot taken");
-          },
+        journal.recordIrreversible(
+          `mark-scheme upsert on pre-existing question ${q.questionNumber} (${rows.length} point(s))`,
+          `the previous criterion text was not snapshotted`,
         );
       }
     }
@@ -1390,17 +1435,46 @@ async function main() {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`\n  ${RED}✗${RESET} ${message}`);
-    console.error(`  Compensating ${journal.size} journalled write(s)…`);
-    const { undone, failed } = await journal.compensate();
+    console.error(
+      `  Compensating ${journal.reversibleSize} reversible write(s) of ` +
+        `${journal.size} journalled…`,
+    );
+    const { undone, failed, irreversible } = await journal.compensate();
     console.error(`  ${undone} undone.`);
+
+    // ⚠ ONLY `failed` MEANS PARTIALLY SEEDED. An irreversible entry is a write
+    // that never had an undo; reporting it as a failed compensation is what
+    // produced "THE DATABASE IS PARTIALLY SEEDED. 6 compensation(s) could not
+    // be applied" on a rollback where nothing had been lost.
     if (failed.length > 0) {
       console.error(
         `\n  ${RED}${BOLD}THE DATABASE IS PARTIALLY SEEDED.${RESET} ` +
-          `${failed.length} compensation(s) could not be applied:`,
+          `${failed.length} rollback(s) were attempted and FAILED:`,
       );
       for (const f of failed) console.error(`      ${f}`);
       console.error(
         `\n  Inspect paper_questions for paper_id ${set.paperId} before re-running.`,
+      );
+    }
+
+    if (irreversible.length > 0) {
+      console.error(
+        `\n  ${YELLOW}${irreversible.length} write(s) had no undo and therefore ` +
+          `STAND${RESET} — this is not a rollback failure:`,
+      );
+      for (const i of irreversible) console.error(`      ${i}`);
+      console.error(
+        `  ${DIM}Whether that matters depends on what they overwrote, which the ` +
+          `journal cannot know.${RESET}`,
+      );
+    }
+
+    if (failed.length === 0) {
+      console.error(
+        `\n  ${GREEN}Every reversible write was rolled back.${RESET}` +
+          (irreversible.length > 0
+            ? ` The ${irreversible.length} above are the only changes still in place.`
+            : ` The database is back to its pre-run state.`),
       );
     }
     fail("seed aborted.");
