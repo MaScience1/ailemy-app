@@ -85,6 +85,17 @@
  *   mark_scheme_items  UPSERT on (question_id, point_code) — also a real
  *                      unique key, so criterion / guidance / accept / reject
  *                      update in place.
+ *   question_expected  UPSERT on (question_id), the key 0031 declares.
+ *   _answers
+ *
+ * ⚠ AN UPSERT DESTROYS AS A SIDE EFFECT OF SUCCEEDING. "Updates in place"
+ * means the previous criterion, guidance, accept[], reject[], tolerance and
+ * accepted_values are gone — content transcribed by hand from the examiner's
+ * PDF. Both upsert tables therefore go through upsertReversibly(), which
+ * snapshots first and journals an undo that puts the previous values back.
+ * Neither did until the run that added it; a failure on question 21 took
+ * question 3's corrected wording with it and the report said only that the
+ * write stood.
  *
  * See CHILD TABLES for the three that have no natural key.
  *
@@ -99,7 +110,7 @@
  * It contains no rule about what a valid question is.
  */
 
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
@@ -287,6 +298,20 @@ class Journal {
    * Deliberately NOT `record(label, () => { throw ... })`. That shape is what
    * made an unreversible-by-design write indistinguishable from a broken
    * rollback.
+   *
+   * ⚠ THIS CURRENTLY HAS NO CALLERS, AND THAT IS LOAD-BEARING. Every
+   * destructive write in this file is now snapshotted and journalled, so an
+   * empty `irreversible` bucket is the truth rather than an omission — which
+   * matters because that bucket is the only thing standing between a run and
+   * the unqualified "the database is back to its pre-run state". Its last
+   * caller was the mark-scheme upsert; when that was snapshotted, the bucket
+   * emptied and the all-clear started firing over the expected-answer upsert
+   * twelve lines below, which was never journalled at all. Both are now
+   * covered by upsertReversibly().
+   *
+   * So: ADD A DESTRUCTIVE WRITE, ADD AN ENTRY. Either a real undo via
+   * record(), or this — never neither. A write with no journal entry is not
+   * reported as irreversible, it is reported as though it never happened.
    */
   recordIrreversible(label: string, why: string) {
     this.entries.push({ kind: "irreversible", label, why });
@@ -327,6 +352,155 @@ class Journal {
     }
     return { undone, failed, irreversible };
   }
+}
+
+/**
+ * Upsert onto a table with a REAL unique key, and journal an undo that works.
+ *
+ * ============================================================================
+ * WHY THIS EXISTS
+ * ============================================================================
+ * `mark_scheme_items` and `question_expected_answers` are the two tables the
+ * seeder writes by upsert rather than insert, because both carry a genuine
+ * unique key. An upsert is the one write shape that DESTROYS as a side effect
+ * of succeeding: every column of a matched row is silently replaced. Both hold
+ * content transcribed by hand from the examiner's PDF — a corrected `reject[]`,
+ * a tightened tolerance — and neither was snapshotted, so a failure on an
+ * unrelated question later in the run took that wording with it.
+ *
+ * ⚠ THE UNDO RESTORES BEFORE IT DELETES, AND THE ORDER IS THE POINT.
+ *
+ * The two halves are independent — the restore addresses rows that existed
+ * before this run, the delete addresses rows this run created, and the sets are
+ * disjoint by construction. Sequencing them means the FIRST one to fail vetoes
+ * the second, so the order decides which failure is survivable:
+ *
+ *   restore first   a failed delete leaves rows an operator can see in the
+ *                   table and remove by id. The report names them.
+ *   delete first    a failed delete abandons the restore, and the previous
+ *                   wording — which exists nowhere but this closure — is gone.
+ *
+ * The restore is also the safe half to lead with: it is addressed by primary
+ * key and idempotent, so running it and then failing changes nothing.
+ *
+ * ⚠ AND IF THE RESTORE ITSELF FAILS, THE SNAPSHOT IS WRITTEN TO DISK.
+ * Otherwise the only copy of that wording is this closure, and the next thing
+ * the process does after a failed rollback is exit.
+ */
+async function upsertReversibly(opts: {
+  db: SupabaseClient;
+  journal: Journal;
+  table: "mark_scheme_items" | "question_expected_answers";
+  /** The column scoping the snapshot to this question's rows. */
+  scopeColumn: "question_id";
+  scopeValue: string;
+  rows: Record<string, unknown>[];
+  onConflict: string;
+  /** For the journal label and error prose. */
+  what: string;
+  /**
+   * False for a brand-new question: deleting it cascades the whole subtree,
+   * and that undo is journalled by the caller. Journalling here as well would
+   * make the rollback restore rows onto a question that no longer exists.
+   */
+  journalUndo: boolean;
+}): Promise<void> {
+  const { db, journal, table, scopeColumn, scopeValue, rows, onConflict, what } = opts;
+  if (rows.length === 0) return;
+
+  const { data: before, error: beforeError } = await db
+    .from(table)
+    .select("*")
+    .eq(scopeColumn, scopeValue);
+  if (beforeError) {
+    throw new Error(`snapshotting ${table} for ${what}: ${beforeError.message}`);
+  }
+  const snapshot = (before ?? []) as { id: string }[];
+
+  // .select() so the affected ids come back: the difference against the
+  // snapshot is exactly the set this upsert INSERTED, which the undo must
+  // remove rather than restore.
+  const { data: affected, error } = await db
+    .from(table)
+    .upsert(rows, { onConflict })
+    .select("id");
+  if (error) throw new Error(`${table} for ${what}: ${error.message}`);
+
+  // ⚠ The id arithmetic below is only sound if EVERY row came back. A short or
+  // absent representation would compute "this run inserted nothing", and the
+  // undo would then delete nothing and report a clean rollback over rows it
+  // had just created. No error is not proof it landed — the row count is.
+  const returned = (affected ?? []) as { id: string }[];
+  if (returned.length !== rows.length) {
+    throw new Error(
+      `${table} for ${what}: upsert returned ${returned.length} id(s) for ` +
+        `${rows.length} row(s), so the rollback set cannot be computed`,
+    );
+  }
+
+  if (!opts.journalUndo) return;
+
+  const existingIds = new Set(snapshot.map((r) => r.id));
+  const inserted = returned.map((r) => r.id).filter((id) => !existingIds.has(id));
+  // What was actually REWRITTEN is the intersection, not the whole snapshot: a
+  // question may carry points this fixture does not touch, and a rollback
+  // report that inflates the damage misdirects whoever reads it.
+  const overwritten = returned.filter((r) => existingIds.has(r.id)).length;
+
+  journal.record(
+    `restore ${table} on ${what} (${overwritten} rewritten, ${inserted.length} added)`,
+    async () => {
+      // 1. THE IRREPLACEABLE HALF FIRST. Upsert on the primary key, so every
+      //    column returns to its snapshot value rather than being merged.
+      if (snapshot.length > 0) {
+        const { data: restored, error: restoreError } = await db
+          .from(table)
+          .upsert(before ?? [], { onConflict: "id" })
+          .select("id");
+        const shortfall =
+          !restoreError && (restored ?? []).length !== snapshot.length
+            ? `restored ${(restored ?? []).length} of ${snapshot.length} row(s)`
+            : null;
+        if (restoreError || shortfall) {
+          // The process exits after a failed rollback. Put the snapshot
+          // somewhere it survives that.
+          const path = resolve(`seed-snapshot-${table}-${scopeValue}.json`);
+          let saved = path;
+          try {
+            await writeFile(path, JSON.stringify(before ?? [], null, 2), "utf8");
+          } catch (writeError) {
+            saved = `COULD NOT BE SAVED (${
+              writeError instanceof Error ? writeError.message : String(writeError)
+            })`;
+          }
+          throw new Error(
+            `${restoreError ? restoreError.message : shortfall}` +
+              ` — the previous ${table} rows for ${what} are NOT back. ` +
+              `Snapshot written to ${saved}`,
+          );
+        }
+      }
+      // 2. Then remove what this run ADDED — by id, never by a filter.
+      if (inserted.length > 0) {
+        const { error: deleteError, count } = await db
+          .from(table)
+          .delete({ count: "exact" })
+          .in("id", inserted);
+        if (deleteError) {
+          throw new Error(
+            `previous rows restored, but the ${inserted.length} row(s) this run ` +
+              `added to ${table} for ${what} are still there: ${deleteError.message}`,
+          );
+        }
+        if ((count ?? 0) !== inserted.length) {
+          throw new Error(
+            `previous rows restored, but removed only ${count ?? 0} of ` +
+              `${inserted.length} row(s) added to ${table} for ${what}`,
+          );
+        }
+      }
+    },
+  );
 }
 
 // ============================================================================
@@ -1167,38 +1341,39 @@ async function applyPlan(
       });
     }
 
-    // --- mark scheme: real unique key, so upsert -------------------------
+    // --- the two upsert tables -------------------------------------------
+    // Both carry a real unique key, so both DESTROY on a successful write.
+    // upsertReversibly snapshots first and journals an undo that puts the
+    // previous wording back; see its header for why the undo restores before
+    // it deletes. journalUndo is false for a brand-new question, whose whole
+    // subtree is already covered by the cascade undo journalled above.
     const rows = buildMarkSchemeRows(questionId, q);
-    if (rows.length > 0) {
-      const { error: msError } = await db
-        .from("mark_scheme_items")
-        .upsert(rows, { onConflict: "question_id,point_code" });
-      if (msError) {
-        throw new Error(`mark scheme for ${q.questionNumber}: ${msError.message}`);
-      }
-      stats.markSchemePoints += rows.length;
-      // No undo for a pre-existing question's points: the previous criterion
-      // text is not snapshotted. Recorded here so the failure report is
-      // truthful rather than silent.
-      if (row.existing) {
-        journal.recordIrreversible(
-          `mark-scheme upsert on pre-existing question ${q.questionNumber} (${rows.length} point(s))`,
-          `the previous criterion text was not snapshotted`,
-        );
-      }
-    }
+    await upsertReversibly({
+      db,
+      journal,
+      table: "mark_scheme_items",
+      scopeColumn: "question_id",
+      scopeValue: questionId,
+      rows,
+      onConflict: "question_id,point_code",
+      what: q.questionNumber,
+      journalUndo: row.existing !== null,
+    });
+    stats.markSchemePoints += rows.length;
 
-    // --- expected answer: real unique key on question_id, so upsert -------
     const expectedRows = buildExpectedAnswerRows(questionId, q);
-    if (expectedRows.length > 0) {
-      const { error: eaError } = await db
-        .from("question_expected_answers")
-        .upsert(expectedRows, { onConflict: "question_id" });
-      if (eaError) {
-        throw new Error(`expected answer for ${q.questionNumber}: ${eaError.message}`);
-      }
-      stats.expectedAnswers += 1;
-    }
+    await upsertReversibly({
+      db,
+      journal,
+      table: "question_expected_answers",
+      scopeColumn: "question_id",
+      scopeValue: questionId,
+      rows: expectedRows,
+      onConflict: "question_id",
+      what: q.questionNumber,
+      journalUndo: row.existing !== null,
+    });
+    if (expectedRows.length > 0) stats.expectedAnswers += 1;
 
     // --- keyless child tables --------------------------------------------
     const BUMP: Record<ChildTable, (n: number) => void> = {
