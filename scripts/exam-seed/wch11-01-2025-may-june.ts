@@ -165,7 +165,7 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // scripts/exam-seed/propose-regions.py. confidence is set because a
       // machine placed it; approval remains a human act in the admin mapper.
       regions: [
-        { pageNumber: 2, x: 38.52, y: 163.21, width: 507.9, height: 220.22, confidence: 0.9 },
+        { pageNumber: 2, x: 34.52, y: 163.21, width: 522.24, height: 220.22, confidence: 0.9 },
       ],
       parentQuestionNumber: null,
       displayOrder: 10,
@@ -213,7 +213,7 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // scripts/exam-seed/propose-regions.py. confidence is set because a
       // machine placed it; approval remains a human act in the admin mapper.
       regions: [
-        { pageNumber: 2, x: 38.52, y: 381.44, width: 507.9, height: 202.26, confidence: 0.8 },
+        { pageNumber: 2, x: 34.52, y: 381.44, width: 515.9, height: 202.26, confidence: 0.8 },
       ],
       parentQuestionNumber: null,
       displayOrder: 20,
@@ -260,7 +260,7 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // scripts/exam-seed/propose-regions.py. confidence is set because a
       // machine placed it; approval remains a human act in the admin mapper.
       regions: [
-        { pageNumber: 10, x: 38.52, y: 101.45, width: 475.72, height: 26.42, confidence: 0.85 },
+        { pageNumber: 10, x: 34.52, y: 101.45, width: 483.72, height: 26.42, confidence: 0.85 },
       ],
       parentQuestionNumber: null,
       displayOrder: 200,
@@ -275,7 +275,7 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // scripts/exam-seed/propose-regions.py. confidence is set because a
       // machine placed it; approval remains a human act in the admin mapper.
       regions: [
-        { pageNumber: 10, x: 38.52, y: 125.87, width: 475.72, height: 656.02, confidence: 0.72 },
+        { pageNumber: 10, x: 34.52, y: 125.87, width: 483.72, height: 656.02, confidence: 0.72 },
       ],
       parentQuestionNumber: "20",
       displayOrder: 210,
@@ -353,7 +353,7 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // scripts/exam-seed/propose-regions.py. confidence is set because a
       // machine placed it; approval remains a human act in the admin mapper.
       regions: [
-        { pageNumber: 11, x: 38.52, y: 53.94, width: 515.79, height: 38.42, confidence: 0.85 },
+        { pageNumber: 11, x: 34.52, y: 53.94, width: 523.79, height: 38.42, confidence: 0.85 },
       ],
       parentQuestionNumber: "20",
       displayOrder: 220,
@@ -369,7 +369,7 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // scripts/exam-seed/propose-regions.py. confidence is set because a
       // machine placed it; approval remains a human act in the admin mapper.
       regions: [
-        { pageNumber: 11, x: 38.52, y: 91.92, width: 515.79, height: 96.32, confidence: 0.9 },
+        { pageNumber: 11, x: 34.52, y: 91.92, width: 523.79, height: 96.32, confidence: 0.9 },
       ],
       parentQuestionNumber: "20(b)",
       displayOrder: 230,
@@ -395,7 +395,7 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // scripts/exam-seed/propose-regions.py. confidence is set because a
       // machine placed it; approval remains a human act in the admin mapper.
       regions: [
-        { pageNumber: 11, x: 38.52, y: 186.24, width: 515.79, height: 105.26, confidence: 0.9 },
+        { pageNumber: 11, x: 34.52, y: 186.24, width: 523.79, height: 105.26, confidence: 0.9 },
       ],
       parentQuestionNumber: "20(b)",
       displayOrder: 240,
@@ -434,7 +434,7 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // scripts/exam-seed/propose-regions.py. confidence is set because a
       // machine placed it; approval remains a human act in the admin mapper.
       regions: [
-        { pageNumber: 11, x: 38.52, y: 289.5, width: 515.79, height: 492.39, confidence: 0.72 },
+        { pageNumber: 11, x: 34.52, y: 289.5, width: 523.79, height: 492.39, confidence: 0.72 },
       ],
       parentQuestionNumber: "20(b)",
       displayOrder: 250,
@@ -541,7 +541,7 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // scripts/exam-seed/propose-regions.py. confidence is set because a
       // machine placed it; approval remains a human act in the admin mapper.
       regions: [
-        { pageNumber: 12, x: 71.12, y: 53.94, width: 443.11, height: 375.07, confidence: 0.8 },
+        { pageNumber: 12, x: 49.77, y: 53.94, width: 495.73, height: 375.07, confidence: 0.8 },
       ],
       parentQuestionNumber: "20(b)",
       displayOrder: 260,
@@ -613,7 +613,7 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // scripts/exam-seed/propose-regions.py. confidence is set because a
       // machine placed it; approval remains a human act in the admin mapper.
       regions: [
-        { pageNumber: 13, x: 38.52, y: 53.49, width: 515.79, height: 48.85, confidence: 0.85 },
+        { pageNumber: 13, x: 34.52, y: 53.49, width: 523.79, height: 48.85, confidence: 0.85 },
       ],
       parentQuestionNumber: null,
       displayOrder: 300,
@@ -642,7 +642,7 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // scripts/exam-seed/propose-regions.py. confidence is set because a
       // machine placed it; approval remains a human act in the admin mapper.
       regions: [
-        { pageNumber: 14, x: 56.94, y: 53.94, width: 477.01, height: 603.34, confidence: 0.8 },
+        { pageNumber: 14, x: 52.94, y: 53.94, width: 488.2, height: 603.34, confidence: 0.8 },
       ],
       parentQuestionNumber: "21(c)",
       displayOrder: 320,
@@ -714,7 +714,7 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // scripts/exam-seed/propose-regions.py. confidence is set because a
       // machine placed it; approval remains a human act in the admin mapper.
       regions: [
-        { pageNumber: 16, x: 38.52, y: 53.49, width: 515.79, height: 48.85, confidence: 0.85 },
+        { pageNumber: 16, x: 34.52, y: 53.49, width: 523.79, height: 48.85, confidence: 0.85 },
       ],
       parentQuestionNumber: null,
       displayOrder: 400,
@@ -731,7 +731,7 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // scripts/exam-seed/propose-regions.py. confidence is set because a
       // machine placed it; approval remains a human act in the admin mapper.
       regions: [
-        { pageNumber: 17, x: 55.93, y: 53.94, width: 458.3, height: 710.96, confidence: 0.8 },
+        { pageNumber: 17, x: 51.93, y: 53.94, width: 466.3, height: 710.96, confidence: 0.8 },
       ],
       parentQuestionNumber: "22",
       displayOrder: 410,
@@ -838,7 +838,7 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // scripts/exam-seed/propose-regions.py. confidence is set because a
       // machine placed it; approval remains a human act in the admin mapper.
       regions: [
-        { pageNumber: 18, x: 38.52, y: 53.49, width: 515.79, height: 48.85, confidence: 0.85 },
+        { pageNumber: 18, x: 34.52, y: 53.49, width: 523.79, height: 48.85, confidence: 0.85 },
       ],
       parentQuestionNumber: null,
       displayOrder: 500,
@@ -853,7 +853,7 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // scripts/exam-seed/propose-regions.py. confidence is set because a
       // machine placed it; approval remains a human act in the admin mapper.
       regions: [
-        { pageNumber: 22, x: 38.52, y: 340.14, width: 515.79, height: 48.4, confidence: 0.85 },
+        { pageNumber: 22, x: 34.52, y: 340.14, width: 523.79, height: 48.4, confidence: 0.85 },
       ],
       parentQuestionNumber: "23",
       displayOrder: 510,
@@ -868,7 +868,7 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       // scripts/exam-seed/propose-regions.py. confidence is set because a
       // machine placed it; approval remains a human act in the admin mapper.
       regions: [
-        { pageNumber: 22, x: 38.52, y: 486.61, width: 515.79, height: 230.46, confidence: 0.8 },
+        { pageNumber: 22, x: 34.52, y: 486.61, width: 523.79, height: 230.46, confidence: 0.8 },
       ],
       parentQuestionNumber: "23(c)",
       displayOrder: 520,

@@ -137,9 +137,92 @@ def load_pages(doc):
                 "h": p.rect.height,
                 "rot": p.rotation,
                 "lines": lines,
+                "draw": content_rects(p),
             }
         )
     return pages
+
+
+def content_rects(page):
+    """Drawn shapes that are part of the QUESTION, not the template.
+
+    Answer boxes, tables and graph grids are vector rects with no text in them,
+    so a column derived from text alone stops short of the answer area. On p12
+    the second skeletal-formula box runs to x=541.5 while the widest text line
+    ends at 514.2 — the region clipped 27pt off its own answer space. Every
+    Edexcel paper draws its answer boxes this way, so this is fixed here rather
+    than trimmed by hand per paper.
+
+    Excluded, and each for a reason that recurs on every paper:
+      - THE PAGE FRAME. A rect covering most of the page in both directions is
+        the printed border. Including it widens every region to the frame and
+        swallows the margins.
+      - OFF-PAGE FURNITURE. Crop marks and bleed bars sit at negative x or past
+        the page width; one of them spans x -30.2..26.5 and would drag every
+        box to the left edge.
+      - TICKS. Marks under ~20pt in both directions are template furniture, not
+        content. Grid lines are kept: they are 0pt in ONE direction but long in
+        the other, which is why the test is on the LARGER dimension.
+    """
+    # THE PRINTED BORDER IS THE FILTER. Edexcel rules a frame around the
+    # content on every page, so "outside the frame" is a precise definition of
+    # template furniture — better than any size threshold, which is what was
+    # tried first and let p2's bleed bars through: 27x4pt at x 0..26.5, big
+    # enough to pass a size test and enough to drag Q1 and Q2 to x=0.
+    #
+    # ⚠ ONE PASS over get_drawings(), because it returns FRESH Rect objects on
+    # every call — an identity check against a frame found in an earlier pass
+    # never matches, and the frame is then treated as content, which snaps
+    # every region on the paper to the border.
+    paths = [(p_["rect"], p_) for p_ in page.get_drawings()]
+
+    frame_i, frame = None, None
+    for i, (r, _) in enumerate(paths):
+        if r.width > page.rect.width * 0.8 and r.height > page.rect.height * 0.8:
+            if frame is None or r.width * r.height > frame.width * frame.height:
+                frame_i, frame = i, r
+
+    out = []
+    for i, (r, _) in enumerate(paths):
+        if i == frame_i:
+            continue
+        if frame is not None:
+            # Wholly inside the border, with a hair of tolerance for strokes
+            # drawn on the frame itself.
+            if r.x0 < frame.x0 - 2 or r.x1 > frame.x1 + 2:
+                continue
+        elif r.x1 <= 0 or r.x0 >= page.rect.width:
+            continue
+        # Ticks and register marks. Grid lines are 0pt in ONE direction but
+        # long in the other, so the test is on the LARGER dimension.
+        if max(r.width, r.height) < 20:
+            continue
+        out.append((r.x0, r.y0, r.x1, r.y1))
+    return out
+
+
+def content_x_extent(pg, top, bottom, fallback):
+    """Left/right edge of everything that lives in this vertical band.
+
+    Computed PER REGION rather than per page, so a wide answer box widens the
+    question it belongs to and leaves its neighbours alone.
+    """
+    x0s, x1s = [], []
+    for l in pg["lines"]:
+        if not l["horizontal"]:
+            continue
+        if l["bbox"][3] <= top or l["bbox"][1] >= bottom:
+            continue
+        x0s.append(l["bbox"][0])
+        x1s.append(l["bbox"][2])
+    for rx0, ry0, rx1, ry1 in pg["draw"]:
+        if ry1 <= top or ry0 >= bottom:
+            continue
+        x0s.append(max(0.0, rx0))
+        x1s.append(min(pg["w"], rx1))
+    if not x0s:
+        return fallback
+    return min(x0s), max(x1s)
 
 
 def find_anchor(pages, question_text):
@@ -309,6 +392,13 @@ def main():
         if bottom - top < 8 or x1 - x0 < 8:
             dropped.append((qn, f"degenerate box {x1-x0:.0f}x{bottom-top:.0f}pt"))
             continue
+
+        # Widen to whatever actually occupies this band — text AND drawn
+        # answer boxes — then keep the anchor's own left edge so the question
+        # label stays inside.
+        cx0, cx1 = content_x_extent(pg, top, bottom, (x0c, x1c))
+        x0 = max(0.0, min(x0, cx0) - 4.0)
+        x1 = min(pg["w"], max(x1, cx1) + 4.0)
 
         rect = pymupdf.Rect(x0, top, x1, bottom)
 
