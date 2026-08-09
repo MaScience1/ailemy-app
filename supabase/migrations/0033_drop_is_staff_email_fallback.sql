@@ -1,10 +1,20 @@
 -- ============================================================================
--- 0033_PROPOSED_drop_is_staff_email_fallback.sql
+-- 0033_drop_is_staff_email_fallback.sql
 -- ----------------------------------------------------------------------------
--- ⚠ PROPOSED. NOT APPLIED. NOT APPROVED. The filename says PROPOSED so that a
---   rebuild replaying this folder does not pick it up by accident. Rename it
---   to 0033_drop_is_staff_email_fallback.sql only when you have decided to
---   apply it.
+-- ⚠ APPLIED 2026-08-09, by hand in the SQL Editor. This file now exists so a
+--   rebuild from migrations matches what is already live.
+--
+--   Verification (a) below was run after applying and returned:
+--       still_hardcoded = false
+--   i.e. the address is gone from the function body. The behavioural half was
+--   checked from real authenticated sessions rather than the SQL Editor, where
+--   auth.uid() is NULL and is_staff() returns false regardless:
+--       role-backed session  -> is_staff() TRUE  (saw another student's attempt
+--                               through exam_attempts' `OR public.is_staff()`)
+--       role-less session    -> is_staff() FALSE (0 rows)
+--
+--   Re-runnable: CREATE OR REPLACE plus a pre-flight that aborts rather than
+--   locking anyone out, so a second run is a no-op.
 --
 -- The region mapper does NOT depend on this. It gates on roles directly
 -- (src/lib/admin/staff.ts reads user_roles through the caller's own session),

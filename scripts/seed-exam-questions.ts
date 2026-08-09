@@ -823,11 +823,12 @@ type Stats = {
  * fixes, a rendered review of ten pages and an independent re-check before
  * anyone was willing to sign.
  *
- * --replace-children deletes and re-inserts, and the seeder journals that
- * deletion as CANNOT UNDO because the rows are not snapshotted. So the flag
- * that was free while everything was a machine proposal is, the moment a
- * signature exists, the one command that can silently destroy the most
- * expensive thing in the table.
+ * --replace-children deletes and re-inserts. The deletion is now snapshotted,
+ * so a run that FAILS compensates and puts the approvals back — but a run that
+ * SUCCEEDS replaces them with fresh, unapproved rows, and no journal helps
+ * with that because nothing went wrong. The journal protects the failure path;
+ * this guard protects the success path, which is the one that actually loses
+ * signatures.
  *
  * The refusal NAMES the rows and the approver, because "16 approved regions"
  * is a number and "signed by mascience15@gmail.com on 9 August" is a person
@@ -910,13 +911,15 @@ async function guardApprovals(
 
   if (options.discardApprovals) {
     console.error(
-      `  ${YELLOW}!${RESET} ${BOLD}--discard-approvals given.${RESET} These ` +
-        `${approved.length} human approval(s) WILL BE DESTROYED and cannot be restored:`,
+      `  ${YELLOW}!${RESET} ${BOLD}--discard-approvals given.${RESET} If this run ` +
+        `succeeds, these ${approved.length} human approval(s) are replaced by fresh ` +
+        `unapproved rows:`,
     );
     render(YELLOW);
     console.error(
-      `  ${YELLOW}The rows are deleted, not snapshotted. Re-approving means ` +
-        `reviewing every box again.${RESET}\n`,
+      `  ${YELLOW}A successful run replaces them with unapproved rows. The journal ` +
+        `restores them only if the run FAILS. Re-approving means reviewing every ` +
+        `box again.${RESET}\n`,
     );
     return;
   }
@@ -927,9 +930,10 @@ async function guardApprovals(
   );
   render(RED);
   fail(
-    `Refusing to discard ${approved.length} approval(s). The seeder journals this ` +
-      `deletion as CANNOT UNDO — the rows are not snapshotted, so the signatures ` +
-      `cannot be restored and every box would need reviewing again.\n\n` +
+    `Refusing to discard ${approved.length} approval(s). If this run SUCCEEDS they ` +
+      `are replaced by fresh unapproved rows and every box needs reviewing again. ` +
+      `(The journal snapshots the deletion, so a run that FAILS puts them back — ` +
+      `but success is not failure.)\n\n` +
       `  If the regions really have changed and must be rewritten, re-run with ` +
       `--discard-approvals alongside --replace-children.\n` +
       `  If you only meant to update questions or the mark scheme, drop ` +
@@ -1176,17 +1180,53 @@ async function applyPlan(
         continue;
       }
       if (present > 0) {
-        const { error: delError } = await db
+        // ⚠ SNAPSHOT FIRST, THEN DELETE BY THE IDS WE HOLD.
+        //
+        // This used to be `.delete().eq("question_id", …)` with nothing kept,
+        // and the journal entry for it was a stub that threw "deleted rows
+        // were not snapshotted" — the seeder's only genuinely irreversible
+        // operation, sitting inside a mechanism whose whole promise is that a
+        // failure compensates cleanly.
+        //
+        // Reading them first fixes two things at once. The delete now
+        // addresses rows by id rather than by a filter that matches whatever
+        // happens to be there, and the journal can put them BACK — including
+        // approved_by / approved_at, which is what made --discard-approvals a
+        // one-way door.
+        const { data: snapshot, error: snapError } = await db
           .from(table)
-          .delete()
+          .select("*")
           .eq("question_id", questionId);
+        if (snapError) {
+          throw new Error(
+            `snapshotting ${table} for ${q.questionNumber} before replacing it: ${snapError.message}`,
+          );
+        }
+        const doomed = (snapshot ?? []) as { id: string }[];
+
+        const { error: delError, count: deleted } = await db
+          .from(table)
+          .delete({ count: "exact" })
+          .in("id", doomed.map((r) => r.id));
         if (delError) {
           throw new Error(`clearing ${table} for ${q.questionNumber}: ${delError.message}`);
         }
+        // The row count is the proof. A delete whose filter matches nothing
+        // returns neither rows nor an error, so "no error" is not "it went".
+        if ((deleted ?? 0) !== doomed.length) {
+          throw new Error(
+            `clearing ${table} for ${q.questionNumber}: deleted ${deleted ?? 0} of ` +
+              `${doomed.length} row(s). Refusing to continue with a partial delete.`,
+          );
+        }
+
         journal.record(
-          `${YELLOW}CANNOT UNDO${RESET} deletion of ${present} ${table} row(s) on ${q.questionNumber} — --replace-children discards them irrecoverably`,
+          `restore ${doomed.length} ${table} row(s) on ${q.questionNumber}`,
           async () => {
-            throw new Error("deleted rows were not snapshotted");
+            // Re-inserted with their ORIGINAL ids, so anything referencing a
+            // region by id still resolves after a compensation.
+            const { error: undoError } = await db.from(table).insert(snapshot ?? []);
+            if (undoError) throw new Error(undoError.message);
           },
         );
       }

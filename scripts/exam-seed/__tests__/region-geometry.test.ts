@@ -191,7 +191,8 @@ console.log("\n── the fixture NAMES what is missing, rather than omitting it
     /NOT MAPPED \(2\): 1, 22\(c\)/.test(out), out.slice(0, 600));
   t("records the coordinate space in the file itself", /top-left origin/.test(out));
   t("tells the reader to dry-run before --commit", /--commit/.test(out) && /seed-exam-questions/.test(out));
-  t("warns that --replace-children cannot be undone", /CANNOT UNDO/.test(out));
+  t("warns that --replace-children discards approvals on success",
+    /--discard-approvals/.test(out) && /unapproved rows/.test(out), out.slice(0, 700));
 }
 
 console.log("\n── fixture blocks come out in the paper's own order, not capture order ──");

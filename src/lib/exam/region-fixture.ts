@@ -20,11 +20,12 @@ import type { Rotation, ViewportRect } from "./region-geometry";
  *     LEAVES EXISTING ROWS ALONE and says so, rather than silently doubling
  *     them. --replace-children opts into delete-then-insert.
  *
- * ⚠ READ THIS BEFORE PASSING --replace-children. The seeder journals that
- * deletion as CANNOT UNDO: the rows are not snapshotted, so a later failure in
- * the same run cannot put them back. Regions a human has APPROVED
- * (approved_by/approved_at set) are exactly what it discards. Re-map is cheap;
- * re-approval is not.
+ * ⚠ READ THIS BEFORE PASSING --replace-children. The deletion is snapshotted,
+ * so a run that FAILS compensates and puts the rows back. A run that SUCCEEDS
+ * replaces them — including any a human has APPROVED (approved_by /
+ * approved_at set), which come back as fresh unapproved rows. The seeder
+ * refuses outright in that case unless --discard-approvals is also passed.
+ * Re-mapping is cheap; re-approval is not.
  *
  * ============================================================================
  * WHAT IS DELIBERATELY NOT EMITTED
@@ -147,8 +148,9 @@ export function emitRegionFixture(input: {
     `//   node scripts/seed-exam-questions.ts --set=${input.paperSlug} --commit`,
     `//`,
     `// ⚠ A question that ALREADY has regions is left untouched on a re-run and`,
-    `// reported as skipped. --replace-children overwrites, and the seeder`,
-    `// journals that deletion as CANNOT UNDO — it discards human approvals.`,
+    `// reported as skipped. --replace-children overwrites; a successful run`,
+    `// replaces human approvals with fresh unapproved rows, so the seeder`,
+    `// refuses unless --discard-approvals is passed too.`,
     `//`,
     `// ${mapped.length} of ${input.ordering.length} questions mapped.`,
   ];

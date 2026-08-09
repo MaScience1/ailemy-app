@@ -88,20 +88,81 @@ async function uploadIfPresent(
   return path;
 }
 
+/**
+ * Replace a lesson's spec-point links.
+ *
+ * ============================================================================
+ * ⚠ SNAPSHOT, DELETE BY ID, RESTORE ON FAILURE
+ * ============================================================================
+ * This was `delete().eq("lesson_id", …)` with the error not checked at all,
+ * followed by an insert that could fail — so a failed insert left the lesson
+ * with NO spec points and nothing to say so. Delete-then-insert without a
+ * transaction is a window where the data is gone, and PostgREST gives no
+ * transaction across two requests.
+ *
+ * Three changes, the same ones made to the seeder's --replace-children path:
+ *   - the rows are READ first, so the delete addresses ids we hold rather than
+ *     a filter that matches whatever is there;
+ *   - the delete's error AND row count are checked, because a delete matching
+ *     nothing returns neither rows nor an error;
+ *   - if the insert fails, the snapshot goes back, and the restore's own
+ *     failure is reported rather than swallowed — losing the links silently is
+ *     the outcome worth the most noise.
+ */
 async function syncSpecPoints(
   supabase: ReturnType<typeof createAdminClient>,
   lessonId: string,
   specPointIds: string[],
 ): Promise<void> {
-  await supabase.from("lesson_spec_points").delete().eq("lesson_id", lessonId);
-  if (specPointIds.length > 0) {
-    const rows = specPointIds.map((sp) => ({
-      lesson_id: lessonId,
-      spec_point_id: sp,
-    }));
-    const { error } = await supabase.from("lesson_spec_points").insert(rows);
-    if (error) throw new Error(`Linking spec points failed: ${error.message}`);
+  const { data: existing, error: readError } = await supabase
+    .from("lesson_spec_points")
+    .select("*")
+    .eq("lesson_id", lessonId);
+  if (readError) {
+    throw new Error(`Reading current spec points failed: ${readError.message}`);
   }
+  const previous = (existing ?? []) as { id: string }[];
+
+  if (previous.length > 0) {
+    const { error: delError, count } = await supabase
+      .from("lesson_spec_points")
+      .delete({ count: "exact" })
+      .in("id", previous.map((r) => r.id));
+    if (delError) {
+      throw new Error(`Clearing spec points failed: ${delError.message}`);
+    }
+    if ((count ?? 0) !== previous.length) {
+      throw new Error(
+        `Clearing spec points removed ${count ?? 0} of ${previous.length} link(s); ` +
+          `refusing to continue with a partial delete.`,
+      );
+    }
+  }
+
+  if (specPointIds.length === 0) return;
+
+  const rows = specPointIds.map((sp) => ({ lesson_id: lessonId, spec_point_id: sp }));
+  const { error } = await supabase.from("lesson_spec_points").insert(rows);
+  if (!error) return;
+
+  // The insert failed and the old links are already gone. Put them back with
+  // their original ids before reporting, so the lesson is not left stripped.
+  if (previous.length > 0) {
+    const { error: restoreError } = await supabase
+      .from("lesson_spec_points")
+      .insert(existing ?? []);
+    if (restoreError) {
+      throw new Error(
+        `Linking spec points failed (${error.message}) AND restoring the previous ` +
+          `${previous.length} link(s) failed (${restoreError.message}). This lesson ` +
+          `now has no spec points — re-save it to fix.`,
+      );
+    }
+  }
+  throw new Error(
+    `Linking spec points failed: ${error.message}` +
+      (previous.length > 0 ? ` — the previous ${previous.length} link(s) were restored.` : ""),
+  );
 }
 
 // ---------------------------------------------------------------------------
