@@ -283,7 +283,30 @@ def main():
     for q in questions:
         qn = q["questionNumber"]
         if not norm(q.get("questionText") or ""):
-            unmapped.append((qn, "no question_text recorded to anchor on"))
+            # ⚠ A STEMLESS CONTAINER GETS NO REGION, BY DESIGN — not by
+            # omission, and it must not be hand-filled later.
+            #
+            # 21(c) on WCH11/01 is the case: its "(c)" shares a printed line
+            # with its child's "(i)", so it owns no page area at all. Every
+            # point inside a box drawn for it would also be inside a CHILD,
+            # more specifically, so the row could never win a
+            # most-specific-match lookup — it would be unreachable by the
+            # question a region exists to answer, while being the only row in
+            # the table that fully contains other rows.
+            #
+            # Where a whole-container box IS wanted (question -> highlight,
+            # the reverse lookup), it is the union of the children's regions,
+            # and unionByPage() in region-geometry.ts computes it on demand.
+            # Computed, not stored: re-draw one child and a stored union goes
+            # silently stale with nothing to detect it.
+            if qn in container:
+                unmapped.append(
+                    (qn, "stemless container — shares its line with a child, so it owns no "
+                         "page area. No region BY DESIGN; use unionByPage() if a whole-"
+                         "container box is ever needed.")
+                )
+            else:
+                unmapped.append((qn, "no question_text recorded to anchor on"))
             continue
         hit = find_anchor(pages, q["questionText"])
         if not hit:

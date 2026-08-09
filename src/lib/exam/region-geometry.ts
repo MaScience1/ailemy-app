@@ -220,6 +220,60 @@ export function normaliseRotation(raw: number): Rotation {
 }
 
 /**
+ * The smallest box containing all of them, per page.
+ *
+ * ============================================================================
+ * ⚠ FOR STEMLESS CONTAINERS — AND IT IS COMPUTED, NEVER STORED
+ * ============================================================================
+ * Most containers own a stem: a printed line that belongs to them and to
+ * nothing else, so a click on it means the container and a stored region is
+ * exactly right. 21(c) on WCH11/01 is the other kind — its "(c)" shares a line
+ * with its child's "(i)", so it has no page area of its own at all.
+ *
+ * It gets NO ROW in question_regions, and that is the correct representation
+ * rather than a gap:
+ *
+ *   1. A region answers "what is at this point?". Every point inside a
+ *      stemless container's union is also inside a CHILD, more specifically.
+ *      Under any sane most-specific-match rule the union never wins, so the
+ *      row would be unreachable by the query regions exist to serve.
+ *   2. It would be the only region in the table that fully contains other
+ *      regions, forcing every consumer to handle an overlap case that
+ *      otherwise does not arise.
+ *   3. It is derivable from its children, so storing it duplicates state that
+ *      can go stale — re-draw one child and the stored union is silently
+ *      wrong, with nothing to detect it.
+ *
+ * So if Teacher Mode wants to highlight "the whole of 21(c)" — a question →
+ * highlight interaction, the reverse of point → question — it calls this. The
+ * answer is always current because it is recomputed from the children.
+ *
+ * Per page on purpose: a container's children can span pages (Q20's run from
+ * p10 to p12) and a box spanning two sheets of paper is not a thing. Returns
+ * one entry per page that has any child region.
+ */
+export function unionByPage(
+  regions: { pageNumber: number; rect: ViewportRect }[],
+): { pageNumber: number; rect: ViewportRect }[] {
+  const byPage = new Map<number, ViewportRect>();
+  for (const r of regions) {
+    const seen = byPage.get(r.pageNumber);
+    if (!seen) {
+      byPage.set(r.pageNumber, { ...r.rect });
+      continue;
+    }
+    const x0 = Math.min(seen.x, r.rect.x);
+    const y0 = Math.min(seen.y, r.rect.y);
+    const x1 = Math.max(seen.x + seen.width, r.rect.x + r.rect.width);
+    const y1 = Math.max(seen.y + seen.height, r.rect.y + r.rect.height);
+    byPage.set(r.pageNumber, { x: x0, y: y0, width: x1 - x0, height: y1 - y0 });
+  }
+  return [...byPage.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([pageNumber, rect]) => ({ pageNumber, rect }));
+}
+
+/**
  * Round for storage.
  *
  * Two decimals is ~1/3600 inch — far finer than any hand-drawn box, and it

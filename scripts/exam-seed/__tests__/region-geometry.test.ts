@@ -12,6 +12,7 @@
  */
 import {
   assertRotationMatches,
+  unionByPage,
   clampToPage,
   MIN_REGION_POINTS,
   normaliseDrag,
@@ -222,6 +223,38 @@ console.log("\n── JSON emission carries the space, so it cannot be misread l
     json.coordinateSpace === "pdfjs-getViewport-scale-1-top-left-y-down", json.coordinateSpace);
   t("flattens the rect to the DB's column names", json.regions[0].x === 1.5 && json.regions[0].height === 4);
   t("omits confidence when absent", !("confidence" in json.regions[0]));
+}
+
+console.log("\n── stemless containers: the union is COMPUTED, per page ──");
+{
+  // 21(c) on WCH11/01 has no stem — its "(c)" shares a line with its child's
+  // "(i)" — so it gets no stored row. If Teacher Mode ever wants to highlight
+  // the whole of it, this is where the box comes from.
+  const one = unionByPage([
+    { pageNumber: 14, rect: { x: 52.9, y: 53.9, width: 488.2, height: 603.3 } },
+  ]);
+  t("a single child yields that child's box", one.length === 1 && close(one[0].rect.width, 488.2), one);
+
+  const two = unionByPage([
+    { pageNumber: 11, rect: { x: 40, y: 100, width: 100, height: 50 } },
+    { pageNumber: 11, rect: { x: 60, y: 200, width: 200, height: 50 } },
+  ]);
+  t("two on one page union into one box", two.length === 1);
+  t("...spanning both horizontally", close(two[0].rect.x, 40) && close(two[0].rect.width, 220), two[0].rect);
+  t("...and both vertically", close(two[0].rect.y, 100) && close(two[0].rect.height, 150), two[0].rect);
+
+  // Q20's children run p10 -> p12. A box spanning two sheets of paper is not
+  // a thing, so the union is PER PAGE.
+  const across = unionByPage([
+    { pageNumber: 10, rect: { x: 40, y: 100, width: 100, height: 50 } },
+    { pageNumber: 12, rect: { x: 40, y: 300, width: 100, height: 50 } },
+    { pageNumber: 11, rect: { x: 40, y: 200, width: 100, height: 50 } },
+  ]);
+  t("children across pages give one box PER PAGE, not one box", across.length === 3, across.length);
+  t("...returned in page order", across.map((u) => u.pageNumber).join(",") === "10,11,12",
+    across.map((u) => u.pageNumber));
+
+  t("no children -> no box, not a zero-sized one", unionByPage([]).length === 0);
 }
 
 console.log(`\n${fail === 0 ? "✓ ALL" : "✗"} ${pass} passed, ${fail} failed`);

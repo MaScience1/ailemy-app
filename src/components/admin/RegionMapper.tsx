@@ -99,6 +99,19 @@ export function RegionMapper({ mapping }: { mapping: PaperMapping }) {
     mapping.questions[0]?.questionNumber ?? null,
   );
   const [drag, setDrag] = useState<{ x: number; y: number; cx: number; cy: number } | null>(null);
+  /**
+   * Drawing is OFF until explicitly armed.
+   *
+   * Selection used to be enough: pick a question, and any drag on the page
+   * became a box. Reviewing a paper means selecting questions constantly and
+   * dragging to scroll or to select text, so review silently produced drafts —
+   * two of them, in one pass, before anyone noticed. Selecting a question is
+   * navigation; drawing a box is an edit, and they should not be the same
+   * gesture.
+   *
+   * Disarms itself after one box, so a single arming cannot produce two.
+   */
+  const [armed, setArmed] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [showOutput, setShowOutput] = useState<"none" | "ts" | "json">("none");
 
@@ -282,7 +295,7 @@ export function RegionMapper({ mapping }: { mapping: PaperMapping }) {
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
-    if (!mapping.canWrite || !selected || !pageBox || scale <= 0 || !painted) return;
+    if (!armed || !mapping.canWrite || !selected || !pageBox || scale <= 0 || !painted) return;
     const p = pointerPos(e);
     if (!p) return;
     (e.target as Element).setPointerCapture?.(e.pointerId);
@@ -311,6 +324,8 @@ export function RegionMapper({ mapping }: { mapping: PaperMapping }) {
       setNotice(verdict.problem);
       return;
     }
+    // One arming, one box.
+    setArmed(false);
     setDrafts((prev) => [
       ...prev,
       {
@@ -325,9 +340,43 @@ export function RegionMapper({ mapping }: { mapping: PaperMapping }) {
     ]);
   };
 
+  /**
+   * Selecting a question is NAVIGATION: it jumps the page to where that
+   * question actually is. Hunting through 24 pages by hand was the slow part
+   * of mapping, and the page number is already known for anything with a
+   * stored region.
+   *
+   * It also disarms. Changing question mid-draw would otherwise attach the
+   * next box to a question you merely clicked past.
+   */
+  const selectQuestion = useCallback(
+    (q: MappableQuestion) => {
+      setSelected(q.questionNumber);
+      setArmed(false);
+      setNotice(null);
+      const target = q.regions[0]?.pageNumber ?? drafts.find((d) => d.questionNumber === q.questionNumber)?.pageNumber;
+      if (target && target !== page) setPage(target);
+    },
+    [drafts, page],
+  );
+
   const removeDraft = useCallback((localId: string) => {
     setDrafts((prev) => prev.filter((d) => d.localId !== localId));
   }, []);
+
+  // Escape is the universal "stop what you are doing"; without it the only way
+  // out of an armed state is to draw a box you did not want.
+  useEffect(() => {
+    if (!armed) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setArmed(false);
+        setDrag(null);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [armed]);
 
   // --- what to draw on this page -----------------------------------------
   const storedOnPage = useMemo(() => {
@@ -470,7 +519,7 @@ export function RegionMapper({ mapping }: { mapping: PaperMapping }) {
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
               onPointerCancel={() => setDrag(null)}
-              className={`absolute inset-0 ${mapping.canWrite && selected ? "cursor-crosshair" : "cursor-not-allowed"}`}
+              className={`absolute inset-0 ${armed ? "cursor-crosshair" : "cursor-default"}`}
             >
               {pageBox && storedOnPage.out.map((s) => {
                 const p = toPercent(s.rect, pageBox);
@@ -519,6 +568,31 @@ export function RegionMapper({ mapping }: { mapping: PaperMapping }) {
             marker or admin, which is what 0028 requires to write regions.
           </p>
         )}
+        {/* The arm control. Deliberately a separate, explicit act from
+            selecting a question — see `armed`. */}
+        {mapping.canWrite && selected && (
+          <div className="mb-3">
+            <button
+              type="button"
+              onClick={() => setArmed((a) => !a)}
+              disabled={!painted}
+              aria-pressed={armed}
+              className={`w-full rounded-md px-3 py-2 text-sm font-medium transition disabled:opacity-40 ${
+                armed
+                  ? "bg-fuchsia-700 text-white hover:bg-fuchsia-800"
+                  : "border border-slate-300 bg-white text-slate-800 hover:border-slate-500"
+              }`}
+            >
+              {armed ? `Drawing ${selected} — drag on the page` : `Draw a box for ${selected}`}
+            </button>
+            <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
+              {armed
+                ? "Escape to cancel. Drawing switches off after one box."
+                : "Selecting a question only navigates. Dragging does nothing until you press this."}
+            </p>
+          </div>
+        )}
+
         <p className="font-mono mb-2 text-[10px] uppercase tracking-widest text-slate-500">
           Questions · {mappedNumbers.size}/{mapping.questions.length} mapped
         </p>
@@ -528,14 +602,16 @@ export function RegionMapper({ mapping }: { mapping: PaperMapping }) {
             const done = mappedNumbers.has(q.questionNumber);
             return (
               <li key={q.id}>
-                <button type="button" onClick={() => setSelected(q.questionNumber)}
+                <button type="button" onClick={() => selectQuestion(q)}
                   className={`w-full rounded-md border px-3 py-2 text-left text-sm transition ${
                     isSel ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 bg-white hover:border-slate-400"
                   }`}>
                   <span className="flex items-center justify-between gap-2">
                     <span className="font-medium">{q.questionNumber}</span>
                     <span className={`font-mono text-[10px] ${isSel ? "text-white/70" : "text-slate-500"}`}>
-                      {done ? "mapped" : `${q.marks ?? 0}m`}
+                      {/* The page is what makes clicking a question feel like
+                          navigation rather than a jump to somewhere unknown. */}
+                      {q.regions[0] ? `p${q.regions[0].pageNumber} · mapped` : done ? "mapped" : `${q.marks ?? 0}m`}
                     </span>
                   </span>
                   {q.questionTextPreview && (
