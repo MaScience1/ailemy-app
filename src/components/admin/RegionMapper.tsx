@@ -86,6 +86,13 @@ export function RegionMapper({ mapping }: { mapping: PaperMapping }) {
   /** Unscaled page box + live /Rotate for the CURRENT page. */
   const [pageBox, setPageBox] = useState<PageBox | null>(null);
   const [pageRotation, setPageRotation] = useState<Rotation>(0);
+  /**
+   * Has THIS page's render task resolved? Not the same as `status`, which only
+   * says the document loaded. Drawing boxes onto an unpainted canvas would
+   * capture coordinates against a page nobody can see — the overlay would look
+   * exactly as it does now, and be positioned against nothing.
+   */
+  const [painted, setPainted] = useState(false);
 
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [selected, setSelected] = useState<string | null>(
@@ -203,6 +210,9 @@ export function RegionMapper({ mapping }: { mapping: PaperMapping }) {
     if (status !== "ready" || !doc || !canvas || renderWidth <= 0) return;
 
     let cancelled = false;
+    // Resizing the canvas below clears it; nothing is on screen until the
+    // task resolves, and the UI says so rather than showing an empty overlay.
+    setPainted(false);
     (async () => {
       try {
         renderTaskRef.current?.cancel();
@@ -236,7 +246,10 @@ export function RegionMapper({ mapping }: { mapping: PaperMapping }) {
         const task = pdfPage.render({ canvasContext: ctx, canvas, viewport });
         renderTaskRef.current = task;
         await task.promise;
-        if (!cancelled) renderTaskRef.current = null;
+        if (!cancelled) {
+          renderTaskRef.current = null;
+          setPainted(true);
+        }
       } catch (e) {
         if (cancelled) return;
         if ((e as { name?: string })?.name === "RenderingCancelledException") return;
@@ -269,7 +282,7 @@ export function RegionMapper({ mapping }: { mapping: PaperMapping }) {
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
-    if (!mapping.canWrite || !selected || !pageBox || scale <= 0) return;
+    if (!mapping.canWrite || !selected || !pageBox || scale <= 0 || !painted) return;
     const p = pointerPos(e);
     if (!p) return;
     (e.target as Element).setPointerCapture?.(e.pointerId);
@@ -441,12 +454,13 @@ export function RegionMapper({ mapping }: { mapping: PaperMapping }) {
 
         <div className="overflow-auto rounded-lg border border-slate-300 bg-slate-100 p-3">
           <div ref={shellRef} className="w-full">
-          {status === "loading" && (
-            <p className="flex items-center gap-2 py-16 text-sm text-slate-600">
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Loading the paper…
+          {!painted && (
+            <p className="flex items-center gap-2 py-16 text-sm text-slate-600" aria-live="polite">
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              {status === "loading" ? "Loading the paper…" : `Rendering page ${page}…`}
             </p>
           )}
-          <div className="relative inline-block">
+          <div className={`relative inline-block ${painted ? "" : "hidden"}`}>
             <canvas ref={canvasRef} className="block" aria-label={`${mapping.paperName} page ${page}`} />
             {/* The overlay is exactly the canvas box. Both come from the same
                 viewport, so a percentage inside it is a percentage of the page. */}

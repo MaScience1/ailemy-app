@@ -111,6 +111,21 @@ export function PaperViewer({
   );
   const [width, setWidth] = useState(0);
 
+  /**
+   * Has the CURRENT page's render task resolved?
+   *
+   * ⚠ NOT the same as `status === "ready"`, and conflating them is what this
+   * exists to stop. `status` becomes "ready" when the DOCUMENT loads, which is
+   * why the page counter could read "Page 1 of 24" over a canvas with no ink
+   * on it — chrome asserting a state the canvas had not reached. The document
+   * being loaded says nothing about whether this page has been painted.
+   *
+   * Reset to false the moment a render starts, set to true only when
+   * task.promise resolves. Everything that claims a page is on screen is
+   * gated on this, not on `status`.
+   */
+  const [painted, setPainted] = useState(false);
+
   // --- Track the available width so pages render fit-to-width and stay sharp.
   //
   // ⚠ MEASURED SYNCHRONOUSLY ON MOUNT, then observed for CHANGES ONLY.
@@ -165,6 +180,7 @@ export function PaperViewer({
     let task: PDFDocumentLoadingTask | null = null;
     setStatus("loading");
     setDoc(null);
+    setPainted(false);
 
     (async () => {
       try {
@@ -220,6 +236,9 @@ export function PaperViewer({
     if (!doc || !canvas || width <= 0) return;
 
     let cancelled = false;
+    // The canvas is about to be resized, which CLEARS it. From here until the
+    // task resolves there is genuinely nothing on screen, and the UI says so.
+    setPainted(false);
     (async () => {
       try {
         // Cancel any in-flight render before starting another, or two rapid
@@ -248,7 +267,12 @@ export function PaperViewer({
         const task = pdfPage.render({ canvasContext: ctx, canvas, viewport });
         renderTaskRef.current = task;
         await task.promise;
-        if (!cancelled) renderTaskRef.current = null;
+        if (!cancelled) {
+          renderTaskRef.current = null;
+          // The one place this is set. A page is "shown" when pdf.js says it
+          // finished drawing it, not when the document loaded.
+          setPainted(true);
+        }
       } catch (e) {
         // A cancelled render throws; that is expected and not an error state.
         if (!cancelled && (e as { name?: string })?.name !== "RenderingCancelledException") {
@@ -304,10 +328,17 @@ export function PaperViewer({
           </div>
         ) : (
           <div className="flex justify-center">
-            {status === "loading" && (
-              <p className="font-mono flex items-center gap-2 py-16 text-xs uppercase tracking-[0.2em] text-ink/55">
+            {/* Shown until pdf.js says the page is DRAWN, not until the
+                document loads. Those are different moments, and the gap
+                between them is where a blank canvas used to sit under
+                confident chrome. */}
+            {!painted && (
+              <p
+                className="font-mono flex items-center gap-2 py-16 text-xs uppercase tracking-[0.2em] text-ink/55"
+                aria-live="polite"
+              >
                 <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
-                Loading paper…
+                {status === "loading" ? "Loading paper…" : `Rendering page ${page}…`}
               </p>
             )}
             <canvas
@@ -316,7 +347,10 @@ export function PaperViewer({
               role="img"
               className={cn(
                 "max-w-full rounded shadow-sm",
-                status === "ready" ? "block" : "hidden",
+                // `painted`, NOT `status`. A sized-but-unpainted canvas is a
+                // blank white rectangle, and showing it is the same lie as a
+                // page counter over nothing.
+                painted ? "block" : "hidden",
               )}
             />
           </div>
@@ -324,7 +358,9 @@ export function PaperViewer({
         </div>
       </div>
 
-      {config.showPageNav && status === "ready" && numPages > 0 && (
+      {/* `painted` gates this too: "Page 1 of 24" is a claim that page 1 is
+          in front of you. Until the render resolves, it is not. */}
+      {config.showPageNav && painted && numPages > 0 && (
         <div className="flex shrink-0 items-center justify-between gap-3 border-t border-ink/10 bg-snow px-3 py-2">
           <PageButton onClick={() => go(-1)} disabled={page <= 1} label="Previous page">
             <ChevronLeft className="h-4 w-4" aria-hidden="true" />
