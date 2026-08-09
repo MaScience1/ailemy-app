@@ -67,6 +67,73 @@ END_FURNITURE = re.compile(
 )
 
 
+# A line that OPENS a sub-part: "(a)", "(iv)", "(d)", or a bare question number
+# like "23:". This is BUG B's fix and the important one — the extractor only
+# ever knew about SEEDED questions, so on a partially-seeded paper (which every
+# paper is: this set is 25 of 80 marks) nothing stopped a box running over an
+# unseeded neighbour. 22(c) swallowed the whole of 22(d) — stem, data, mark
+# allocation and a mass-spectrum grid — because 22(d) is not seeded and was
+# therefore invisible.
+#
+# Matched on the LINE'S OWN OPENING so it fires on the printed label, not on a
+# "(2)" mark allocation (which is a whole line of digits — see MARK_ALLOC) or on
+# "(c) (i) Plot…", where the leading label is the anchor's own.
+SUBPART_LABEL = re.compile(r"^\(\s*(?:[a-z]{1,3}|[ivx]{1,5})\s*\)|^\d{1,2}\s*[:.]")
+MARK_ALLOC = re.compile(r"^\(\s*\d{1,2}\s*\)$")
+
+
+# ============================================================================
+# THE GATE
+# ============================================================================
+# Two invariants, both of which caught a real fault from stored data alone,
+# deterministically, with no judgement involved:
+#
+#   NO MARKS TALLY. "(Total for Question 1 = 1 mark)" is printed
+#   end-of-question furniture. A region containing it claims the tally is part
+#   of the student's answer space. Q1 shipped with its own tally inside it.
+#
+#   AT MOST ONE MARK ALLOCATION. Edexcel prints exactly one "(N)" per question.
+#   Two inside one box means the box spans two questions — which is precisely
+#   how 22(c) came to contain the whole of 22(d), its (2), and a mass-spectrum
+#   grid. This is the signature of a swallowed neighbour, and it does not
+#   depend on knowing that the neighbour exists.
+#
+# ⚠ ENFORCED IN BOTH PLACES, and it must stay that way. Here, so a bad proposal
+# is never emitted; and in seed-exam-questions.ts, so a region cannot reach
+# question_regions by any route — including one drawn by hand in the admin
+# mapper, which never passes through this file.
+TALLY = re.compile(r"total\s+for\s+(question|section)|total\s+for\s+paper", re.I)
+
+
+def audit_region(question_number: str, text_inside: str):
+    """Problems that must stop a region being written. Empty list = passes."""
+    lines = [norm(l) for l in (text_inside or "").split("\n") if norm(l)]
+    problems = []
+
+    tallies = [l for l in lines if TALLY.search(l)]
+    if tallies:
+        problems.append(
+            f"contains end-of-question furniture: {tallies[0]!r} — the box runs past "
+            f"the end of {question_number}'s answer space"
+        )
+
+    allocs = [l for l in lines if MARK_ALLOC.match(l)]
+    if len(allocs) > 1:
+        problems.append(
+            f"contains {len(allocs)} mark allocations {allocs} — a question has one, "
+            f"so this box spans more than {question_number}"
+        )
+
+    return problems
+
+
+def opens_subpart(line) -> bool:
+    t = line["t"]
+    if MARK_ALLOC.match(t):
+        return False  # "(2)" is a tariff, not a label
+    return bool(SUBPART_LABEL.match(t))
+
+
 def is_answer_rule(line) -> bool:
     """A dotted rule a student writes on.
 
@@ -323,120 +390,118 @@ def main():
         pg = a["page"]
         x0c, x1c = column_bounds(pg)
         top = max(TOP_MARGIN, a["line"]["bbox"][1] - PAD_TOP)
+        anchor_y = a["line"]["bbox"][3]
+        page_bound = pg["h"] - BOTTOM_MARGIN
 
-        # The next anchored question that starts on this page, whatever kind
-        # it is. Bounds a container's stem from below and a leaf's answer
-        # space.
-        next_top = None
+        # ── ONE CEILING, FROM EVERY BOUND THAT APPLIES ──────────────────────
+        # This used to branch: a sibling bound one way, no sibling another, and
+        # the end-of-question furniture rule ran ONLY in the no-sibling branch.
+        # That is how Q1 kept "(Total for Question 1 = 1 mark)" — a sibling
+        # bounded it, so the furniture rule never ran, and Q2 on the same page
+        # (no sibling) correctly excluded its own tally. Two boxes, same page,
+        # opposite conventions.
+        #
+        # Now every bound is a candidate ceiling and the box stops at the
+        # NEAREST one, whichever kind it is.
+        ceiling, bound_by = page_bound, "page"
+
+        def lower(cand, why):
+            nonlocal ceiling, bound_by
+            if cand is not None and cand < ceiling:
+                ceiling, bound_by = cand, why
+
+        # the next SEEDED question that starts on this page
         for _, b in ordered[i + 1 :]:
             if b["page"]["n"] == pg["n"] and b["line"]["bbox"][1] > a["line"]["bbox"][1]:
-                next_top = b["line"]["bbox"][1] - PAD_BOTTOM
+                lower(b["line"]["bbox"][1] - PAD_BOTTOM, "sibling")
+                break
+
+        # the next sub-part label, SEEDED OR NOT — bug B
+        for l in pg["lines"]:
+            if not l["horizontal"] or l["bbox"][1] <= anchor_y:
+                continue
+            if opens_subpart(l):
+                lower(l["bbox"][1] - PAD_BOTTOM, "next sub-part")
+                break
+
+        # end-of-question furniture, in EVERY case now
+        for l in pg["lines"]:
+            if not l["horizontal"] or l["bbox"][1] <= anchor_y:
+                continue
+            if END_FURNITURE.match(l["t"]):
+                lower(l["bbox"][1] - PAD_BOTTOM, "end-of-question furniture")
                 break
 
         if qn in container:
-            # A container is a STEM: prose, no answer space, children carry
-            # their own regions. Grow to the smallest box that holds the whole
-            # recorded stem, then stop.
+            # ⚠ THE ANCHOR LINE IS TESTED FIRST — bug A.
             #
-            # Text-driven growth is safe HERE and nowhere else. Every stem on
-            # this paper is prose; the questions containing tables — Q1,
-            # 21(c)(i) — are leaves, and a table's cells extract in an order
-            # that never equals the transcribed prose, so growth keyed on text
-            # would run to the bottom of the page. Purely geometric grouping
-            # was tried and fails the other way: "(a) According to data…" sits
-            # close below Q20's stem and is not indented further left, so a
-            # paragraph rule swallows the child.
+            # The loop used to seed `bottom` with the anchor line and then skip
+            # it (`cand <= bottom: continue`), so the stem was never CHECKED
+            # before growing and every container came out at least one line too
+            # tall. Q20 and 20(b) escaped only because a sibling on the same
+            # page capped them; 21, 23 and 23(c) each swallowed the first line
+            # of a child.
             want = squash(qtext_of[qn])[:150]
-            ceiling = min(next_top or (pg["h"] - BOTTOM_MARGIN), pg["h"] - BOTTOM_MARGIN)
-            bottom = min(a["line"]["bbox"][3] + PAD_BOTTOM, ceiling)
-            confidence = 0.6  # stem not confirmed; the fallback below
+            bottom, confidence = None, 0.6
+            candidates = [min(anchor_y + PAD_BOTTOM, ceiling)]
             for l in pg["lines"]:
                 if not l["horizontal"] or l["bbox"][1] < a["line"]["bbox"][1]:
                     continue
-                cand = min(l["bbox"][3] + PAD_BOTTOM, ceiling)
-                if cand <= bottom:
-                    continue
-                probe = pymupdf.Rect(x0c - 4.0, top, x1c + 4.0, cand)
-                bottom = cand
+                c = min(l["bbox"][3] + PAD_BOTTOM, ceiling)
+                if c > candidates[-1]:
+                    candidates.append(c)
+            for c in candidates:
+                probe = pymupdf.Rect(x0c - 4.0, top, x1c + 4.0, c)
+                bottom = c
                 if want in squash(doc[pg["n"] - 1].get_text("text", clip=probe)):
                     confidence = 0.85  # the whole stem, and no more than it
                     break
-                if cand >= ceiling:
+                if c >= ceiling:
                     break
         else:
-            # A leaf owns its answer space: down to the next question that
-            # starts on this page, else the bottom of the printable area.
-            if next_top is not None:
-                bottom = min(next_top, pg["h"] - BOTTOM_MARGIN)
-                confidence = 0.9  # both edges anchored on real text
+            # A leaf owns its answer space, down to the nearest ceiling — and
+            # to the last rule the student can write on, if one is nearer.
+            last_rule = None
+            for l in pg["lines"]:
+                if l["horizontal"] and is_answer_rule(l) and anchor_y < l["bbox"][3] <= ceiling:
+                    last_rule = max(last_rule or 0, l["bbox"][3])
+            for y1 in vector_rules(doc[pg["n"] - 1]):
+                if anchor_y < y1 <= ceiling:
+                    last_rule = max(last_rule or 0, y1)
+
+            if last_rule is not None:
+                bottom = min(last_rule + PAD_BOTTOM, ceiling)
+                confidence = 0.8
             else:
-                # No sibling below, so the box would run to the page bound and
-                # swallow whatever the template prints at the foot of the
-                # question. Trim to where the ANSWER SPACE actually ends.
-                page_bound = pg["h"] - BOTTOM_MARGIN
-                anchor_y = a["line"]["bbox"][3]
+                bottom = ceiling
+                confidence = {
+                    "sibling": 0.9,
+                    "next sub-part": 0.9,
+                    "end-of-question furniture": 0.8,
+                    "page": 0.72,
+                }[bound_by]
 
-                # 1. End-of-question furniture is not part of the answer.
-                furniture_top = None
-                for l in pg["lines"]:
-                    if not l["horizontal"] or l["bbox"][1] <= anchor_y:
-                        continue
-                    if END_FURNITURE.match(l["t"]):
-                        furniture_top = l["bbox"][1]
-                        break
-
-                ceiling = min(furniture_top - PAD_BOTTOM, page_bound) if furniture_top else page_bound
-
-                # 2. The last rule the student can write on, above that.
-                last_rule = None
-                for l in pg["lines"]:
-                    if l["horizontal"] and is_answer_rule(l) and anchor_y < l["bbox"][3] <= ceiling:
-                        last_rule = max(last_rule or 0, l["bbox"][3])
-                for y1 in vector_rules(doc[pg["n"] - 1]):
-                    if anchor_y < y1 <= ceiling:
-                        last_rule = max(last_rule or 0, y1)
-
-                if last_rule is not None:
-                    bottom = min(last_rule + PAD_BOTTOM, ceiling)
-                    confidence = 0.8  # ends on a real answer line
-                elif furniture_top is not None:
-                    bottom = ceiling
-                    confidence = 0.8  # ends where the question's content does
-                else:
-                    # Genuinely blank working space to the page bound — Q20(a)
-                    # is a 4-mark calculation with no ruled lines at all. The
-                    # position is anchored; the extent is still a guess.
-                    bottom = page_bound
-                    confidence = 0.72
-
-        x0 = max(0.0, min(x0c, a["line"]["bbox"][0]) - 4.0)
-        x1 = min(pg["w"], x1c + 4.0)
+        cx0, cx1 = content_x_extent(pg, top, bottom, (x0c, x1c))
+        x0 = max(0.0, min(x0c, a["line"]["bbox"][0], cx0) - 4.0)
+        x1 = min(pg["w"], max(x1c, cx1) + 4.0)
 
         if bottom - top < 8 or x1 - x0 < 8:
             dropped.append((qn, f"degenerate box {x1-x0:.0f}x{bottom-top:.0f}pt"))
             continue
 
-        # Widen to whatever actually occupies this band — text AND drawn
-        # answer boxes — then keep the anchor's own left edge so the question
-        # label stays inside.
-        cx0, cx1 = content_x_extent(pg, top, bottom, (x0c, x1c))
-        x0 = max(0.0, min(x0, cx0) - 4.0)
-        x1 = min(pg["w"], max(x1, cx1) + 4.0)
-
         rect = pymupdf.Rect(x0, top, x1, bottom)
 
-        # ⚠ THE ASSERTION. Re-read the text inside the computed box and require
-        # this question's own anchor text to be in it. A mirrored, shifted or
-        # mis-columned box lands on different text and is dropped here.
-        inside = squash(doc[pg["n"] - 1].get_text("text", clip=rect))
-        # A distinctive prefix — the opening line and a little more. Not the
-        # full text: a question containing a table extracts its cells in an
-        # order that never equals the transcribed prose, and asserting on that
-        # rejects perfectly good boxes (it rejected Q1 and 21(c)(i)). Not a
-        # handful of characters either, which would assert almost nothing.
+        # ⚠ CONTAINS ITS OWN QUESTION'S TEXT.
+        inside_text = doc[pg["n"] - 1].get_text("text", clip=rect)
         needle = squash(qtext_of[qn])[:60]
-        if needle not in inside:
+        if needle not in squash(inside_text):
             dropped.append((qn, "computed box does not contain the question's own text"))
+            continue
+
+        # ⚠ THE GATE, applied here as well as in the seeder. See audit_region.
+        problems = audit_region(qn, inside_text)
+        if problems:
+            dropped.append((qn, "; ".join(problems)))
             continue
 
         regions.append(
@@ -449,8 +514,7 @@ def main():
                 "height": round(bottom - top, 2),
                 "rotationApplied": pg["rot"] % 360,
                 "confidence": confidence,
-                # Carried so the TypeScript side can re-validate against the
-                # real page box rather than trusting these numbers.
+                "boundedBy": bound_by,
                 "pageWidth": round(pg["w"], 2),
                 "pageHeight": round(pg["h"], 2),
             }
@@ -477,6 +541,8 @@ def main():
         )
     for qn, reason in unmapped + dropped:
         print(f"    {qn:<12} NOT PROPOSED — {reason}")
+    if dropped:
+        print(f"\n  ⚠ {len(dropped)} region(s) FAILED THE GATE and were not emitted.")
 
 
 if __name__ == "__main__":

@@ -112,6 +112,12 @@ import {
   verifyRequiredColumns,
   type RequiredColumn,
 } from "./exam-seed/schema-probe.ts";
+import {
+  auditRegion,
+  describeAudit,
+  type RegionAuditProblem,
+} from "../src/lib/exam/region-audit.ts";
+import { extractPageLines, linesInside } from "./exam-seed/pdf-lines.ts";
 
 // ============================================================================
 // FIXTURES
@@ -272,6 +278,8 @@ type PaperRow = {
   year: number | null;
   total_marks: number | null;
   status: string | null;
+  /** Needed by the region gate — the document the boxes are checked against. */
+  paper_pdf_path: string | null;
 };
 
 type QuestionRow = {
@@ -330,7 +338,7 @@ async function verifyPaper(
 ): Promise<PaperRow> {
   const { data, error } = await db
     .from("past_papers")
-    .select("id, slug, paper_code, session, year, total_marks, status")
+    .select("id, slug, paper_code, session, year, total_marks, status, paper_pdf_path")
     .eq("id", set.paperId)
     .maybeSingle();
 
@@ -686,7 +694,7 @@ function printWritePlan(set: QuestionSet, plan: PlanRow[]) {
     }
   }
 
-  heading("5. Write plan by table");
+  heading("6. Write plan by table");
   const width = Math.max(...tables.map((t) => t.table.length));
   let total = 0;
   for (const t of tables) {
@@ -719,7 +727,7 @@ function printWritePlan(set: QuestionSet, plan: PlanRow[]) {
     (r) => Array.isArray(r.accept) && (r.accept as string[]).length > 0 && r.guidance,
   );
 
-  heading("6. Sample rows — exactly as they would be sent");
+  heading("7. Sample rows — exactly as they would be sent");
 
   for (const [label, sample] of [
     ["mark_scheme_items — the reject[] case", withReject],
@@ -767,6 +775,113 @@ type Stats = {
   modelAnswers: number;
   skippedChildren: string[];
 };
+
+/**
+ * ⚠ THE REGION GATE. Runs BEFORE anything is written, and aborts the seed.
+ *
+ * Two invariants, defined in src/lib/exam/region-audit.ts: a region may contain
+ * no marks tally, and at most one mark allocation. Both caught a real fault
+ * that had survived extraction, rendering, a visual review, a seed, a re-trim,
+ * a re-widen and a second seed — Q1 had swallowed its own "(Total for Question
+ * 1 = 1 mark)", and 22(c) had swallowed the whole of the UNSEEDED sub-question
+ * 22(d), including a mass-spectrum grid.
+ *
+ * The second invariant is the valuable one: it detects a swallowed neighbour
+ * without knowing the neighbour exists. Every paper is partially seeded, so
+ * the unseeded questions are precisely the ones nothing else can see.
+ *
+ * It reads the ACTUAL PDF, because that is the only way to know what a box
+ * contains. The document is fetched using the path on the paper row the
+ * fixture has already been checked against, so it cannot be pointed at a
+ * different document than the regions were drawn on.
+ *
+ * A fixture with no regions skips it — nothing to check, and the download
+ * would be a round trip for nothing.
+ */
+async function gateRegions(
+  set: QuestionSet,
+  paper: { paper_pdf_path: string | null },
+  supabaseUrl: string,
+): Promise<void> {
+  const withRegions = set.questions.filter((q) => (q.regions?.length ?? 0) > 0);
+  if (withRegions.length === 0) {
+    console.log(`  ${DIM}no regions in this fixture — nothing to gate${RESET}`);
+    return;
+  }
+  if (!paper.paper_pdf_path) {
+    fail(
+      `The fixture defines regions on ${withRegions.length} question(s) but the paper ` +
+        `row has no paper_pdf_path, so there is no document to check them against. ` +
+        `Nothing was written.`,
+    );
+  }
+
+  // ⚠ The URL is built from the env this script ALREADY loaded, not from
+  // getPaperPublicUrl(). That helper reads process.env.NEXT_PUBLIC_SUPABASE_URL,
+  // which a Next server has and this script does not — loadEnv() parses
+  // .env.local itself and never exports into process.env. Called from here it
+  // logged a warning, returned null, and the gate then tried to fetch(null).
+  // A gate that cannot fetch the paper must ABORT, not fall through.
+  const base = supabaseUrl.replace(/\/$/, "");
+  const path = paper.paper_pdf_path.replace(/^\//, "");
+  const url = `${base}/storage/v1/object/public/papers/${path}`;
+
+  let response: Response;
+  try {
+    response = await fetch(url);
+  } catch (e) {
+    fail(
+      `Could not reach the paper PDF to gate the regions (${e instanceof Error ? e.message : String(e)}). ` +
+        `Refusing to write regions that have not been checked. Nothing was written.`,
+    );
+    return;
+  }
+  if (!response.ok) {
+    fail(
+      `Could not fetch the paper PDF (HTTP ${response.status}) to gate the regions. ` +
+        `Refusing to write regions that have not been checked. Nothing was written.`,
+    );
+  }
+  const pages = await extractPageLines(new Uint8Array(await response.arrayBuffer()));
+  const byNumber = new Map(pages.map((pg) => [pg.pageNumber, pg]));
+
+  const problems: RegionAuditProblem[] = [];
+  let checked = 0;
+  for (const q of withRegions) {
+    for (const r of q.regions ?? []) {
+      const page = byNumber.get(r.pageNumber);
+      if (!page) {
+        problems.push({
+          questionNumber: q.questionNumber,
+          pageNumber: r.pageNumber,
+          problem: `page ${r.pageNumber} is not in the PDF, which has ${pages.length}`,
+        });
+        continue;
+      }
+      checked += 1;
+      problems.push(
+        ...auditRegion({
+          questionNumber: q.questionNumber,
+          pageNumber: r.pageNumber,
+          linesInside: linesInside(page, r),
+        }),
+      );
+    }
+  }
+
+  if (problems.length > 0) {
+    console.error(`  ${RED}✗${RESET} ${problems.length} region(s) failed the gate:`);
+    console.error(describeAudit(problems));
+    fail(
+      `Region gate failed. NOTHING WAS WRITTEN — not the regions, not the questions, ` +
+        `not the mark scheme. Fix the boxes and re-run.`,
+    );
+  }
+  console.log(
+    `  ${GREEN}✓${RESET} ${checked} region(s) checked against the PDF — no marks tally, ` +
+      `none spanning more than one question`,
+  );
+}
 
 async function applyPlan(
   db: SupabaseClient,
@@ -1014,8 +1129,11 @@ async function main() {
       `${paper.total_marks} marks  status=${paper.status}\n     slug ${paper.slug}\n     id   ${paper.id}`,
   );
 
+  heading("4. Region gate");
+  await gateRegions(set, paper, url);
+
   // ---- 3. what is already there ------------------------------------------
-  heading("4. Plan");
+  heading("5. Plan");
   const existing = await loadExistingQuestions(db, set.paperId);
   const plan = buildPlan(set, existing);
 
@@ -1074,14 +1192,14 @@ async function main() {
 
   // ---- 7. write, or don't -------------------------------------------------
   if (!options.commit) {
-    heading("7. Dry run complete");
+    heading("8. Dry run complete");
     console.log(
       `  Nothing was written. Re-run with ${BOLD}--commit${RESET} to apply.\n`,
     );
     return;
   }
 
-  heading("7. Writing");
+  heading("8. Writing");
   const journal = new Journal();
   let stats: Stats;
   try {
@@ -1105,7 +1223,7 @@ async function main() {
     fail("seed aborted.");
   }
 
-  heading("8. Done");
+  heading("9. Done");
   console.log(`  questions   ${stats.questionsInserted} inserted, ${stats.questionsUpdated} updated, ${stats.questionsUnchanged} unchanged`);
   console.log(`  mark scheme ${stats.markSchemePoints} point(s) upserted`);
   console.log(`  expected    ${stats.expectedAnswers} answer(s) upserted (staff-only table)`);
