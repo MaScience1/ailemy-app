@@ -88,20 +88,38 @@
  *               fallback; there is no paper question that should use it.
  *
  * ============================================================================
- * REGIONS ARE DELIBERATELY ABSENT
+ * REGIONS ARE MACHINE PROPOSALS, NOT APPROVED PLACEMENTS
  * ============================================================================
- * Not one question below carries a `regions` entry, and the importer supports
- * them fully. The reason is that a bbox is the one field that cannot be
- * authored responsibly from a text dump: it is only correct if someone has
- * seen it drawn over the rendered page. A wrong bbox is strictly worse than a
+ * This section previously read "REGIONS ARE DELIBERATELY ABSENT", and its
+ * reasoning still stands: a bbox is the one field that cannot be authored
+ * responsibly from a text dump, because it is only correct if someone has seen
+ * it drawn over the rendered page. A wrong bbox is strictly worse than a
  * missing one — it silently highlights the wrong half of the page for every
  * student, and nothing about it looks wrong in a diff.
  *
- * Producing approved regions is the entire job of the admin mapping tool, and
- * 0028 already models the handoff: question_regions.approved_by /
- * approved_at are NULL until a human signs off. Questions seeded from this
- * file are readable and markable; they are not yet *locatable* on the page.
- */
+ * What changed is that these were not authored from a text dump. Each one is
+ * ANCHORED on the question's own recorded question_text, located in the PDF's
+ * text layer by scripts/exam-seed/propose-regions.py, and every box is
+ * re-checked to contain that text before it is emitted. The coordinate space
+ * was verified against the live document rather than assumed: PyMuPDF's
+ * page.rect and pdf.js getViewport({scale:1}) are the same space, so no y-flip
+ * is applied and none must be added.
+ *
+ * They are still PROPOSALS, and the schema says so:
+ *
+ *   confidence 0.9   both edges anchored on real text (a sibling bounds it)
+ *              0.85  a container's stem, grown to hold exactly its own text
+ *              0.72  bounded below by the page, not by a sibling — the extent
+ *                    is a guess even though the position is not
+ *
+ *   approved_by / approved_at stay NULL. 0028 is explicit that approved_at
+ *   IS NULL means PROPOSED, not accepted, and approval is a human act against
+ *   a rendered overlay in the admin mapper — not a side effect of extraction.
+ *
+ * 21(c) has NO region and must not be given one by hand here: it carries no
+ * question_text, so there is nothing to anchor on, and a box invented for it
+ * would be exactly the failure this note warns about. Map it in the tool.
+  */
 
 import type { QuestionSet } from "../../src/lib/exam/question-set.ts";
 
@@ -136,6 +154,12 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
     // document's shape rather than an omission.
     {
       questionNumber: "1",
+      // Machine proposal from the PDF text layer — see
+      // scripts/exam-seed/propose-regions.py. confidence is set because a
+      // machine placed it; approval remains a human act in the admin mapper.
+      regions: [
+        { pageNumber: 2, x: 38.52, y: 163.21, width: 507.9, height: 220.22, confidence: 0.9 },
+      ],
       parentQuestionNumber: null,
       displayOrder: 10,
       marks: 1,
@@ -178,6 +202,12 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
     },
     {
       questionNumber: "2",
+      // Machine proposal from the PDF text layer — see
+      // scripts/exam-seed/propose-regions.py. confidence is set because a
+      // machine placed it; approval remains a human act in the admin mapper.
+      regions: [
+        { pageNumber: 2, x: 38.52, y: 381.44, width: 507.9, height: 400.45, confidence: 0.72 },
+      ],
       parentQuestionNumber: null,
       displayOrder: 20,
       marks: 1,
@@ -219,6 +249,12 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
     // children's is the standard way these totals end up doubled.
     {
       questionNumber: "20",
+      // Machine proposal from the PDF text layer — see
+      // scripts/exam-seed/propose-regions.py. confidence is set because a
+      // machine placed it; approval remains a human act in the admin mapper.
+      regions: [
+        { pageNumber: 10, x: 38.52, y: 101.45, width: 475.72, height: 26.42, confidence: 0.85 },
+      ],
       parentQuestionNumber: null,
       displayOrder: 200,
       marks: 0,
@@ -228,6 +264,12 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
     },
     {
       questionNumber: "20(a)",
+      // Machine proposal from the PDF text layer — see
+      // scripts/exam-seed/propose-regions.py. confidence is set because a
+      // machine placed it; approval remains a human act in the admin mapper.
+      regions: [
+        { pageNumber: 10, x: 38.52, y: 125.87, width: 475.72, height: 656.02, confidence: 0.72 },
+      ],
       parentQuestionNumber: "20",
       displayOrder: 210,
       marks: 4,
@@ -300,6 +342,12 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
     },
     {
       questionNumber: "20(b)",
+      // Machine proposal from the PDF text layer — see
+      // scripts/exam-seed/propose-regions.py. confidence is set because a
+      // machine placed it; approval remains a human act in the admin mapper.
+      regions: [
+        { pageNumber: 11, x: 38.52, y: 53.94, width: 515.79, height: 38.42, confidence: 0.85 },
+      ],
       parentQuestionNumber: "20",
       displayOrder: 220,
       marks: 0,
@@ -310,6 +358,12 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
     },
     {
       questionNumber: "20(b)(i)",
+      // Machine proposal from the PDF text layer — see
+      // scripts/exam-seed/propose-regions.py. confidence is set because a
+      // machine placed it; approval remains a human act in the admin mapper.
+      regions: [
+        { pageNumber: 11, x: 38.52, y: 91.92, width: 515.79, height: 96.32, confidence: 0.9 },
+      ],
       parentQuestionNumber: "20(b)",
       displayOrder: 230,
       marks: 1,
@@ -330,6 +384,12 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
     },
     {
       questionNumber: "20(b)(ii)",
+      // Machine proposal from the PDF text layer — see
+      // scripts/exam-seed/propose-regions.py. confidence is set because a
+      // machine placed it; approval remains a human act in the admin mapper.
+      regions: [
+        { pageNumber: 11, x: 38.52, y: 186.24, width: 515.79, height: 105.26, confidence: 0.9 },
+      ],
       parentQuestionNumber: "20(b)",
       displayOrder: 240,
       marks: 2,
@@ -363,6 +423,12 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
     },
     {
       questionNumber: "20(b)(iii)",
+      // Machine proposal from the PDF text layer — see
+      // scripts/exam-seed/propose-regions.py. confidence is set because a
+      // machine placed it; approval remains a human act in the admin mapper.
+      regions: [
+        { pageNumber: 11, x: 38.52, y: 289.5, width: 515.79, height: 492.39, confidence: 0.72 },
+      ],
       parentQuestionNumber: "20(b)",
       displayOrder: 250,
       marks: 6,
@@ -464,6 +530,12 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
     },
     {
       questionNumber: "20(b)(iv)",
+      // Machine proposal from the PDF text layer — see
+      // scripts/exam-seed/propose-regions.py. confidence is set because a
+      // machine placed it; approval remains a human act in the admin mapper.
+      regions: [
+        { pageNumber: 12, x: 71.12, y: 53.94, width: 443.11, height: 727.95, confidence: 0.72 },
+      ],
       parentQuestionNumber: "20(b)",
       displayOrder: 260,
       marks: 2,
@@ -530,6 +602,12 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
     // ========================================================================
     {
       questionNumber: "21",
+      // Machine proposal from the PDF text layer — see
+      // scripts/exam-seed/propose-regions.py. confidence is set because a
+      // machine placed it; approval remains a human act in the admin mapper.
+      regions: [
+        { pageNumber: 13, x: 38.52, y: 53.49, width: 515.79, height: 48.85, confidence: 0.85 },
+      ],
       parentQuestionNumber: null,
       displayOrder: 300,
       marks: 0,
@@ -553,6 +631,12 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
     },
     {
       questionNumber: "21(c)(i)",
+      // Machine proposal from the PDF text layer — see
+      // scripts/exam-seed/propose-regions.py. confidence is set because a
+      // machine placed it; approval remains a human act in the admin mapper.
+      regions: [
+        { pageNumber: 14, x: 56.94, y: 53.94, width: 477.01, height: 727.95, confidence: 0.72 },
+      ],
       parentQuestionNumber: "21(c)",
       displayOrder: 320,
       marks: 3,
@@ -619,6 +703,12 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
     // ========================================================================
     {
       questionNumber: "22",
+      // Machine proposal from the PDF text layer — see
+      // scripts/exam-seed/propose-regions.py. confidence is set because a
+      // machine placed it; approval remains a human act in the admin mapper.
+      regions: [
+        { pageNumber: 16, x: 38.52, y: 53.49, width: 515.79, height: 48.85, confidence: 0.85 },
+      ],
       parentQuestionNumber: null,
       displayOrder: 400,
       marks: 0,
@@ -630,6 +720,12 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
     },
     {
       questionNumber: "22(c)",
+      // Machine proposal from the PDF text layer — see
+      // scripts/exam-seed/propose-regions.py. confidence is set because a
+      // machine placed it; approval remains a human act in the admin mapper.
+      regions: [
+        { pageNumber: 17, x: 55.93, y: 53.94, width: 458.3, height: 727.95, confidence: 0.72 },
+      ],
       parentQuestionNumber: "22",
       displayOrder: 410,
       marks: 3,
@@ -731,6 +827,12 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
     // ========================================================================
     {
       questionNumber: "23",
+      // Machine proposal from the PDF text layer — see
+      // scripts/exam-seed/propose-regions.py. confidence is set because a
+      // machine placed it; approval remains a human act in the admin mapper.
+      regions: [
+        { pageNumber: 18, x: 38.52, y: 53.49, width: 515.79, height: 48.85, confidence: 0.85 },
+      ],
       parentQuestionNumber: null,
       displayOrder: 500,
       marks: 0,
@@ -740,6 +842,12 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
     },
     {
       questionNumber: "23(c)",
+      // Machine proposal from the PDF text layer — see
+      // scripts/exam-seed/propose-regions.py. confidence is set because a
+      // machine placed it; approval remains a human act in the admin mapper.
+      regions: [
+        { pageNumber: 22, x: 38.52, y: 340.14, width: 515.79, height: 48.4, confidence: 0.85 },
+      ],
       parentQuestionNumber: "23",
       displayOrder: 510,
       marks: 0,
@@ -749,6 +857,12 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
     },
     {
       questionNumber: "23(c)(ii)",
+      // Machine proposal from the PDF text layer — see
+      // scripts/exam-seed/propose-regions.py. confidence is set because a
+      // machine placed it; approval remains a human act in the admin mapper.
+      regions: [
+        { pageNumber: 22, x: 38.52, y: 486.61, width: 515.79, height: 295.28, confidence: 0.72 },
+      ],
       parentQuestionNumber: "23(c)",
       displayOrder: 520,
       marks: 2,
