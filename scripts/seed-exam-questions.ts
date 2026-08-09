@@ -132,6 +132,13 @@ import {
   type RegionAuditProblem,
 } from "../src/lib/exam/region-audit.ts";
 import { extractPageLines, linesInside } from "./exam-seed/pdf-lines.ts";
+import { tierFor } from "../src/lib/exam/deterministic.ts";
+import {
+  describeFixtureOrphans,
+  findFixtureOrphans,
+  hasFixtureOrphans,
+  type FixtureOrphans,
+} from "../src/lib/exam/fixture-orphans.ts";
 
 // ============================================================================
 // FIXTURES
@@ -648,6 +655,172 @@ async function loadExistingQuestions(
 
   if (error) fail(`could not read paper_questions: ${error.message}`);
   return (data ?? []) as QuestionRow[];
+}
+
+/**
+ * The child-row half of the orphan check: what the upsert tables still hold
+ * that the fixture has stopped claiming.
+ *
+ * The rule lives in src/lib/exam/fixture-orphans.ts and is tested there. This
+ * function only does the reading — same division as validateQuestionSet().
+ */
+async function loadFixtureOrphans(
+  db: SupabaseClient,
+  set: QuestionSet,
+  existing: QuestionRow[],
+): Promise<FixtureOrphans> {
+  const ids = existing.map((row) => row.id);
+  if (ids.length === 0) {
+    return { points: [], expectedAnswers: [] };
+  }
+  const numberOf = new Map(existing.map((row) => [row.id, row.question_number]));
+
+  // ⚠ count: "exact" IS THE POINT, not decoration. PostgREST caps a response at
+  // db-max-rows and signals it with a partial Content-Range and NO error, which
+  // supabase-js surfaces as a short `data` — so a truncated read would render
+  // as "fewer orphans" in the one check whose entire job is to stop a silent
+  // pass. Compare the length against the count and abort on a shortfall.
+  const { data: points, error: pointsError, count: pointsCount } = await db
+    .from("mark_scheme_items")
+    .select("id, question_id, point_code, display_order, criterion", { count: "exact" })
+    .in("question_id", ids);
+  if (pointsError) {
+    fail(`could not read mark_scheme_items: ${pointsError.message}`);
+  }
+  if ((points ?? []).length !== (pointsCount ?? -1)) {
+    fail(
+      `mark_scheme_items read returned ${(points ?? []).length} of ${pointsCount} row(s) — ` +
+        `truncated, so the orphan check cannot be trusted. Raise the project's Max rows.`,
+    );
+  }
+
+  const { data: expected, error: expectedError, count: expectedCount } = await db
+    .from("question_expected_answers")
+    .select("id, question_id, expected_value", { count: "exact" })
+    .in("question_id", ids);
+  if (expectedError) {
+    fail(`could not read question_expected_answers: ${expectedError.message}`);
+  }
+  if ((expected ?? []).length !== (expectedCount ?? -1)) {
+    fail(
+      `question_expected_answers read returned ${(expected ?? []).length} of ` +
+        `${expectedCount} row(s) — truncated, so the orphan check cannot be trusted.`,
+    );
+  }
+
+  type PointRow = {
+    id: string;
+    question_id: string;
+    point_code: string;
+    display_order: number;
+    criterion: string;
+  };
+  type ExpectedRow = { id: string; question_id: string; expected_value: string | null };
+
+  // ⚠ FAIL, DO NOT RENAME. A row whose question_id is not in the map would, if
+  // labelled with its uuid, match no fixture questionNumber and be dropped by
+  // the "the question itself is the orphan" branch — while no question-level
+  // report mentions it either, because that report is built from this same
+  // array. Unreachable today (the .in() filter is built from the map's own
+  // keys); a fail-open default inside a check that promises to miss nothing is
+  // how a future scoping change becomes silent under-reporting.
+  const label = (questionId: string): string => {
+    const number = numberOf.get(questionId);
+    if (number === undefined) {
+      fail(
+        `orphan check read a row for question_id ${questionId}, which is not one of ` +
+          `the ${ids.length} questions on this paper. The read is wider than the map.`,
+      );
+    }
+    return number;
+  };
+
+  return findFixtureOrphans({
+    claims: set.questions.map((q) => ({
+      questionNumber: q.questionNumber,
+      answerType: q.answerType,
+      tier: tierFor(q.answerType),
+      pointCodes: (q.markScheme ?? []).map((p) => p.pointCode),
+      hasExpectedAnswer: Boolean(q.expectedAnswer),
+    })),
+    storedPoints: ((points ?? []) as PointRow[]).map((row) => ({
+      id: row.id,
+      questionNumber: label(row.question_id),
+      pointCode: row.point_code,
+      displayOrder: row.display_order,
+      criterion: row.criterion,
+    })),
+    storedExpectedAnswers: ((expected ?? []) as ExpectedRow[]).map((row) => ({
+      id: row.id,
+      questionNumber: label(row.question_id),
+      expectedValue: row.expected_value,
+    })),
+  });
+}
+
+/**
+ * The keyless tables' version of the same gap: rows the fixture has stopped
+ * supplying altogether.
+ *
+ * ⚠ THE ZERO-ROW CASE WAS THE ONE THAT WAS SILENT, and it is the only case an
+ * author can create by editing. applyPlan reports "already has N row(s) — left
+ * untouched" when the fixture still supplies rows, but that notice sits behind
+ * `if (rows.length === 0) continue`, so emptying a `regions: []` array — the
+ * single edit that disowns those rows — skipped the count entirely and printed
+ * nothing. `question_regions` is the one that bites: it is student-readable, so
+ * the disowned boxes go on defining what a student sees.
+ *
+ * Reported here rather than in applyPlan so it shows on a DRY RUN too, and in
+ * three queries rather than one per question per table.
+ */
+async function loadUnbackedKeylessRows(
+  db: SupabaseClient,
+  set: QuestionSet,
+  existing: QuestionRow[],
+): Promise<string[]> {
+  const supplies: Record<ChildTable, (q: QuestionInput) => number> = {
+    question_regions: (q) => q.regions?.length ?? 0,
+    examiner_report_insights: (q) => q.examinerInsights?.length ?? 0,
+    model_answers: (q) => (q.modelAnswer ? 1 : 0),
+  };
+
+  // Only questions the fixture owns AND that supply nothing for that table.
+  const idOf = new Map(existing.map((row) => [row.question_number, row.id]));
+  const lines: string[] = [];
+
+  for (const table of Object.keys(supplies) as ChildTable[]) {
+    const candidates = set.questions
+      .filter((q) => supplies[table](q) === 0)
+      .map((q) => ({ number: q.questionNumber, id: idOf.get(q.questionNumber) }))
+      .filter((c): c is { number: string; id: string } => Boolean(c.id));
+    if (candidates.length === 0) continue;
+
+    const { data, error, count } = await db
+      .from(table)
+      .select("id, question_id", { count: "exact" })
+      .in(
+        "question_id",
+        candidates.map((c) => c.id),
+      );
+    if (error) fail(`could not read ${table}: ${error.message}`);
+    if ((data ?? []).length !== (count ?? -1)) {
+      fail(
+        `${table} read returned ${(data ?? []).length} of ${count} row(s) — truncated, ` +
+          `so the unbacked-row check cannot be trusted.`,
+      );
+    }
+
+    const byQuestion = new Map<string, number>();
+    for (const row of (data ?? []) as { question_id: string }[]) {
+      byQuestion.set(row.question_id, (byQuestion.get(row.question_id) ?? 0) + 1);
+    }
+    for (const c of candidates) {
+      const n = byQuestion.get(c.id);
+      if (n) lines.push(`${c.number}: ${table} holds ${n} row(s) the fixture supplies none for`);
+    }
+  }
+
+  return lines.sort();
 }
 
 function buildPlan(set: QuestionSet, existing: QuestionRow[]): PlanRow[] {
@@ -1549,6 +1722,11 @@ async function main() {
   const orphans = existing.filter(
     (row) => !set.questions.some((q) => q.questionNumber === row.question_number),
   );
+  // The same reconciliation one level down. The upsert tables can only gain
+  // rows, so a point or an expected answer deleted from the fixture survives in
+  // the database and goes on being marked against.
+  const childOrphans = await loadFixtureOrphans(db, set, existing);
+  const unbackedKeyless = await loadUnbackedKeylessRows(db, set, existing);
 
   const width = Math.max(...plan.map((r) => r.question.questionNumber.length), 8);
   console.log(
@@ -1583,6 +1761,28 @@ async function main() {
     }
   }
 
+  if (hasFixtureOrphans(childOrphans)) {
+    // "planned": nothing has been renumbered yet, and on a dry run nothing will
+    // be. A report that describes the database as already damaged, on the run
+    // whose purpose is to decide whether to damage it, is checkable and wrong.
+    const lines = describeFixtureOrphans(childOrphans, "planned");
+    console.log(`\n  ${YELLOW}!${RESET} ${lines[0]}`);
+    for (const line of lines.slice(1)) console.log(line ? `    ${line}` : "");
+  }
+
+  if (unbackedKeyless.length > 0) {
+    console.log(
+      `\n  ${YELLOW}!${RESET} ${unbackedKeyless.length} keyless child row-set(s) exist ` +
+        `for a question whose fixture entry supplies none. A re-run leaves them ` +
+        `alone, so they stand — and question_regions is student-readable:`,
+    );
+    for (const line of unbackedKeyless) console.log(`      ${line}`);
+    console.log(
+      `    ${DIM}--replace-children only overwrites where the fixture HAS rows; ` +
+        `it does not clear these.${RESET}`,
+    );
+  }
+
   const inserts = plan.filter((r) => r.disposition === "insert").length;
   const updates = plan.filter((r) => r.disposition === "update").length;
   const unchanged = plan.filter((r) => r.disposition === "unchanged").length;
@@ -1596,6 +1796,20 @@ async function main() {
   // ---- 7. write, or don't -------------------------------------------------
   if (!options.commit) {
     heading("9. Dry run complete");
+    // ⚠ REPEATED HERE TOO, and this is the copy that matters most. The dry run
+    // is where a person decides whether to commit, and headings 7 and 8 put two
+    // screens of table counts and sample rows between step 6 and this line.
+    // The commit path repeats it at the bottom of step 10 — after the write it
+    // was meant to inform.
+    if (hasFixtureOrphans(childOrphans)) {
+      console.log(
+        `  ${YELLOW}${BOLD}UNRECONCILED — this run would not fix these:${RESET}`,
+      );
+      for (const line of describeFixtureOrphans(childOrphans, "planned")) {
+        console.log(line ? `    ${line}` : "");
+      }
+      console.log("");
+    }
     console.log(
       `  Nothing was written. Re-run with ${BOLD}--commit${RESET} to apply.\n`,
     );
@@ -1665,6 +1879,20 @@ async function main() {
   if (stats.skippedChildren.length > 0) {
     console.log(`\n  ${YELLOW}Skipped, to avoid duplicating keyless rows:${RESET}`);
     for (const line of stats.skippedChildren) console.log(`      ${line}`);
+  }
+
+  // Repeated from step 6 on purpose. A committing run prints several screens
+  // between the two, and "N point(s) upserted" is exactly what a run that left
+  // a stale marking point behind also prints — the counts above cannot
+  // distinguish the two, so the warning has to survive to the bottom.
+  if (hasFixtureOrphans(childOrphans)) {
+    console.log(
+      `\n  ${YELLOW}${BOLD}STILL UNRECONCILED${RESET} ` +
+        `${YELLOW}— rows above were written, these were not touched:${RESET}`,
+    );
+    for (const line of describeFixtureOrphans(childOrphans, "written")) {
+      console.log(line ? `    ${line}` : "");
+    }
   }
   console.log(
     `\n  ${DIM}This ran as service role and bypassed RLS. It proves the rows exist;\n` +

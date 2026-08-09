@@ -12,10 +12,28 @@
  *   node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON \
  *     scripts/exam-seed/__tests__/schema-probe.test.ts
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 
 import { probeColumn, verifyRequiredColumns } from "../schema-probe.ts";
+
+/**
+ * ⚠ EXIT 2 MEANS SKIPPED, and run-tests.ts knows that.
+ *
+ * This is the only suite that needs credentials and a network, and `.env.local`
+ * is gitignored. Left as-is it made `npm test` impossible to pass on a fresh
+ * clone or in CI — an ENOENT rendered identically to a broken assertion, which
+ * is the same false-red habit the runner was written to end. Crashing on a
+ * missing file would be worse than useless here; so would passing, which would
+ * report a schema guard as verified when it never ran.
+ */
+if (!existsSync(".env.local")) {
+  console.log(
+    "  SKIPPED — .env.local not found. This suite asks the live database real\n" +
+      "  questions and needs SUPABASE_SERVICE_ROLE_KEY. Nothing was verified.",
+  );
+  process.exit(2);
+}
 
 const env = new Map<string, string>();
 for (const line of readFileSync(".env.local", "utf8").split("\n")) {

@@ -4,6 +4,33 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
+# Tests
+
+```bash
+npm test
+```
+
+That runs every `*.test.ts` / `*.test.tsx` / `*.spec.ts(x)` in the repository with
+`node`, one process per suite. It exits non-zero if any suite fails, **if it
+discovers none** (a run that matched nothing is not a pass), **if a suite exits 0
+while printing failures**, or **if a suite runs no assertions at all**. Exit code
+2 is the skip channel: `schema-probe.test.ts` needs `.env.local` and a live
+database, so without them it reports SKIPPED and is excluded from the pass count
+rather than being counted as verified.
+
+**Do not run `npx vitest`.** vitest is not a dependency of this project and is
+not installed; `npx` downloads it, imports each suite, and reads the
+`process.exit(0)` at the bottom of a *passing* run as a crash. It reported six
+failed suites against a repository where every assertion passed. A false red
+is how a real red gets ignored. If these are ever ported to vitest, install it
+and convert all of them — a half-migration puts the false red back.
+
+The suites are plain Node programs: they assert, print, and exit non-zero.
+Node 26 strips the types, so there is no build step. `npm run typecheck` covers
+both `tsconfig.json` (the app) and `tsconfig.scripts.json` (`scripts/`, which
+the app config excludes — for a while that meant nothing under `scripts/` was
+typechecked at all).
+
 # Database migrations
 
 ## Every `CREATE TABLE` migration must revoke three privileges
