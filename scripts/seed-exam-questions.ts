@@ -19,6 +19,9 @@
  *   --replace-children   for the child tables that have no natural key
  *                        (regions, model answers, examiner insights), delete
  *                        what is there and re-insert. See "CHILD TABLES".
+ *   --discard-approvals  REQUIRED alongside --replace-children when any region
+ *                        being replaced carries a human approval. Those
+ *                        signatures cannot be restored — see guardApprovals().
  *
  * ============================================================================
  * THE TRANSACTION PROBLEM — READ THIS BEFORE TRUSTING "ALL OR NOTHING"
@@ -156,17 +159,27 @@ type Options = {
   setName: string;
   commit: boolean;
   replaceChildren: boolean;
+  /**
+   * Consent to destroying human approvals. See guardApprovals().
+   *
+   * A SECOND flag, and named for the consequence rather than the mechanism:
+   * --replace-children says what it does to the database, this says what it
+   * does to someone's signature. You have to type the destructive thing.
+   */
+  discardApprovals: boolean;
 };
 
 function parseArgs(argv: string[]): Options {
   let setName = "";
   let commit = false;
   let replaceChildren = false;
+  let discardApprovals = false;
 
   for (const arg of argv) {
     if (arg.startsWith("--set=")) setName = arg.slice("--set=".length);
     else if (arg === "--commit") commit = true;
     else if (arg === "--replace-children") replaceChildren = true;
+    else if (arg === "--discard-approvals") discardApprovals = true;
     else fail(`unrecognised argument ${JSON.stringify(arg)}.`);
   }
 
@@ -175,7 +188,10 @@ function parseArgs(argv: string[]): Options {
   if (!FIXTURES[setName]) {
     fail(`no fixture named ${JSON.stringify(setName)}. Available: ${available}`);
   }
-  return { setName, commit, replaceChildren };
+  if (discardApprovals && !replaceChildren) {
+    fail("--discard-approvals only means anything alongside --replace-children.");
+  }
+  return { setName, commit, replaceChildren, discardApprovals };
 }
 
 // ============================================================================
@@ -694,7 +710,7 @@ function printWritePlan(set: QuestionSet, plan: PlanRow[]) {
     }
   }
 
-  heading("6. Write plan by table");
+  heading("7. Write plan by table");
   const width = Math.max(...tables.map((t) => t.table.length));
   let total = 0;
   for (const t of tables) {
@@ -727,7 +743,7 @@ function printWritePlan(set: QuestionSet, plan: PlanRow[]) {
     (r) => Array.isArray(r.accept) && (r.accept as string[]).length > 0 && r.guidance,
   );
 
-  heading("7. Sample rows — exactly as they would be sent");
+  heading("8. Sample rows — exactly as they would be sent");
 
   for (const [label, sample] of [
     ["mark_scheme_items — the reject[] case", withReject],
@@ -798,6 +814,130 @@ type Stats = {
  * A fixture with no regions skips it — nothing to check, and the download
  * would be a round trip for nothing.
  */
+/**
+ * ⚠ REFUSES --replace-children WHEN IT WOULD DESTROY A HUMAN APPROVAL.
+ *
+ * question_regions.approved_by / approved_at record that a person looked at
+ * that box drawn over the rendered page and signed for it. Producing them is
+ * slow and manual — sixteen regions on WCH11/01 took two rounds of extraction
+ * fixes, a rendered review of ten pages and an independent re-check before
+ * anyone was willing to sign.
+ *
+ * --replace-children deletes and re-inserts, and the seeder journals that
+ * deletion as CANNOT UNDO because the rows are not snapshotted. So the flag
+ * that was free while everything was a machine proposal is, the moment a
+ * signature exists, the one command that can silently destroy the most
+ * expensive thing in the table.
+ *
+ * The refusal NAMES the rows and the approver, because "16 approved regions"
+ * is a number and "signed by mascience15@gmail.com on 9 August" is a person
+ * you might want to ask first.
+ *
+ * ⚠ It reads approvals for THIS PAPER'S questions only. Approvals on other
+ * papers are not at risk from this run and listing them would train the reader
+ * to skim the warning.
+ */
+async function guardApprovals(
+  db: SupabaseClient,
+  set: QuestionSet,
+  options: Options,
+): Promise<void> {
+  if (!options.replaceChildren) {
+    console.log(
+      `  ${DIM}--replace-children not passed; existing child rows are left alone${RESET}`,
+    );
+    return;
+  }
+
+  const { data: questions, error: qErr } = await db
+    .from("paper_questions")
+    .select("id, question_number")
+    .eq("paper_id", set.paperId);
+  if (qErr) fail(`could not read paper_questions to check approvals: ${qErr.message}`);
+  const names = new Map((questions ?? []).map((q) => [q.id as string, q.question_number as string]));
+  if (names.size === 0) {
+    console.log(`  ${DIM}no questions on this paper yet — nothing to protect${RESET}`);
+    return;
+  }
+
+  const { data: regions, error: rErr } = await db
+    .from("question_regions")
+    .select("question_id, page_number, bbox_x, bbox_y, bbox_width, bbox_height, approved_by, approved_at")
+    .in("question_id", [...names.keys()])
+    .not("approved_at", "is", null);
+  if (rErr) fail(`could not read question_regions to check approvals: ${rErr.message}`);
+
+  const approved = regions ?? [];
+  if (approved.length === 0) {
+    console.log(
+      `  ${GREEN}✓${RESET} no approved regions on this paper — --replace-children ` +
+        `would discard machine proposals only`,
+    );
+    return;
+  }
+
+  // Resolve approvers to addresses. A uuid tells the reader nothing about
+  // whose signature they are about to delete.
+  const emails = new Map<string, string>();
+  for (const id of new Set(approved.map((r) => r.approved_by as string).filter(Boolean))) {
+    const { data } = await db.auth.admin.getUserById(id);
+    emails.set(id, data?.user?.email ?? id);
+  }
+
+  const rows = approved
+    .map((r) => ({
+      q: names.get(r.question_id as string) ?? "(unknown)",
+      page: r.page_number as number,
+      box: `${Number(r.bbox_x).toFixed(0)},${Number(r.bbox_y).toFixed(0)} ` +
+           `${Number(r.bbox_width).toFixed(0)}x${Number(r.bbox_height).toFixed(0)}`,
+      at: String(r.approved_at).slice(0, 19).replace("T", " "),
+      by: emails.get(r.approved_by as string) ?? "(unknown)",
+    }))
+    .sort((a, b) => a.page - b.page || a.q.localeCompare(b.q));
+
+  const w = Math.max(...rows.map((r) => r.q.length), 8);
+  const render = (colour: string) => {
+    console.error(
+      `  ${DIM}${"question".padEnd(w)}  page  box${" ".repeat(18)}approved             approved by${RESET}`,
+    );
+    for (const r of rows) {
+      console.error(
+        `  ${colour}${r.q.padEnd(w)}${RESET}  ${String("p" + r.page).padEnd(5)} ` +
+          `${r.box.padEnd(20)} ${r.at}  ${r.by}`,
+      );
+    }
+  };
+
+  if (options.discardApprovals) {
+    console.error(
+      `  ${YELLOW}!${RESET} ${BOLD}--discard-approvals given.${RESET} These ` +
+        `${approved.length} human approval(s) WILL BE DESTROYED and cannot be restored:`,
+    );
+    render(YELLOW);
+    console.error(
+      `  ${YELLOW}The rows are deleted, not snapshotted. Re-approving means ` +
+        `reviewing every box again.${RESET}\n`,
+    );
+    return;
+  }
+
+  console.error(
+    `  ${RED}✗${RESET} --replace-children would DELETE ${approved.length} ` +
+      `HUMAN-APPROVED region(s) on this paper:`,
+  );
+  render(RED);
+  fail(
+    `Refusing to discard ${approved.length} approval(s). The seeder journals this ` +
+      `deletion as CANNOT UNDO — the rows are not snapshotted, so the signatures ` +
+      `cannot be restored and every box would need reviewing again.\n\n` +
+      `  If the regions really have changed and must be rewritten, re-run with ` +
+      `--discard-approvals alongside --replace-children.\n` +
+      `  If you only meant to update questions or the mark scheme, drop ` +
+      `--replace-children: child rows are left untouched without it.\n\n` +
+      `  Nothing was written.`,
+  );
+}
+
 async function gateRegions(
   set: QuestionSet,
   paper: { paper_pdf_path: string | null },
@@ -1133,7 +1273,10 @@ async function main() {
   await gateRegions(set, paper, url);
 
   // ---- 3. what is already there ------------------------------------------
-  heading("5. Plan");
+  heading("5. Approval guard");
+  await guardApprovals(db, set, options);
+
+  heading("6. Plan");
   const existing = await loadExistingQuestions(db, set.paperId);
   const plan = buildPlan(set, existing);
 
@@ -1192,14 +1335,14 @@ async function main() {
 
   // ---- 7. write, or don't -------------------------------------------------
   if (!options.commit) {
-    heading("8. Dry run complete");
+    heading("9. Dry run complete");
     console.log(
       `  Nothing was written. Re-run with ${BOLD}--commit${RESET} to apply.\n`,
     );
     return;
   }
 
-  heading("8. Writing");
+  heading("9. Writing");
   const journal = new Journal();
   let stats: Stats;
   try {
@@ -1223,7 +1366,7 @@ async function main() {
     fail("seed aborted.");
   }
 
-  heading("9. Done");
+  heading("10. Done");
   console.log(`  questions   ${stats.questionsInserted} inserted, ${stats.questionsUpdated} updated, ${stats.questionsUnchanged} unchanged`);
   console.log(`  mark scheme ${stats.markSchemePoints} point(s) upserted`);
   console.log(`  expected    ${stats.expectedAnswers} answer(s) upserted (staff-only table)`);
