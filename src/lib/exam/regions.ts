@@ -89,14 +89,26 @@ export async function getPaperMapping(paperSlug: string): Promise<MappingResult>
 
   const db = await createClient();
 
-  // A slug is unique only WITHIN a course — two subjects already share
-  // "unit-1-january-2019" — so this can legitimately match more than one row.
-  // Ordering by seeded-question count picks the one worth mapping, and the
-  // ambiguity is reported rather than silently resolved.
-  const { data: papers, error: paperError } = await db
+  // ⚠ ACCEPTS A SLUG **OR** A PAPER ID.
+  //
+  // It took only the slug, and the id is what anyone actually has to hand —
+  // it is what the seed fixture holds, what the storage path contains, and
+  // what every diagnostic in this repo prints. Passing one produced
+  // `.eq("slug", "<uuid>")`, zero rows, and a bare Next 404 that looked
+  // exactly like a route that had been deleted.
+  //
+  // The id is also the BETTER key: a slug is unique only within a course, and
+  // "unit-1-may-june-2025" matches three papers today. The slug form has to
+  // guess (see below); the id form cannot be wrong.
+  const looksLikeId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    paperSlug,
+  );
+  const query = db
     .from("past_papers")
-    .select("id, slug, paper_name, paper_code, paper_pdf_path")
-    .eq("slug", paperSlug);
+    .select("id, slug, paper_name, paper_code, paper_pdf_path");
+  const { data: papers, error: paperError } = await (looksLikeId
+    ? query.eq("id", paperSlug)
+    : query.eq("slug", paperSlug));
   if (paperError) {
     console.error(`[regions] past_papers: ${paperError.code ?? "?"}: ${paperError.message}`);
     return {
@@ -143,6 +155,10 @@ export async function getPaperMapping(paperSlug: string): Promise<MappingResult>
   // first is as good as any — and the page will say it has no questions.
   const counts = new Map<string, number>();
   for (const r of rows) counts.set(r.paper_id, (counts.get(r.paper_id) ?? 0) + 1);
+  // An id match is exactly one row and needs no guess. A SLUG match may be
+  // several — "unit-1-may-june-2025" is three papers — so the seeded one is
+  // picked, because an unseeded paper has nothing to attach a region to. That
+  // is a guess, and the way to avoid it is to use the id.
   const paper =
     candidates.find((p) => (counts.get(p.id) ?? 0) > 0) ?? candidates[0];
 
