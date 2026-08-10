@@ -14,6 +14,8 @@ import {
   describeReconciliation,
   type ReconcilableQuestion,
 } from "../../../src/lib/exam/reconcile.ts";
+import { WCH11_01_2025_MAY_JUNE as WCH11 } from "../wch11-01-2025-may-june.ts";
+import { tierFor } from "../../../src/lib/exam/deterministic.ts";
 
 let pass = 0, fail = 0;
 const t = (n: string, c: boolean, got?: unknown) => {
@@ -179,11 +181,41 @@ console.log("\n── MARKS, NOT JUST QUESTIONS. A census cannot see an over-rep
 }
 
 {
-  // ⚠ THE WHOLE OF WCH11/01, AS IT ACTUALLY MARKS. The mark check added above
-  // is new, and a reconciliation that aborts a healthy paper is worse than none
-  // — so the real paper's ten answerable questions are asserted directly, in
-  // the shapes markAttempt produces for them. Reconstructed from the fixture
-  // rather than the database, because this suite must run with no credentials.
+  // ⚠ THE WHOLE OF WCH11/01, AS IT ACTUALLY MARKS.
+  //
+  // The tariffs and tiers below are DERIVED from the fixture, not typed out.
+  // This block previously said 20(b)(ii) was unmarkable and kept passing for a
+  // week after the equation parser started marking it — a model of the real
+  // paper failing at the one job it has. The outcome shape (which bucket each
+  // question lands in) is still hand-written, because it depends on what a
+  // student answered; the FACTS about the paper are not.
+  // Derived: if a tariff or an answer type changes in the fixture, the guard
+  // below fails and names it, instead of this block quietly testing fiction.
+  const fx = (qn: string) => {
+    const q = WCH11.questions.find((x) => x.questionNumber === qn);
+    if (!q) throw new Error(`${qn} is not in the fixture`);
+    return { marks: q.marks, tier: tierFor(q.answerType) };
+  };
+  const REAL: [string, ReconcilableQuestion["confidence"]][] = [
+    ["1", "deterministic"], ["2", "deterministic"], ["20(a)", "deterministic"],
+    ["20(b)(i)", "requires_review"], ["20(b)(ii)", "deterministic"],
+    ["20(b)(iii)", "deterministic"], ["20(b)(iv)", null], ["21(c)(i)", null],
+    ["22(c)", "requires_review"], ["23(c)(ii)", "requires_review"],
+  ];
+  for (const [qn, confidence] of REAL) {
+    const { tier } = fx(qn);
+    // ⚠ COMPARED AGAINST THE HAND-WRITTEN EXPECTATION, NOT AGAINST ITSELF.
+    // The first version computed `expected` FROM `tier` and then checked it
+    // against `tier` — a tautology that passed for every possible input. It
+    // was found by sabotaging the fixture and watching the suite stay green,
+    // which is the only way a check that cannot fail is ever found.
+    t(`${qn}: the fixture's answer type still matches the outcome modelled here`,
+      (tier === "unmarkable") === (confidence === null), { qn, tier, confidence });
+  }
+  t("the fixture still totals 25 marks",
+    REAL.reduce((n, [qn]) => n + fx(qn).marks, 0) === 25,
+    REAL.reduce((n, [qn]) => n + fx(qn).marks, 0));
+
   const paper: ReconcilableQuestion[] = [
     // mcq, marked outright
     { confidence: "deterministic", maxMarks: 1, assessedOutOf: 1, provisionalOutOf: 0, unassessedMarks: 0 },
