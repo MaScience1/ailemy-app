@@ -2,13 +2,29 @@
 -- 0034 — mark_scheme_items: drop accepted_alternatives, add point_kind
 -- ============================================================================
 --
--- ⚠ PROPOSED. NOT APPLIED. NOT TO BE APPLIED WITHOUT READING THE CHECK BELOW.
+-- ⚠ APPLIED 2026-08-10, by hand in the SQL Editor. VERIFIED — all four checks:
 --
--- The _PROPOSED_ prefix is load-bearing: a rebuild replays this folder in
--- order, so a file sitting under its plain number that has not been run
--- manufactures the exact drift that naming rule exists to prevent. Rename to
--- 0034_drop_accepted_alternatives_and_add_point_kind.sql only once it is live,
--- and write the verification result into this header at the same time.
+--   1. Column census returned exactly one row: point_kind | YES | text.
+--      accepted_alternatives is gone.
+--   2. The CHECK rejected point_kind = 'nonsense' with ERROR 23514, and the
+--      ROLLBACK left nothing behind.
+--   3. point_kind = 'state_symbols' was accepted, then rolled back.
+--   4. The DO guard passed rather than aborting: 25 mark_scheme_items rows,
+--      0 holding a non-empty accepted_alternatives, confirmed read-only before
+--      the run.
+--
+-- Before applying, both repositories were audited for references to the
+-- dropped column — ailemy-app and ailemy-mobile, which share this database.
+-- Nothing outside the migration folder referenced it. The three hits in mobile
+-- are a denylist of field NAMES (src/lib/marking.ts), an in-memory test of that
+-- denylist (proofs/exam-session.ts), and a census that prints rather than
+-- asserts and does not probe this column on this table (proofs/probe-schema.sh).
+--
+-- ⚠ 0029 MUST NOT BE RE-RUN STANDALONE NOW. Its line 209 is a live
+-- COMMENT ON COLUMN naming the dropped column, inside one BEGIN..COMMIT — a
+-- standalone re-run raises 42703 and rolls back the guidance / accept[] /
+-- reject[] columns it adds. An in-order rebuild is unaffected. A warning to
+-- that effect is at the top of 0029.
 --
 -- ----------------------------------------------------------------------------
 -- PART 1 — DROP accepted_alternatives

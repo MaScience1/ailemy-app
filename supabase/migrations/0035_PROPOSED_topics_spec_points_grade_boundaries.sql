@@ -148,6 +148,14 @@ COMMENT ON COLUMN public.grade_boundaries.boundary_source IS
 -- topics of a question on a live paper for the same reason they may read the
 -- question.
 
+-- ⚠ THE OUTER COLUMN IS QUALIFIED IN EVERY SUBQUERY BELOW, and that is not
+-- style. An unqualified `question_id` inside `SELECT 1 FROM paper_questions q
+-- JOIN past_papers p ...` resolves to the OUTER table today only because
+-- paper_questions has no column of that name. The day a migration adds one,
+-- Postgres silently prefers the inner scope, the correlation disappears, and
+-- the policy becomes "does ANY live paper have ANY question" — which is true
+-- for every row. It would not error, and no test would notice.
+
 ALTER TABLE public.question_topics ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS question_topics_read ON public.question_topics;
@@ -158,7 +166,7 @@ CREATE POLICY question_topics_read
     OR EXISTS (
       SELECT 1 FROM public.paper_questions q
         JOIN public.past_papers p ON p.id = q.paper_id
-       WHERE q.id = question_id AND p.status = 'live'
+       WHERE q.id = question_topics.question_id AND p.status = 'live'
     )
   );
 
@@ -178,7 +186,7 @@ CREATE POLICY question_spec_points_read
     OR EXISTS (
       SELECT 1 FROM public.paper_questions q
         JOIN public.past_papers p ON p.id = q.paper_id
-       WHERE q.id = question_id AND p.status = 'live'
+       WHERE q.id = question_spec_points.question_id AND p.status = 'live'
     )
   );
 
@@ -196,7 +204,8 @@ CREATE POLICY grade_boundaries_read
   USING (
     public.has_role('teacher') OR public.has_role('marker') OR public.has_role('admin')
     OR EXISTS (
-      SELECT 1 FROM public.past_papers p WHERE p.id = paper_id AND p.status = 'live'
+      SELECT 1 FROM public.past_papers p
+       WHERE p.id = grade_boundaries.paper_id AND p.status = 'live'
     )
   );
 
@@ -287,11 +296,20 @@ COMMIT;
 --    WHERE question_number = '20(a)'
 --      AND paper_id = 'f7577346-3c45-4b3a-b944-d52542863358';
 --
+--   ⚠ 58 AND 51 ARE INVENTED. Nobody has looked up the real May-June 2025
+--   boundaries. The first draft of this block cited "Pearson published
+--   boundaries" on a made-up number with boundary_source = 'official' — which,
+--   if the row survived, would have had the results screen report an official
+--   grade and name the awarding body for a figure we made up. That is the exact
+--   failure boundary_source exists to prevent, and a plausible source_note
+--   makes it worse, not better. Both notes now say what these rows are, and
+--   step (f2) below deletes them and proves they are gone.
+--
 --   INSERT INTO public.grade_boundaries (paper_id, grade, raw_mark_min, boundary_source, source_note)
 --   VALUES ('f7577346-3c45-4b3a-b944-d52542863358', 'A', 58, 'official',
---           'Pearson published boundaries, WCH11/01 May-June 2025'),
+--           'TEST ROW - DELETE - not a real boundary'),
 --          ('f7577346-3c45-4b3a-b944-d52542863358', 'B', 51, 'estimated',
---           'interpolated from adjacent sessions — NOT published');
+--           'TEST ROW - DELETE - not a real boundary');
 --
 --   SELECT count(*) FROM public.question_topics;       -- expect 2
 --   SELECT count(*) FROM public.question_spec_points;  -- expect 1
@@ -322,9 +340,82 @@ COMMIT;
 --     WRITE. If the reads return 0 rows here while (e) counted 2/1/2, the read
 --     policy is broken, not safe.
 --
--- (g) And that a NON-LIVE paper's rows stay hidden from a student. As service
---     role, flip a paper to 'draft' and re-run the student select; expect its
---     rows to disappear and reappear when set back to 'live'.
+-- (f2) ⚠ MANDATORY CLEANUP — DO THIS BEFORE YOU CLOSE THE EDITOR.
+--
+--      Everything (e) inserted is fabricated: two invented boundaries, a spec
+--      code nobody mapped, two topics nobody authored. They are indistinguishable
+--      from real content to every reader downstream, and the boundary rows are
+--      the dangerous ones — a row with boundary_source = 'official' is a claim
+--      about a real examination.
+--
+--      Delete by the paper this block used, then PROVE the tables are empty.
+--      A delete that reports success is not evidence; the count is.
+--
+--   DELETE FROM public.question_topics
+--    WHERE question_id IN (SELECT id FROM public.paper_questions
+--                           WHERE paper_id = 'f7577346-3c45-4b3a-b944-d52542863358');
+--
+--   DELETE FROM public.question_spec_points
+--    WHERE question_id IN (SELECT id FROM public.paper_questions
+--                           WHERE paper_id = 'f7577346-3c45-4b3a-b944-d52542863358');
+--
+--   DELETE FROM public.grade_boundaries
+--    WHERE paper_id = 'f7577346-3c45-4b3a-b944-d52542863358';
+--
+--   -- All three MUST be 0. If any is not, something else wrote to these
+--   -- tables during the check and you need to look before going further.
+--   SELECT 'question_topics'      AS t, count(*) FROM public.question_topics
+--   UNION ALL
+--   SELECT 'question_spec_points',      count(*) FROM public.question_spec_points
+--   UNION ALL
+--   SELECT 'grade_boundaries',          count(*) FROM public.grade_boundaries;
+--
+--   -- And specifically: no boundary anywhere still claims to be official.
+--   -- MUST return zero rows.
+--   SELECT id, paper_id, grade, raw_mark_min, source_note
+--     FROM public.grade_boundaries WHERE boundary_source = 'official';
+--
+-- ----------------------------------------------------------------------------
+-- (g) ⚠ OPTIONAL, AND IT TAKES YOUR LIVE PAPER OFF THE SITE. SKIP IT.
+-- ----------------------------------------------------------------------------
+--     This proves the negative case — that a NON-live paper's rows stay hidden
+--     from a student — by flipping WCH11/01 to 'draft'. WCH11/01 is currently
+--     the only live paper, so for however long the check takes, the site has
+--     nothing on it. If anything interrupts you between the flip and the
+--     restore, it stays that way.
+--
+--     WHAT SKIPPING COSTS, stated so the decision is informed: (f) already
+--     evidences the positive case — rows for a LIVE paper are visible to a
+--     student. What goes unproven is the `p.status = 'live'` branch, which is
+--     copied verbatim from paper_questions_read and has been in production
+--     since 0028. I would skip it.
+--
+--     IF YOU RUN IT ANYWAY: the restore is a DO block that asserts, not a bare
+--     UPDATE, so the paper cannot be left in draft by a statement that silently
+--     matched nothing.
+--
+--   -- 1. flip, and confirm it took
+--   UPDATE public.past_papers SET status = 'draft'
+--    WHERE id = 'f7577346-3c45-4b3a-b944-d52542863358'
+--   RETURNING id, status;                      -- expect one row, status=draft
+--
+--   -- 2. student session: the three selects must now return 0 rows
+--
+--   -- 3. RESTORE IMMEDIATELY. Raises rather than returning if it did not work.
+--   DO $$
+--   DECLARE s text;
+--   BEGIN
+--     UPDATE public.past_papers SET status = 'live'
+--      WHERE id = 'f7577346-3c45-4b3a-b944-d52542863358';
+--     SELECT status INTO s FROM public.past_papers
+--      WHERE id = 'f7577346-3c45-4b3a-b944-d52542863358';
+--     IF s IS DISTINCT FROM 'live' THEN
+--       RAISE EXCEPTION 'PAPER LEFT AT %, NOT live — restore it by hand NOW', s;
+--     END IF;
+--     RAISE NOTICE 'paper restored to live';
+--   END $$;
+--
+--   -- 4. and see it on the site before you walk away.
 --
 -- (h) 0028/0031's existing policies are untouched; this file adds six.
 --
