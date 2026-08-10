@@ -792,8 +792,7 @@ export async function markSubmittedAttempt(
 
         const eqAwarded = clamp(eq.awarded, qa.max_marks, q.question_number);
         try {
-          await persist(db, qa.id, eqAwarded, "deterministic", eq.points.map(byTier1));
-          persistedRows += 1;
+          persistedRows += await persist(db, qa.id, eqAwarded, "deterministic", eq.points.map(byTier1));
         } catch (error) {
           marked.push(persistFailed(qa, q, tier, error));
           continue;
@@ -976,8 +975,7 @@ export async function markSubmittedAttempt(
         // awardedMarks carries the provisional figure and confidence says so,
         // which keeps it out of the confirmed total.
         try {
-          await persist(db, qa.id, outcome.awarded, "requires_review", outcome.points.map(byTier2));
-          persistedRows += 1;
+          persistedRows += await persist(db, qa.id, outcome.awarded, "requires_review", outcome.points.map(byTier2));
         } catch (error) {
           marked.push(persistFailed(qa, q, tier, error));
           continue;
@@ -1010,11 +1008,10 @@ export async function markSubmittedAttempt(
       // ONE persist call for both tiers: two would each write awarded_marks,
       // and the second would overwrite the first.
       try {
-        await persist(db, qa.id, awarded, "deterministic", [
+        persistedRows += await persist(db, qa.id, awarded, "deterministic", [
           ...result.points.map(byTier1),
           ...outcome.points.map(byTier2),
         ]);
-        persistedRows += 1;
       } catch (error) {
         marked.push(persistFailed(qa, q, tier, error));
         continue;
@@ -1097,8 +1094,7 @@ export async function markSubmittedAttempt(
     const text = response && response.kind === "text" ? response.text.trim() : "";
     if (!text) {
       try {
-        await persist(db, qa.id, 0, "requires_review", []);
-        persistedRows += 1;
+        persistedRows += await persist(db, qa.id, 0, "requires_review", []);
       } catch (error) {
         marked.push(persistFailed(qa, q, tier, error));
         continue;
@@ -1119,6 +1115,42 @@ export async function markSubmittedAttempt(
         provisionalOutOf: 0,
         provisionalPoints: [],
         note: "No answer was given.",
+      });
+      continue;
+    }
+
+    // ⚠ THE SAME PROTECTION THE METHOD PASS GOT, EXTENDED TO WHOLE AI-MARKED
+    // QUESTIONS. Marking re-runs on every results-page load, so a long_text
+    // answer was re-sampled each time: refresh and 2/2 could become 1/2 and
+    // back, each load overwriting the last through the same upsert key. This
+    // was pre-existing rather than introduced by working capture, and it is the
+    // identical defect — a mark that changes when nothing about the answer did.
+    const priorAi = priorByQa.get(qa.id);
+    const storedAi = criteria
+      .map((c) => {
+        const hit = priorAi?.get(c.point_code);
+        return hit ? { pointCode: c.point_code, awarded: hit.awarded, evidence: hit.evidence } : null;
+      })
+      .filter((v): v is PointVerdict => v !== null);
+
+    if (criteria.length > 0 && storedAi.length === criteria.length) {
+      const already = clamp(storedAi.filter((p) => p.awarded).length, qa.max_marks, q.question_number);
+      marked.push({
+        questionAttemptId: qa.id,
+        questionNumber: q.question_number,
+        answerType: q.answer_type,
+        maxMarks: qa.max_marks,
+        awardedMarks: already,
+        assessedOutOf: qa.max_marks,
+        unassessedMarks: 0,
+        unassessedReason: null,
+        tier,
+        confidence: "requires_review",
+        points: storedAi,
+        provisionalMarks: already,
+        provisionalOutOf: storedAi.length,
+        provisionalPoints: storedAi,
+        note: null,
       });
       continue;
     }
@@ -1172,8 +1204,7 @@ export async function markSubmittedAttempt(
     // 'requires_review' is hardcoded, not derived from anything the model
     // returned. A model cannot promote its own marking to authoritative.
     try {
-      await persist(db, qa.id, awarded, "requires_review", points.map(byTier2));
-      persistedRows += 1;
+      persistedRows += await persist(db, qa.id, awarded, "requires_review", points.map(byTier2));
     } catch (error) {
       marked.push(persistFailed(qa, q, tier, error));
       continue;
@@ -1358,7 +1389,8 @@ async function persist(
   awarded: number,
   confidence: "deterministic" | "requires_review",
   points: PersistablePoint[],
-): Promise<void> {
+): Promise<number> {
+  let rowsWritten = 0;
   if (points.length > 0) {
     const { data, error } = await db
       .from("marking_results")
@@ -1384,6 +1416,7 @@ async function persist(
         `wrote ${data?.length ?? 0} of ${points.length} points`,
       );
     }
+    rowsWritten = data?.length ?? 0;
   }
 
   // ⚠ .select("id") IS LOAD-BEARING. Without it PostgREST returns neither rows
@@ -1401,4 +1434,10 @@ async function persist(
   if ((data?.length ?? 0) !== 1) {
     throw new PersistError("question_attempts", "row_count", `updated ${data?.length ?? 0} rows, expected 1`);
   }
+  // ⚠ ROWS, NOT CALLS. MarkingReconciliation.persisted documents itself as
+  // "Rows this run wrote AND read back. NOT the number of verdicts" — and the
+  // caller was incrementing it once per persist() call. One call now covers
+  // between zero and six marking_results rows, so an audit reading that number
+  // was reading something other than what it says.
+  return rowsWritten;
 }
