@@ -17,6 +17,8 @@ export async function saveQuestionRulingsAction(
   paperSlug: string,
   questionNumber: string,
   rulings: QuestionRulings,
+  /** The revision this tab last saw for this question. See saveRulings. */
+  baseRevision?: number,
 ): Promise<SaveResult> {
   if (!paperSlug || !questionNumber) {
     return { ok: false, error: "Missing paper or question." };
@@ -35,7 +37,7 @@ export async function saveQuestionRulingsAction(
     };
   }
 
-  const result = await saveRulings(paperSlug, questionNumber, rulings);
+  const result = await saveRulings(paperSlug, questionNumber, rulings, baseRevision);
   if (result.ok) {
     revalidatePath(`/admin/papers/${paperSlug}/markscheme`);
   }

@@ -59,6 +59,22 @@ const LINE_CHOICES: { kind: LineKind; label: string; hint: string }[] = [
   { kind: "discard", label: "Discard", hint: "carries nothing we should store" },
 ];
 
+/**
+ * Turn what is stored on disk back into the shape the editor holds.
+ *
+ * Stored rulings and the in-progress draft are deliberately the SAME shape, so
+ * a reload is a seed rather than a merge. A merge would need a rule for what
+ * happens when the two disagree, and the honest rule — disk wins, because it
+ * is the only copy that survived — is what seeding already does.
+ */
+function seedDraft(rulings: ReviewData["rulings"]): Record<string, Draft> {
+  const out: Record<string, Draft> = {};
+  for (const [qn, book] of Object.entries(rulings ?? {})) {
+    out[qn] = { points: book.points ?? {}, lines: book.lines ?? {} };
+  }
+  return out;
+}
+
 export function MarkSchemeReview({ data }: { data: ReviewData }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const shellRef = useRef<HTMLDivElement | null>(null);
@@ -83,9 +99,43 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
 
   const [selected, setSelected] = useState<string>(data.items[0]?.question.questionNumber ?? "");
   const [highlightY, setHighlightY] = useState<number | null>(null);
-  const [draft, setDraft] = useState<Record<string, Draft>>({});
+
+  /**
+   * ⚠ SEEDED FROM WHAT IS ON DISK, NOT EMPTY.
+   *
+   * This used to start `{}`. Rulings persisted correctly and the page reloaded
+   * showing none of them: every radio unselected, every line counted as still
+   * needing a decision. Nothing was lost — but a reviewer cannot tell "your
+   * work is safe, the screen just cannot see it" from "your work is gone", and
+   * either way they rule on all 68 lines again.
+   */
+  const [draft, setDraft] = useState<Record<string, Draft>>(() => seedDraft(data.rulings));
+
+  /**
+   * The revision each question was at when this tab last saw it. Sent with
+   * every save so a second tab cannot overwrite this one silently, and updated
+   * from the server's reply on success.
+   */
+  const [revisions, setRevisions] = useState<Record<string, number>>(() =>
+    Object.fromEntries(Object.entries(data.rulings).map(([qn, r]) => [qn, r.revision ?? 0])),
+  );
+
+  /**
+   * Questions edited since their last successful save.
+   *
+   * ⚠ THE COUNT ON SCREEN IS DERIVED FROM STORED STATE; this is what keeps
+   * that honest. Without it, ruling a line would decrement "remaining" the
+   * instant it was clicked, so a reviewer whose save had failed — or who never
+   * pressed save — would watch the number reach zero with the work still only
+   * in a browser tab. The number now means "ruled AND on disk", and unsaved
+   * work is reported separately rather than folded into it.
+   */
+  const [dirty, setDirty] = useState<Record<string, true>>({});
+
   const [saving, setSaving] = useState<string | null>(null);
-  const [notice, setNotice] = useState<{ kind: "ok" | "bad"; text: string } | null>(null);
+  const [notice, setNotice] = useState<
+    { kind: "ok" | "bad" | "conflict"; text: string } | null
+  >(null);
   const [onlyUnruled, setOnlyUnruled] = useState(false);
 
   // ── measure, synchronously on mount ──────────────────────────────────────
@@ -212,7 +262,8 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
     [goTo],
   );
 
-  const ruleLine = (qn: string, line: ProposedLine, kind: LineKind) =>
+  const ruleLine = (qn: string, line: ProposedLine, kind: LineKind) => {
+    setDirty((s) => ({ ...s, [qn]: true }));
     setDraft((d) => {
       const cur = d[qn] ?? { points: {}, lines: {} };
       return {
@@ -220,8 +271,10 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
         [qn]: { ...cur, lines: { ...cur.lines, [line.sourceLine]: { ...cur.lines[line.sourceLine], kind } } },
       };
     });
+  };
 
-  const editLine = (qn: string, line: ProposedLine, editedText: string) =>
+  const editLine = (qn: string, line: ProposedLine, editedText: string) => {
+    setDirty((s) => ({ ...s, [qn]: true }));
     setDraft((d) => {
       const cur = d[qn] ?? { points: {}, lines: {} };
       const existing = cur.lines[line.sourceLine];
@@ -231,20 +284,36 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
         [qn]: { ...cur, lines: { ...cur.lines, [line.sourceLine]: { ...existing, editedText } } },
       };
     });
+  };
 
-  const rulePoint = (qn: string, code: string, ruling: PointRuling) =>
+  const rulePoint = (qn: string, code: string, ruling: PointRuling) => {
+    setDirty((s) => ({ ...s, [qn]: true }));
     setDraft((d) => {
       const cur = d[qn] ?? { points: {}, lines: {} };
       return { ...d, [qn]: { ...cur, points: { ...cur.points, [code]: ruling } } };
     });
+  };
 
+  /** Lines this tab has a decision for, saved or not. Drives the editor. */
   const localUnruled = (item: ReviewItem) => {
     const d = draftFor(item.question.questionNumber);
     return item.question.requiresRuling.filter((l) => !d.lines[l.sourceLine]).length;
   };
 
-  const totalRemaining =
-    data.items.reduce((n, i) => n + localUnruled(i), 0);
+  /**
+   * ⚠ THE HEADLINE COUNT COMES FROM THE SERVER, NOT FROM THIS TAB.
+   *
+   * `data.unruled` is computed by countUnruled() over what was read off disk.
+   * Counting the draft instead let the number drift from reality in the one
+   * direction that matters: downward. A reviewer clicking through lines
+   * watched "68 remaining" fall to zero while every one of those decisions
+   * lived only in a browser tab, and a refresh would have put it straight back
+   * to 68 with no explanation.
+   *
+   * Unsaved work is REPORTED, never SUBTRACTED.
+   */
+  const storedRemaining = data.unruled;
+  const unsavedQuestions = Object.keys(dirty).length;
 
   const save = async (item: ReviewItem, approve: boolean) => {
     const qn = item.question.questionNumber;
@@ -258,14 +327,105 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
         ? { approvedAt: new Date().toISOString(), approvedBy: "self" }
         : {}),
     };
-    const res = await saveQuestionRulingsAction(data.paperSlug, qn, rulings);
+    const res = await saveQuestionRulingsAction(data.paperSlug, qn, rulings, revisions[qn] ?? 0);
     setSaving(null);
-    setNotice(
-      res.ok
-        ? { kind: "ok", text: `${qn} saved${approve ? " and approved" : ""}.` }
-        : { kind: "bad", text: res.error },
-    );
+
+    if (res.ok) {
+      setRevisions((r) => ({ ...r, [qn]: res.revision }));
+      setDirty((s) => {
+        const next = { ...s };
+        delete next[qn];
+        return next;
+      });
+      setNotice({ kind: "ok", text: `${qn} saved${approve ? " and approved" : ""}.` });
+      return;
+    }
+
+    // ⚠ THE DRAFT IS NOT TOUCHED ON FAILURE, AND THE QUESTION STAYS DIRTY.
+    //
+    // Reverting to the last saved state would be the tidy thing to do and
+    // would throw away the reviewer's actual work — the ruling they just made,
+    // which the server declined to store. It stays on screen so they can
+    // retry, copy it out, or resolve the conflict. `dirty` stays set for the
+    // same reason: the whole point of that flag is to say this question is not
+    // safely on disk, and a failed save is exactly when that is true.
+    setNotice({
+      kind: res.conflict ? "conflict" : "bad",
+      text: res.error,
+    });
   };
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // KEYBOARD — because 68 lines with a mouse is an hour that did not need to be
+  // ══════════════════════════════════════════════════════════════════════════
+  //
+  // ⚠ 1-5 RULES THE FIRST LINE THAT STILL NEEDS A DECISION, and the list is
+  // ordered doubt-first, so the keys walk down the queue on their own: each
+  // press consumes the line it answered and the next one becomes first. That is
+  // the whole speed-up — no pointing, no scrolling, no hunting for the next
+  // unanswered radio.
+  //
+  // ⚠ IT DOES NOT SAVE, AND IT DOES NOT APPROVE. Approving needs the source
+  // page painted and on screen (see the header of this file); a key that could
+  // approve would be a key that skips the one check this tool exists to
+  // enforce. Cmd/Ctrl+S saves. Approval stays a deliberate click.
+  const keyRef = useRef({ current, ruleLine, save, items, selectQuestion });
+  keyRef.current = { current, ruleLine, save, items, selectQuestion };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      // Never steal a keystroke from something the reviewer is typing into —
+      // the edit-the-criterion textareas are the reason this tool is usable.
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      if (e.altKey) return;
+
+      const { current: cur, ruleLine: rule, save: doSave, items: list, selectQuestion: pick } =
+        keyRef.current;
+      if (!cur) return;
+
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        void doSave(cur, false);
+        return;
+      }
+      if (e.metaKey || e.ctrlKey) return;
+
+      const idx = list.findIndex((i) => i.question.questionNumber === cur.question.questionNumber);
+      if (e.key === "j" || e.key === "ArrowDown") {
+        e.preventDefault();
+        if (idx >= 0 && idx < list.length - 1) pick(list[idx + 1]);
+        return;
+      }
+      if (e.key === "k" || e.key === "ArrowUp") {
+        e.preventDefault();
+        if (idx > 0) pick(list[idx - 1]);
+        return;
+      }
+
+      const n = Number(e.key);
+      if (Number.isInteger(n) && n >= 1 && n <= LINE_CHOICES.length) {
+        const qn = cur.question.questionNumber;
+        const d = draftFor(qn);
+        const next = cur.question.requiresRuling.find((l) => !d.lines[l.sourceLine]);
+        if (!next) return;
+        e.preventDefault();
+        rule(qn, next, LINE_CHOICES[n - 1].kind);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [draftFor]);
+
+  // ⚠ THE LAST LINE OF DEFENCE AGAINST LOSING A SITTING. A ruling that has not
+  // been saved lives only in this tab; a stray Cmd+W or a reload takes it. The
+  // browser's own prompt is the only thing that can interrupt that.
+  useEffect(() => {
+    if (unsavedQuestions === 0) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [unsavedQuestions]);
 
   const verified = new Set(data.verifiedQuestions);
 
@@ -276,12 +436,25 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
         <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-slate-500">
           Rulings remaining
         </span>
-        <span className={`font-mono text-2xl ${totalRemaining === 0 ? "text-emerald-700" : "text-slate-900"}`}>
-          {totalRemaining}
+        <span className={`font-mono text-2xl ${storedRemaining === 0 ? "text-emerald-700" : "text-slate-900"}`}>
+          {storedRemaining}
         </span>
         <span className="text-sm text-slate-600">
           {data.approved} of {data.total} question(s) approved
         </span>
+
+        {/* ⚠ REPORTED SEPARATELY, NEVER SUBTRACTED FROM THE COUNT ABOVE.
+            The number on the left means "still needs a ruling, on disk". This
+            one means "ruled in this tab and not yet stored" — which is work
+            that a refresh would lose, and the reviewer is the only one who can
+            decide to press save. Folding the two together is what made the
+            count reach zero while nothing had been written. */}
+        {unsavedQuestions > 0 && (
+          <span className="flex items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-sm text-amber-900">
+            <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+            {unsavedQuestions} question{unsavedQuestions === 1 ? "" : "s"} with unsaved rulings
+          </span>
+        )}
         <label className="ml-auto flex items-center gap-2 text-sm text-slate-700">
           <input
             type="checkbox"

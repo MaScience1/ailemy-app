@@ -11,6 +11,7 @@ import {
   sortForReview,
   countUnruled,
   countApproved,
+  nextRevision,
   type ProposalSet,
   type RulingBook,
   type ReviewItem,
@@ -58,6 +59,8 @@ export type ReviewData = {
   unruled: number;
   approved: number;
   total: number;
+  /** Everything already ruled, so a refresh restores the screen. */
+  rulings: RulingBook;
   /** Questions already transcribed by hand and seeded — the accuracy evidence. */
   verifiedQuestions: string[];
   roles: string[];
@@ -107,18 +110,60 @@ export async function getMarkSchemeReview(paperSlug: string): Promise<ReviewResu
   }
 
   const db = await createClient();
-  const { data: paper, error } = await db
+
+  // ⚠ A SLUG IS NOT UNIQUE, AND .maybeSingle() ON ONE IS A BUG.
+  //
+  // This is the same lesson regions.ts already learned, and this file was
+  // written afterwards without inheriting it — a second lookup instead of a
+  // reuse. `slug` is unique within a COURSE: "unit-1-may-june-2025" is
+  // Chemistry WCH11/01, Physics WPH11/01 and Biology WBI11/01. Across the
+  // catalogue 72 of 90 slugs sit on more than one row.
+  //
+  // So .maybeSingle() raised PGRST116 — "multiple (or no) rows returned" — and
+  // the page rendered "We couldn't load this paper" for EVERY paper. It failed
+  // in the right direction, which is why it was survivable: it refused rather
+  // than picking a subject at random and showing a Chemistry reviewer the
+  // Biology mark scheme. But it never once worked.
+  //
+  // An id needs no guess. A slug is disambiguated the way regions.ts does it:
+  // prefer the candidate that actually has a proposal set and questions.
+  const looksLikeId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    paperSlug,
+  );
+  const query = db
     .from("past_papers")
-    .select("id, slug, paper_name, paper_code, markscheme_pdf_path")
-    .eq("slug", paperSlug)
-    .maybeSingle();
+    .select("id, slug, paper_name, paper_code, markscheme_pdf_path");
+  const { data: papers, error } = await (looksLikeId
+    ? query.eq("id", paperSlug)
+    : query.eq("slug", paperSlug));
 
   // ⚠ AN ERROR IS OURS; AN ABSENT ROW IS THEIRS. Folding them together sends
   // someone hunting for a catalogue problem that does not exist.
   if (error) {
     return { ok: false, reason: "unavailable", detail: `${error.code ?? "?"}: ${error.message}` };
   }
-  if (!paper) return { ok: false, reason: "not_found" };
+  const candidates = (papers ?? []) as {
+    id: string;
+    slug: string;
+    paper_name: string;
+    paper_code: string | null;
+    markscheme_pdf_path: string | null;
+  }[];
+  if (candidates.length === 0) return { ok: false, reason: "not_found" };
+
+  // With several subjects sharing the slug, the one this tool means is the one
+  // whose questions have been seeded — an unseeded paper has nothing for a
+  // mark scheme to attach to. That is a guess, and the way not to guess is to
+  // put the id in the URL.
+  let paper = candidates[0];
+  if (candidates.length > 1) {
+    const { data: counts } = await db
+      .from("paper_questions")
+      .select("paper_id")
+      .in("paper_id", candidates.map((p) => p.id));
+    const seeded = new Set((counts ?? []).map((r: { paper_id: string }) => r.paper_id));
+    paper = candidates.find((p) => seeded.has(p.id)) ?? candidates[0];
+  }
 
   let file: StoredFile;
   try {
@@ -144,6 +189,16 @@ export async function getMarkSchemeReview(paperSlug: string): Promise<ReviewResu
       paperCode: paper.paper_code,
       markSchemeUrl: getPaperPublicUrl(paper.markscheme_pdf_path),
       items,
+      // ⚠ THE STORED RULINGS THEMSELVES, NOT JUST THE COUNTS.
+      //
+      // The client seeds its draft from this on mount, which is what makes a
+      // mid-session refresh survivable. Without it the page came back with an
+      // empty draft: every radio unselected and every line counted as still
+      // needing a ruling, on a question that had been saved ten minutes
+      // earlier. The work was on disk the whole time — the screen just could
+      // not see it, which is the version of losing an hour that also makes you
+      // do the hour again.
+      rulings: file.rulings ?? {},
       unruled: countUnruled(items),
       approved: countApproved(items),
       total: items.length,
@@ -155,7 +210,15 @@ export async function getMarkSchemeReview(paperSlug: string): Promise<ReviewResu
   };
 }
 
-export type SaveResult = { ok: true } | { ok: false; error: string };
+export type SaveResult =
+  | { ok: true; revision: number }
+  /**
+   * `conflict` is set only when another writer got there first. Every other
+   * failure is a plain error. They are distinguished because the RECOVERY is
+   * different: a conflict means "look at the other version before you retry",
+   * everything else means "try again".
+   */
+  | { ok: false; error: string; conflict?: boolean };
 
 /**
  * Persist one question's rulings.
@@ -169,6 +232,19 @@ export async function saveRulings(
   paperSlug: string,
   questionNumber: string,
   rulings: RulingBook[string],
+  /**
+   * The revision this client last SAW for this question. Undefined means "I
+   * believe nobody has ruled on it yet".
+   *
+   * ⚠ THIS IS THE ONLY THING STANDING BETWEEN TWO TABS AND A SILENT
+   * OVERWRITE. The read-modify-write below re-reads the file, so a save to
+   * question 14 never clobbers question 15 — but two tabs on the SAME question
+   * were last-write-wins, and the tab that lost was never told. A reviewer who
+   * rules on 22(c) in one tab, refines it in another, and saves the first
+   * would have watched the refinement disappear with a green "saved" next to
+   * it.
+   */
+  baseRevision?: number,
 ): Promise<SaveResult> {
   const staff = await getStaffStatus();
   // ⚠ THE SAME PAIR 0028's write policies check. A page that let a teacher save
@@ -198,12 +274,31 @@ export async function saveRulings(
     return { ok: false, error: `${questionNumber} is not in this proposal set.` };
   }
 
-  file.rulings = { ...(file.rulings ?? {}), [questionNumber]: rulings };
+  // ⚠ COMPARED AGAINST WHAT IS ON DISK RIGHT NOW, re-read a few lines above.
+  // Comparing against anything the client sent would be asking the tab whose
+  // write we are trying to validate whether its write is valid.
+  const verdict = nextRevision((file.rulings ?? {})[questionNumber], baseRevision);
+  if (!verdict.ok) {
+    return {
+      ok: false,
+      conflict: true,
+      error:
+        `${questionNumber} was changed somewhere else after this tab loaded it ` +
+        `(this tab has revision ${verdict.clientRevision}, the file has ${verdict.diskRevision}). ` +
+        `Your ruling has NOT been saved and is still on screen. Reload to see the other version — ` +
+        `reloading will replace what is in front of you, so copy anything you want to keep first.`,
+    };
+  }
+
+  file.rulings = {
+    ...(file.rulings ?? {}),
+    [questionNumber]: { ...rulings, revision: verdict.revision },
+  };
 
   try {
     await writeFile(path, JSON.stringify(file, null, 2) + "\n", "utf8");
   } catch (e) {
     return { ok: false, error: `Could not write the proposals file: ${e instanceof Error ? e.message : String(e)}` };
   }
-  return { ok: true };
+  return { ok: true, revision: verdict.revision };
 }

@@ -137,9 +137,59 @@ export type QuestionRulings = {
    */
   approvedAt?: string;
   approvedBy?: string;
+  /**
+   * Bumped on every successful save of THIS question.
+   *
+   * ⚠ PER QUESTION, NOT PER FILE, AND THAT IS THE WHOLE DESIGN. A reviewer
+   * ruling on 68 lines will have two tabs open — one to check a page against
+   * another — and a file-wide revision would make every save in tab A reject
+   * the next save in tab B, on a question tab B is not even touching. False
+   * conflicts get clicked through, and a person trained to click through
+   * conflicts will click through the real one.
+   *
+   * Absent on rulings written before this existed; treated as 0.
+   */
+  revision?: number;
 };
 
 export type RulingBook = Record<string, QuestionRulings>;
+
+/**
+ * May this save proceed, and at what revision?
+ *
+ * Pure, and separated from the file I/O in markscheme-review.ts so it can be
+ * tested without a filesystem or a session. The rule it encodes:
+ *
+ *   nothing on disk        first ruling for this question — accept, revision 1.
+ *                          A client claiming a base revision for a question
+ *                          that does not exist is stale in the other
+ *                          direction (someone deleted it); accepting is right,
+ *                          because the ruling in front of the reviewer is the
+ *                          only one that exists now.
+ *   revisions agree        this tab is up to date — accept, revision + 1.
+ *   revisions differ       somebody else wrote after this tab loaded. REFUSE.
+ *
+ * ⚠ REFUSE, NOT MERGE. Two people's rulings on the same line cannot be
+ * combined by a machine: they are opposite answers to the same question about
+ * chemistry, and picking one is an examiner decision. The only correct move is
+ * to stop and say so.
+ */
+export type RevisionVerdict =
+  | { ok: true; revision: number }
+  | { ok: false; conflict: true; diskRevision: number; clientRevision: number };
+
+export function nextRevision(
+  onDisk: QuestionRulings | undefined,
+  clientBase: number | undefined,
+): RevisionVerdict {
+  if (!onDisk) return { ok: true, revision: (clientBase ?? 0) + 1 };
+  const disk = onDisk.revision ?? 0;
+  const client = clientBase ?? 0;
+  if (disk !== client) {
+    return { ok: false, conflict: true, diskRevision: disk, clientRevision: client };
+  }
+  return { ok: true, revision: disk + 1 };
+}
 
 // ============================================================================
 // REVIEW ORDER — doubt first
