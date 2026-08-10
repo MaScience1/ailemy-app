@@ -569,7 +569,15 @@ export function markNumeric(
 // ============================================================================
 
 /** Answer types Tier 1 can mark for real marks. */
-export const DETERMINISTIC_TYPES = ["mcq", "numeric", "numeric_with_unit"] as const;
+export const DETERMINISTIC_TYPES = [
+  "mcq",
+  "numeric",
+  "numeric_with_unit",
+  // Marked by chemistry/equation.ts, structurally and with no model: species,
+  // balancing, states, charges and arrows. It earns its place in Tier 1 the
+  // same way the others do — the same answer always produces the same marks.
+  "chemical_equation",
+] as const;
 /** Answer types Tier 2 marks provisionally, with a model. */
 export const AI_MARKED_TYPES = ["short_text", "long_text"] as const;
 
@@ -578,7 +586,7 @@ export type MarkingTier = "deterministic" | "ai" | "unmarkable";
 export function tierFor(answerType: string): MarkingTier {
   if ((DETERMINISTIC_TYPES as readonly string[]).includes(answerType)) return "deterministic";
   if ((AI_MARKED_TYPES as readonly string[]).includes(answerType)) return "ai";
-  // structure, graph, chemical_equation, mechanism, apparatus, freehand, other:
+  // structure, graph, mechanism, apparatus, freehand, other:
   // no editor collected an answer, so there is nothing to mark. Marking these
   // would mean inventing a judgement about work the student made on paper.
   return "unmarkable";

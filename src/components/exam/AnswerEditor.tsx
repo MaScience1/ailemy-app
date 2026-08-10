@@ -26,6 +26,8 @@ export const ANSWERABLE_TYPES: readonly AnswerType[] = [
   "long_text",
   "numeric",
   "numeric_with_unit",
+  // Marked structurally by chemistry/equation.ts — see markChemicalEquation.
+  "chemical_equation",
 ];
 
 export function isAnswerable(type: AnswerType): boolean {
@@ -34,7 +36,6 @@ export function isAnswerable(type: AnswerType): boolean {
 
 /** What each not-yet-supported type is actually waiting for. */
 const PENDING_REASON: Partial<Record<AnswerType, string>> = {
-  chemical_equation: "an equation editor that understands formulae and state symbols",
   structure: "a structure canvas for drawing skeletal formulae",
   graph: "a plotting grid you can place points on",
   mechanism: "a curly-arrow mechanism canvas",
@@ -144,6 +145,48 @@ export function AnswerEditor({
         </label>
       );
     }
+
+    // ── CHEMICAL EQUATION ────────────────────────────────────────────────
+    // Plain text, deliberately. The parser accepts every form a keyboard can
+    // produce — `->`, `→`, `⇌`, `H2O` or `H₂O`, `18.5` or `37/2` — so a
+    // formula-builder UI would add friction to gain nothing, and would have to
+    // be re-learned under exam conditions. What the student types is compared
+    // structurally, never as a string.
+    case "chemical_equation":
+      return (
+        <label className="block">
+          <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-ink/50">
+            Equation
+          </span>
+          <span className="mt-1 block text-xs text-ink/55">
+            Type it however you like — <span className="font-mono">-&gt;</span> or{" "}
+            <span className="font-mono">→</span> for the arrow, and{" "}
+            <span className="font-mono">H2O</span> or{" "}
+            <span className="font-mono">H₂O</span> both read the same. Include
+            state symbols if the question asks for them.
+          </span>
+          {/*
+            ⚠ EVERY MOBILE CONVENIENCE OFF. Autocapitalise turns `n` into `N`
+            and `aq` into `Aq`; autocorrect rewrites formulae into words; smart
+            punctuation on iOS turns `->` into an em dash and straight quotes
+            into curly ones. The parser normalises a lot, but the cheapest fix
+            for "my phone changed my answer" is to stop the phone changing it.
+          */}
+          <input
+            type="text"
+            inputMode="text"
+            autoCapitalize="off"
+            autoCorrect="off"
+            autoComplete="off"
+            spellCheck={false}
+            value={value?.kind === "text" ? value.text : ""}
+            disabled={disabled}
+            onChange={(e) => onChange({ kind: "text", text: e.target.value })}
+            placeholder="e.g. CH4(g) + 2O2(g) -> CO2(g) + 2H2O(l)"
+            className={`${FIELD} mt-3 font-mono`}
+          />
+        </label>
+      );
 
     // ── NUMERIC (± UNIT) ─────────────────────────────────────────────────
     // One payload shape for both, with unit simply absent for `numeric`. The

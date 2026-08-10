@@ -406,6 +406,21 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       questionText:
         "Write a balanced equation for the complete combustion of dodecane, C12H26.\n" +
         "Include state symbols.",
+      // ⚠ THE ANSWER LIVES HERE, NOT IN THE MARK SCHEME. M1's guidance happens
+      // to print the equation, but guidance is examiner PROSE — the fixture
+      // header says the column is a merged cell whose splitting is editorial,
+      // and deterministic.ts forbids guidance reaching a student under any
+      // circumstance. question_expected_answers is where "what is correct"
+      // belongs, exactly as it is for 20(a)'s 0.0172, and it is the only thing
+      // markChemicalEquation() compares against.
+      expectedAnswer: {
+        value: "C12H26(l) + 18.5O2(g) -> 12CO2(g) + 13H2O(l)",
+        // Not applicable to an equation: the marks come from the mark-scheme
+        // POINTS, judged one at a time, never from a whole-answer match. null
+        // is the honest ruling rather than an omission — see the note on the
+        // field, which is required for exactly this reason.
+        marksOnCorrectAnswer: null,
+      },
       markScheme: [
         {
           pointCode: "M1",

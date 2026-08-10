@@ -149,7 +149,11 @@ t("numeric_with_unit → deterministic", tierFor("numeric_with_unit")==="determi
 t("long_text → ai", tierFor("long_text")==="ai");
 t("structure → unmarkable", tierFor("structure")==="unmarkable");
 t("graph → unmarkable", tierFor("graph")==="unmarkable");
-t("chemical_equation → unmarkable", tierFor("chemical_equation")==="unmarkable");
+  // ⚠ NO LONGER UNMARKABLE. chemistry/equation.ts marks these structurally —
+  // species, balancing, state symbols, charges and arrows — with no model, so
+  // they are Tier 1 and award real marks. The test that used to assert
+  // "unmarkable" here was correct until the parser existed.
+  t("chemical_equation → deterministic", tierFor("chemical_equation") === "deterministic");
 
 console.log(`\n${fail===0?"✓ ALL":"✗"} ${pass} passed, ${fail} failed`);
 process.exit(fail?1:0);
