@@ -27,6 +27,7 @@ import {
   type DeterministicResult,
 } from "../../../src/lib/exam/deterministic.ts";
 import type { ResponsePayload } from "../../../src/lib/exam/attempts.ts";
+import { WCH11_01_2025_MAY_JUNE as WCH11 } from "../wch11-01-2025-may-june.ts";
 import {
   narrowResponsePayload,
   MAX_WORKING,
@@ -41,43 +42,43 @@ const t = (n: string, c: boolean, got?: unknown) => {
 const answer = (value: string, extra: { unit?: string; working?: string } = {}): ResponsePayload =>
   ({ kind: "numeric", value, ...extra });
 
-// The two real questions this feature exists for.
-const Q20A = {
-  maxMarks: 4,
-  spec: {
-    expectedValue: "0.0172", expectedUnit: null, tolerance: 0.005,
-    acceptedValues: null, marksOnCorrectAnswer: 4, requiresUnit: false,
-  },
-  criteria: [
-    { pointCode: "M1", criterion: "conversion" }, { pointCode: "M2", criterion: "rearrangement" },
-    { pointCode: "M3", criterion: "substitution" }, { pointCode: "M4", criterion: "evaluation" },
-  ],
+// ============================================================================
+// ⚠ DERIVED FROM THE FIXTURE, NOT COPIED FROM IT
+// ============================================================================
+// These three specs used to be hand-written here: expectedValue "0.0172",
+// marksOnCorrectAnswer 4, and a list of criteria typed out from the mark
+// scheme. Every one of them is a claim about production data, and a copy keeps
+// passing while the data underneath it changes — which is exactly how
+// reconcile.test.ts came to assert that 20(b)(ii) was unmarkable for a week
+// after the parser started marking it.
+//
+// 20(a)'s marksOnCorrectAnswer is the whole point of this suite. If someone
+// re-reads the scheme and changes it from 4, "a bare correct answer still
+// scores 4/4" must stop being true HERE, loudly, rather than quietly become a
+// test of a number nobody uses.
+const fixtureQuestion = (questionNumber: string) => {
+  const q = WCH11.questions.find((x) => x.questionNumber === questionNumber);
+  if (!q) throw new Error(`${questionNumber} is not in the fixture — this suite marks against it`);
+  if (!q.expectedAnswer) throw new Error(`${questionNumber} carries no expectedAnswer`);
+  return {
+    maxMarks: q.marks,
+    spec: {
+      expectedValue: q.expectedAnswer.value,
+      expectedUnit: q.expectedAnswer.unit ?? null,
+      tolerance: q.expectedAnswer.tolerance ?? null,
+      acceptedValues: q.expectedAnswer.acceptedValues ?? null,
+      marksOnCorrectAnswer: q.expectedAnswer.marksOnCorrectAnswer,
+      requiresUnit: q.answerType === "numeric_with_unit",
+    },
+    criteria: (q.markScheme ?? []).map((p) => ({ pointCode: p.pointCode, criterion: p.criterion })),
+  };
 };
-const Q20BIII = {
-  maxMarks: 6,
-  spec: {
-    expectedValue: "307", expectedUnit: null, tolerance: 0.005,
-    acceptedValues: null, marksOnCorrectAnswer: 1, requiresUnit: false,
-  },
-  criteria: [
-    { pointCode: "M1", criterion: "litres of fuel" }, { pointCode: "M2", criterion: "mass of fuel" },
-    { pointCode: "M3", criterion: "mol of fuel" }, { pointCode: "M4", criterion: "mol of CO2" },
-    { pointCode: "M5", criterion: "mass of CO2" }, { pointCode: "M6", criterion: "mass per passenger" },
-  ],
-};
+
+const Q20A = fixtureQuestion("20(a)");
+const Q20BIII = fixtureQuestion("20(b)(iii)");
 // 22(c): marksOnCorrectAnswer deliberately null — "Correct answer with SOME
 // WORKING scores 3", a condition Tier 1 cannot test.
-const Q22C = {
-  maxMarks: 3,
-  spec: {
-    expectedValue: "3.591", expectedUnit: null, tolerance: 0.01,
-    acceptedValues: null, marksOnCorrectAnswer: null as number | null, requiresUnit: false,
-  },
-  criteria: [
-    { pointCode: "M1", criterion: "moles" }, { pointCode: "M2", criterion: "ratio" },
-    { pointCode: "M3", criterion: "mass" },
-  ],
-};
+const Q22C = fixtureQuestion("22(c)");
 
 type Question = {
   maxMarks: number;
@@ -86,6 +87,22 @@ type Question = {
 };
 const run = (q: Question, r: ResponsePayload | null): DeterministicResult =>
   markNumeric(r, q.maxMarks, q.spec, q.criteria);
+
+
+console.log("── THE FIXTURE MUST STILL HAVE THE SHAPE THIS SUITE DEPENDS ON ──");
+{
+  // ⚠ If any of these change, the assertions below stop meaning what they say.
+  // Better to fail here, naming the number, than to keep passing.
+  t("20(a) is 4 marks", Q20A.maxMarks === 4, Q20A.maxMarks);
+  t("...and scores all 4 on a correct answer with no working",
+    Q20A.spec.marksOnCorrectAnswer === 4, Q20A.spec.marksOnCorrectAnswer);
+  t("20(b)(iii) is 6 marks", Q20BIII.maxMarks === 6, Q20BIII.maxMarks);
+  t("...with 6 mark-scheme points", Q20BIII.criteria.length === 6, Q20BIII.criteria.length);
+  t("...and awards 1 for the final answer", Q20BIII.spec.marksOnCorrectAnswer === 1,
+    Q20BIII.spec.marksOnCorrectAnswer);
+  t("22(c) states NO figure for a correct answer",
+    Q22C.spec.marksOnCorrectAnswer === null, Q22C.spec.marksOnCorrectAnswer);
+}
 
 console.log("── workingFrom(): absent and blank are ONE state ──");
 {

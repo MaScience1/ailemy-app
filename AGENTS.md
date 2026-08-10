@@ -31,6 +31,38 @@ both `tsconfig.json` (the app) and `tsconfig.scripts.json` (`scripts/`, which
 the app config excludes — for a while that meant nothing under `scripts/` was
 typechecked at all).
 
+## A test that models production data must DERIVE it, never copy it
+
+`reconcile.test.ts` held a hand-written model of WCH11/01 — ten questions, their
+tariffs and their marking outcomes — introduced as a cry-wolf guard so a new
+check could not abort a healthy paper. It said 20(b)(ii) was `unmarkable`. That
+was true when it was written and stopped being true the day the chemical
+equation parser landed, and the suite kept passing for a week: **a model of the
+real paper failing at the one job it has.**
+
+The same shape was in `working.test.ts`, whose three question specs —
+`expectedValue: "0.0172"`, `marksOnCorrectAnswer: 4`, the criteria lists — were
+typed out of the fixture rather than read from it.
+
+**The rule.** Any fixture, model, or constant that stands in for production data
+has to be re-derived from the source when production changes, or it silently
+pins yesterday's behaviour. In practice:
+
+- **Import the real thing.** The fixture is a data module whose only import is
+  type-only, so `node` loads it directly in a suite. There is no reason to copy
+  a tariff, an answer type, or a mark scheme by hand.
+- **Where the model genuinely cannot be derived** — an outcome that depends on
+  what a student answered — derive the FACTS it rests on and assert them
+  separately, so a fixture change fails loudly and names the number.
+- **Prove the derivation bites by sabotage.** Change the fixture, watch the
+  suite go red, put it back. A guard that has never been seen to fail has not
+  been shown to work.
+
+⚠ That last point is not a formality. The first version of the reconcile guard
+computed its expected value FROM the thing it was checking — a tautology that
+passed for every possible input. It was found only by sabotaging the fixture
+and noticing the suite stayed green.
+
 # Database migrations
 
 ## Every `CREATE TABLE` migration must revoke three privileges

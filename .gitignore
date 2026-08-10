@@ -48,3 +48,8 @@ __pycache__/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Python bytecode. A stale __pycache__ once kept a restored test failing —
+# "accept" and "reject" are the same length, so the source size never changed.
+__pycache__/
+*.pyc

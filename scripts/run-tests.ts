@@ -48,7 +48,15 @@ const SKIP = new Set(["node_modules", ".next", ".git", "public"]);
  * not mentioned. Matching all four costs nothing and removes the blind spot.
  * `supabase/` is scanned for the same reason.
  */
-const SUITE = /\.(test|spec)\.tsx?$/;
+const SUITE = /\.(test|spec)\.(tsx?|py)$/;
+/**
+ * ⚠ PYTHON SUITES RUN TOO. The mark-scheme extractor is Python — PyMuPDF has no
+ * usable JS equivalent — and its polarity classifier decides whether "Do not
+ * accept X" is read as a permission. That exact confusion already shipped once,
+ * one layer downstream. A module the runner cannot discover is a module nothing
+ * checks, so the runner discovers it.
+ */
+const PYTHON_SUITE = /\.(test|spec)\.py$/;
 
 const BOLD = "\x1b[1m";
 const DIM = "\x1b[2m";
@@ -78,9 +86,10 @@ const TIMEOUT_MS = 60_000;
 
 function run(file: string): Promise<{ code: number; output: string }> {
   return new Promise((done) => {
+    const isPython = PYTHON_SUITE.test(file);
     const child = spawn(
-      process.execPath,
-      ["--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", file],
+      isPython ? "python3" : process.execPath,
+      isPython ? [file] : ["--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", file],
       { cwd: ROOT, stdio: ["ignore", "pipe", "pipe"] },
     );
     let output = "";
