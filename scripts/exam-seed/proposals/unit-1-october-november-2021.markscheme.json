@@ -1,0 +1,4324 @@
+{
+  "source": "/Users/muhammed/Desktop/Ailemy/Exams/7 - International edexcel from 2018 /1 - Chemistry /4 - October/2021/Unit 1 /WCH11_01_1021_MS.pdf",
+  "pages": 29,
+  "extractor": "extract-markscheme.py",
+  "status": "PROPOSALS — nothing here has been reviewed, ruled on, or written to a database",
+  "questions": [
+    {
+      "questionNumber": "1(a)",
+      "problems": [],
+      "page": 4,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 4,
+        "y": 128.6
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "The only correct answer is C (10)",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "The only correct answer is C (10)",
+          "page": 4,
+          "y": 128.6
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [
+        {
+          "text": "A is incorrect because this is the ratio by mass",
+          "page": 4,
+          "y": 158.6,
+          "sourceLine": "A is incorrect because this is the ratio by mass",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "B is incorrect because in the mass ratio the unit of kg has been ignored and this is based on 10 mg of sulfur in 1 g of fuel",
+          "page": 4,
+          "y": 188.6,
+          "sourceLine": "B is incorrect because in the mass ratio the unit of kg has been ignored and this is based on 10 mg of sulfur in 1 g of fuel",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "D is incorrect because this is based on 10 g of sulfur in 1 kg of fuel",
+          "page": 4,
+          "y": 218.5,
+          "sourceLine": "D is incorrect because this is based on 10 g of sulfur in 1 kg of fuel",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "1(b)",
+      "problems": [],
+      "page": 4,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 4,
+        "y": 279.9
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "The only correct answer is A (0.024 dm3)",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "The only correct answer is A (0.024 dm3)",
+          "page": 4,
+          "y": 279.9
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [
+        {
+          "text": "B is incorrect because the molar mass of sulfur has not been taken into account",
+          "page": 4,
+          "y": 309.9,
+          "sourceLine": "B is incorrect because the molar mass of sulfur has not been taken into account",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "C is incorrect because the mass ratio has been ignored",
+          "page": 4,
+          "y": 339.8,
+          "sourceLine": "C is incorrect because the mass ratio has been ignored",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "D is incorrect because the units of mg have been ignored",
+          "page": 4,
+          "y": 369.8,
+          "sourceLine": "D is incorrect because the units of mg have been ignored",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "2",
+      "problems": [],
+      "page": 4,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 4,
+        "y": 431.2
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "The only correct answer is D (Cl +(g) → Cl 2+(g) + e — )",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "The only correct answer is D (Cl +(g) → Cl 2+(g) + e — )",
+          "page": 4,
+          "y": 434.2
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [
+        {
+          "text": "A is incorrect because the equation represents an electron is added to an ion rather than being removed",
+          "page": 4,
+          "y": 457.6,
+          "sourceLine": "A is incorrect because the equation represents an electron is added to an ion rather than being removed",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "B is incorrect because the equation represents electrons being added to an atom",
+          "page": 4,
+          "y": 489.0,
+          "sourceLine": "B is incorrect because the equation represents electrons being added to an atom",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "C is incorrect because one electron is being removed from each of two atoms",
+          "page": 4,
+          "y": 519.0,
+          "sourceLine": "C is incorrect because one electron is being removed from each of two atoms",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "3(a)",
+      "problems": [],
+      "page": 5,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 5,
+        "y": 101.9
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "The only correct answer is B (electrons are removed from molecules or atoms and positive ions are formed)",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "The only correct answer is B (electrons are removed from molecules or atoms and positive ions are formed)",
+          "page": 5,
+          "y": 101.9
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [
+        {
+          "text": "A is incorrect because the sample has been vaporised previously",
+          "page": 5,
+          "y": 131.9,
+          "sourceLine": "A is incorrect because the sample has been vaporised previously",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "C is incorrect because electrons are not added to atoms (in this mass spectrometer)",
+          "page": 5,
+          "y": 161.8,
+          "sourceLine": "C is incorrect because electrons are not added to atoms (in this mass spectrometer)",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "D is incorrect because acceleration occurs in region S",
+          "page": 5,
+          "y": 191.7,
+          "sourceLine": "D is incorrect because acceleration occurs in region S",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "3(b)",
+      "problems": [],
+      "page": 5,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 5,
+        "y": 253.2
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "The only correct answer is A (ions with a greater mass have a smaller deflection)",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "The only correct answer is A (ions with a greater mass have a smaller deflection)",
+          "page": 5,
+          "y": 253.2
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [
+        {
+          "text": "B is incorrect because ions with a greater mass have a smaller deflection",
+          "page": 5,
+          "y": 276.6,
+          "sourceLine": "B is incorrect because ions with a greater mass have a smaller deflection",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "C is incorrect because ions with a greater charge have a greater deflection",
+          "page": 5,
+          "y": 308.0,
+          "sourceLine": "C is incorrect because ions with a greater charge have a greater deflection",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "D is incorrect because ions are not speeded up in a magnetic field",
+          "page": 5,
+          "y": 338.0,
+          "sourceLine": "D is incorrect because ions are not speeded up in a magnetic field",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "4(a)",
+      "problems": [],
+      "page": 5,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 5,
+        "y": 404.5
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "The only correct answer is B (0.029)",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "The only correct answer is B (0.029)",
+          "page": 5,
+          "y": 404.5
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [
+        {
+          "text": "A is incorrect because this is just the number of moles of sodium",
+          "page": 5,
+          "y": 434.4,
+          "sourceLine": "A is incorrect because this is just the number of moles of sodium",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "C is incorrect because this assumes the number of moles of sodium is 0.1",
+          "page": 5,
+          "y": 464.4,
+          "sourceLine": "C is incorrect because this assumes the number of moles of sodium is 0.1",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "D is incorrect because this is the concentration in g dm-3",
+          "page": 5,
+          "y": 494.4,
+          "sourceLine": "D is incorrect because this is the concentration in g dm-3",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "4(b)",
+      "problems": [],
+      "page": 6,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 6,
+        "y": 86.9
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "The only correct answer is A (120)",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "The only correct answer is A (120)",
+          "page": 6,
+          "y": 86.9
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [
+        {
+          "text": "B is incorrect because the mole ratio of 1:1 has been used",
+          "page": 6,
+          "y": 110.4,
+          "sourceLine": "B is incorrect because the mole ratio of 1:1 has been used",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "C is incorrect because the mole ratio has been taken as 2:1 rather than 1:2",
+          "page": 6,
+          "y": 141.7,
+          "sourceLine": "C is incorrect because the mole ratio has been taken as 2:1 rather than 1:2",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "D is incorrect because the mass of sodium has been taken as the number of moles",
+          "page": 6,
+          "y": 171.6,
+          "sourceLine": "D is incorrect because the mass of sodium has been taken as the number of moles",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "4(c)",
+      "problems": [],
+      "page": 6,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 6,
+        "y": 238.2
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "The only correct answer is A (H+(aq) + OH−(aq) → H2O(l))",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "The only correct answer is A (H+(aq) + OH−(aq) → H2O(l))",
+          "page": 6,
+          "y": 239.3
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [
+        {
+          "text": "B is incorrect because the water has been ignored",
+          "page": 6,
+          "y": 263.0,
+          "sourceLine": "B is incorrect because the water has been ignored",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "C is incorrect because the sulfuric acid has not been shown as ions",
+          "page": 6,
+          "y": 294.3,
+          "sourceLine": "C is incorrect because the sulfuric acid has not been shown as ions",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "D is incorrect because all the ions are shown but none are cancelled",
+          "page": 6,
+          "y": 324.3,
+          "sourceLine": "D is incorrect because all the ions are shown but none are cancelled",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "4(d)",
+      "problems": [],
+      "page": 6,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 6,
+        "y": 385.7
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "The only correct answer is A (29.1 %)",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "The only correct answer is A (29.1 %)",
+          "page": 6,
+          "y": 385.7
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [
+        {
+          "text": "B is incorrect because this is the percentage ratio of magnesium hydroxide to sodium sulfate",
+          "page": 6,
+          "y": 415.7,
+          "sourceLine": "B is incorrect because this is the percentage ratio of magnesium hydroxide to sodium sulfate",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "C is incorrect because this is the percentage ratio of magnesium hydroxide to magnesium sulfate",
+          "page": 6,
+          "y": 445.7,
+          "sourceLine": "C is incorrect because this is the percentage ratio of magnesium hydroxide to magnesium sulfate",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "D is incorrect because this is the percentage mole ratio of the product",
+          "page": 6,
+          "y": 475.6,
+          "sourceLine": "D is incorrect because this is the percentage mole ratio of the product",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "5",
+      "problems": [],
+      "page": 7,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 7,
+        "y": 101.9
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "(N3―> > The only correct answer is C O2― F―)",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "(N3―> >",
+          "page": 7,
+          "y": 101.9
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [
+        {
+          "text": "A is incorrect because the size of positive ions decreases across Period 3",
+          "page": 7,
+          "y": 138.6,
+          "sourceLine": "A is incorrect because the size of positive ions decreases across Period 3",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "B is incorrect because the size of positive ions increases down Group 1",
+          "page": 7,
+          "y": 168.6,
+          "sourceLine": "B is incorrect because the size of positive ions increases down Group 1",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "D is incorrect because the size of negative ions increases down Group 6",
+          "page": 7,
+          "y": 198.6,
+          "sourceLine": "D is incorrect because the size of negative ions increases down Group 6",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "6",
+      "problems": [],
+      "page": 7,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 7,
+        "y": 275.0
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "The only correct answer is C (d)",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "The only correct answer is C (d)",
+          "page": 7,
+          "y": 275.0
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [
+        {
+          "text": "A is incorrect because the s block elements don’t form stable 3+ ions",
+          "page": 7,
+          "y": 304.9,
+          "sourceLine": "A is incorrect because the s block elements don’t form stable 3+ ions",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "B is incorrect because the elements which form stable 3+ ions do not have 21 electrons",
+          "page": 7,
+          "y": 334.9,
+          "sourceLine": "B is incorrect because the elements which form stable 3+ ions do not have 21 electrons",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "D is incorrect because elements in the f block have more than 21 electrons",
+          "page": 7,
+          "y": 364.8,
+          "sourceLine": "D is incorrect because elements in the f block have more than 21 electrons",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "7(a)",
+      "problems": [],
+      "page": 8,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 8,
+        "y": 100.5
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "The only correct answer is C (392.0)",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "The only correct answer is C (392.0)",
+          "page": 8,
+          "y": 100.5
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [
+        {
+          "text": "A is incorrect because the brackets have been ignored",
+          "page": 8,
+          "y": 130.4,
+          "sourceLine": "A is incorrect because the brackets have been ignored",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "B is incorrect because the mass of water has been omitted",
+          "page": 8,
+          "y": 160.4,
+          "sourceLine": "B is incorrect because the mass of water has been omitted",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "D is incorrect because the iron has been doubled",
+          "page": 8,
+          "y": 190.4,
+          "sourceLine": "D is incorrect because the iron has been doubled",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "7(b)",
+      "problems": [],
+      "page": 8,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 8,
+        "y": 249.5
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "The only correct answer is D (ionic, covalent and dative covalent)",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "The only correct answer is D (ionic, covalent and dative covalent)",
+          "page": 8,
+          "y": 249.5
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [
+        {
+          "text": "A is incorrect because there are both dative covalent and covalent bonds within the ions",
+          "page": 8,
+          "y": 279.4,
+          "sourceLine": "A is incorrect because there are both dative covalent and covalent bonds within the ions",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "B is incorrect because there are dative covalent bonds within the ions",
+          "page": 8,
+          "y": 309.3,
+          "sourceLine": "B is incorrect because there are dative covalent bonds within the ions",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "C is incorrect because there are covalent bonds within the ions",
+          "page": 8,
+          "y": 339.3,
+          "sourceLine": "C is incorrect because there are covalent bonds within the ions",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "7(c)",
+      "problems": [],
+      "page": 8,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 8,
+        "y": 418.2
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "The only correct answer is C (3.01 x 1023)",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "The only correct answer is C (3.01 x 1023)",
+          "page": 8,
+          "y": 418.2
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [
+        {
+          "text": "A is incorrect because only one ammonium, one iron and one sulfate ion have been included",
+          "page": 8,
+          "y": 448.2,
+          "sourceLine": "A is incorrect because only one ammonium, one iron and one sulfate ion have been included",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "B is incorrect because the iron ions have not been included",
+          "page": 8,
+          "y": 478.2,
+          "sourceLine": "B is incorrect because the iron ions have not been included",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "D is incorrect because the water molecules have been included",
+          "page": 8,
+          "y": 508.1,
+          "sourceLine": "D is incorrect because the water molecules have been included",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "8",
+      "problems": [],
+      "page": 9,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 9,
+        "y": 101.9
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "The only correct answer is B (Li< Be< B< C)",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "The only correct answer is B (Li< Be< B< C)",
+          "page": 9,
+          "y": 101.9
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [
+        {
+          "text": "A is incorrect because the melting temperatures of Group 7 elements increase going down the group",
+          "page": 9,
+          "y": 131.9,
+          "sourceLine": "A is incorrect because the melting temperatures of Group 7 elements increase going down the group",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "C is incorrect because the melting temperatures of Group 1 elements decrease going down the group",
+          "page": 9,
+          "y": 161.8,
+          "sourceLine": "C is incorrect because the melting temperatures of Group 1 elements decrease going down the group",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "D is incorrect because silicon has the highest melting temperature in Period 3",
+          "page": 9,
+          "y": 191.7,
+          "sourceLine": "D is incorrect because silicon has the highest melting temperature in Period 3",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "9",
+      "problems": [],
+      "page": 9,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 9,
+        "y": 253.2
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "The only correct answer is B (polar, non-polar)",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "The only correct answer is B (polar, non-polar)",
+          "page": 9,
+          "y": 253.2
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [
+        {
+          "text": "A is incorrect because the SF6 molecule is non-polar",
+          "page": 9,
+          "y": 283.1,
+          "sourceLine": "A is incorrect because the SF6 molecule is non-polar",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "C is incorrect because the S-F bond is polar and the SF6 molecule is non-polar",
+          "page": 9,
+          "y": 313.1,
+          "sourceLine": "C is incorrect because the S-F bond is polar and the SF6 molecule is non-polar",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "D is incorrect because the S-F bond is polar",
+          "page": 9,
+          "y": 343.1,
+          "sourceLine": "D is incorrect because the S-F bond is polar",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "10(a)",
+      "problems": [],
+      "page": 9,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 9,
+        "y": 404.5
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "( ) The only correct answer is B",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "( )",
+          "page": 9,
+          "y": 404.5
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [
+        {
+          "text": "A is incorrect because the curly arrow indicates heterolytic fission",
+          "page": 9,
+          "y": 449.4,
+          "sourceLine": "A is incorrect because the curly arrow indicates heterolytic fission",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "C is incorrect because both arrows are full arrows rather than half arrows",
+          "page": 9,
+          "y": 479.4,
+          "sourceLine": "C is incorrect because both arrows are full arrows rather than half arrows",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "D is incorrect because the arrows are in the wrong direction",
+          "page": 9,
+          "y": 509.3,
+          "sourceLine": "D is incorrect because the arrows are in the wrong direction",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "10(b)",
+      "problems": [],
+      "page": 10,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 10,
+        "y": 101.9
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "The only correct answer is D (HCl)",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "The only correct answer is D (HCl)",
+          "page": 10,
+          "y": 101.9
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [
+        {
+          "text": "A is incorrect because ethane could be formed by the combination of two methyl radicals",
+          "page": 10,
+          "y": 131.9,
+          "sourceLine": "A is incorrect because ethane could be formed by the combination of two methyl radicals",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "B is incorrect because chloromethane could be formed by the combination of a methyl radical and a chlorine radical",
+          "page": 10,
+          "y": 161.8,
+          "sourceLine": "B is incorrect because chloromethane could be formed by the combination of a methyl radical and a chlorine radical",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "C is incorrect because dichloromethane could be formed from the combination of CH2Cl radical and a chlorine radical",
+          "page": 10,
+          "y": 191.7,
+          "sourceLine": "C is incorrect because dichloromethane could be formed from the combination of CH2Cl radical and a chlorine radical",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "11(a)",
+      "problems": [],
+      "page": 10,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 10,
+        "y": 250.3
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "( ) Cl The only correct answer is A",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "( )",
+          "page": 10,
+          "y": 250.3
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [
+        {
+          "text": "B is incorrect because it is Z-1-chlorobut-2-ene",
+          "page": 10,
+          "y": 303.5,
+          "sourceLine": "B is incorrect because it is Z-1-chlorobut-2-ene",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "C is incorrect because it is Z-2-chlorobut-2-ene",
+          "page": 10,
+          "y": 333.4,
+          "sourceLine": "C is incorrect because it is Z-2-chlorobut-2-ene",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "D is incorrect because it is E-1-chlorobut-2-ene",
+          "page": 10,
+          "y": 363.3,
+          "sourceLine": "D is incorrect because it is E-1-chlorobut-2-ene",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "11(b)",
+      "problems": [],
+      "page": 11,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 11,
+        "y": 101.9
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "The only correct answer is D (11) (Total for Section A = 20",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "The only correct answer is D (11)",
+          "page": 11,
+          "y": 101.9
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [
+        {
+          "text": "A is incorrect because the C-H bonds and the sigma C-C have not been counted",
+          "page": 11,
+          "y": 131.9,
+          "sourceLine": "A is incorrect because the C-H bonds and the sigma C-C have not been counted",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "B is incorrect because some of the C-H bonds have not been counted",
+          "page": 11,
+          "y": 161.8,
+          "sourceLine": "B is incorrect because some of the C-H bonds have not been counted",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        },
+        {
+          "text": "C is incorrect because the C-C bond on the alkene bond has not been counted",
+          "page": 11,
+          "y": 191.7,
+          "sourceLine": "C is incorrect because the C-C bond on the alkene bond has not been counted",
+          "confidence": 0.9,
+          "derivedFrom": "distractor explanation in the Answer column",
+          "requiresRuling": [
+            "explains why a WRONG option is wrong — whether this is a reject[] rule or commentary is a judgement"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "12(a)",
+      "problems": [],
+      "page": 12,
+      "marks": {
+        "value": 2,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(2)",
+        "page": 12,
+        "y": 127.9
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "2s2",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " 2s2 (1)",
+          "page": 12,
+          "y": 143.6
+        },
+        {
+          "pointCode": "M2",
+          "route": 1,
+          "criterion": "2s2 2p6 3s2 3p6 4s2",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " 2s2 2p6 3s2 3p6 4s2 (1)",
+          "page": 12,
+          "y": 173.5
+        }
+      ],
+      "accept": [
+        {
+          "text": "Ignore extra 1s2 for both Be and Ca",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore extra 1s2 for both Be and Ca",
+          "page": 12,
+          "y": 142.9
+        },
+        {
+          "text": "Accept px2 py2 pz2 for p6",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Accept px2 py2 pz2 for p6",
+          "page": 12,
+          "y": 172.8
+        }
+      ],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 2,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "12(b)",
+      "problems": [],
+      "page": 12,
+      "marks": {
+        "value": 2,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(2)",
+        "page": 12,
+        "y": 251.9
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "2 single covalent bonds",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " 2 single covalent bonds (1)",
+          "page": 12,
+          "y": 282.6
+        },
+        {
+          "pointCode": "M2",
+          "route": 1,
+          "criterion": "6 non-bonding electrons shown on chlorine",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " 6 non-bonding electrons shown on chlorine (1)",
+          "page": 12,
+          "y": 312.5
+        }
+      ],
+      "accept": [
+        {
+          "text": "Allow non-bonding electrons unpaired",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow non-bonding electrons unpaired",
+          "page": 12,
+          "y": 371.8
+        },
+        {
+          "text": "Allow all dots or all crosses",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow all dots or all crosses",
+          "page": 12,
+          "y": 386.7
+        },
+        {
+          "text": "Allow shared electrons on the axis of the bond",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow shared electrons on the axis of the bond",
+          "page": 12,
+          "y": 401.7
+        },
+        {
+          "text": "Ignore line showing covalent bond",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore line showing covalent bond",
+          "page": 12,
+          "y": 431.7
+        },
+        {
+          "text": "Ignore overlapping circles",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore overlapping circles",
+          "page": 12,
+          "y": 446.7
+        }
+      ],
+      "reject": [
+        {
+          "text": "Reject incorrect total number of electrons for M2",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Reject incorrect total number of electrons for M2",
+          "page": 12,
+          "y": 476.6
+        }
+      ],
+      "guidance": [
+        {
+          "text": "Example of correct dot-and-cross diagram:",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Example of correct dot-and-cross diagram:",
+          "page": 12,
+          "y": 251.9
+        },
+        {
+          "text": "If Ca in place of Be Max 1",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "If Ca in place of Be Max 1",
+          "page": 12,
+          "y": 416.7
+        },
+        {
+          "text": "Ionic bond scores 0 overall",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ionic bond scores 0 overall",
+          "page": 12,
+          "y": 461.7
+        }
+      ],
+      "requiresRuling": [],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 2,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "12(c)",
+      "problems": [],
+      "page": 13,
+      "marks": {
+        "value": 2,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(2)",
+        "page": 13,
+        "y": 131.9
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "a line/covalent bond is when electron(s) come from both/each atom(s)",
+          "marks": null,
+          "methodBlock": null,
+          "confidence": 0.6,
+          "derivedFrom": "bullet in the Answer column with NO per-point mark found nearby",
+          "sourceLine": " a line/covalent bond is when electron(s)",
+          "page": 13,
+          "y": 132.5
+        },
+        {
+          "pointCode": "M2",
+          "route": 1,
+          "criterion": "arrow / dative covalent/ co-ordinate bond which is (a lone pair of) electrons donated from chlorine/ (only) one atom",
+          "marks": null,
+          "methodBlock": null,
+          "confidence": 0.6,
+          "derivedFrom": "bullet in the Answer column with NO per-point mark found nearby",
+          "sourceLine": " arrow / dative covalent/ co-ordinate bond",
+          "page": 13,
+          "y": 192.4
+        }
+      ],
+      "accept": [
+        {
+          "text": "Ignore references to attraction between bonding pair and",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore references to attraction between bonding pair and",
+          "page": 13,
+          "y": 131.9
+        }
+      ],
+      "reject": [
+        {
+          "text": "Do not award any statement stating that the donation",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Do not award any statement stating that the donation",
+          "page": 13,
+          "y": 206.7
+        }
+      ],
+      "guidance": [
+        {
+          "text": "nucleus.",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "nucleus.",
+          "page": 13,
+          "y": 146.8
+        },
+        {
+          "text": "comes from Beryllium",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "comes from Beryllium",
+          "page": 13,
+          "y": 221.7
+        }
+      ],
+      "requiresRuling": [],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 2,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "12(d)",
+      "problems": [],
+      "page": 13,
+      "marks": {
+        "value": 4,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(4)",
+        "page": 13,
+        "y": 313.1
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "bond angle in BeCl2(g)/linear is 180o",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " bond angle in BeCl2(g)/linear is 180o (1)",
+          "page": 13,
+          "y": 328.7
+        },
+        {
+          "pointCode": "M2",
+          "route": 1,
+          "criterion": "bond angle in BeCl2(s)/polymeric is 109.5o",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " bond angle in BeCl2(s)/polymeric is 109.5o (1)",
+          "page": 13,
+          "y": 358.7
+        },
+        {
+          "pointCode": "M3",
+          "route": 1,
+          "criterion": "electron pairs/bonds repel each other to minimise repulsion",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " electron pairs/bonds repel each other to (1)",
+          "page": 13,
+          "y": 418.6
+        },
+        {
+          "pointCode": "M4",
+          "route": 1,
+          "criterion": "4 electron pairs/bonds in solid or 2 bonding pairs/2 bonds (no lone pairs) in gas",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " 4 electron pairs/bonds in solid or 2 bonding (1)",
+          "page": 13,
+          "y": 463.6
+        }
+      ],
+      "accept": [
+        {
+          "text": "Ignore references to shape",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore references to shape",
+          "page": 13,
+          "y": 328.1
+        },
+        {
+          "text": "ALLOW any bond angle between 110 o and 95 o.",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "ALLOW any bond angle between 110 o and 95 o.",
+          "page": 13,
+          "y": 358.1
+        },
+        {
+          "text": "Ignore references to shape",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore references to shape",
+          "page": 13,
+          "y": 388.0
+        },
+        {
+          "text": "Allow to a maximum separation",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow to a maximum separation",
+          "page": 13,
+          "y": 417.9
+        },
+        {
+          "text": "Ignore references to lp-lp/lp-bp repulsion",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore references to lp-lp/lp-bp repulsion",
+          "page": 13,
+          "y": 492.9
+        }
+      ],
+      "reject": [
+        {
+          "text": "Do not award repulsion between atoms/elements or",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Do not award repulsion between atoms/elements or",
+          "page": 13,
+          "y": 432.9
+        }
+      ],
+      "guidance": [
+        {
+          "text": "[98o actual value]",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "[98o actual value]",
+          "page": 13,
+          "y": 372.7
+        },
+        {
+          "text": "between lone pairs",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "between lone pairs",
+          "page": 13,
+          "y": 447.9
+        }
+      ],
+      "requiresRuling": [],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 4,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "12(e)",
+      "problems": [],
+      "page": 14,
+      "marks": {
+        "value": 2,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(2)",
+        "page": 14,
+        "y": 101.9
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "correct charges shown and two chloride ions",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " correct charges shown and two chloride ions (1)",
+          "page": 14,
+          "y": 117.5
+        },
+        {
+          "pointCode": "M2",
+          "route": 1,
+          "criterion": "electronic configuration of all ions",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " electronic configuration of all ions (1)",
+          "page": 14,
+          "y": 147.5
+        }
+      ],
+      "accept": [
+        {
+          "text": "Accept Ca with 8 electrons",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Accept Ca with 8 electrons",
+          "page": 14,
+          "y": 212.9
+        },
+        {
+          "text": "Allow all dots or all crosses or any combination",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow all dots or all crosses or any combination",
+          "page": 14,
+          "y": 227.9
+        },
+        {
+          "text": "Ignore inner electron shells",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore inner electron shells",
+          "page": 14,
+          "y": 242.8
+        }
+      ],
+      "reject": [],
+      "guidance": [
+        {
+          "text": "Example of correct dot-and-cross diagram",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Example of correct dot-and-cross diagram",
+          "page": 14,
+          "y": 101.9
+        }
+      ],
+      "requiresRuling": [],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 2,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "12(f)",
+      "problems": [],
+      "page": 15,
+      "marks": {
+        "value": 3,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(3)",
+        "page": 15,
+        "y": 101.9
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "Beryllium is smaller /has fewer electron shells/ has a higher charge density (than calcium) OR beryllium is more electronegative (than calcium)",
+          "marks": null,
+          "methodBlock": null,
+          "confidence": 0.6,
+          "derivedFrom": "bullet in the Answer column with NO per-point mark found nearby",
+          "sourceLine": " Beryllium is smaller /has fewer electron",
+          "page": 15,
+          "y": 102.5
+        },
+        {
+          "pointCode": "M2",
+          "route": 1,
+          "criterion": "Beryllium ion/ Be2+ is more polarising (than calcium /ion Ca2+) OR calcium loses (outer) electrons more easily (than beryllium) OR difference in electronegativity between calcium and chlorine is greater (than between beryllium and chlorine)",
+          "marks": null,
+          "methodBlock": null,
+          "confidence": 0.6,
+          "derivedFrom": "bullet in the Answer column with NO per-point mark found nearby",
+          "sourceLine": " Beryllium ion/ Be2+ is more polarising (than",
+          "page": 15,
+          "y": 207.4
+        },
+        {
+          "pointCode": "M3",
+          "route": 1,
+          "criterion": "beryllium-chlorine bond has a higher degree of covalency (than calcium-chlorine bond)",
+          "marks": null,
+          "methodBlock": null,
+          "confidence": 0.6,
+          "derivedFrom": "bullet in the Answer column with NO per-point mark found nearby",
+          "sourceLine": " beryllium-chlorine bond has a higher degree",
+          "page": 15,
+          "y": 357.2
+        }
+      ],
+      "accept": [
+        {
+          "text": "Allow beryllium is more polarising than calcium",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow beryllium is more polarising than calcium",
+          "page": 15,
+          "y": 206.7
+        },
+        {
+          "text": "Accept bonding in beryllium chloride is (more) covalent/",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Accept bonding in beryllium chloride is (more) covalent/",
+          "page": 15,
+          "y": 356.6
+        },
+        {
+          "text": "Allow reverse arguments throughout",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow reverse arguments throughout",
+          "page": 15,
+          "y": 401.5
+        }
+      ],
+      "reject": [],
+      "guidance": [
+        {
+          "text": "bonding in calcium chloride is (more) ionic.",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "bonding in calcium chloride is (more) ionic.",
+          "page": 15,
+          "y": 371.5
+        },
+        {
+          "text": "M3 is dependent on either M1 or M2 being scored",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "M3 is dependent on either M1 or M2 being scored",
+          "page": 15,
+          "y": 386.5
+        },
+        {
+          "text": "(Total for Question 12 = 15 marks)",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "(Total for Question 12 = 15 marks)",
+          "page": 15,
+          "y": 446.9
+        }
+      ],
+      "requiresRuling": [],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 3,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "13(a)(i)",
+      "problems": [],
+      "page": 16,
+      "marks": {
+        "value": 2,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(2)",
+        "page": 16,
+        "y": 101.9
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "expression for calculation of RAM of silicon",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " expression for calculation of RAM of silicon (1)",
+          "page": 16,
+          "y": 115.2
+        },
+        {
+          "pointCode": "M2",
+          "route": 1,
+          "criterion": "answer to two decimal places",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " answer to two decimal places (1)",
+          "page": 16,
+          "y": 145.1
+        }
+      ],
+      "accept": [
+        {
+          "text": "Allow units g mol-1/a.m.u only",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow units g mol-1/a.m.u only",
+          "page": 16,
+          "y": 175.4
+        }
+      ],
+      "reject": [],
+      "guidance": [
+        {
+          "text": "Example of calculation:",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Example of calculation:",
+          "page": 16,
+          "y": 101.9,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "(28x92.17) +(29x4.71)+(30x3.12)",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "(28x92.17) +(29x4.71)+(30x3.12)",
+          "page": 16,
+          "y": 116.8,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "100",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "100",
+          "page": 16,
+          "y": 130.5,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "=28.1095",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "=28.1095",
+          "page": 16,
+          "y": 145.5,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "=28.11",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "=28.11",
+          "page": 16,
+          "y": 160.4,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "Correct answer scores 2",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Correct answer scores 2",
+          "page": 16,
+          "y": 190.4,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "28 and 30.",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "28 and 30.",
+          "page": 16,
+          "y": 220.4,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        }
+      ],
+      "requiresRuling": [
+        {
+          "text": "Allow TE from incorrect expression if answer lies between",
+          "confidence": 0.4,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow TE from incorrect expression if answer lies between",
+          "page": 16,
+          "y": 205.4,
+          "requiresRuling": [
+            "transferred-error rule — scope must be decided"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 2,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "13(a)(ii)",
+      "problems": [],
+      "page": 16,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 16,
+        "y": 281.8
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "Some silicon atoms (of mass 28) lose two electrons/have a charge of 2+",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "Some silicon atoms (of mass 28) lose two",
+          "page": 16,
+          "y": 281.8
+        }
+      ],
+      "accept": [
+        {
+          "text": "Allow (formation of ) Si2+",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow (formation of ) Si2+",
+          "page": 16,
+          "y": 281.8
+        }
+      ],
+      "reject": [
+        {
+          "text": "Do not award “atoms of mass 14”",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Do not award “atoms of mass 14”",
+          "page": 16,
+          "y": 296.7
+        }
+      ],
+      "guidance": [],
+      "requiresRuling": [],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "13(a)(iii)",
+      "problems": [],
+      "page": 16,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 16,
+        "y": 377.2
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "28Si 14 14 29Si 14 15 30Si 14 16",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "28Si 14 14",
+          "page": 16,
+          "y": 397.3
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "13(b)",
+      "problems": [],
+      "page": 17,
+      "marks": {
+        "value": 3,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(3)",
+        "page": 17,
+        "y": 101.9
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "all atoms are joined together by covalent bonds/giant covalent(structure)",
+          "marks": null,
+          "methodBlock": null,
+          "confidence": 0.6,
+          "derivedFrom": "bullet in the Answer column with NO per-point mark found nearby",
+          "sourceLine": " all atoms are joined together by covalent",
+          "page": 17,
+          "y": 102.5
+        },
+        {
+          "pointCode": "M2",
+          "route": 1,
+          "criterion": "these are strong / take a lot of energy to break (so melting temperature is very high)",
+          "marks": null,
+          "methodBlock": null,
+          "confidence": 0.6,
+          "derivedFrom": "bullet in the Answer column with NO per-point mark found nearby",
+          "sourceLine": " these are strong / take a lot of energy to",
+          "page": 17,
+          "y": 147.5
+        },
+        {
+          "pointCode": "M3",
+          "route": 1,
+          "criterion": "no electrons are free (to move)/ mobile/delocalised/ (so charge cannot be carried)",
+          "marks": null,
+          "methodBlock": null,
+          "confidence": 0.6,
+          "derivedFrom": "bullet in the Answer column with NO per-point mark found nearby",
+          "sourceLine": " no electrons are free (to move)/",
+          "page": 17,
+          "y": 192.4
+        }
+      ],
+      "accept": [
+        {
+          "text": "Allow correct description of covalent bond",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow correct description of covalent bond",
+          "page": 17,
+          "y": 101.9
+        },
+        {
+          "text": "Ignore high boiling temperature",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore high boiling temperature",
+          "page": 17,
+          "y": 161.8
+        },
+        {
+          "text": "Ignore no free moving ions",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore no free moving ions",
+          "page": 17,
+          "y": 191.7
+        }
+      ],
+      "reject": [
+        {
+          "text": "Do not award intermolecular forces/ ionic bonds/ double",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Do not award intermolecular forces/ ionic bonds/ double",
+          "page": 17,
+          "y": 116.9
+        }
+      ],
+      "guidance": [
+        {
+          "text": "covalent bonds. Ignore stoichiometry even if incorrect.",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "covalent bonds. Ignore stoichiometry even if incorrect.",
+          "page": 17,
+          "y": 131.9
+        }
+      ],
+      "requiresRuling": [],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 3,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "13(c)",
+      "problems": [],
+      "page": 17,
+      "marks": {
+        "value": 3,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(3)",
+        "page": 17,
+        "y": 280.8
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "calculation of number of moles",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " calculation of number of moles (1)",
+          "page": 17,
+          "y": 281.5
+        },
+        {
+          "pointCode": "M2",
+          "route": 1,
+          "criterion": "calculation of whole number mole ratio",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " calculation of whole number mole ratio (1)",
+          "page": 17,
+          "y": 371.3
+        },
+        {
+          "pointCode": "M3",
+          "route": 1,
+          "criterion": "empirical formula",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " empirical formula (1)",
+          "page": 17,
+          "y": 401.3
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [
+        {
+          "text": "Example of calculation",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Example of calculation",
+          "page": 17,
+          "y": 280.8,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "12 8.43 14.47",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "12 8.43 14.47",
+          "page": 17,
+          "y": 295.8,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "40.1 28.1 16",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "40.1 28.1 16",
+          "page": 17,
+          "y": 310.8,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "OR 0.299 : 0.30 : 0.904",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "OR 0.299 : 0.30 : 0.904",
+          "page": 17,
+          "y": 340.7,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "1 : 1 : 3",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "1 : 1 : 3",
+          "page": 17,
+          "y": 370.7,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "CaSiO3",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "CaSiO3",
+          "page": 17,
+          "y": 400.7,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "Incorrect symbol(s) in formula loses M3",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Incorrect symbol(s) in formula loses M3",
+          "page": 17,
+          "y": 460.5,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        }
+      ],
+      "requiresRuling": [
+        {
+          "text": "Correct formula with no working scores 1 mark only",
+          "confidence": 0.4,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Correct formula with no working scores 1 mark only",
+          "page": 17,
+          "y": 430.6,
+          "requiresRuling": [
+            "conditions marks on working"
+          ]
+        },
+        {
+          "text": "TE on use of atomic numbers",
+          "confidence": 0.4,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "TE on use of atomic numbers",
+          "page": 17,
+          "y": 445.6,
+          "requiresRuling": [
+            "transferred-error rule — scope must be decided"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 3,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "13(d)",
+      "problems": [],
+      "page": 18,
+      "marks": {
+        "value": 4,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(4)",
+        "page": 18,
+        "y": 101.9
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "calculation of moles carbon dioxide",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " calculation of moles carbon dioxide (1)",
+          "page": 18,
+          "y": 117.5
+        },
+        {
+          "pointCode": "M2",
+          "route": 1,
+          "criterion": "conversion of temperature to K",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " conversion of temperature to K (1)",
+          "page": 18,
+          "y": 147.5
+        },
+        {
+          "pointCode": "M3",
+          "route": 1,
+          "criterion": "rearrangement of expression",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " rearrangement of expression (1)",
+          "page": 18,
+          "y": 177.5
+        },
+        {
+          "pointCode": "M4",
+          "route": 1,
+          "criterion": "evaluation of answer in cm3",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " evaluation of answer in cm3 (1)",
+          "page": 18,
+          "y": 237.4
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [
+        {
+          "text": "Example of calculation:",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Example of calculation:",
+          "page": 18,
+          "y": 101.9,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "3÷44 = 0.06818",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "3÷44 = 0.06818",
+          "page": 18,
+          "y": 116.9,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "273 + 5 = 278",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "273 + 5 = 278",
+          "page": 18,
+          "y": 146.8,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "V=0.06818 x 8.31 x 278",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "V=0.06818 x 8.31 x 278",
+          "page": 18,
+          "y": 176.8,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "1.3 x 105",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "1.3 x 105",
+          "page": 18,
+          "y": 191.7,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "(=1.2116 x 10−3m3)",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "(=1.2116 x 10−3m3)",
+          "page": 18,
+          "y": 206.7,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "=1211.6/1212/1210/1200 (cm3)",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "=1211.6/1212/1210/1200 (cm3)",
+          "page": 18,
+          "y": 236.7,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "(Total for Question 13 = 14 marks)",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "(Total for Question 13 = 14 marks)",
+          "page": 18,
+          "y": 324.8,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        }
+      ],
+      "requiresRuling": [
+        {
+          "text": "TE throughout but do not award M4 for negative volume",
+          "confidence": 0.4,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "TE throughout but do not award M4 for negative volume",
+          "page": 18,
+          "y": 251.7,
+          "requiresRuling": [
+            "transferred-error rule — scope must be decided",
+            "negation appears mid-line, so the polarity is mixed"
+          ]
+        },
+        {
+          "text": "Ignore SF except 1 SF",
+          "confidence": 0.4,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore SF except 1 SF",
+          "page": 18,
+          "y": 266.7,
+          "requiresRuling": [
+            "conditional (unless / except / only if / provided)",
+            "significant-figure rule — enforceability must be decided"
+          ]
+        },
+        {
+          "text": "Correct answer with no working scores 4 marks",
+          "confidence": 0.4,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Correct answer with no working scores 4 marks",
+          "page": 18,
+          "y": 281.6,
+          "requiresRuling": [
+            "conditions the whole tariff on working",
+            "conditions marks on working"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 4,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "14(a)",
+      "problems": [],
+      "page": 19,
+      "marks": {
+        "value": 2,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(2)",
+        "page": 19,
+        "y": 101.9
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "there is a “jump”/much bigger increase between the third and fourth ionisation energies",
+          "marks": null,
+          "methodBlock": null,
+          "confidence": 0.6,
+          "derivedFrom": "bullet in the Answer column with NO per-point mark found nearby",
+          "sourceLine": " there is a “jump”/much bigger increase",
+          "page": 19,
+          "y": 102.5
+        },
+        {
+          "pointCode": "M2",
+          "route": 1,
+          "criterion": "(First) 3 electrons in outer shell",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " (First) 3 electrons in outer shell (1)",
+          "page": 19,
+          "y": 162.5
+        }
+      ],
+      "accept": [
+        {
+          "text": "Accept fourth electron is removed from a different",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Accept fourth electron is removed from a different",
+          "page": 19,
+          "y": 161.8
+        }
+      ],
+      "reject": [],
+      "guidance": [
+        {
+          "text": "(quantum) shell (which is closer to the nucleus)",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "(quantum) shell (which is closer to the nucleus)",
+          "page": 19,
+          "y": 176.8
+        }
+      ],
+      "requiresRuling": [],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 2,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "14(b)(i)",
+      "problems": [],
+      "page": 19,
+      "marks": {
+        "value": 2,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(2)",
+        "page": 19,
+        "y": 235.8
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "the number of protons increases /nuclear charge increases",
+          "marks": null,
+          "methodBlock": null,
+          "confidence": 0.6,
+          "derivedFrom": "bullet in the Answer column with NO per-point mark found nearby",
+          "sourceLine": " the number of protons increases",
+          "page": 19,
+          "y": 236.5
+        },
+        {
+          "pointCode": "M2",
+          "route": 1,
+          "criterion": "the additional electrons are in the same shell/same energy level/ little additional shielding from electrons",
+          "marks": null,
+          "methodBlock": null,
+          "confidence": 0.6,
+          "derivedFrom": "bullet in the Answer column with NO per-point mark found nearby",
+          "sourceLine": " the additional electrons are in the same",
+          "page": 19,
+          "y": 281.5
+        }
+      ],
+      "accept": [
+        {
+          "text": "Allow “same shielding”",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow “same shielding”",
+          "page": 19,
+          "y": 280.8
+        },
+        {
+          "text": "Ignore references to atomic radius even if incorrect",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore references to atomic radius even if incorrect",
+          "page": 19,
+          "y": 295.8
+        },
+        {
+          "text": "Ignore electron repulsion",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore electron repulsion",
+          "page": 19,
+          "y": 310.8
+        }
+      ],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 2,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "14(b)(ii)",
+      "problems": [],
+      "page": 19,
+      "marks": {
+        "value": 2,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(2)",
+        "page": 19,
+        "y": 384.8
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "the first electron is removed from a (3)p orbital/subshell in aluminium/ (3)s orbital/subshell from magnesium",
+          "marks": null,
+          "methodBlock": null,
+          "confidence": 0.6,
+          "derivedFrom": "bullet in the Answer column with NO per-point mark found nearby",
+          "sourceLine": " the first electron is removed from a (3)p",
+          "page": 19,
+          "y": 385.5
+        },
+        {
+          "pointCode": "M2",
+          "route": 1,
+          "criterion": "p electron(s) shielded by the s electrons (so requires less energy)/ p energy level is higher than s energy level",
+          "marks": null,
+          "methodBlock": null,
+          "confidence": 0.6,
+          "derivedFrom": "bullet in the Answer column with NO per-point mark found nearby",
+          "sourceLine": " p electron(s) shielded by the s electrons",
+          "page": 19,
+          "y": 445.4
+        }
+      ],
+      "accept": [],
+      "reject": [
+        {
+          "text": "Do not award 2p/2s",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Do not award 2p/2s",
+          "page": 19,
+          "y": 384.8
+        }
+      ],
+      "guidance": [],
+      "requiresRuling": [],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 2,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "14(c)(i)",
+      "problems": [],
+      "page": 20,
+      "marks": {
+        "value": 2,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(2)",
+        "page": 20,
+        "y": 101.9
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "delocalised /free (to move) electrons /sea of electrons",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " delocalised /free (to move) electrons /sea of (1)",
+          "page": 20,
+          "y": 117.5
+        },
+        {
+          "pointCode": "M2",
+          "route": 1,
+          "criterion": "attracted to (a lattice of) metal/aluminium/positive ions/cations",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " attracted to (a lattice of) (1)",
+          "page": 20,
+          "y": 162.5
+        }
+      ],
+      "accept": [
+        {
+          "text": "Allow charges up to 3+",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow charges up to 3+",
+          "page": 20,
+          "y": 161.8
+        },
+        {
+          "text": "Ignore attraction of electrons to nuclei",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore attraction of electrons to nuclei",
+          "page": 20,
+          "y": 191.7
+        }
+      ],
+      "reject": [],
+      "guidance": [
+        {
+          "text": "Correct fully labelled diagram scores 2 marks",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Correct fully labelled diagram scores 2 marks",
+          "page": 20,
+          "y": 176.8
+        }
+      ],
+      "requiresRuling": [],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 2,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "14(c)(ii)",
+      "problems": [
+        "route 1 claims 4 mark(s) against a tariff of 2"
+      ],
+      "page": 20,
+      "marks": {
+        "value": 2,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(2)",
+        "page": 20,
+        "y": 250.8
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "(delocalised) electrons can move/carry charge",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " (delocalised) electrons can move/carry (1)",
+          "page": 20,
+          "y": 296.5
+        },
+        {
+          "pointCode": "M2",
+          "route": 1,
+          "criterion": "aluminium has low density/light (weight)",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " aluminium has low density/light (weight) (1)",
+          "page": 20,
+          "y": 341.4
+        },
+        {
+          "pointCode": "M3",
+          "route": 1,
+          "criterion": "aluminium is ductile/can be drawn into wires",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " aluminium is ductile/can be drawn into (1)",
+          "page": 20,
+          "y": 371.3
+        },
+        {
+          "pointCode": "M4",
+          "route": 1,
+          "criterion": "aluminium forms an inert/oxide layer",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " aluminium forms an inert/oxide layer (1)",
+          "page": 20,
+          "y": 416.3
+        }
+      ],
+      "accept": [
+        {
+          "text": "Allow good conductor of electricity",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow good conductor of electricity",
+          "page": 20,
+          "y": 295.8
+        },
+        {
+          "text": "Ignore malleable, strong, heat resistant, high melting",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore malleable, strong, heat resistant, high melting",
+          "page": 20,
+          "y": 415.6
+        }
+      ],
+      "reject": [],
+      "guidance": [
+        {
+          "text": "temperature.",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "temperature.",
+          "page": 20,
+          "y": 430.6
+        }
+      ],
+      "requiresRuling": [],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 2,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "14(d)(i)",
+      "problems": [],
+      "page": 20,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 20,
+        "y": 489.7
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "2 Al + 3 H2O  Al2O3 + 3H2",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "2 Al + 3 H2O  Al2O3 + 3H2",
+          "page": 20,
+          "y": 489.7
+        }
+      ],
+      "accept": [
+        {
+          "text": "Allow multiples",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow multiples",
+          "page": 20,
+          "y": 489.7
+        },
+        {
+          "text": "Ignore state symbols even if incorrect",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore state symbols even if incorrect",
+          "page": 20,
+          "y": 504.7
+        }
+      ],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "14(d)(ii)",
+      "problems": [
+        "route 1 claims 3 mark(s) against a tariff of 2"
+      ],
+      "page": 21,
+      "marks": {
+        "value": 2,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(2)",
+        "page": 21,
+        "y": 101.9
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "reduces greenhouse gas emissions / carbon dioxide and which affects climate change / global warming",
+          "marks": null,
+          "methodBlock": null,
+          "confidence": 0.6,
+          "derivedFrom": "bullet in the Answer column with NO per-point mark found nearby",
+          "sourceLine": " reduces greenhouse gas emissions /",
+          "page": 21,
+          "y": 132.5
+        },
+        {
+          "pointCode": "M2",
+          "route": 1,
+          "criterion": "the production of hydrogen is portable",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " the production of hydrogen is portable (1)",
+          "page": 21,
+          "y": 192.4
+        },
+        {
+          "pointCode": "M3",
+          "route": 1,
+          "criterion": "fossil fuels are non-renewable (unlike water)",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " fossil fuels are non-renewable (unlike (1)",
+          "page": 21,
+          "y": 222.4
+        },
+        {
+          "pointCode": "M4",
+          "route": 1,
+          "criterion": "aluminium can be recycled",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " aluminium can be recycled (1)",
+          "page": 21,
+          "y": 267.4
+        }
+      ],
+      "accept": [
+        {
+          "text": "Allow reduces sulfur dioxide emissions and which reduces",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow reduces sulfur dioxide emissions and which reduces",
+          "page": 21,
+          "y": 131.9
+        },
+        {
+          "text": "Ignore renewable",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore renewable",
+          "page": 21,
+          "y": 266.7
+        },
+        {
+          "text": "Ignore landfill, atom economy, references to cost",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore landfill, atom economy, references to cost",
+          "page": 21,
+          "y": 296.6
+        }
+      ],
+      "reject": [
+        {
+          "text": "Do not award references to ozone depletion,",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Do not award references to ozone depletion,",
+          "page": 21,
+          "y": 161.8
+        }
+      ],
+      "guidance": [
+        {
+          "text": "acid rain",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "acid rain",
+          "page": 21,
+          "y": 146.8
+        },
+        {
+          "text": "carbon neutral",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "carbon neutral",
+          "page": 21,
+          "y": 176.8
+        },
+        {
+          "text": "(Total for Question 14 = 13 marks)",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "(Total for Question 14 = 13 marks)",
+          "page": 21,
+          "y": 324.8
+        }
+      ],
+      "requiresRuling": [],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 2,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "15(a)",
+      "problems": [],
+      "page": 22,
+      "marks": {
+        "value": 2,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(2)",
+        "page": 22,
+        "y": 101.9
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "the mixture is boiled/ vapourised/ (fractionally) distilled",
+          "marks": null,
+          "methodBlock": null,
+          "confidence": 0.6,
+          "derivedFrom": "bullet in the Answer column with NO per-point mark found nearby",
+          "sourceLine": " the mixture is boiled/ vapourised/",
+          "page": 22,
+          "y": 117.5
+        },
+        {
+          "pointCode": "M2",
+          "route": 1,
+          "criterion": "distillate condensing at a suitable temperature (range) is collected",
+          "marks": null,
+          "methodBlock": null,
+          "confidence": 0.6,
+          "derivedFrom": "bullet in the Answer column with NO per-point mark found nearby",
+          "sourceLine": " distillate condensing at a suitable",
+          "page": 22,
+          "y": 177.5
+        }
+      ],
+      "accept": [
+        {
+          "text": "Allow correct references to collecting fractions at different",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow correct references to collecting fractions at different",
+          "page": 22,
+          "y": 176.8
+        },
+        {
+          "text": "Allow simple descriptions of fractional distillation e.g.",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow simple descriptions of fractional distillation e.g.",
+          "page": 22,
+          "y": 206.7
+        }
+      ],
+      "reject": [
+        {
+          "text": "Do not award cracking/reforming",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Do not award cracking/reforming",
+          "page": 22,
+          "y": 116.9
+        },
+        {
+          "text": "Do not award references to molecular mass or to melting",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Do not award references to molecular mass or to melting",
+          "page": 22,
+          "y": 236.7
+        }
+      ],
+      "guidance": [
+        {
+          "text": "heights/temperatures (in the fractionating column)",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "heights/temperatures (in the fractionating column)",
+          "page": 22,
+          "y": 191.7
+        },
+        {
+          "text": "separated by boiling point/ temperature",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "separated by boiling point/ temperature",
+          "page": 22,
+          "y": 221.7
+        },
+        {
+          "text": "temperature.",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "temperature.",
+          "page": 22,
+          "y": 251.7
+        }
+      ],
+      "requiresRuling": [],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 2,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "15(b)(i)",
+      "problems": [],
+      "page": 22,
+      "marks": {
+        "value": 1,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(1)",
+        "page": 22,
+        "y": 310.8
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "(C18H38 → 2C4H8 +) C10H22",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "(C18H38 → 2C4H8 +) C10H22",
+          "page": 22,
+          "y": 310.8
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 1,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "15(b)(ii)",
+      "problems": [],
+      "page": 22,
+      "marks": {
+        "value": 2,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(2)",
+        "page": 22,
+        "y": 384.8
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "cis and trans skeletal formulae",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " cis and trans skeletal formulae (1)",
+          "page": 22,
+          "y": 400.5
+        },
+        {
+          "pointCode": "M2",
+          "route": 1,
+          "criterion": "2-methylpropene",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " 2-methylpropene (1)",
+          "page": 22,
+          "y": 445.4
+        }
+      ],
+      "accept": [
+        {
+          "text": "Allow 1 mark for three correct non-skeletal formulae",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow 1 mark for three correct non-skeletal formulae",
+          "page": 22,
+          "y": 471.8
+        },
+        {
+          "text": "Ignore bond lengths and angles",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore bond lengths and angles",
+          "page": 22,
+          "y": 486.8
+        }
+      ],
+      "reject": [],
+      "guidance": [
+        {
+          "text": "and",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "and",
+          "page": 22,
+          "y": 399.8
+        }
+      ],
+      "requiresRuling": [],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 2,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "15(b)(iii)",
+      "problems": [],
+      "page": 23,
+      "marks": {
+        "value": 4,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(4)",
+        "page": 23,
+        "y": 101.9
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "Product 1 2 3 4",
+          "marks": 4,
+          "methodBlock": null,
+          "confidence": 0.75,
+          "derivedFrom": "whole Answer cell — Section A prints no bullets, so the cell is taken as one marking point",
+          "sourceLine": "Product",
+          "page": 23,
+          "y": 131.4
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [
+        {
+          "text": "8 correct points scores 4 marks",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "8 correct points scores 4 marks",
+          "page": 23,
+          "y": 101.9
+        },
+        {
+          "text": "6 or 7 correct points scores 3 marks",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "6 or 7 correct points scores 3 marks",
+          "page": 23,
+          "y": 116.9
+        },
+        {
+          "text": "Name Structural formula 4 or 5 correct points scores 2 marks",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Name Structural formula 4 or 5 correct points scores 2 marks",
+          "page": 23,
+          "y": 131.4
+        },
+        {
+          "text": "2 or 3 correct points scores 1 mark",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "2 or 3 correct points scores 1 mark",
+          "page": 23,
+          "y": 146.8
+        },
+        {
+          "text": "1,2- Allow displayed / skeletal formulae",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "1,2- Allow displayed / skeletal formulae",
+          "page": 23,
+          "y": 175.6
+        },
+        {
+          "text": "CH3CH2CHClCH2Cl",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "CH3CH2CHClCH2Cl",
+          "page": 23,
+          "y": 183.9
+        },
+        {
+          "text": "dichlorobutane If two types of formula are shown",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "dichlorobutane If two types of formula are shown",
+          "page": 23,
+          "y": 192.1
+        },
+        {
+          "text": "point.",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "point.",
+          "page": 23,
+          "y": 221.7
+        },
+        {
+          "text": "butane CH3CH2CH2CH3 Ignore punctuation errors ,",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "butane CH3CH2CH2CH3 Ignore punctuation errors ,",
+          "page": 23,
+          "y": 233.8
+        },
+        {
+          "text": "misplaced numbers e.g. 1,2-butan",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "misplaced numbers e.g. 1,2-butan",
+          "page": 23,
+          "y": 251.7
+        },
+        {
+          "text": "butan(e)-1,2- diol and connectivity of pendant -",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "butan(e)-1,2- diol and connectivity of pendant -",
+          "page": 23,
+          "y": 266.9
+        },
+        {
+          "text": "CH3CH2CHOHCH2OH",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "CH3CH2CHOHCH2OH",
+          "page": 23,
+          "y": 275.1
+        },
+        {
+          "text": "diol OH group.",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "diol OH group.",
+          "page": 23,
+          "y": 283.3
+        },
+        {
+          "text": "(4)",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "(4)",
+          "page": 23,
+          "y": 311.6
+        },
+        {
+          "text": "butan(e)-2-ol CH3CH2CHOHCH3",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "butan(e)-2-ol CH3CH2CHOHCH3",
+          "page": 23,
+          "y": 316.4
+        },
+        {
+          "text": "Penalise omission of “an” in 3 and 4",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Penalise omission of “an” in 3 and 4",
+          "page": 23,
+          "y": 326.6
+        },
+        {
+          "text": "once only",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "once only",
+          "page": 23,
+          "y": 341.6
+        },
+        {
+          "text": "Penalise wrong number of carbon",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Penalise wrong number of carbon",
+          "page": 23,
+          "y": 356.6
+        },
+        {
+          "text": "atoms once only",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "atoms once only",
+          "page": 23,
+          "y": 371.5
+        },
+        {
+          "text": "Award 1 point for butan-1-ol and",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Award 1 point for butan-1-ol and",
+          "page": 23,
+          "y": 386.5
+        },
+        {
+          "text": "correct formula in Product 4",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "correct formula in Product 4",
+          "page": 23,
+          "y": 401.5
+        }
+      ],
+      "requiresRuling": [
+        {
+          "text": "both must be correct to score the",
+          "confidence": 0.4,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "both must be correct to score the",
+          "page": 23,
+          "y": 206.7,
+          "requiresRuling": [
+            "states a requirement that may or may not be testable"
+          ]
+        }
+      ],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 4,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "15(c)",
+      "problems": [],
+      "page": 24,
+      "marks": {
+        "value": 2,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(2)",
+        "page": 24,
+        "y": 101.9
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "correct repeat unit",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " correct repeat unit (1)",
+          "page": 24,
+          "y": 117.5
+        },
+        {
+          "pointCode": "M2",
+          "route": 1,
+          "criterion": "two repeat units and continuation bonds ALLOW C2H5, CH2CH3 as pendant group",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " two repeat units and continuation bonds (1)",
+          "page": 24,
+          "y": 147.5
+        }
+      ],
+      "accept": [
+        {
+          "text": "Ignore brackets and n",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore brackets and n",
+          "page": 24,
+          "y": 221.7
+        },
+        {
+          "text": "Allow ethyl groups on C2 and C3 or C1 and C4",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow ethyl groups on C2 and C3 or C1 and C4",
+          "page": 24,
+          "y": 236.7
+        }
+      ],
+      "reject": [
+        {
+          "text": "Do not award a dimer",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Do not award a dimer",
+          "page": 24,
+          "y": 311.6
+        }
+      ],
+      "guidance": [
+        {
+          "text": "M2 depends on M1 or near miss e.g. attachment of",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "M2 depends on M1 or near miss e.g. attachment of",
+          "page": 24,
+          "y": 251.7
+        },
+        {
+          "text": "pendant group or use of alternative 4-carbon monomer",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "pendant group or use of alternative 4-carbon monomer",
+          "page": 24,
+          "y": 266.7
+        },
+        {
+          "text": "alkene producing a valid polymer i.e.",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "alkene producing a valid polymer i.e.",
+          "page": 24,
+          "y": 281.6
+        },
+        {
+          "text": "poly(but-2-ene)/poly(methylpropene).",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "poly(but-2-ene)/poly(methylpropene).",
+          "page": 24,
+          "y": 296.6
+        }
+      ],
+      "requiresRuling": [],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 2,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "15(d)",
+      "problems": [],
+      "page": 25,
+      "marks": {
+        "value": 2,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(2)",
+        "page": 25,
+        "y": 101.9
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "energy is produced /can be used to generate electricity or heat locally Or prevents polymers going to landfill/storage/taking up space",
+          "marks": null,
+          "methodBlock": null,
+          "confidence": 0.6,
+          "derivedFrom": "bullet in the Answer column with NO per-point mark found nearby",
+          "sourceLine": " energy is produced /can be used to generate",
+          "page": 25,
+          "y": 115.2
+        },
+        {
+          "pointCode": "M2",
+          "route": 1,
+          "criterion": "toxic/harmful/corrosive gases/substances may be produced Or particulates/soot may be produced",
+          "marks": null,
+          "methodBlock": null,
+          "confidence": 0.6,
+          "derivedFrom": "bullet in the Answer column with NO per-point mark found nearby",
+          "sourceLine": " toxic/harmful/corrosive",
+          "page": 25,
+          "y": 228.1
+        }
+      ],
+      "accept": [
+        {
+          "text": "Allow production of hydrogen",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow production of hydrogen",
+          "page": 25,
+          "y": 116.9
+        },
+        {
+          "text": "Ignore non-biodegradable, non-renewable,",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore non-biodegradable, non-renewable,",
+          "page": 25,
+          "y": 161.8
+        }
+      ],
+      "reject": [
+        {
+          "text": "Do not award references to climate change",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Do not award references to climate change",
+          "page": 25,
+          "y": 266.7
+        }
+      ],
+      "guidance": [
+        {
+          "text": "reduces polymer waste/pollution",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "reduces polymer waste/pollution",
+          "page": 25,
+          "y": 176.8
+        },
+        {
+          "text": "a named gas e.g. sulfur dioxide, hydrogen cyanide, dioxin",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "a named gas e.g. sulfur dioxide, hydrogen cyanide, dioxin",
+          "page": 25,
+          "y": 221.7
+        },
+        {
+          "text": "without qualification is insufficient",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "without qualification is insufficient",
+          "page": 25,
+          "y": 236.7
+        }
+      ],
+      "requiresRuling": [],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 2,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "15(e)(i)",
+      "problems": [
+        "route 1 claims 6 mark(s) against a tariff of 3"
+      ],
+      "page": 26,
+      "marks": {
+        "value": 3,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(3)",
+        "page": 26,
+        "y": 101.9
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "volume CO2 produced",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " volume CO2 produced (1)",
+          "page": 26,
+          "y": 117.5
+        },
+        {
+          "pointCode": "M2",
+          "route": 1,
+          "criterion": "volume of oxygen used",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " volume of oxygen used (1)",
+          "page": 26,
+          "y": 147.5
+        },
+        {
+          "pointCode": "M3",
+          "route": 1,
+          "criterion": "total volume of gas remaining",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " total volume of gas remaining (1)",
+          "page": 26,
+          "y": 177.5
+        },
+        {
+          "pointCode": "M4",
+          "route": 1,
+          "criterion": "moles CO2 produced",
+          "marks": 1,
+          "methodBlock": "Alternative method",
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " moles CO2 produced (1)",
+          "page": 26,
+          "y": 237.4
+        },
+        {
+          "pointCode": "M5",
+          "route": 1,
+          "criterion": "moles oxygen remaining",
+          "marks": 1,
+          "methodBlock": "Alternative method",
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " moles oxygen remaining (1)",
+          "page": 26,
+          "y": 297.3
+        },
+        {
+          "pointCode": "M6",
+          "route": 1,
+          "criterion": "total volume remaining",
+          "marks": 1,
+          "methodBlock": "Alternative method",
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " total volume remaining (1)",
+          "page": 26,
+          "y": 357.2
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [
+        {
+          "text": "Example of calculation:",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Example of calculation:",
+          "page": 26,
+          "y": 101.9,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "4 x 35 = 140 (cm3 )",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "4 x 35 = 140 (cm3 )",
+          "page": 26,
+          "y": 116.9,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "6.5 x 35 = 227.5/228 (cm3 )",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "6.5 x 35 = 227.5/228 (cm3 )",
+          "page": 26,
+          "y": 146.8,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "300-227.5 + 140 (cm3 )",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "300-227.5 + 140 (cm3 )",
+          "page": 26,
+          "y": 176.8,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "=212.5/213 (cm3)",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "=212.5/213 (cm3)",
+          "page": 26,
+          "y": 191.7,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "Alternative method",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Alternative method",
+          "page": 26,
+          "y": 221.7,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "35 / 24000 = 1.4583 x 10-3 / 1.458 x 10-3 /1.46 x 10-3",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "35 / 24000 = 1.4583 x 10-3 / 1.458 x 10-3 /1.46 x 10-3",
+          "page": 26,
+          "y": 236.7,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "1.4583 x 10-3 x 4 = 5.8333 x 10-3 / 5.83 x 10-3 or 5.84 x 10-3 if",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "1.4583 x 10-3 x 4 = 5.8333 x 10-3 / 5.83 x 10-3 or 5.84 x 10-3 if",
+          "page": 26,
+          "y": 251.7,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "rounded previously",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "rounded previously",
+          "page": 26,
+          "y": 266.7,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "300/24000 = 1.25 x 10-2",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "300/24000 = 1.25 x 10-2",
+          "page": 26,
+          "y": 296.6,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "(1.46 x 10-3 ) x 6.5 = 9.49 x 10-3 moles",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "(1.46 x 10-3 ) x 6.5 = 9.49 x 10-3 moles",
+          "page": 26,
+          "y": 311.6,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "(1.25 x 10-2 ) – (9.49 x 10-3) = 3.01 x 10-3 (mol)",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "(1.25 x 10-2 ) – (9.49 x 10-3) = 3.01 x 10-3 (mol)",
+          "page": 26,
+          "y": 326.6,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        },
+        {
+          "text": "[(5.83 x 10-3 ) + (3.01 x 10-3 )] x 24000 = 212.16/212 (cm3)",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "[(5.83 x 10-3 ) + (3.01 x 10-3 )] x 24000 = 212.16/212 (cm3)",
+          "page": 26,
+          "y": 356.6,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
+        }
+      ],
+      "requiresRuling": [
+        {
+          "text": "Allow TE throughout.",
+          "confidence": 0.4,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow TE throughout.",
+          "page": 26,
+          "y": 371.5,
+          "requiresRuling": [
+            "transferred-error rule — scope must be decided"
+          ]
+        },
+        {
+          "text": "Correct answer with no working scores 3 marks",
+          "confidence": 0.4,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Correct answer with no working scores 3 marks",
+          "page": 26,
+          "y": 386.5,
+          "requiresRuling": [
+            "conditions the whole tariff on working",
+            "conditions marks on working"
+          ]
+        },
+        {
+          "text": "IGNORE SF except 1 SF",
+          "confidence": 0.4,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "IGNORE SF except 1 SF",
+          "page": 26,
+          "y": 401.5,
+          "requiresRuling": [
+            "conditional (unless / except / only if / provided)",
+            "significant-figure rule — enforceability must be decided"
+          ]
+        }
+      ],
+      "alternativeMethods": [
+        {
+          "heading": "Alternative method",
+          "page": 26,
+          "y": 221.7,
+          "confidence": 1.0,
+          "derivedFrom": "heading in the Answer column",
+          "sourceLine": "Alternative method"
+        }
+      ],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 3,
+      "markingRule": null
+    },
+    {
+      "questionNumber": "15(e)(ii)",
+      "problems": [],
+      "page": 27,
+      "marks": {
+        "value": 2,
+        "confidence": 1.0,
+        "derivedFrom": "bracketed integer in the ruled Mark column",
+        "sourceLine": "(2)",
+        "page": 27,
+        "y": 139.8
+      },
+      "points": [
+        {
+          "pointCode": "M1",
+          "route": 1,
+          "criterion": "carbon monoxide may be produced (incomplete combustion may occur)",
+          "marks": null,
+          "methodBlock": null,
+          "confidence": 0.6,
+          "derivedFrom": "bullet in the Answer column with NO per-point mark found nearby",
+          "sourceLine": " carbon monoxide may be produced",
+          "page": 27,
+          "y": 140.5
+        },
+        {
+          "pointCode": "M2",
+          "route": 1,
+          "criterion": "which is toxic/combines(irreversibly) with haemoglobin/",
+          "marks": 1,
+          "methodBlock": null,
+          "confidence": 0.9,
+          "derivedFrom": "bullet in the Answer column",
+          "sourceLine": " which is toxic/combines(irreversibly) (1)",
+          "page": 27,
+          "y": 185.5
+        }
+      ],
+      "accept": [
+        {
+          "text": "Ignore references to flammability of butane/global",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore references to flammability of butane/global",
+          "page": 27,
+          "y": 214.7
+        }
+      ],
+      "reject": [
+        {
+          "text": "Do not award particulates",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Do not award particulates",
+          "page": 27,
+          "y": 154.8
+        }
+      ],
+      "guidance": [
+        {
+          "text": "M2 depends on clear link to gas produced by burning",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "M2 depends on clear link to gas produced by burning",
+          "page": 27,
+          "y": 184.8
+        },
+        {
+          "text": "butane",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "butane",
+          "page": 27,
+          "y": 199.7
+        },
+        {
+          "text": "warming/greenhouse gases",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "warming/greenhouse gases",
+          "page": 27,
+          "y": 229.7
+        },
+        {
+          "text": "If no other mark awarded allow 1 mark for carbon dioxide",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "If no other mark awarded allow 1 mark for carbon dioxide",
+          "page": 27,
+          "y": 259.7
+        },
+        {
+          "text": "causes suffocation.",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "causes suffocation.",
+          "page": 27,
+          "y": 274.7
+        },
+        {
+          "text": "(Total for Question 15 = 18 marks)",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "(Total for Question 15 = 18 marks)",
+          "page": 27,
+          "y": 305.1
+        },
+        {
+          "text": "(Total for Section B = 60 marks)",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "(Total for Section B = 60 marks)",
+          "page": 27,
+          "y": 335.1
+        },
+        {
+          "text": "(Total for Paper = 80 marks)",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "(Total for Paper = 80 marks)",
+          "page": 27,
+          "y": 350.0
+        }
+      ],
+      "requiresRuling": [],
+      "alternativeMethods": [],
+      "hasAlternativeMethods": false,
+      "routes": 1,
+      "marksAvailable": 2,
+      "markingRule": null
+    }
+  ],
+  "questionTotals": [
+    {
+      "question": "12",
+      "marks": 15,
+      "page": 15,
+      "sourceLine": "Total for Question 12 = 15 marks"
+    },
+    {
+      "question": "13",
+      "marks": 14,
+      "page": 18,
+      "sourceLine": "Total for Question 13 = 14 marks"
+    },
+    {
+      "question": "14",
+      "marks": 13,
+      "page": 21,
+      "sourceLine": "Total for Question 14 = 13 marks"
+    },
+    {
+      "question": "15",
+      "marks": 18,
+      "page": 27,
+      "sourceLine": "Total for Question 15 = 18 marks"
+    }
+  ],
+  "problems": [
+    {
+      "page": 1,
+      "problem": "no table rules found — page not read"
+    },
+    {
+      "page": 3,
+      "problem": "no table rules found — page not read"
+    }
+  ]
+}

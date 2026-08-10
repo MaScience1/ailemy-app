@@ -77,6 +77,28 @@ MIN_RULE_HEIGHT = 40.0
 MAX_RULE_WIDTH = 3.0
 LINE_TOLERANCE = 4.0
 
+# ⚠ A BULLET IS NOT ALWAYS U+2022, AND THE OTHER SPELLING IS INVISIBLE.
+#
+# Edexcel changed this between sittings. May-June 2025 and January 2024 print a
+# real U+2022. January 2019 and October 2021 print U+F0B7 — a PRIVATE USE AREA
+# codepoint, which is what Word emits for a Symbol-font bullet. It renders as a
+# bullet and reads as one; it is simply not the same character.
+#
+# Testing only for "•" did not raise an error on those papers. Every marking
+# point splits on a bullet, so with none found EVERY block fell through to the
+# whole-Answer-cell fallback below and came out as exactly ONE point carrying
+# the question's ENTIRE tariff. 2019 and 2021 both reported precisely 1.00
+# marking points per block — a five-mark question with five printed criteria
+# arriving as one five-mark point, and the fallback's derivedFrom asserting
+# "Section A prints no bullets" about a Section B page.
+#
+# That number is the only thing that gave it away. Nothing failed.
+BULLETS = ("•", "")
+
+
+def is_bullet_token(t):
+    return t in BULLETS
+
 
 def vertical_rules(page):
     xs = Counter()
@@ -323,7 +345,7 @@ def extract_page(page, page_no):
         # Pairing them by "same visual line" lost 20(a)'s M4, whose (1) is 4.4pt
         # above its bullet — just outside the line tolerance. Marks are matched
         # to the NEAREST bullet instead, which is what the layout actually means.
-        bullet_ys = sorted(y for y, line in a.items() if any(t == "•" for _, t in line))
+        bullet_ys = sorted(y for y, line in a.items() if any(is_bullet_token(t) for _, t in line))
         point_marks = {}
         for y, line in a.items():
             for x, tok in line:
@@ -340,10 +362,10 @@ def extract_page(page, page_no):
         for y in sorted(a):
             line = a[y]
             text = joined(line)
-            is_bullet = any(t == "•" for _, t in line)
+            is_bullet = any(is_bullet_token(t) for _, t in line)
             body = " ".join(
                 t for x, t in line
-                if t != "•"
+                if not is_bullet_token(t)
                 and not (BRACKETED_INT.match(t) and mark_x is not None and abs(x - mark_x) <= 6)
             ).strip()
 
@@ -543,6 +565,31 @@ def main():
     questions, problems, totals = [], [], []
     for n in range(doc.page_count):
         page = doc[n]
+        # ⚠ NORMALISE /Rotate BEFORE READING ANYTHING OFF THE PAGE.
+        #
+        # A landscape mark scheme comes in two forms, and they are
+        # indistinguishable from page.rect alone: WCH11/01 May-June 2025 stores
+        # its landscape pages natively (842x595, /Rotate 0), while October 2021
+        # stores the SAME layout portrait with /Rotate 90. In the second form
+        # the column rules — vertical on screen — are stored as HORIZONTAL
+        # lines, so vertical_rules()' tall-and-narrow filter never matches one.
+        # What it matched instead were the ROW separators, and column_bounds()
+        # built a four-column table out of them: q0=71, q1=102, mark0=525.
+        # Every subsequent words_in() call then selected a horizontal band
+        # rather than a column, so no page yielded a single question block.
+        #
+        # October 2021 extracted 0 questions and 0 marking points from a
+        # perfectly good text layer AND EXITED 0 — see the guard at the end of
+        # this function, which exists because of it.
+        #
+        # remove_rotation() bakes the transform in and leaves rotation 0, so
+        # both forms are read in one coordinate space. Measured on the baseline
+        # before shipping: on an already-rot-0 page it changes nothing at all —
+        # rules [72, 140, 716, 781] and the text bbox are identical before and
+        # after — so this cannot perturb the paper the extractor was validated
+        # against. The regression check re-runs May-June 2025 and diffs.
+        if page.rotation:
+            page.remove_rotation()
         text = page.get_text()
         for m in TOTAL_RE.finditer(text):
             totals.append({"question": m.group(1), "marks": int(m.group(2)),
@@ -585,6 +632,27 @@ def main():
     if problems:
         print(f"{len(problems)} page(s) could not be read: {problems}")
     print(f"-> {out_path}")
+
+    # ⚠ A RUN THAT EXTRACTED NOTHING IS A FAILURE, NOT AN EMPTY PAPER.
+    #
+    # October 2021 produced 0 question blocks and 0 marking points from an
+    # intact 25,000-character text layer, wrote a structurally valid artefact,
+    # and exited 0. Everything downstream reads that as "this mark scheme has
+    # no questions in it" — the review surface would render an empty paper, and
+    # a batch loop over twenty papers would report twenty successes.
+    #
+    # There is no mark scheme with no questions. Zero means the reader did not
+    # understand the page, and the only safe report is a non-zero exit. The
+    # artefact is still written, because it carries `problems` and is the thing
+    # a person needs in order to diagnose the run.
+    if not questions:
+        print(
+            "\n✗ EXTRACTED NOTHING. 0 question blocks from a "
+            f"{sum(len(doc[i].get_text()) for i in range(doc.page_count))}-character text layer.\n"
+            "  This is a reader failure, not a mark scheme without questions.\n"
+            "  If the text layer is genuinely absent this paper cannot be extracted — say so and move on."
+        )
+        sys.exit(1)
 
 
 if __name__ == "__main__":
