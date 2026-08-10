@@ -33,6 +33,7 @@ type Proposal = {
     criterion: string;
     marks: number | null;
     methodBlock: string | null;
+    route: number;
     confidence: number;
     sourceLine: string;
   }[];
@@ -41,6 +42,9 @@ type Proposal = {
   guidance: { text: string; sourceLine: string }[];
   requiresRuling: { text: string; requiresRuling: string[] }[];
   hasAlternativeMethods?: boolean;
+  routes?: number;
+  marksAvailable?: number | null;
+  markingRule?: string | null;
 };
 
 const proposals = JSON.parse(readFileSync(process.argv[2], "utf8")) as { questions: Proposal[] };
@@ -90,17 +94,26 @@ for (const qn of GROUND_TRUTH) {
 
   // ── point count ─────────────────────────────────────────────────────────
   const fixturePoints = fixture.markScheme ?? [];
-  const countOk = proposed.points.length === fixturePoints.length;
+  // ⚠ COMPARED PER ROUTE. 22(c) prints its three marks twice, once per route to
+  // the answer; the fixture holds one route because a script takes one and can
+  // earn three. Diffing the flat list against the fixture reported three
+  // phantom "extractor only" points on a question where both sides agree.
+  // Ruling: store both routes, mark against whichever the script matches, cap
+  // at the tariff, never sum across routes.
+  const route1 = proposed.points.filter((p) => (p.route ?? 1) === 1);
+  const otherRoutes = proposed.points.filter((p) => (p.route ?? 1) !== 1);
+  const countOk = route1.length === fixturePoints.length;
   record("point count", countOk,
-    `${qn}: fixture ${fixturePoints.length}, extractor ${proposed.points.length}` +
-    (proposed.hasAlternativeMethods ? " (extractor flagged alternative methods)" : ""));
+    `${qn}: fixture ${fixturePoints.length}, extractor route 1 ${route1.length}`);
   console.log(`  point count  ${countOk ? GREEN + "agree" + RESET : YELLOW + "DIFFER" + RESET}` +
-    `  fixture=${fixturePoints.length} extractor=${proposed.points.length}` +
-    (proposed.hasAlternativeMethods ? `  ${YELLOW}[extractor: alternative methods]${RESET}` : ""));
+    `  fixture=${fixturePoints.length} extractor(route 1)=${route1.length}` +
+    (proposed.hasAlternativeMethods
+      ? `  ${DIM}[+${otherRoutes.length} in ${(proposed.routes ?? 1) - 1} alternative route(s), capped at ${proposed.marksAvailable}]${RESET}`
+      : ""));
 
   // ── per point: code, criterion, marks ───────────────────────────────────
-  for (let i = 0; i < Math.max(fixturePoints.length, proposed.points.length); i++) {
-    const f = fixturePoints[i], p = proposed.points[i];
+  for (let i = 0; i < Math.max(fixturePoints.length, route1.length); i++) {
+    const f = fixturePoints[i], p = route1[i];
     if (!f || !p) {
       const side = f ? "fixture only" : "extractor only";
       record("point criterion", false, `${qn}: ${side} — ${(f ?? p)!.criterion ?? ""}`.slice(0, 120));

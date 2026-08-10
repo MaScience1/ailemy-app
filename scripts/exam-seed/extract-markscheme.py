@@ -351,11 +351,31 @@ def extract_page(page, page_no):
                 if pending:
                     points.append(pending)
                 per_point = point_marks.get(y)
+                # ⚠ NUMBERED WITHIN ITS ROUTE, AND PREFIXED SO THE CODE IS
+                # UNIQUE. 22(c) prints three marks twice because there are two
+                # routes to the same answer; a script takes ONE and can earn
+                # three. Numbering them M1..M6 said six marks on a three-mark
+                # question, and mark_scheme_items has UNIQUE (question_id,
+                # point_code) so both routes cannot both be called M1.
+                #
+                # THE RULING (Muhammed, and it belongs in the data, not in a
+                # marker's head): store both routes, mark against whichever the
+                # script matches, cap at the question tariff. NEVER sum across
+                # routes — the same three marks appearing twice is a printing
+                # convention, not six marks.
+                route_label = method_for(y)
+                route_index = 1
+                if route_label:
+                    seen = [lbl for _, lbl in method_rows]
+                    route_index = seen.index(route_label) + 1
+                in_route = sum(1 for pt in points if pt["route"] == route_index) + 1
+                prefix = "" if route_index == 1 else f"ALT{route_index - 1}."
                 pending = {
-                    "pointCode": f"M{len(points) + 1}",
+                    "pointCode": f"{prefix}M{in_route}",
+                    "route": route_index,
                     "criterion": body,
                     "marks": per_point,
-                    "methodBlock": method_for(y),
+                    "methodBlock": route_label,
                     "confidence": 0.9 if per_point else 0.6,
                     "derivedFrom": "bullet in the Answer column"
                     + ("" if per_point else " with NO per-point mark found nearby"),
@@ -396,6 +416,7 @@ def extract_page(page, page_no):
                 criterion = " ".join(t for _, t in head).strip()
                 points = [{
                     "pointCode": "M1",
+                    "route": 1,
                     "criterion": criterion,
                     "marks": total["value"] if total else None,
                     "methodBlock": None,
@@ -417,11 +438,28 @@ def extract_page(page, page_no):
         ]
 
         # ── guidance column: classify by polarity, escalate anything mixed ──
+        # ⚠ WORKED EXAMPLES ARE FLAGGED UNPARSED, NOT REPAIRED.
+        #
+        # Under "Example of calculation" the guidance column prints arithmetic
+        # with superscripts, and superscripts interleave in the PDF text layer:
+        # "415 x 10-6 / 4.15 x 10-4" comes out as "415 x ÷ 10-6 / x 10-4". That
+        # is a real limitation and it is recorded as one.
+        #
+        # It is deliberately NOT solved. This text is an illustration of one
+        # route to the answer — nothing marks against it, no criterion depends
+        # on it, and no student sees it. Reconstructing reading order from glyph
+        # positions to rescue prose that decides nothing would be effort spent
+        # where a wrong result costs nothing and a right one buys nothing.
+        # Marked `unparsed` so a reviewer knows not to trust the characters, and
+        # left alone.
+        in_worked_example = False
         accept, reject, notes, rulings = [], [], [], []
         for y, line in sorted(g.items()):
             text = joined(line)
             if not text or text.lower() in ("additional guidance",):
                 continue
+            if re.match(r"^\s*example of (calculation|answer)", text, re.I):
+                in_worked_example = True
             kind, confidence, escalate = classify(text)
             entry = {
                 "text": text,
@@ -431,6 +469,17 @@ def extract_page(page, page_no):
                 "page": page_no,
                 "y": round(y, 1),
             }
+            # A worked-example line that carries no marking keyword is
+            # arithmetic, and its characters are not reliable.
+            if in_worked_example and kind == "guidance" and not escalate:
+                entry["unparsed"] = True
+                entry["unparsedReason"] = (
+                    "worked example — superscripts interleave in the PDF text layer, so the "
+                    "characters are unreliable. Nothing marks against this text."
+                )
+                entry["confidence"] = 0.2
+                notes.append(entry)
+                continue
             if escalate:
                 entry["requiresRuling"] = escalate
                 rulings.append(entry)
@@ -441,8 +490,23 @@ def extract_page(page, page_no):
             else:
                 notes.append(entry)
 
+        # ⚠ THE CAP, CHECKED RATHER THAN ASSUMED. Per route, the marks a script
+        # can earn must not exceed the tariff. If they do, either the tariff was
+        # misread or a route boundary was missed — and quietly emitting a route
+        # worth more than the question is how six marks appear on a three-mark
+        # question in the first place.
+        overrun = []
+        if total:
+            for r in range(1, max(1, len(method_rows)) + 1):
+                claimed = sum(pt["marks"] or 0 for pt in points if pt["route"] == r)
+                if claimed > total["value"]:
+                    overrun.append(
+                        f"route {r} claims {claimed} mark(s) against a tariff of {total['value']}"
+                    )
+
         out.append({
             "questionNumber": block["label"],
+            "problems": overrun,
             "page": page_no,
             "marks": total,
             "points": points,
@@ -454,6 +518,17 @@ def extract_page(page, page_no):
             # ⚠ When true, the number of points is NOT the number of marks:
             # the same marks are printed once per route. A reviewer must pick.
             "hasAlternativeMethods": len(method_rows) > 1,
+            # How many routes the scheme prints, and the ceiling any script can
+            # reach. marksAvailable is the TARIFF, never the point count: with
+            # alternatives those differ, and reading the point count as a total
+            # is the mistake this records the answer to.
+            "routes": max(1, len(method_rows)),
+            "marksAvailable": total["value"] if total else None,
+            "markingRule": (
+                "Two or more routes to the same marks. Mark against whichever route the "
+                "script matches and cap the award at marksAvailable. Never sum across routes."
+                if len(method_rows) > 1 else None
+            ),
         })
     return out, None
 
@@ -494,12 +569,19 @@ def main():
         json.dump(payload, f, indent=2, ensure_ascii=False)
 
     ruled = sum(len(q["requiresRuling"]) for q in questions)
+    unparsed = sum(1 for q in questions for g in q["guidance"] if g.get("unparsed"))
     print(f"{len(questions)} question block(s) across {doc.page_count} pages")
     print(f"{sum(len(q['points']) for q in questions)} marking point(s)")
     print(f"{sum(len(q['accept']) for q in questions)} accept, "
           f"{sum(len(q['reject']) for q in questions)} reject, "
           f"{sum(len(q['guidance']) for q in questions)} guidance")
     print(f"{ruled} line(s) FLAGGED FOR A RULING — not classified")
+    print(f"{unparsed} worked-example line(s) FLAGGED UNPARSED — nothing marks against them")
+    overruns = [(q["questionNumber"], p) for q in questions for p in q.get("problems", [])]
+    if overruns:
+        print(f"⚠ {len(overruns)} ROUTE(S) CLAIM MORE MARKS THAN THE TARIFF:")
+        for qn, p in overruns:
+            print(f"    {qn}: {p}")
     if problems:
         print(f"{len(problems)} page(s) could not be read: {problems}")
     print(f"-> {out_path}")

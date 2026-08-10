@@ -1,107 +1,109 @@
-# Transactional email — what I need from you
+# Transactional email — Resend on ailemy.com, DNS on Cloudflare
 
 Everything that needs no secret is done: five templates in this folder, on
-brand, verified for the traps that break auth mail. **Nothing has been sent, no
-account has been created, and no credential has been invented or guessed.**
+brand, verified. **Nothing has been sent, no account created, no credential
+invented.** Below is the runbook, in order.
 
-This is the seam. Below is exactly what to fetch and exactly where each value
-goes.
+Decisions already taken: **Resend**, sending domain **`mail.ailemy.com`**, DMARC
+starts at **`p=none`**, click tracking **off**.
 
----
-
-## Why this is blocking, in one paragraph
-
-Supabase's built-in sender is explicitly **for development only**. It is rate
-limited to a handful of messages per hour across the whole project, sends from a
-Supabase-owned address, and has no deliverability reputation attached to your
-domain. A parent who pays and then waits for a confirmation email that never
-arrives — or lands in spam — cannot complete signup, and there is no code change
-that fixes it. It needs a real sender.
+⚠ **Why a subdomain and not the apex.** `mail.ailemy.com` builds its own sending
+reputation. If marketing mail ever goes out from the apex and gets complaints,
+signup email on the subdomain is unaffected — and the reverse. The *From*
+address reads `noreply@mail.ailemy.com`, which is unremarkable to a recipient.
 
 ---
 
-## 1. Choose a provider
+## Step 1 — Resend account and domain
 
-Any SMTP provider works; Supabase takes host/port/user/pass. Two that suit this
-project:
-
-| | **Resend** | **Postmark** |
-|---|---|---|
-| Free tier | 3,000/month, 100/day | 100/month, then paid |
-| Setup | fastest — DNS + key, minutes | slightly more involved |
-| Deliverability | good | best in class for transactional |
-| Separate streams | no | **yes** — transactional never mixes with marketing |
-
-**My recommendation: Resend**, on the free tier, now. The volume fits early
-signups comfortably, setup is the shortest path off the dev sender, and moving
-to Postmark later is a host/user/pass change and a second DNS record — not a
-migration. Take Postmark instead if you already know you'll send marketing email
-from the same domain, because keeping those streams apart is what protects the
-signup mail.
-
-⚠ **Do not use a Gmail/Workspace SMTP account.** It is rate limited, it rewrites
-headers, and a sending account suspension takes signup down with it.
+1. Sign up at **resend.com** (free tier: 3,000/month, 100/day).
+2. **Domains → Add Domain** → enter `mail.ailemy.com`.
+3. Choose the region closest to your users — **eu-west-1 (Ireland)**.
+4. Resend shows you a record set. **Do not close that page**: the DKIM value is
+   generated per domain and is the one thing below I cannot give you.
 
 ---
 
-## 2. What to fetch
+## Step 2 — Cloudflare DNS
 
-### a. The API key / SMTP password
+Cloudflare dashboard → **ailemy.com** → **DNS → Records**.
 
-- Resend → **Dashboard → API Keys → Create API Key**, permission **Sending
-  access** only.
-  - Value looks like `re_...`
-  - SMTP username is the literal string `resend`
-  - SMTP host `smtp.resend.com`, **port 587**, TLS **STARTTLS**
-- Postmark → **Servers → [your server] → API Tokens → Server Token**
-  - SMTP host `smtp.postmarkapp.com`, port 587
-  - Username **and** password are both the server token
+⚠ **Two Cloudflare-specific traps, both of which cause silent failure:**
 
-⚠ Give it **sending permission only**. A full-access key in an SMTP field is a
-key that can also read and delete.
+- **Proxy status must be `DNS only`** (grey cloud, not orange) on every record
+  below. Cloudflare's proxy does not apply to TXT/MX, but it *will* try on a
+  CNAME, and a proxied DKIM CNAME resolves to Cloudflare's IPs instead of
+  Resend's — DKIM then fails to verify with no obvious cause.
+- **Cloudflare appends the zone name.** In the Name field enter
+  `resend._domainkey.mail`, **not** `resend._domainkey.mail.ailemy.com`. Typing
+  the full name produces `resend._domainkey.mail.ailemy.com.ailemy.com`. If
+  Cloudflare shows the full name back to you after saving, that is correct.
 
-### b. The DNS records
+### The records
 
-On the domain you'll send from. Decide this first, because it goes in the
-records:
+| # | Type | Name (as typed into Cloudflare) | Value | TTL | Proxy |
+|---|------|--------------------------------|-------|-----|-------|
+| 1 | `MX` | `send.mail` | `feedback-smtp.eu-west-1.amazonses.com` (priority **10**) | Auto | DNS only |
+| 2 | `TXT` | `send.mail` | `v=spf1 include:amazonses.com ~all` | Auto | n/a |
+| 3 | `TXT` | `resend._domainkey.mail` | **the long `p=MIGfMA0…` key Resend shows you** | Auto | n/a |
+| 4 | `TXT` | `_dmarc.mail` | `v=DMARC1; p=none; rua=mailto:dmarc@ailemy.com; fo=1` | Auto | n/a |
 
-- **Sending domain**: I'd use a subdomain — `mail.ailemy.com` — rather than the
-  apex. A subdomain's sending reputation is separate from the apex's, so a
-  future marketing mistake cannot take signup email down with it. The
-  *From* address still reads `noreply@mail.ailemy.com`.
-- Confirm whether **ailemy.com** is the live domain and where its DNS is hosted
-  (Cloudflare / Vercel / registrar) — I don't have that and won't assume it.
+**Record 3 is the only value I cannot give you** — it is generated per domain.
+Copy it from the Resend page exactly, with no added quotes and no line breaks.
+Cloudflare will show it wrapped in the UI; that is display only.
 
-The provider generates the exact values after you add the domain. There will be:
+⚠ **Records 1 and 2 are on `send.mail`, not `mail`.** That subdomain is the
+bounce/return-path domain, and getting it right is what makes SPF *align* with
+the From address. An SPF record on the wrong host passes SPF and fails DMARC
+alignment, which is the hardest version of this to diagnose.
 
-| Record | Type | Purpose |
-|---|---|---|
-| SPF | TXT on the sending domain | says the provider may send as you |
-| DKIM | TXT (often 1–3 CNAMEs on Resend) | signs each message |
-| DMARC | TXT at `_dmarc.<domain>` | tells receivers what to do on failure |
-| Return-Path | CNAME | aligns the bounce domain |
+⚠ **If you already have an SPF TXT record on `mail` or the apex, do not add a
+second one.** A domain with two SPF records is a PermError and every receiver
+treats it as a failure. Merge into the existing one instead — add
+`include:amazonses.com` before the `~all`.
 
-**Start DMARC at `p=none`:**
+`fo=1` on the DMARC record asks for a forensic report on any failure, which is
+what makes `p=none` useful rather than just permissive.
 
-```
-v=DMARC1; p=none; rua=mailto:dmarc@ailemy.com
-```
+### After adding
 
-`p=none` monitors without rejecting. Going straight to `p=reject` before SPF and
-DKIM are confirmed aligned bounces your own signup mail, and the symptom is
-silence. Tighten to `quarantine` then `reject` once reports are clean.
-
-⚠ **Propagation is real.** Verify in the provider's dashboard that every record
-reads *verified* before switching Supabase over. A half-propagated DKIM sends
-mail that authenticates intermittently, which is worse to diagnose than mail
-that fails outright.
+Back in Resend → **Domains → mail.ailemy.com → Verify**. Wait until all four
+read **verified** — Cloudflare is usually seconds, but do not proceed on
+"pending". A half-propagated DKIM authenticates intermittently, which is worse
+to diagnose than one that fails outright.
 
 ---
 
-## 3. Where each value goes
+## Step 3 — The API key
 
-**Supabase Dashboard → Project Settings → Authentication → SMTP Settings**
-→ *Enable Custom SMTP*:
+Resend → **API Keys → Create API Key**.
+
+- Name: `supabase-auth`
+- Permission: **Sending access** — not full access. A key in an SMTP field
+  should not also be able to read and delete.
+- Domain: restrict to `mail.ailemy.com`.
+
+Copy the `re_…` value. **It is shown once.**
+
+---
+
+## Step 4 — Turn click tracking OFF
+
+Resend → **Domains → mail.ailemy.com → Settings** → ensure **Click tracking** is
+disabled. (Open tracking is harmless; click tracking is not.)
+
+⚠ **This is the one that will bite silently.** Click tracking rewrites every
+link through the provider's domain. `{{ .ConfirmationURL }}` carries a
+single-use Supabase token, and corporate mail filters follow links to scan them
+— so the scanner consumes the token before the recipient clicks, and they see
+"link expired" on a link they never opened. It is intermittent, it depends on
+the recipient's employer, and it looks like a Supabase bug.
+
+---
+
+## Step 5 — Supabase
+
+**Project Settings → Authentication → SMTP Settings** → *Enable Custom SMTP*:
 
 | Field | Value |
 |---|---|
@@ -109,16 +111,15 @@ that fails outright.
 | Sender name | `Ailemy` |
 | Host | `smtp.resend.com` |
 | Port | `587` |
-| Username | `resend` |
-| Password | the `re_...` key |
+| Username | `resend` (the literal string) |
+| Password | the `re_…` key |
 | Minimum interval | leave default |
 
-⚠ **This is a dashboard setting, not an env var.** It does not belong in
-`.env.local`, is not read by the app, and must not be committed. The app never
-sees this key — Supabase sends the mail.
+⚠ **A dashboard setting, not an env var.** It does not belong in `.env.local`,
+the app never reads it, and a copy in the repo's env file is a second place for
+it to leak from. Supabase sends the mail; the app never holds this key.
 
-Then **Authentication → Emails**, and paste each file in this folder into the
-template of the matching name:
+Then **Authentication → Emails** — paste each file into the matching template:
 
 | File | Supabase template |
 |---|---|
@@ -128,47 +129,42 @@ template of the matching name:
 | `invite.html` | Invite user |
 | `change-email.html` | Change Email Address |
 
-Also check **Authentication → URL Configuration**:
+And **Authentication → URL Configuration**:
 
-- **Site URL** — the production origin. Every `{{ .ConfirmationURL }}` is built
-  from it, so if it still points at localhost the links in real email will too.
-- **Redirect URLs** — must include the production callback. `/auth/callback`
-  exists in this app; a URL not on the allow-list is rejected after the
-  recipient has already clicked, which reads as a broken link.
-
-⚠ **Turn OFF click tracking** for this stream (Resend: per-domain; Postmark: per
-message stream). A tracker rewrites `{{ .ConfirmationURL }}` through its own
-domain, and a scanner — corporate mail filters do this routinely — can consume
-the one-time Supabase token before the recipient clicks. The user then sees
-"link expired" on a link they never opened.
+- **Site URL** → `https://ailemy.com` (no trailing slash). Every
+  `{{ .ConfirmationURL }}` is built from this — if it still points at localhost,
+  so will the links in real email.
+- **Redirect URLs** → must include `https://ailemy.com/auth/callback`. A URL not
+  on the allow-list is rejected *after* the recipient has clicked, which reads
+  to them as a broken link.
 
 ---
 
-## 4. How to know it worked
+## Step 6 — Prove it, don't assume it
 
-I haven't test-sent anything, deliberately. When the above is in place:
+1. Sign up with a **real address on a different provider from your own** — a
+   Gmail address, given ailemy.com's own mail. Self-delivery inside one provider
+   proves nothing about deliverability.
+2. It must land in **Inbox**, not Promotions or Spam.
+3. Open the raw source (Gmail: ⋮ → Show original) and confirm:
+   `spf=pass`, `dkim=pass`, `dmarc=pass`, and **`header.from=mail.ailemy.com`**
+   — alignment, not just passing.
+4. Click the link and confirm it signs you in.
+5. Repeat to an **Outlook/Hotmail** address. Its filtering is the strictest of
+   the big three and the likeliest to catch a missing record.
 
-1. Sign up with a **real address you control on a different provider** from your
-   own (a Gmail address if your domain is Google-hosted, say). Self-delivery
-   inside one provider proves less than nothing about deliverability.
-2. Check it arrives in **Inbox, not Promotions or Spam**.
-3. Open the raw source and confirm the headers read `spf=pass`, `dkim=pass`,
-   `dmarc=pass`.
-4. Click the link and confirm it lands on the app, signed in.
-5. Send to an Outlook/Hotmail address too — its filtering is the strictest of
-   the big three and the most likely to catch a missing record.
+Paste me the raw headers afterwards and I'll read the authentication results.
 
-If you want, paste me the raw headers afterwards and I'll read the
-authentication results.
+⚠ Leave DMARC at `p=none` until you have a week of clean reports. Only then
+`p=quarantine`, and later `p=reject`. Going straight to reject before alignment
+is confirmed bounces your own signup mail, and the symptom is silence.
 
 ---
 
 ## What I did not do, and why
 
-- **No credentials invented.** No placeholder key, no example DNS value that
-  could be pasted in by mistake and appear to work.
-- **No test send.** Sending needs a real key and would go to a real inbox.
-- **No account created** with any provider.
-- **`.env.local` untouched.** The SMTP password does not belong there — it is a
-  Supabase dashboard setting, and putting a copy in the repo's env file creates
-  a second place for it to leak from.
+- **No credentials invented.** No placeholder key, no example DKIM value that
+  could be pasted in and appear to work.
+- **No test send.** That needs a real key and a real inbox.
+- **No account created** with Resend or anyone else.
+- **`.env.local` untouched.**
