@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <body style="margin:0;padding:0;background:#F5EFE6;">
+    <!-- Preheader: the grey line next to the subject in an inbox list. Hidden
+         in the body itself. Without one, clients show the first visible text,
+         which is the wordmark. -->
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;">You've been invited to Ailemy.</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+           style="background:#F5EFE6;padding:32px 16px;">
+      <tr><td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+               style="max-width:520px;background:#FFFFFF;border-radius:10px;
+                      border:1px solid #EDE5D8;">
+          <tr><td style="padding:32px 32px 0 32px;">
+            <div style="font-family:Fraunces,Georgia,'Times New Roman',serif;
+                        font-size:22px;font-weight:600;letter-spacing:-0.2px;color:#0F1419;">
+              Ailemy
+            </div>
+            <!-- Lime as a rule, never as a button: #B8FF3D on white is
+                 unreadable, and an unreadable call to action is worse than a
+                 plain one. -->
+            <div style="width:34px;height:3px;background:#B8FF3D;margin-top:10px;"></div>
+          </td></tr>
+          <tr><td style="padding:26px 32px 8px 32px;
+                         font-family:Fraunces,Georgia,'Times New Roman',serif;
+                         font-size:25px;line-height:1.25;font-weight:600;
+                         letter-spacing:-0.4px;color:#0F1419;">
+            You've been invited
+          </td></tr>
+          <tr><td style="padding:0 32px;
+                         font-family:Inter,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;
+                         font-size:15px;line-height:1.65;color:#5C5952;">
+            <p style='margin:0 0 12px 0;'>Someone has invited you to Ailemy. Accept the invitation to set a password and get started.</p><p style='margin:0;'>This link works once.</p>
+          </td></tr>
+          <tr><td style="padding:26px 32px 6px 32px;">
+            <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+              <td style="background:#0F1419;border-radius:7px;">
+                <a href="{{ .ConfirmationURL }}"
+                   style="display:inline-block;padding:13px 26px;
+                          font-family:Inter,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;
+                          font-size:15px;font-weight:600;color:#FFFFFF;
+                          text-decoration:none;">Accept invitation</a>
+              </td>
+            </tr></table>
+          </td></tr>
+          <tr><td style="padding:14px 32px 0 32px;
+                         font-family:Inter,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;
+                         font-size:13px;line-height:1.6;color:#8A867D;">
+            If the button doesn't work, paste this into your browser:<br />
+            <span style="word-break:break-all;color:#5C5952;">{{ .ConfirmationURL }}</span>
+          </td></tr>
+          
+          <tr><td style="padding:24px 32px 30px 32px;">
+            <div style="height:1px;background:#EDE5D8;margin-bottom:16px;"></div>
+            <div style="font-family:Inter,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;
+                        font-size:12px;line-height:1.6;color:#8A867D;">
+              If you weren't expecting this, you can ignore it — no account is created until you accept.<br /><br />Ailemy — where reaction meets revelation.
+            </div>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>
