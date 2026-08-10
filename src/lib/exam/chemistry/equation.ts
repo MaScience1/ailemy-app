@@ -80,7 +80,16 @@ export function rToDisplay(a: Rational): string {
   return d === 1 ? String(a.n / a.d) : `${a.n}/${a.d}`;
 }
 
-/** Parses "2", "18.5", "37/2", "0.5". Returns null for anything else. */
+/**
+ * Parses "2", "18.5", "37/2", "0.5". Returns null for anything else.
+ *
+ * ⚠ BOUNDED. A 400-digit coefficient overflowed to Infinity, gcd returned NaN,
+ * and the student was shown "NaN/NaN" in the evidence for a real zero. No
+ * equation needs a coefficient in the thousands; anything larger is refused so
+ * it reaches the unmarkable path instead.
+ */
+const MAX_COEFFICIENT = 100_000;
+
 export function parseCoefficient(text: string): Rational | null {
   const t = text.trim();
   if (t === "") return rational(1);
@@ -94,6 +103,12 @@ export function parseCoefficient(text: string): Rational | null {
   m = /^(\d+)$/.exec(t);
   if (m) return rational(Number(m[1]));
   return null;
+}
+
+function withinBounds(r: Rational | null): Rational | null {
+  if (!r) return null;
+  if (!Number.isFinite(r.n) || !Number.isFinite(r.d)) return null;
+  return Math.abs(r.n) > MAX_COEFFICIENT || r.d > MAX_COEFFICIENT ? null : r;
 }
 
 // ============================================================================
@@ -126,6 +141,16 @@ export function normalise(raw: string): string {
   // looks right and is not: the single-arrow pass then finds the `=>` inside
   // the `<=>` it just wrote and turns `A <=> B` into `A < -> B`. Every
   // reversible form failed to parse. The placeholder cannot be re-matched.
+  // ⚠ THINGS STUDENTS TYPE THAT MEAN NOTHING CHEMICALLY.
+  //
+  // A trailing full stop made the WHOLE answer unmarkable and blamed the state
+  // symbol it was attached to. A comma decimal ("18,5") is how most of Europe
+  // writes 18.5. Spaces inside a formula ("C12 H26", "Ca (OH)2") are ordinary
+  // handwriting habits. None changes what the student means, and refusing them
+  // sends a correct answer to a human for no reason.
+  s = s.replace(/[.;,]+\s*$/, "");
+  s = s.replace(/(\d),(\d)/g, "$1.$2");
+
   const REV = "\u0001";
   s = s.replace(/<-->|<=>|<->|⇌|⇄|⇆|⇋|↔|⟷/g, REV);
   s = s.replace(/-->|->|→|⟶|⇒|=>/g, " -> ");
@@ -153,7 +178,24 @@ export type Species = {
 export type ParseFailure = { ok: false; reason: string };
 export type Parsed<T> = { ok: true; value: T } | ParseFailure;
 
-const STATE_RE = /\((s|l|g|aq)\)\s*$/i;
+
+/** True for "Fe", "Ca", "O" — one element symbol and nothing else. */
+function isSingleElement(text: string): boolean {
+  return /^[A-Z][a-z]{0,2}$/.test(text) && ELEMENTS.has(text);
+}
+
+/**
+ * ⚠ `(I)` AND `(1)` ARE LIQUIDS, NOT IODINE AND NOT A NUMBER.
+ *
+ * A capital I is indistinguishable from a lower-case L in most sans-serif
+ * fonts, and `1` sits next to both on a keyboard. `C12H26(I)` used to parse as
+ * dodecane bonded to an iodine atom in a bracketed group — a different
+ * substance — and a perfect answer scored 0/2. There is no formula in which a
+ * trailing bracketed lone `I` or `1` is meaningful, so reading them as `(l)`
+ * costs nothing and rescues an answer that is right.
+ */
+const STATE_RE = /\((s|l|g|aq|i|1)\)\s*$/i;
+const STATE_ALIASES: Record<string, StateSymbol> = { i: "l", "1": "l" };
 
 /**
  * Parse one species: `2` is NOT included — coefficients belong to the term.
@@ -167,7 +209,10 @@ export function parseSpecies(raw: string): Parsed<Species> {
   // `parseSpecies("SO4²⁻")` called on its own silently failed. A function that
   // is exported is a function that will be called directly. normalise() is
   // idempotent, so doing it twice costs nothing.
-  const text = normalise(raw).trim();
+  // Spaces inside one species carry no meaning — `C12 H26` and `Ca (OH)2` are
+  // the same substances as their closed-up forms. The term was already split
+  // on `+` and the arrow, so nothing can be joined that should not be.
+  const text = normalise(raw).replace(/\s+/g, "").trim();
   if (!text) return { ok: false, reason: "an empty term" };
 
   // ── state symbol, from the right ────────────────────────────────────────
@@ -176,7 +221,8 @@ export function parseSpecies(raw: string): Parsed<Species> {
   let state: StateSymbol | null = null;
   const stateMatch = STATE_RE.exec(body);
   if (stateMatch) {
-    state = stateMatch[1].toLowerCase() as StateSymbol;
+    const raw2 = stateMatch[1].toLowerCase();
+    state = (STATE_ALIASES[raw2] ?? raw2) as StateSymbol;
     body = body.slice(0, stateMatch.index).trim();
   }
   if (!body) return { ok: false, reason: `"${text}" is a state symbol with no substance` };
@@ -185,19 +231,63 @@ export function parseSpecies(raw: string): Parsed<Species> {
   // `SO4^2-`, `SO42-`, `Fe3+`, `Na+`. Digits immediately before a trailing
   // +/- are the MAGNITUDE, which is why `Fe3+` is one iron ion and not three
   // iron atoms — the universal plain-text convention.
-  // ⚠ WITHOUT `^`, AT MOST ONE DIGIT IS THE CHARGE. A greedy `\d*` reads
-  // `SO42-` as a charge of 42 on one oxygen, when every chemist on earth means
-  // sulfate: O4, charge 2−. Real charges are single digits; the digits before
-  // them belong to the formula. An explicit `^` removes the ambiguity, so
-  // there the magnitude may be as long as it likes.
+  // ⚠ THE HARDEST AMBIGUITY IN PLAIN-TEXT CHEMISTRY, AND IT IS NOT OPTIONAL.
+  //
+  // A digit sitting between a formula and a bare sign is either the charge
+  // magnitude or the last element's subscript, and BOTH readings are valid
+  // notation:
+  //
+  //   Fe3+   iron(III)      -> charge +3, formula Fe        (digit = charge)
+  //   NO3-   nitrate        -> charge -1, formula NO3       (digit = subscript)
+  //
+  // The first version took the digit as the charge unconditionally, which was
+  // right for Fe3+ and wrong for every ±1 polyatomic ion on the syllabus:
+  // NH4+ became {N,H} charge +4, NO3- became {N,O} charge -3, MnO4- became
+  // {Mn,O} charge -4. Those are not near misses, they are different
+  // substances — and because the mangled parse still BALANCES against itself,
+  // a perfect ionic equation came back markable with a real zero and a false
+  // statement about its own atom counts. Fail-closed protects what the parser
+  // knows it cannot read; this was reading confidently and wrongly.
+  //
+  // THE RULE, which is exact for every ion in A-level chemistry:
+  //
+  //   ^n±        explicit: n is the charge, however many digits
+  //   two or     the LAST digit is the charge, the rest stay in the formula
+  //   more       SO42- -> SO4 charge 2-;  Cr2O72- -> Cr2O7 charge 2-
+  //   exactly    charge IFF the formula without it is a single element.
+  //   one        Fe3+ -> "Fe" is one element  -> charge +3
+  //              NO3- -> "NO" is two elements -> subscript, charge -1
+  //              O2-  -> "O" is one element   -> charge -2 (oxide, correct)
+  //   none       magnitude 1:  Na+, Cl-, OH-
+  //
+  // Residual ambiguity, stated rather than hidden: a HOMONUCLEAR polyatomic ion
+  // — I3-, azide N3-, superoxide O2- — reads as monatomic with a large charge.
+  // Those are genuinely ambiguous in this notation and are not A-level core;
+  // `I3^-` says it unambiguously and is parsed exactly.
   let charge = 0;
   const explicit = /\^(\d*)([+-])$/.exec(body);
-  const implicit = /(\d?)([+-])$/.exec(body);
-  const chargeMatch = explicit ?? implicit;
-  if (chargeMatch) {
-    const magnitude = chargeMatch[1] === "" ? 1 : Number(chargeMatch[1]);
-    charge = chargeMatch[2] === "+" ? magnitude : -magnitude;
-    body = body.slice(0, chargeMatch.index);
+  if (explicit) {
+    const magnitude = explicit[1] === "" ? 1 : Number(explicit[1]);
+    charge = explicit[2] === "+" ? magnitude : -magnitude;
+    body = body.slice(0, explicit.index);
+  } else {
+    const bare = /(\d*)([+-])$/.exec(body);
+    if (bare) {
+      const digits = bare[1];
+      const sign = bare[2] === "+" ? 1 : -1;
+      const before = body.slice(0, bare.index);
+      if (digits.length === 0) {
+        charge = sign;
+        body = before;
+      } else if (digits.length >= 2) {
+        charge = sign * Number(digits[digits.length - 1]);
+        body = before + digits.slice(0, -1);
+      } else {
+        // Exactly one digit: charge only if what precedes it is one element.
+        charge = isSingleElement(before) ? sign * Number(digits) : sign;
+        body = isSingleElement(before) ? before : before + digits;
+      }
+    }
   }
   if (!body) return { ok: false, reason: `"${text}" is a charge with no formula` };
 
@@ -230,7 +320,14 @@ export function parseSpecies(raw: string): Parsed<Species> {
 const ELEMENTS = new Set("H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu Hf Ta W Re Os Ir Pt Au Hg Tl Pb Bi Po At Rn Fr Ra Ac Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr Rf Db Sg Bh Hs Mt Ds Rg Cn Nh Fl Mc Lv Ts Og".split(" "));
 
 /** The recursive part: elements, counts and bracketed groups. */
-function parseFormula(formula: string): Parsed<Map<string, number>> {
+function parseFormula(formula: string, depth = 0): Parsed<Map<string, number>> {
+  // ⚠ THE ONLY PATH IN THIS FILE THAT COULD THROW. Nested brackets recurse, so
+  // `((((…))))` blew the stack with a RangeError instead of returning a
+  // failure — a crash rather than "left for a human", which is the one outcome
+  // the fail-closed contract does not allow. Real formulae nest twice.
+  if (depth > 8) {
+    return { ok: false, reason: `"${formula}" has brackets nested too deeply to read` };
+  }
   const atoms = new Map<string, number>();
   let i = 0;
 
@@ -256,7 +353,7 @@ function parseFormula(formula: string): Parsed<Map<string, number>> {
         }
       }
       if (depth !== 0) return { ok: false, reason: `"${formula}" has an unclosed bracket` };
-      const inner = parseFormula(formula.slice(i + 1, j));
+      const inner = parseFormula(formula.slice(i + 1, j), depth + 1);
       if (!inner.ok) return inner;
       i = j + 1;
       const n = readCount();
@@ -346,7 +443,7 @@ function parseTerm(raw: string): Parsed<Term> {
   const text = raw.trim();
   // A leading number is a coefficient only when a formula follows it.
   const lead = /^(\d+(?:\.\d+)?(?:\/\d+)?)\s*(?=[A-Z(\[])/.exec(text);
-  const coefficient = lead ? parseCoefficient(lead[1]) : rational(1);
+  const coefficient = lead ? withinBounds(parseCoefficient(lead[1])) : rational(1);
   if (!coefficient) return { ok: false, reason: `"${text}" has a coefficient that could not be read` };
   if (rIsZero(coefficient)) return { ok: false, reason: `"${text}" has a coefficient of zero` };
   const species = parseSpecies(lead ? text.slice(lead[0].length) : text);
@@ -634,7 +731,7 @@ export function compareStates(
  * Pure and import-free apart from the parser: no database, no model, no clock.
  */
 
-export type EquationPointKind = "equation" | "states";
+export type EquationPointKind = "equation" | "states" | "both";
 
 export type EquationVerdict = {
   pointCode: string;
@@ -663,6 +760,17 @@ export type EquationCriterion = {
   pointCode: string;
   criterion: string;
   accept?: string[] | null;
+  /**
+   * "Do not award …" rules. 0029 split these out of accept[] precisely so they
+   * could not be mistaken for concessions.
+   *
+   * ⚠ NOT HONOURED, AND THEREFORE REFUSED. This marker has no way to test a
+   * prose prohibition, and silently ignoring one would award a mark the
+   * examiner forbade — the exact failure 0029 existed to prevent, reintroduced
+   * one layer up. A point carrying any reject rule makes the question
+   * unmarkable, so a human applies it.
+   */
+  reject?: string[] | null;
 };
 
 /**
@@ -674,16 +782,34 @@ export type EquationCriterion = {
  */
 export function classifyPoint(criterion: string): EquationPointKind | null {
   const c = criterion.toLowerCase();
-  if (/state\s*symbol/.test(c)) return "states";
-  if (/\bbalanc/.test(c) || /\bequation\b/.test(c) || /\bformulae?\b/.test(c)) return "equation";
+  const mentionsStates = /state\s*symbol/.test(c);
+  const mentionsEquation =
+    /\bbalanc/.test(c) ||
+    /\bequation\b/.test(c) ||
+    /\bformulae?\b/.test(c) ||
+    /\bspecies\b/.test(c) ||
+    /\breactants?\b/.test(c) ||
+    /\bproducts?\b/.test(c);
+
+  // ⚠ A POINT THAT ASKS FOR BOTH IS ONE MARK FOR BOTH. "Balanced equation with
+  // state symbols" is a common Edexcel shape, and filing it under "states"
+  // would award it for state symbols on an unbalanced equation. It gets its
+  // own kind and is awarded only when EVERY part of it holds.
+  if (mentionsStates && mentionsEquation) return "both";
+  if (mentionsStates) return "states";
+  if (mentionsEquation) return "equation";
   return null;
 }
 
 /** Does this point demand the smallest whole-number ratio rather than any multiple? */
 function demandsWholeNumbers(criterion: string, accept: string[] | null | undefined): boolean {
   const text = `${criterion} ${(accept ?? []).join(" ")}`.toLowerCase();
-  // "Allow multiples" is an explicit permission and outranks the rest.
-  if (/allow\s+multiples/.test(text)) return false;
+  // "Allow multiples" is an explicit permission and outranks the rest — but
+  // only when it is not itself negated. "Do not allow multiples" contains the
+  // permission as a substring and was read as one.
+  if (/allow\s+multiples/.test(text) && !/\b(do not|don't|dont|never)\s+allow\s+multiples/.test(text)) {
+    return false;
+  }
   return /whole\s*number|simplest\s*(whole\s*)?ratio|smallest\s*(whole\s*)?ratio/.test(text);
 }
 
@@ -698,10 +824,33 @@ function demandsWholeNumbers(criterion: string, accept: string[] | null | undefi
  * stricter, never looser — the failure mode is a student sent for review, not
  * a mark awarded on a misreading.
  */
+
+/**
+ * Does this examiner phrase FORBID rather than allow?
+ *
+ * ⚠ THE WHOLE PHRASE IS DISCARDED WHEN IT DOES, not the negated clause. "Allow
+ * H2O(g) but not H2O(s)" is dropped entirely rather than split, because
+ * splitting examiner prose correctly is exactly the confidence this file does
+ * not have. Dropping a concession makes marking STRICTER — a student sent for a
+ * mark they should have had is a visible, fixable error; the alternative is
+ * awarding a mark the scheme forbids, which nothing catches.
+ *
+ * "Ignore …" is NOT a negation here: the fixture header records that Edexcel
+ * uses it to mean "award despite", which is a permission.
+ */
+function forbids(phrase: string): boolean {
+  return /\b(do not|don't|dont|not|never|reject|except|neither|nor)\b/i.test(phrase);
+}
+
 export function acceptedStatesFrom(criteria: EquationCriterion[]): Map<string, StateSymbol[]> {
   const allowed = new Map<string, StateSymbol[]>();
   for (const c of criteria) {
     for (const phrase of c.accept ?? []) {
+      // A negated concession is not a concession. Before this, "Do not accept
+      // C12H26(g)" ADDED gas to dodecane's allowed states and awarded full
+      // marks for the precise error the examiner's report says candidates lost
+      // the mark for.
+      if (forbids(phrase)) continue;
       for (const token of phrase.match(/\d*\s*[A-Z][A-Za-z0-9().·]*\((?:s|l|g|aq)\)/g) ?? []) {
         const withoutCoefficient = token.replace(/^\d+\s*/, "");
         const parsed = parseSpecies(withoutCoefficient);
@@ -765,7 +914,14 @@ export function markChemicalEquation(input: {
         .join(", ")}), so it was left for a human to mark.`,
     };
   }
-  if (kinds.filter((k) => k.kind === "equation").length !== 1) {
+  if (kinds.filter((k) => k.kind === "both").length > 0 && kinds.length !== 1) {
+    return {
+      markable: false,
+      reason:
+        "This question's mark scheme mixes a combined equation-and-states point with others, which isn't supported yet — it was left for a human to mark.",
+    };
+  }
+  if (kinds.length > 1 && kinds.filter((k) => k.kind === "equation").length !== 1) {
     return {
       markable: false,
       reason:
@@ -777,6 +933,19 @@ export function markChemicalEquation(input: {
       markable: false,
       reason:
         "This question's mark scheme has more than one state-symbol point, which isn't supported yet — it was left for a human to mark.",
+    };
+  }
+
+  // ⚠ BEFORE ANYTHING IS MARKED. A reject rule is a veto the examiner wrote
+  // down and this marker cannot evaluate; the honest response is to decline the
+  // whole question rather than award marks that ignore it.
+  const vetoed = kinds.filter((k) => (k.reject ?? []).length > 0);
+  if (vetoed.length > 0) {
+    return {
+      markable: false,
+      reason: `This question's mark scheme carries "do not award" rules (${vetoed
+        .map((v) => v.pointCode)
+        .join(", ")}) that automatic marking can't apply, so it was left for a human to mark.`,
     };
   }
 
@@ -798,7 +967,10 @@ export function markChemicalEquation(input: {
     return {
       markable: true,
       awarded: 0,
-      assessedOutOf: input.maxMarks,
+      // The POINT COUNT, as every other path reports. Using maxMarks here made
+      // a blank answer show a different denominator from a wrong one on the
+      // same question.
+      assessedOutOf: Math.min(kinds.length, input.maxMarks),
       points: kinds.map((k) => ({
         pointCode: k.pointCode,
         awarded: false,
@@ -823,10 +995,46 @@ export function markChemicalEquation(input: {
   const target = render(expected.value);
 
   const points: EquationVerdict[] = kinds.map((k) => {
+    if (k.kind === "both") {
+      // One mark for the equation AND its states. Awarded only when every part
+      // holds; the message names the first thing that failed.
+      const equationOk =
+        cmp.balance.balanced && cmp.equivalent && cmp.arrowMatches && !cmp.reversed;
+      if (!equationOk) {
+        return {
+          pointCode: k.pointCode,
+          awarded: false,
+          evidence: `Your equation isn't right yet. The expected equation is ${target}.`,
+        };
+      }
+      if (!states.allCorrect) {
+        const missing = states.missing.length > 0 ? `missing from ${states.missing.join(", ")}` : "";
+        const wrong = states.wrong.map((w) => `${w.species} is (${w.got})`).join("; ");
+        return {
+          pointCode: k.pointCode,
+          awarded: false,
+          evidence: `The equation is right but the state symbols aren't — ${[missing, wrong].filter(Boolean).join("; ")}.`,
+        };
+      }
+      return {
+        pointCode: k.pointCode,
+        awarded: true,
+        evidence: `Your equation is balanced, correct and fully labelled: ${shown}.`,
+      };
+    }
+
     if (k.kind === "equation") {
       const wholeOnly = demandsWholeNumbers(k.criterion, k.accept);
-      const integral =
-        [...student.value.left, ...student.value.right].every((t) => t.coefficient.d === 1);
+      const coefficients = [...student.value.left, ...student.value.right].map((t) => t.coefficient);
+      const integral = coefficients.every((c) => c.d === 1);
+      // ⚠ SIMPLEST FORM IS A PROPERTY OF THE STUDENT'S OWN EQUATION, not of its
+      // relationship to whatever happens to be stored. Requiring scale === 1
+      // made the mark arithmetically unawardable whenever the transcribed
+      // expected equation was not itself in smallest whole-number form — the
+      // student could not win by writing the correct answer.
+      const simplest =
+        integral &&
+        coefficients.reduce((g, c) => gcd(g, Math.abs(c.n)), 0) === 1;
       const scaleIsOne = cmp.scale !== null && rEq(cmp.scale, rational(1));
 
       if (!cmp.balance.balanced) {
@@ -871,7 +1079,7 @@ export function markChemicalEquation(input: {
           }.`,
         };
       }
-      if (wholeOnly && (!integral || !scaleIsOne)) {
+      if (wholeOnly && !simplest) {
         return {
           pointCode: k.pointCode,
           awarded: false,
@@ -894,11 +1102,21 @@ export function markChemicalEquation(input: {
     // substances are not a state-symbol error, they are the equation error
     // already reported above, and refusing both for one mistake would take
     // two marks for one fault.
-    if (!cmp.equivalent) {
+    // ⚠ GATED ON THE SUBSTANCES, NOT ON THE COEFFICIENTS. The marks are
+    // independent — that is the entire reason 20(b)(ii) has two of them — so a
+    // student who names the right substances and labels every one correctly
+    // earns the state mark even when the balancing is wrong. Requiring full
+    // equivalence charged one balancing mistake twice, which is the same fault
+    // as voiding it for a wrong arrow.
+    //
+    // What it DOES require is that the substances are the right ones: a state
+    // symbol on a substance that should not be in the equation is not a
+    // correct state symbol, and there is nothing to compare it against.
+    if (cmp.extraSpecies.length > 0 || cmp.missingSpecies.length > 0) {
       return {
         pointCode: k.pointCode,
         awarded: false,
-        evidence: "State symbols can't be judged until the equation itself is right.",
+        evidence: "State symbols can't be judged until the right substances are there.",
       };
     }
     if (states.missing.length > 0) {

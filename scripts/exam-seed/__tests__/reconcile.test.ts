@@ -192,8 +192,10 @@ console.log("\n── MARKS, NOT JUST QUESTIONS. A census cannot see an over-rep
     { confidence: "deterministic", maxMarks: 4, assessedOutOf: 4, provisionalOutOf: 0, unassessedMarks: 0 },
     // 20(b)(i) short_text, unanswered -> wholly provisional
     { confidence: "requires_review", maxMarks: 1, assessedOutOf: 1, provisionalOutOf: 0, unassessedMarks: 0 },
-    // 20(b)(ii) chemical_equation — unmarkable answer type
-    { confidence: null, maxMarks: 2, assessedOutOf: null, provisionalOutOf: 0, unassessedMarks: 2 },
+    // 20(b)(ii) chemical_equation — MARKED since the parser landed. This row
+    // said "unmarkable" and kept passing, which is exactly what a model of the
+    // real paper is supposed to stop.
+    { confidence: "deterministic", maxMarks: 2, assessedOutOf: 2, provisionalOutOf: 0, unassessedMarks: 0 },
     // 20(b)(iii): 1 confirmed by arithmetic + 5 method marks from working
     { confidence: "deterministic", maxMarks: 6, assessedOutOf: 1, provisionalOutOf: 5, unassessedMarks: 0 },
     // 20(b)(iv) structure, 21(c)(i) graph — unmarkable

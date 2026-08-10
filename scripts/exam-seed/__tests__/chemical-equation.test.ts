@@ -140,12 +140,14 @@ console.log("\n── UNBALANCED ──");
   t("an unbalanced equation loses M1", got(r, "M1")?.awarded === false, r);
   t("...and names the elements that don't tally",
     /O \(|H \(|C \(/.test(got(r, "M1")?.evidence ?? ""), got(r, "M1")?.evidence);
-  t("...and does NOT award the state mark for it either",
-    got(r, "M2")?.awarded === false);
-  t("...total 0 of 2", scored(r) === 0);
-  // The state-symbol refusal must not read as a second, separate mistake.
-  t("...state evidence points back at the equation",
-    /until the equation itself is right/.test(got(r, "M2")?.evidence ?? ""), got(r, "M2")?.evidence);
+  // ⚠ BUT M2 IS STILL AWARDED, AND THAT IS THE RULING. The marks are
+  // independent — the same reason a wrong ARROW does not void the state mark.
+  // This student named the right four substances and labelled every one
+  // correctly; the fault is in the coefficients, and M1 already charges for it.
+  // Refusing M2 as well would take two marks for one mistake.
+  t("...but M2 IS awarded: the substances and their states are right",
+    got(r, "M2")?.awarded === true, r);
+  t("...scoring 1 of 2", scored(r) === 1, r);
 }
 
 console.log("\n── MISSING STATE SYMBOLS — the split this whole design exists for ──");
@@ -235,10 +237,120 @@ console.log("\n── WRITTEN BACKWARDS ──");
   t("a correct equation written backwards loses M1", got(r, "M1")?.awarded === false, r);
   t("...and is told so specifically, not just 'wrong'",
     /wrong way round/.test(got(r, "M1")?.evidence ?? ""), got(r, "M1")?.evidence);
-  t("...0 of 2", scored(r) === 0);
+  // Same ruling again: every substance carries its correct state symbol, so M2
+  // stands. Writing the reaction backwards is one mistake and M1 charges it.
+  t("...while M2 stands, for 1 of 2", scored(r) === 1 && got(r, "M2")?.awarded === true, r);
   // It balances perfectly — which is exactly why balance alone cannot mark this.
   const eq = parseEquation("12CO2 + 13H2O -> C12H26 + 18.5O2");
   t("...even though it balances atom for atom", eq.ok && checkBalance(eq.value).balanced);
+}
+
+
+console.log("\n── THE STATE MARK IS GATED ON SUBSTANCES, NOT COEFFICIENTS ──");
+{
+  // Right substances, wrong coefficients, right states -> M2 stands.
+  const a = mark("C12H26(l) + 2O2(g) -> 3CO2(g) + 4H2O(l)");
+  t("wrong coefficients do not void a correct set of state symbols",
+    got(a, "M2")?.awarded === true && got(a, "M1")?.awarded === false, a);
+  // WRONG substances -> there is nothing to judge the states against.
+  const b = mark("C12H26(l) + 18.5O2(g) -> 12CO(g) + 13H2O(l)");
+  t("but a substance that shouldn't be there DOES block it",
+    got(b, "M2")?.awarded === false, b);
+  t("...and says so in those terms",
+    /right substances are there/.test(got(b, "M2")?.evidence ?? ""), got(b, "M2")?.evidence);
+}
+
+console.log("\n── IONS: A SUBSCRIPT IS NOT A CHARGE ──");
+{
+  // ⚠ THE WORST BUG THE REVIEW FOUND. NH4+ parsed as {N:1,H:1} charge +4 — a
+  // different substance — so a perfect ionic equation came back with a REAL
+  // ZERO and a false statement about its own atom counts.
+  const cases: [string, Record<string, number>, number][] = [
+    ["NH4+", { N: 1, H: 4 }, 1],
+    ["NO3-", { N: 1, O: 3 }, -1],
+    ["MnO4-", { Mn: 1, O: 4 }, -1],
+    ["HCO3-", { H: 1, C: 1, O: 3 }, -1],
+    ["SO42-", { S: 1, O: 4 }, -2],
+    ["CO32-", { C: 1, O: 3 }, -2],
+    ["PO43-", { P: 1, O: 4 }, -3],
+    ["Fe3+", { Fe: 1 }, 3],
+    ["Ca2+", { Ca: 1 }, 2],
+    ["O2-", { O: 1 }, -2],
+    ["Na+", { Na: 1 }, 1],
+    ["OH-", { O: 1, H: 1 }, -1],
+    ["Cr2O72-", { Cr: 2, O: 7 }, -2],
+  ];
+  for (const [text, atoms, charge] of cases) {
+    const r = parseSpecies(text);
+    const okAtoms = r.ok && Object.entries(atoms).every(([el, n]) => r.value.atoms.get(el) === n) &&
+      r.ok && r.value.atoms.size === Object.keys(atoms).length;
+    t(`${text} -> ${JSON.stringify(atoms)} charge ${charge}`,
+      okAtoms && r.ok && r.value.charge === charge,
+      r.ok ? [[...r.value.atoms], r.value.charge] : r);
+  }
+  // ...and the caret form must agree with the bare form.
+  for (const [bare, caret] of [["NH4+", "NH4^+"], ["NO3-", "NO3^-"], ["SO42-", "SO4^2-"], ["Fe3+", "Fe^3+"]]) {
+    const a = parseSpecies(bare), b = parseSpecies(caret);
+    t(`${bare} and ${caret} are the same ion`,
+      a.ok && b.ok && speciesKey(a.value) === speciesKey(b.value),
+      [a.ok && speciesKey(a.value), b.ok && speciesKey(b.value)]);
+  }
+  // A real ionic equation must mark correctly end to end.
+  const ionic: EquationCriterion[] = [{ pointCode: "M1", criterion: "correctly balanced equation" }];
+  const eq = "NH4+(aq) + OH-(aq) -> NH3(g) + H2O(l)";
+  const r = markChemicalEquation({ answer: eq, maxMarks: 1, expectedEquation: eq, criteria: ionic });
+  t("a correct ionic equation scores full marks", scored(r) === 1, r);
+  const redox = "MnO4-(aq) + 8H+(aq) + 5Fe2+(aq) -> Mn2+(aq) + 4H2O(l) + 5Fe3+(aq)";
+  const rr = markChemicalEquation({ answer: redox, maxMarks: 1, expectedEquation: redox, criteria: ionic });
+  t("...and so does a redox half-equation with charges", scored(rr) === 1, rr);
+}
+
+console.log("\n── A PROHIBITION MUST NEVER BECOME A PERMISSION ──");
+{
+  const withBan: EquationCriterion[] = [
+    { pointCode: "M1", criterion: "correctly balanced equation", accept: ["Allow multiples"] },
+    { pointCode: "M2", criterion: "state symbols correct", accept: ["Accept 13H2O(g)", "Do not accept C12H26(g)"] },
+  ];
+  const r = markChemicalEquation({
+    answer: "C12H26(g) + 18.5O2(g) -> 12CO2(g) + 13H2O(l)",
+    maxMarks: 2, expectedEquation: EXPECTED, criteria: withBan,
+  });
+  t("'Do not accept C12H26(g)' does not permit C12H26(g)",
+    got(r, "M2")?.awarded === false, r);
+  const harvested = acceptedStatesFrom(withBan);
+  const dodecane = parseSpecies("C12H26");
+  t("...because the negated phrase is discarded whole",
+    dodecane.ok && !(harvested.get(speciesKey(dodecane.value)) ?? []).includes("g"), [...harvested]);
+  t("...while the positive concession survives",
+    (() => { const w = parseSpecies("H2O"); return w.ok && (harvested.get(speciesKey(w.value)) ?? []).includes("g"); })());
+}
+
+console.log("\n── CAPITAL I IS A LIQUID, NOT IODINE ──");
+{
+  for (const state of ["(I)", "(1)", "(l)", "(L)"]) {
+    const r = mark(`C12H26${state} + 18.5O2(g) -> 12CO2(g) + 13H2O${state}`);
+    t(`${state} reads as liquid`, scored(r) === 2, r);
+  }
+}
+
+console.log("\n── NOTHING THROWS, EVER ──");
+{
+  const nasty = [
+    "(".repeat(40) + "H" + ")".repeat(40) + " -> H",
+    "((((((((((H2))))))))))" + " -> H2",
+    "9".repeat(400) + "H2 -> H2",
+    "H2 -> -> H2", "-> H2", "H2 ->", "+ -> +", "() -> ()", "2 -> 2",
+    "H2 + -> H2", "C12H26(l) + 0O2(g) -> CO2(g)",
+  ];
+  let threw = 0;
+  for (const n of nasty) {
+    try { const r = mark(n); if (r.markable && r.awarded > 0) t(`unexpected award for ${JSON.stringify(n)}`, false, r); }
+    catch (e) { threw++; t(`THREW on ${JSON.stringify(n)}`, false, String(e)); }
+  }
+  t("no input throws — every one returns a verdict or a refusal", threw === 0);
+  t("a 400-digit coefficient is refused, not turned into NaN",
+    (() => { const r = mark("9".repeat(400) + "H2 -> H2"); return !r.markable; })(),
+    mark("9".repeat(400) + "H2 -> H2"));
 }
 
 console.log("\n── BLANK, AND UNREADABLE ──");
@@ -368,6 +480,64 @@ console.log("\n── EVIDENCE MUST NOT LEAK THE MARK SCHEME ──");
     for (const p of r.points) for (const b of banned) if (p.evidence.includes(b)) leaks++;
   }
   t("no criterion or accept[] wording appears in any evidence string", leaks === 0, leaks);
+}
+
+
+console.log("\n── 'DO NOT AWARD' RULES ARE REFUSED, NOT IGNORED ──");
+{
+  // 0029 split reject[] out of accept[] so a prohibition could not be mistaken
+  // for a concession. Silently dropping it here would reintroduce that exact
+  // fault one layer up, and award a mark the examiner forbade.
+  const withReject: EquationCriterion[] = [
+    { pointCode: "M1", criterion: "correctly balanced equation", accept: ["Allow multiples"],
+      reject: ["Do not award if the equation is not balanced"] },
+    { pointCode: "M2", criterion: "state symbols correct" },
+  ];
+  const r = markChemicalEquation({
+    answer: "C12H26(l) + 18.5O2(g) -> 12CO2(g) + 13H2O(l)",
+    maxMarks: 2, expectedEquation: EXPECTED, criteria: withReject,
+  });
+  t("a reject rule makes the question unmarkable, even for a correct answer",
+    r.markable === false, r);
+  t("...naming the point that carries it", !r.markable && /M1/.test(r.reason));
+  t("...and the real scheme, which has none, still marks", scored(mark(EXPECTED)) === 2);
+}
+
+console.log("\n── A COMBINED 'EQUATION WITH STATE SYMBOLS' POINT ──");
+{
+  const combined: EquationCriterion[] = [
+    { pointCode: "M1", criterion: "balanced equation with correct state symbols" },
+  ];
+  const run = (a: string) => markChemicalEquation({ answer: a, maxMarks: 1, expectedEquation: EXPECTED, criteria: combined });
+  t("classified as both, not as states", classifyPoint(combined[0].criterion) === "both");
+  t("fully correct earns it", (run(EXPECTED) as { awarded: number }).awarded === 1, run(EXPECTED));
+  t("right equation, missing states does NOT",
+    (run("C12H26 + 18.5O2 -> 12CO2 + 13H2O") as { awarded: number }).awarded === 0);
+  t("...and says the equation was the part that was right",
+    /equation is right but the state symbols aren't/.test(
+      (run("C12H26 + 18.5O2 -> 12CO2 + 13H2O") as { points: { evidence: string }[] }).points[0].evidence));
+  t("unbalanced does not earn it either",
+    (run("C12H26(l) + O2(g) -> CO2(g) + H2O(l)") as { awarded: number }).awarded === 0);
+}
+
+console.log("\n── WHAT STUDENTS TYPE THAT MEANS NOTHING CHEMICALLY ──");
+{
+  const forms: [string, string][] = [
+    ["trailing full stop", "C12H26(l) + 18.5O2(g) -> 12CO2(g) + 13H2O(l)."],
+    ["comma decimal", "C12H26(l) + 18,5O2(g) -> 12CO2(g) + 13H2O(l)"],
+    ["spaces inside formulae", "C12 H26 (l) + 18.5 O2 (g) -> 12 CO2 (g) + 13 H2 O (l)"],
+    ["trailing semicolon", "C12H26(l) + 18.5O2(g) -> 12CO2(g) + 13H2O(l);"],
+  ];
+  for (const [label, f] of forms) t(`${label} still scores 2/2`, scored(mark(f)) === 2, mark(f));
+}
+
+console.log("\n── THE DENOMINATOR IS THE SAME WHATEVER THE ANSWER ──");
+{
+  const blank = mark("");
+  const wrong = mark("C12H26(l) + O2(g) -> CO2(g) + H2O(l)");
+  t("a blank answer reports the same assessedOutOf as a wrong one",
+    blank.markable && wrong.markable && blank.assessedOutOf === wrong.assessedOutOf,
+    [blank.markable && blank.assessedOutOf, wrong.markable && wrong.assessedOutOf]);
 }
 
 console.log("\n── DETERMINISM ──");
