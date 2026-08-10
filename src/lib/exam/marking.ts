@@ -19,6 +19,12 @@ import {
   type DeterministicResult,
   type PointVerdict,
 } from "./deterministic";
+// ⚠ IMPORTED HERE, NOT IN deterministic.ts. That file is loaded directly by
+// `node` in the test suites, and its only import is TYPE-ONLY — which Node
+// strips, which is the sole reason it resolves at all. A value import of
+// ./chemistry/equation there would break every deterministic test on a module
+// specifier. marking.ts is `server-only` and no suite loads it.
+import { markChemicalEquation } from "./chemistry/equation";
 
 /**
  * The marking engine.
@@ -738,6 +744,85 @@ export async function markSubmittedAttempt(
 
     if (tier === "deterministic") {
       const simple = criteria.map((c) => ({ pointCode: c.point_code, criterion: c.criterion }));
+
+      // ── chemical_equation: a whole marker of its own ────────────────────
+      //
+      // It is Tier 1 — no model, no confidence gate — but it does not fit
+      // markNumeric's shape at all. It marks PER MARK-SCHEME POINT from one
+      // parse: 20(b)(ii) awards "correctly balanced equation" and "state
+      // symbols correct" separately, which is the difference between 1/2 and
+      // 0/2 for the many candidates the examiner's report describes.
+      //
+      // The expected equation lives in question_expected_answers.expected_value
+      // for the same reason a numeric answer does: it is the answer, not a
+      // marking instruction. accept[] is read for per-species state
+      // concessions ("Accept 13H2O(g)") and never repeated to a student.
+      if (q.answer_type === "chemical_equation") {
+        const eq = markChemicalEquation({
+          answer: response && response.kind === "text" ? response.text : null,
+          maxMarks: qa.max_marks,
+          expectedEquation: expectedByQ.get(qa.question_id)?.expected_value ?? null,
+          criteria: criteria.map((c) => ({
+            pointCode: c.point_code,
+            criterion: c.criterion,
+            accept: c.accept,
+          })),
+        });
+
+        if (!eq.markable) {
+          marked.push({
+            questionAttemptId: qa.id,
+            questionNumber: q.question_number,
+            answerType: q.answer_type,
+            maxMarks: qa.max_marks,
+            awardedMarks: null,
+            assessedOutOf: null,
+            unassessedMarks: qa.max_marks,
+            unassessedReason: eq.reason,
+            tier,
+            confidence: null,
+            points: [],
+            provisionalMarks: 0,
+            provisionalOutOf: 0,
+            provisionalPoints: [],
+            note: eq.reason,
+          });
+          continue;
+        }
+
+        const eqAwarded = clamp(eq.awarded, qa.max_marks, q.question_number);
+        try {
+          await persist(db, qa.id, eqAwarded, "deterministic", eq.points.map(byTier1));
+          persistedRows += 1;
+        } catch (error) {
+          marked.push(persistFailed(qa, q, tier, error));
+          continue;
+        }
+        marked.push({
+          questionAttemptId: qa.id,
+          questionNumber: q.question_number,
+          answerType: q.answer_type,
+          maxMarks: qa.max_marks,
+          awardedMarks: eqAwarded,
+          assessedOutOf: eq.assessedOutOf,
+          // Every point was judged, so nothing is left over. An equation has no
+          // unseeable working: what the student wrote IS the whole answer.
+          unassessedMarks: Math.max(0, qa.max_marks - eq.assessedOutOf),
+          unassessedReason:
+            qa.max_marks - eq.assessedOutOf > 0
+              ? "this question has fewer mark-scheme points than marks"
+              : null,
+          tier,
+          confidence: "deterministic",
+          points: eq.points,
+          provisionalMarks: 0,
+          provisionalOutOf: 0,
+          provisionalPoints: [],
+          note: null,
+        });
+        continue;
+      }
+
       const result: DeterministicResult =
         q.answer_type === "mcq"
           ? markMcq(
