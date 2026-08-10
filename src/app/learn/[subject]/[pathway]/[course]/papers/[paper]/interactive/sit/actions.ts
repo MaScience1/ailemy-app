@@ -8,6 +8,7 @@ import {
   type ResponsePayload,
 } from "@/lib/exam/attempts";
 import { ANSWER_TYPES, type AnswerType } from "@/lib/exam/question-set";
+import { narrowResponsePayload } from "@/lib/exam/response-payload";
 
 /**
  * The player's server actions.
@@ -30,44 +31,6 @@ type ActionResult = { ok: true } | { ok: false; error: string };
 /** Reject anything that is not a plausible uuid before it reaches the database. */
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/**
- * Narrow an unknown payload from the client to the union the marker can read.
- *
- * Returns null rather than coercing: an unrecognised shape is a bug or an
- * attack, and storing a "best effort" version of it would put something in
- * response_payload that nothing downstream knows how to read.
- *
- * Text is capped. Without a limit a single answer could carry megabytes into
- * a jsonb column on every debounce tick; 20k characters is far beyond any real
- * A-level answer and still bounded.
- */
-const MAX_TEXT = 20_000;
-
-function narrowPayload(raw: unknown): ResponsePayload | null {
-  if (typeof raw !== "object" || raw === null) return null;
-  const p = raw as Record<string, unknown>;
-
-  switch (p.kind) {
-    case "mcq":
-      return typeof p.choice === "string" && /^[A-D]$/.test(p.choice)
-        ? { kind: "mcq", choice: p.choice }
-        : null;
-    case "text":
-      return typeof p.text === "string"
-        ? { kind: "text", text: p.text.slice(0, MAX_TEXT) }
-        : null;
-    case "numeric":
-      if (typeof p.value !== "string") return null;
-      return {
-        kind: "numeric",
-        value: p.value.slice(0, 120),
-        ...(typeof p.unit === "string" ? { unit: p.unit.slice(0, 60) } : {}),
-      };
-    default:
-      return null;
-  }
-}
 
 export async function createAttemptAction(
   paperId: string,
@@ -96,7 +59,7 @@ export async function saveAnswerAction(
   if (!ANSWER_TYPES.includes(answerType as AnswerType)) {
     return { ok: false, error: "Unknown answer type." };
   }
-  const narrowed = narrowPayload(payload);
+  const narrowed = narrowResponsePayload(payload);
   if (!narrowed) {
     return { ok: false, error: "That answer could not be read." };
   }

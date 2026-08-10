@@ -54,10 +54,13 @@ export function AnswerEditor({
   value,
   onChange,
   disabled = false,
+  maxMarks = 1,
 }: {
   answerType: AnswerType;
   value: ResponsePayload | null;
   onChange: (payload: ResponsePayload) => void;
+  /** The question tariff. Decides whether a working box is offered at all. */
+  maxMarks?: number;
   /** True once the attempt is submitted — everything becomes read-only. */
   disabled?: boolean;
 }) {
@@ -151,16 +154,31 @@ export function AnswerEditor({
     case "numeric_with_unit": {
       const wantsUnit = answerType === "numeric_with_unit";
       const current = value?.kind === "numeric" ? value : null;
-      const emit = (next: { value?: string; unit?: string }) =>
+      // ⚠ THE WORKING BOX APPEARS EXACTLY WHERE METHOD MARKS EXIST — the same
+      // `maxMarks > 1` test markNumeric() uses to decide whether a question
+      // has method marks at all. On a one-mark numeric there is nothing for
+      // working to earn, and a box that cannot earn anything reads as a
+      // requirement.
+      const wantsWorking = maxMarks > 1;
+      const emit = (next: { value?: string; unit?: string; working?: string }) =>
         onChange({
           kind: "numeric",
           value: next.value ?? current?.value ?? "",
-          ...(wantsUnit
-            ? { unit: next.unit ?? current?.unit ?? "" }
-            : {}),
+          ...(wantsUnit ? { unit: next.unit ?? current?.unit ?? "" } : {}),
+          // ⚠ PRESERVED WHENEVER IT EXISTS, NOT WHENEVER THE BOX IS SHOWN.
+          // This used to be gated on `wantsWorking`, which is derived from a
+          // prop that DEFAULTS TO 1 — so any future mount that forgot to pass
+          // maxMarks would have silently erased stored working on the first
+          // keystroke in the value field, with no type error to catch it.
+          // Keying off the data instead of the display makes that impossible.
+          ...(() => {
+            const w = next.working ?? current?.working;
+            return w !== undefined ? { working: w } : {};
+          })(),
         });
 
       return (
+        <div className="grid gap-5">
         <div className={`grid gap-3 ${wantsUnit ? "sm:grid-cols-[2fr_1fr]" : ""}`}>
           <label className="block">
             <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-ink/50">
@@ -191,6 +209,46 @@ export function AnswerEditor({
               />
             </label>
           )}
+        </div>
+
+        {wantsWorking && (
+          <label className="block">
+            <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-ink/50">
+              Working{" "}
+              <span className="normal-case tracking-normal text-ink/40">(optional)</span>
+            </span>
+            {/*
+              ⚠ THE REASSURANCE IS NOT DECORATION. This question is worth more
+              than one mark, so its scheme credits method steps — but 20(a)
+              says in so many words "Correct answer with no working scores
+              (4)". A student who knows the answer outright must be able to
+              leave this empty and lose nothing, and has to be TOLD that,
+              or the box itself becomes pressure to pad.
+            */}
+            {/*
+              ⚠ THIS SENTENCE HAS TO BE EXACTLY TRUE. An earlier draft said
+              "leaving this blank never costs you marks", which is false on a
+              question like 22(c) whose scheme awards its marks only for working
+              — there, a blank box forgoes marks a filled one could earn. What
+              IS unconditionally true is that blank working never reduces the
+              marks the answer itself earns: 20(a) scores 4/4 on a bare correct
+              answer, with or without this box.
+            */}
+            <span className="mt-1 block text-xs text-ink/55">
+              Show your method if you want the marks for it. Leaving this blank
+              never reduces what your answer scores on its own — but method marks
+              can only be credited from working you actually show.
+            </span>
+            <textarea
+              rows={5}
+              value={current?.working ?? ""}
+              disabled={disabled}
+              onChange={(e) => emit({ working: e.target.value })}
+              placeholder={"e.g.\nn = pV/RT = 101000 x 0.000415 / (8.31 x 298)\n= 0.0169 mol"}
+              className={`${FIELD} mt-3 font-mono leading-relaxed`}
+            />
+          </label>
+        )}
         </div>
       );
     }

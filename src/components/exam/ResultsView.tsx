@@ -152,9 +152,18 @@ export function ResultsView({
               {summary.needsReviewAvailable} mark
               {summary.needsReviewAvailable === 1 ? "" : "s"}
             </strong>{" "}
-            couldn&apos;t be assessed — mostly method marks, because your
-            working isn&apos;t captured on screen, plus question types that need
-            an editor Ailemy doesn&apos;t have yet.{" "}
+            couldn&apos;t be assessed{" "}
+            {/*
+              ⚠ THIS USED TO SAY "because your working isn't captured on screen"
+              UNCONDITIONALLY. Since working capture that is false for exactly
+              the students the feature is for — it printed directly above cards
+              quoting the very working it claimed had never been captured, which
+              is the same falsehood WORKING_UNDER_REVIEW was introduced to
+              remove one layer down. It now describes what is actually left.
+            */}
+            {summary.provisionalAvailable > 0
+              ? "— question types that need an editor Ailemy doesn't have yet, and any method marks left over."
+              : "— mostly method marks, because no working was shown, plus question types that need an editor Ailemy doesn't have yet."}{" "}
             <strong className="text-ink/75">
               These are not counted against you
             </strong>{" "}
@@ -181,6 +190,12 @@ export function ResultsView({
 function QuestionResult({ question: q }: { question: MarkedQuestion }) {
   const provisional = q.confidence === "requires_review";
   const unmarked = q.awardedMarks === null;
+  // ⚠ A QUESTION CAN BE BOTH, and the card has to say so. A numeric question
+  // answered with working has an arithmetic mark AND method marks judged by a
+  // model: its confidence is 'deterministic' because its awarded_marks are, so
+  // keying the whole card off `provisional` would have shown the confirmed 1/1
+  // and silently dropped five marks of judgement and evidence.
+  const hasMethod = q.provisionalPoints.length > 0 && !provisional;
 
   return (
     <li
@@ -222,6 +237,13 @@ function QuestionResult({ question: q }: { question: MarkedQuestion }) {
         </p>
       )}
 
+      {hasMethod && (
+        <p className="font-mono mt-2 text-[10px] uppercase tracking-[0.18em] text-ink/45">
+          + {q.provisionalMarks}/{q.provisionalOutOf} method mark
+          {q.provisionalOutOf === 1 ? "" : "s"} provisional
+        </p>
+      )}
+
       {q.points.length > 0 && (
         <ul className="mt-4 space-y-2.5 border-t border-ink/10 pt-4">
           {q.points.map((p) => (
@@ -243,6 +265,40 @@ function QuestionResult({ question: q }: { question: MarkedQuestion }) {
             </li>
           ))}
         </ul>
+      )}
+
+      {hasMethod && (
+        <div className="mt-4 border-t border-ink/10 pt-4">
+          <p className="font-mono flex items-center gap-1.5 text-[9px] uppercase tracking-[0.2em] text-ink/50">
+            <Sparkles className="h-2.5 w-2.5" aria-hidden="true" />
+            Method marks, from your working — provisional
+          </p>
+          <ul className="mt-3 space-y-2.5">
+            {q.provisionalPoints.map((p) => (
+              <li key={p.pointCode} className="flex gap-3">
+                <span
+                  className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
+                    p.awarded ? "bg-ink/70 text-snow" : "border border-ink/20 text-ink/40"
+                  }`}
+                  aria-hidden="true"
+                >
+                  {p.awarded ? <Check className="h-2.5 w-2.5" /> : <X className="h-2.5 w-2.5" />}
+                </span>
+                <p className="text-sm leading-relaxed text-ink/60">
+                  <span className="font-mono mr-2 text-[10px] uppercase tracking-[0.15em] text-ink/40">
+                    {p.pointCode}
+                  </span>
+                  {p.evidence}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-ink/50">
+            <CircleAlert className="mt-0.5 h-3 w-3 shrink-0" aria-hidden="true" />
+            These were judged by Ailemy from your working, not by an examiner,
+            and are not counted in the confirmed total above.
+          </p>
+        </div>
       )}
 
       {provisional && (

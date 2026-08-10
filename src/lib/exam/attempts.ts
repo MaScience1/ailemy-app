@@ -56,7 +56,34 @@ import type { AnswerType } from "./question-set";
 export type ResponsePayload =
   | { kind: "mcq"; choice: string }
   | { kind: "text"; text: string }
-  | { kind: "numeric"; value: string; unit?: string }
+  | {
+      kind: "numeric";
+      value: string;
+      unit?: string;
+      /**
+       * The student's method, free text, OPTIONAL AND NEVER PENALISED.
+       *
+       * ⚠ THIS FIELD NEEDED NO MIGRATION, and that is deliberate rather than
+       * lazy. response_payload is jsonb with no shape CHECK (0028), and
+       * `authenticated` already holds table-wide UPDATE on student_responses,
+       * so a new key in this union is a new key in the payload. A dedicated
+       * column would be NULL for ten of the twelve response types and would
+       * need a migration to say what this union already says.
+       *
+       * WHY IT EXISTS. Edexcel schemes credit method steps: 20(b)(iii) is six
+       * marks of which five are M1–M5 working, and the editor captured one
+       * number. Those five were not scored badly, they were not scorable at
+       * all — markNumeric() reported them unassessable rather than wrong.
+       *
+       * WHAT IT MUST NOT DO. Leaving it blank must land a student in exactly
+       * the position they were in before it existed: the deterministic
+       * final-answer mark is unchanged, and the method marks stay
+       * not-markable rather than becoming a confirmed zero. A student who
+       * knows the answer outright and writes nothing else loses nothing.
+       * Absent and empty-after-trim are the same state — see workingFrom().
+       */
+      working?: string;
+    }
   | { kind: "unsupported" };
 
 export type AttemptQuestion = {

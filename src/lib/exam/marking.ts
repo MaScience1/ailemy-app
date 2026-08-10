@@ -13,6 +13,8 @@ import {
   markMcq,
   markNumeric,
   tierFor,
+  workingFrom,
+  WORKING_UNDER_REVIEW,
   type DeterministicResult,
   type PointVerdict,
 } from "./deterministic";
@@ -92,6 +94,16 @@ export type AiMarkingRequest = {
   commandWord: string | null;
   maxMarks: number;
   studentAnswer: string;
+  /**
+   * The student's method, verbatim, or null when they showed none.
+   *
+   * ⚠ EVIDENCE, NOT AN ANSWER KEY. This is the only thing that makes a method
+   * mark assessable — M1–M5 of 20(b)(iii) are five calculation steps, and the
+   * final number cannot show whether any of them happened. The prompt below
+   * still requires every evidence string to quote the STUDENT'S OWN WORDS, so
+   * adding this widens what the model may READ, never what it may say back.
+   */
+  studentWorking: string | null;
   points: {
     pointCode: string;
     criterion: string;
@@ -142,6 +154,15 @@ export function buildMarkingPrompt(request: AiMarkingRequest): string {
     `THE STUDENT'S ANSWER:`,
     request.studentAnswer,
     ``,
+    // The working is a SEPARATE labelled block, not appended to the answer.
+    // These are different artefacts marked against different points: the final
+    // answer decides the answer mark (which Tier 1 has usually already
+    // decided), the working carries the method marks. Merging them invites the
+    // model to award a method mark because the final number happened to be
+    // right, which is the exact inference the mark scheme forbids.
+    ...(request.studentWorking
+      ? [`THE STUDENT'S WORKING (their method, as they wrote it):`, request.studentWorking, ``]
+      : []),
     `MARK SCHEME:`,
     points,
     ``,
@@ -151,6 +172,13 @@ export function buildMarkingPrompt(request: AiMarkingRequest): string {
     `- Award a point when the answer matches anything under ALSO ACCEPT.`,
     `- BEFORE awarding any point, check its MUST NOT AWARD IF list. If the answer matches one of those, the point is NOT awarded, however well the rest of it reads. This overrides everything above.`,
     `- Do not award marks for correct chemistry the mark scheme does not ask for.`,
+    ...(request.studentWorking
+      ? [
+          `- These are METHOD marks. Award each one from the WORKING — the step must actually appear there. A correct final answer is not evidence that a method step was carried out, and must not earn a method mark on its own.`,
+          `- Working is often terse and unlabelled: a number, a formula, an arrow. Credit a step that is clearly present even if it is not written out in words.`,
+          `- If the working does not show a step, that point is NOT awarded. For evidence, say only that the working does not show it. Do NOT state what the step was, what figure it should have produced, or any part of the mark scheme — the student reads this, and telling them the answer they missed hands them the mark scheme.`,
+        ]
+      : []),
     `- Evidence must quote or closely paraphrase the student's own words, in one sentence.`,
   ].join("\n");
 }
@@ -172,6 +200,149 @@ export const UNWIRED_MARKER: AiMarker = async () => ({
   ok: false,
   error: "The AI marker is not configured yet, so this answer has not been marked.",
 });
+
+
+/**
+ * Tier 2 over the mark-scheme points Tier 1 did not judge, read from the
+ * student's working.
+ *
+ * ============================================================================
+ * WHY THIS IS A SEPARATE PASS RATHER THAN A WIDER TIER 1
+ * ============================================================================
+ * Tier 1 compares one number against one expected value. That is all it can do
+ * with certainty, and its authority comes from not doing anything else. M1–M5
+ * of 20(b)(iii) are "calculation of litres of fuel used", "…of mass of fuel
+ * used", and so on — judgements about a method written in prose and arithmetic,
+ * which is a reading task. So the method marks go to the tier that reads, and
+ * they carry that tier's confidence: requires_review, always, and excluded
+ * from the confirmed total.
+ *
+ * ⚠ THE CAP IS NOT DECORATION. Tier 1 has usually already claimed some of the
+ * tariff via marks_on_correct_answer — 20(b)(iii) awards 1 of 6 for the final
+ * answer — and the remaining mark-scheme points can outnumber the marks left.
+ * Without a cap a question could report more marks than it is worth. It is
+ * reported when it binds rather than applied silently, because a cap that
+ * binds means the scheme and the transcribed figure disagree, and somebody
+ * should look at that.
+ */
+/**
+ * The student's final answer as a sentence, for the model.
+ *
+ * Not "" for an unanswered question: the model is being asked to judge method
+ * marks, and "no final answer was given" is a materially different situation
+ * from a wrong one. Saying nothing would let it assume an answer it cannot see.
+ */
+function describeNumericAnswer(response: ResponsePayload | null): string {
+  if (!response || response.kind !== "numeric") return "(no final answer was given)";
+  const value = response.value.trim();
+  if (!value) return "(no final answer was given)";
+  const unit = (response.unit ?? "").trim();
+  return unit ? `${value} ${unit}` : value;
+}
+
+/**
+ * The only thing a student is told about a method mark they did not earn.
+ *
+ * One constant, never the model's words — see the filter in
+ * markMethodFromWorking() for why.
+ */
+const METHOD_NOT_SHOWN =
+  "Your working doesn't show this step. If you did it, writing it down would let it be credited.";
+
+type MethodOutcome = {
+  /** Did Tier 2 run at all? False when there was no working, or nothing left. */
+  ran: boolean;
+  points: PointVerdict[];
+  awarded: number;
+  /** Set when the model failed. Tier 1's marks still stand. */
+  error: string | null;
+};
+
+const NO_METHOD_PASS: MethodOutcome = { ran: false, points: [], awarded: 0, error: null };
+
+async function markMethodFromWorking(
+  aiMarker: AiMarker,
+  input: {
+    questionNumber: string;
+    questionText: string | null;
+    commandWord: string | null;
+    maxMarks: number;
+    studentAnswer: string;
+    working: string;
+    /** Only the points Tier 1 left unjudged. */
+    criteria: {
+      point_code: string;
+      criterion: string;
+      guidance: string | null;
+      accept: string[] | null;
+      reject: string[] | null;
+    }[];
+    /** Marks still available on this question after Tier 1 took its share. */
+    cap: number;
+  },
+): Promise<MethodOutcome> {
+  const result = await aiMarker({
+    questionNumber: input.questionNumber,
+    questionText: input.questionText,
+    commandWord: input.commandWord,
+    maxMarks: input.maxMarks,
+    studentAnswer: input.studentAnswer,
+    studentWorking: input.working,
+    points: input.criteria.map((c) => ({
+      pointCode: c.point_code,
+      criterion: c.criterion,
+      guidance: c.guidance,
+      accept: c.accept ?? [],
+      reject: c.reject ?? [],
+    })),
+  });
+
+  if (!result.ok) return { ran: true, points: [], awarded: 0, error: result.error };
+
+  // ⚠ ONLY THE POINTS WE ASKED ABOUT. A model that returns a judgement for a
+  // point Tier 1 already decided would otherwise overwrite an arithmetic
+  // verdict with an opinion, through the same upsert key.
+  const asked = new Set(input.criteria.map((c) => c.point_code));
+  const points = result.judgements
+    .filter((j) => asked.has(j.pointCode))
+    .map((j) => ({
+      pointCode: j.pointCode,
+      awarded: j.awarded,
+      // ⚠ A NOT-AWARDED METHOD POINT GETS A FIXED SENTENCE, NOT THE MODEL'S.
+      //
+      // This is a structural boundary, not a second opinion about the prompt.
+      // When the working does NOT contain a step there are no student words to
+      // quote, so the only material the model holds for that sentence is the
+      // point's own criterion and guidance — and for 20(b)(iii) the guidance IS
+      // the worked solution, number by number ("(11400) × 9.25 = 105 450",
+      // "× 0.749 (× 1000) = 78 982 000"). deterministic.ts's boundary note is
+      // explicit that criterion and guidance prose reach the client under NO
+      // circumstance, and a prompt instruction is a request, not an invariant.
+      //
+      // It also closes the injection route: the working is up to 20k characters
+      // of student-controlled text sharing a prompt with the full mark scheme,
+      // and this is the field that would carry anything extracted back out.
+      // An awarded point still carries the model's sentence, which quotes the
+      // student's own working — text they wrote and can already see.
+      evidence: j.awarded ? j.evidence : METHOD_NOT_SHOWN,
+    }));
+
+  const raw = points.filter((pt) => pt.awarded).length;
+  // A belt-and-braces assertion now, not a silent clamp. The caller refuses to
+  // run this pass at all when the points outnumber the marks, so reaching here
+  // means the judgement count exceeded a cap that was already >= the number of
+  // points asked about — which cannot happen unless the model returned a point
+  // twice, and claudeMarker already de-duplicates.
+  if (raw > input.cap) {
+    console.error(
+      `[marking] ${input.questionNumber}: Tier 2 returned ${raw} awarded method mark(s) ` +
+        `against a cap of ${input.cap} on ${input.criteria.length} point(s). Refusing the ` +
+        `whole method pass rather than reporting more marks than the question is worth.`,
+    );
+    return { ran: true, points: [], awarded: 0, error: "Your working could not be marked reliably." };
+  }
+  return { ran: true, points, awarded: raw, error: null };
+}
 
 // ============================================================================
 // ORCHESTRATION
@@ -198,6 +369,26 @@ export type MarkedQuestion = {
   /** 'requires_review' on every AI-marked question, without exception. */
   confidence: "deterministic" | "requires_review" | null;
   points: PointVerdict[];
+  /**
+   * Method marks Tier 2 awarded from the student's working.
+   *
+   * ⚠ NOT INCLUDED IN awardedMarks WHEN THE QUESTION ALSO HAS CONFIRMED MARKS,
+   * and that separation is the whole contract. A correct 20(b)(iii) with
+   * working confirms 1 mark by arithmetic and may collect up to 5 more from a
+   * model; adding them together would launder a provisional judgement into the
+   * confirmed total, which is what `confidence` exists to prevent. The
+   * confirmed total sums awardedMarks over questions whose confidence is
+   * 'deterministic', so these have to live somewhere else — here.
+   *
+   * When Tier 1 confirmed NOTHING, the question is wholly provisional and
+   * behaves like any other AI-marked question: confidence is 'requires_review'
+   * and awardedMarks carries the same number as this field.
+   */
+  provisionalMarks: number;
+  /** How many method points Tier 2 actually judged. The denominator for the above. */
+  provisionalOutOf: number;
+  /** Tier 2's per-point verdicts on the method. Empty unless working was shown. */
+  provisionalPoints: PointVerdict[];
   /** Present when the question could not be marked; shown to the student. */
   note: string | null;
 };
@@ -295,6 +486,36 @@ export async function markAttempt(
     return { ok: false, error: "This attempt has not been submitted yet." };
   }
 
+  return markSubmittedAttempt(attemptId, aiMarker);
+}
+
+/**
+ * The marking engine, with the ownership gate already passed.
+ *
+ * ⚠ SPLIT OUT SO IT CAN BE RUN, NOT SO THE GATE CAN BE SKIPPED. markAttempt
+ * builds a cookie-backed client to prove the attempt belongs to the caller, so
+ * it only works inside a request with a signed-in student's cookies — which
+ * made the engine impossible to exercise against real rows without one.
+ *
+ * To be precise about what that bought, because the obvious reading is wrong:
+ * this file begins with `import "server-only"`, so NOTHING here runs under
+ * plain `node` — a script cannot import it whatever the split. What the split
+ * allows is driving the engine from a server route inside the app, where the
+ * module graph is intact but no student session exists. That is how working
+ * capture was verified end to end against the live paper and a real model.
+ *
+ * ⚠ AND THEREFORE: THIS FUNCTION TRUSTS ITS CALLER COMPLETELY. It reads and
+ * writes with the service role and asks nobody's permission. The ONLY
+ * legitimate callers are markAttempt, which has just proved ownership and
+ * submission, and an operator-run script. It must never be reachable from a
+ * route, an action, or anything else that takes an attemptId from a client —
+ * that would hand any signed-in student the marks and evidence for any paper
+ * on the system.
+ */
+export async function markSubmittedAttempt(
+  attemptId: string,
+  aiMarker: AiMarker = UNWIRED_MARKER,
+): Promise<{ ok: true; data: MarkingSummary } | { ok: false; error: string }> {
   // --- privileged from here -----------------------------------------------
   const db = createAdminClient();
 
@@ -365,6 +586,37 @@ export async function markAttempt(
     ),
   );
 
+  // ⚠ WHAT AN EARLIER RUN ALREADY DECIDED. The results page marks on EVERY
+  // load, and Tier 2 is a model call: re-running it re-samples a judgement that
+  // is supposed to be fixed. Without this read a student who pressed refresh
+  // could watch their provisional method marks change from 4/5 to 2/5 and back,
+  // each load overwriting the last through the same upsert key — and a load
+  // where the model failed would leave the previous run's awarded rows standing
+  // while the screen reported the question unmarked.
+  //
+  // Tier 1 needs no such protection: it is pure, so re-running it is free and
+  // returns the same verdict every time. Only the model-judged points are
+  // remembered, identified by a non-null model_version.
+  const priorRes = await db
+    .from("marking_results")
+    .select("question_attempt_id, point_code, awarded, evidence, model_version")
+    .in("question_attempt_id", qas.map((r) => r.id));
+  const priorFail = readFailed("marking_results", priorRes.error);
+  if (priorFail) return priorFail;
+  const priorByQa = new Map<string, Map<string, { awarded: boolean; evidence: string }>>();
+  for (const row of (priorRes.data ?? []) as {
+    question_attempt_id: string;
+    point_code: string;
+    awarded: boolean;
+    evidence: string | null;
+    model_version: string | null;
+  }[]) {
+    if (!row.model_version) continue; // Tier 1's own rows are recomputed, not reused.
+    const forQa = priorByQa.get(row.question_attempt_id) ?? new Map();
+    forQa.set(row.point_code, { awarded: row.awarded, evidence: row.evidence ?? METHOD_NOT_SHOWN });
+    priorByQa.set(row.question_attempt_id, forQa);
+  }
+
   const schemeRes = await db
     .from("mark_scheme_items")
     .select("question_id, point_code, criterion, guidance, accept, reject, display_order")
@@ -421,6 +673,9 @@ export async function markAttempt(
       assessedOutOf: null,
       unassessedMarks: qa.max_marks,
       unassessedReason: "the mark could not be saved",
+      provisionalMarks: 0,
+      provisionalOutOf: 0,
+      provisionalPoints: [],
       tier,
       confidence: null,
       points: [],
@@ -472,6 +727,9 @@ export async function markAttempt(
         tier,
         confidence: null,
         points: [],
+        provisionalMarks: 0,
+        provisionalOutOf: 0,
+        provisionalPoints: [],
         note: "This question type can't be answered or marked on screen yet.",
       });
       continue;
@@ -516,47 +774,226 @@ export async function markAttempt(
               simple,
             );
 
+      // ── THE METHOD PASS ────────────────────────────────────────────────
+      //
+      // Whatever Tier 1 decided, the marks it did NOT decide are the method
+      // marks. They were a dead end before working existed; with working they
+      // go to Tier 2. The three inputs are all derived, never guessed:
+      //
+      //   which points   every mark-scheme point Tier 1 returned no verdict on
+      //   how many marks the tariff Tier 1 left on the table
+      //   the evidence   the student's working, trimmed, or nothing at all
+      //
+      // ⚠ WITH NO WORKING, EVERY LINE BELOW IS SKIPPED and this branch behaves
+      // exactly as it did before. That is the "not penalised for leaving it
+      // blank" guarantee, expressed as control flow rather than as a promise.
+      const working = workingFrom(response);
+      const judged = new Set(result.markable ? result.points.map((pt) => pt.pointCode) : []);
+      const methodCriteria = criteria.filter((c) => !judged.has(c.point_code));
+      const reviewCap = result.markable ? result.unassessedMarks : qa.max_marks;
+
+      // ⚠ POINTS AND MARKS ARE DIFFERENT UNITS, AND THIS IS WHERE THEY MUST
+      // AGREE. marking_results.awarded is boolean — 0028 is explicit that one
+      // point cannot award more than one mark — so N method points can carry at
+      // most N marks. reviewCap is what the tariff has left after Tier 1 took
+      // marks_on_correct_answer. When there are MORE points than marks left,
+      // there is no honest mapping: awarding every point would report a 6-mark
+      // question as worth 7, and clamping the total while persisting every
+      // awarded flag would make the stored rows contradict the printed number.
+      //
+      // So the pass does not run. That is a transcription disagreement between
+      // the mark scheme and marks_on_correct_answer, it is logged as one, and
+      // the marks stay exactly where they were before working existed.
+      const methodFits = methodCriteria.length <= reviewCap;
+      if (working !== null && reviewCap > 0 && methodCriteria.length > 0 && !methodFits) {
+        console.error(
+          `[marking] ${q.question_number}: ${methodCriteria.length} unjudged mark-scheme ` +
+            `point(s) but only ${reviewCap} mark(s) left after marks_on_correct_answer ` +
+            `(${qa.max_marks} total). Method marking skipped — check the transcription.`,
+        );
+      }
+      // Verdicts an earlier run already reached on exactly these points.
+      const prior = priorByQa.get(qa.id);
+      const stored = methodCriteria
+        .map((c) => {
+          const hit = prior?.get(c.point_code);
+          return hit ? { pointCode: c.point_code, awarded: hit.awarded, evidence: hit.evidence } : null;
+        })
+        .filter((v): v is PointVerdict => v !== null);
+      const allStored = methodCriteria.length > 0 && stored.length === methodCriteria.length;
+
+      const method: MethodOutcome = allStored
+        ? {
+            // Already judged. Re-asking the model would be asking a different
+            // question of the same evidence and calling the answer the same.
+            ran: true,
+            points: stored,
+            awarded: stored.filter((pt) => pt.awarded).length,
+            error: null,
+          }
+        : working !== null && reviewCap > 0 && methodCriteria.length > 0 && methodFits
+          ? await markMethodFromWorking(aiMarker, {
+              questionNumber: q.question_number,
+              questionText: q.question_text,
+              commandWord: q.command_word,
+              maxMarks: qa.max_marks,
+              studentAnswer: describeNumericAnswer(response),
+              working,
+              criteria: methodCriteria,
+              cap: reviewCap,
+            })
+          : NO_METHOD_PASS;
+
+      // The model failed, but an earlier run had already judged some of these.
+      // Use what is STORED rather than reporting nothing: those verdicts are
+      // real, they are already in the database, and reporting the question as
+      // unjudged would put the screen at odds with the rows behind it. Nothing
+      // is invented — points with no stored verdict simply stay unjudged.
+      const salvaged: MethodOutcome | null =
+        method.error !== null && stored.length > 0
+          ? { ran: true, points: stored, awarded: stored.filter((pt) => pt.awarded).length, error: null }
+          : null;
+      const outcome: MethodOutcome = salvaged ?? method;
+
       if (!result.markable) {
+        // Tier 1 abstained — a mismatch, a null marks_on_correct_answer, or
+        // nothing entered. It still awards NOTHING: abstaining is not a zero,
+        // and that rule is untouched by working.
+        if (!outcome.ran || outcome.error !== null) {
+          // ⚠ TIER 1'S REASON SURVIVES. `outcome.error ?? result.reason` dropped
+          // it whenever the model failed — and the method pass only runs when
+          // working was shown, so the student who filled the box was the ONLY
+          // one who lost the accurate explanation of why their answer was not
+          // marked. They now get both, in that order.
+          const reason =
+            outcome.error !== null ? `${result.reason} (${outcome.error})` : result.reason;
+          marked.push({
+            questionAttemptId: qa.id,
+            questionNumber: q.question_number,
+            answerType: q.answer_type,
+            maxMarks: qa.max_marks,
+            awardedMarks: null,
+            assessedOutOf: null,
+            unassessedMarks: qa.max_marks,
+            unassessedReason: reason,
+            tier,
+            confidence: null,
+            points: [],
+            provisionalMarks: 0,
+            provisionalOutOf: 0,
+            provisionalPoints: [],
+            note: reason,
+          });
+          continue;
+        }
+        // Wholly provisional, and shaped like every other AI-marked question:
+        // awardedMarks carries the provisional figure and confidence says so,
+        // which keeps it out of the confirmed total.
+        try {
+          await persist(db, qa.id, outcome.awarded, "requires_review", outcome.points.map(byTier2));
+          persistedRows += 1;
+        } catch (error) {
+          marked.push(persistFailed(qa, q, tier, error));
+          continue;
+        }
         marked.push({
           questionAttemptId: qa.id,
           questionNumber: q.question_number,
           answerType: q.answer_type,
           maxMarks: qa.max_marks,
-          awardedMarks: null,
-          assessedOutOf: null,
-          unassessedMarks: qa.max_marks,
-          unassessedReason: result.reason,
+          awardedMarks: outcome.awarded,
+          assessedOutOf: outcome.points.length,
+          unassessedMarks: Math.max(0, qa.max_marks - outcome.points.length),
+          unassessedReason:
+            qa.max_marks - outcome.points.length > 0 ? WORKING_UNDER_REVIEW : null,
           tier,
-          confidence: null,
-          points: [],
-          note: result.reason,
+          confidence: "requires_review",
+          points: outcome.points,
+          provisionalMarks: outcome.awarded,
+          provisionalOutOf: outcome.points.length,
+          provisionalPoints: outcome.points,
+          note: `${result.reason} ${outcome.awarded} of ${outcome.points.length} method mark(s) were judged from your working, and need review.`,
         });
         continue;
       }
 
       const awarded = clamp(result.awarded, qa.max_marks, q.question_number);
+      // ONE persist call for both tiers: two would each write awarded_marks,
+      // and the second would overwrite the first.
       try {
-        await persist(db, qa.id, awarded, "deterministic", result.points, null, null);
+        await persist(db, qa.id, awarded, "deterministic", [
+          ...result.points.map(byTier1),
+          ...outcome.points.map(byTier2),
+        ]);
         persistedRows += 1;
       } catch (error) {
         marked.push(persistFailed(qa, q, tier, error));
         continue;
       }
+      // One mark-scheme point carries at most one mark (0028: `awarded boolean`),
+      // and the pass is refused outright when the points outnumber the marks —
+      // so subtracting a point count from a mark count is sound HERE and only
+      // here.
+      const leftUnassessed = Math.max(
+        0,
+        result.markable
+          ? result.unassessedMarks - (outcome.error === null ? outcome.points.length : 0)
+          : 0,
+      );
+      const methodNote =
+        outcome.error !== null
+          ? ` Your working could not be reviewed just now — ${outcome.error}`
+          : outcome.ran
+            ? ` ${outcome.awarded} of ${outcome.points.length} method mark(s) were judged from your working, and need review.`
+            : "";
       marked.push({
         questionAttemptId: qa.id,
         questionNumber: q.question_number,
         answerType: q.answer_type,
         maxMarks: qa.max_marks,
+        // ⚠ Tier 1's figure ONLY. The provisional method marks are reported
+        // beside it, never added into it.
         awardedMarks: awarded,
         assessedOutOf: result.assessedOutOf,
-        unassessedMarks: result.unassessedMarks,
-        unassessedReason: result.unassessedReason,
+        // ⚠ MARKS TIER 2 JUDGED LEAVE THIS BUCKET. needsReviewAvailable sums
+        // unassessedMarks and means "tariff nobody could assess"; the
+        // provisional bucket now counts the same method marks. Leaving them in
+        // both would report 6 marks of outcome on a 6-mark question worth 1
+        // confirmed + 5 provisional, and the totals would stop adding up.
+        unassessedMarks: leftUnassessed,
+        // markNumeric already says WORKING_UNDER_REVIEW when working was
+        // shown. The only case it cannot know about is Tier 2 failing after
+        // the fact, where promising a review that did not happen would be the
+        // same false reassurance in a different place.
+        unassessedReason:
+          leftUnassessed === 0
+            ? null
+            : outcome.ran && outcome.error !== null
+              ? outcome.error
+              : result.unassessedReason,
         tier,
         confidence: "deterministic",
         points: result.points,
-        note: result.unassessedReason
-          ? `${result.unassessedMarks} mark${result.unassessedMarks === 1 ? "" : "s"} on this question could not be assessed — ${result.unassessedReason}.`
-          : null,
+        provisionalMarks: outcome.awarded,
+        provisionalOutOf: outcome.points.length,
+        provisionalPoints: outcome.points,
+        // Counts what was actually judged, not the tariff Tier 1 left — those
+        // differ whenever the scheme has fewer points than marks, and the same
+        // card also prints the remainder as "not assessed", so overstating here
+        // reported the same marks in two places at once.
+        note:
+          outcome.ran && outcome.error === null && outcome.points.length > 0
+            ? `${outcome.points.length} method mark${outcome.points.length === 1 ? "" : "s"} ` +
+              `assessed from your working and awaiting review` +
+              (leftUnassessed > 0
+                ? `, and ${leftUnassessed} more could not be assessed.`
+                : ".")
+            : result.unassessedReason
+              ? `${result.unassessedMarks} mark${result.unassessedMarks === 1 ? "" : "s"} on this ` +
+                `question could not be assessed — ${
+                  outcome.error !== null ? outcome.error : result.unassessedReason
+                }.`
+              : null,
       });
       continue;
     }
@@ -565,7 +1002,7 @@ export async function markAttempt(
     const text = response && response.kind === "text" ? response.text.trim() : "";
     if (!text) {
       try {
-        await persist(db, qa.id, 0, "requires_review", [], MARKING_MODEL, PROMPT_VERSION);
+        await persist(db, qa.id, 0, "requires_review", []);
         persistedRows += 1;
       } catch (error) {
         marked.push(persistFailed(qa, q, tier, error));
@@ -583,6 +1020,9 @@ export async function markAttempt(
         tier,
         confidence: "requires_review",
         points: [],
+        provisionalMarks: 0,
+        provisionalOutOf: 0,
+        provisionalPoints: [],
         note: "No answer was given.",
       });
       continue;
@@ -594,6 +1034,9 @@ export async function markAttempt(
       commandWord: q.command_word,
       maxMarks: qa.max_marks,
       studentAnswer: text,
+      // Long-form answers carry their own method inline; there is no separate
+      // working field on a text response.
+      studentWorking: null,
       points: criteria.map((c) => ({
         pointCode: c.point_code,
         criterion: c.criterion,
@@ -616,6 +1059,9 @@ export async function markAttempt(
         tier,
         confidence: null,
         points: [],
+        provisionalMarks: 0,
+        provisionalOutOf: 0,
+        provisionalPoints: [],
         note: aiResult.error,
       });
       continue;
@@ -631,7 +1077,7 @@ export async function markAttempt(
     // 'requires_review' is hardcoded, not derived from anything the model
     // returned. A model cannot promote its own marking to authoritative.
     try {
-      await persist(db, qa.id, awarded, "requires_review", points, MARKING_MODEL, PROMPT_VERSION);
+      await persist(db, qa.id, awarded, "requires_review", points.map(byTier2));
       persistedRows += 1;
     } catch (error) {
       marked.push(persistFailed(qa, q, tier, error));
@@ -649,6 +1095,11 @@ export async function markAttempt(
       tier,
       confidence: "requires_review",
       points,
+      // A wholly AI-marked question: every mark on it is provisional, so the
+      // two figures agree by construction rather than by coincidence.
+      provisionalMarks: awarded,
+      provisionalOutOf: points.length,
+      provisionalPoints: points,
       note: null,
     });
   }
@@ -688,8 +1139,18 @@ export async function markAttempt(
       // excluded from the denominator as well as the numerator: counting it
       // would present unassessable marks as marks the student lost.
       confirmedAvailable: sum(confirmed.map((m) => m.assessedOutOf ?? 0)),
-      provisionalAwarded: sum(provisional.map((m) => m.awardedMarks ?? 0)),
-      provisionalAvailable: sum(provisional.map((m) => m.assessedOutOf ?? 0)),
+      // ⚠ ACROSS ALL QUESTIONS, NOT JUST THE PROVISIONAL BUCKET. `provisional`
+      // is questions whose CONFIDENCE is requires_review — a whole AI-marked
+      // question. A numeric question with working is not one of those: its
+      // confidence is deterministic because its awarded_marks are, and its
+      // method marks are provisional alongside. Summing the bucket would have
+      // reported 0 provisional marks on the very question this exists for.
+      provisionalAwarded: sum(marked.map((m) => m.provisionalMarks)),
+      provisionalAvailable: sum(
+        marked.map((m) =>
+          m.confidence === "requires_review" ? (m.assessedOutOf ?? 0) : m.provisionalOutOf,
+        ),
+      ),
       needsReviewAvailable: sum(marked.map((m) => m.unassessedMarks)),
       persistenceFailures,
       reconciliation,
@@ -768,14 +1229,40 @@ class PersistError extends Error {
   }
 }
 
+/**
+ * A verdict plus WHO REACHED IT.
+ *
+ * ⚠ PROVENANCE IS PER POINT, not per call, because one question can now carry
+ * both kinds. A 20(b)(iii) with working has M6 decided by arithmetic and M1–M5
+ * judged by a model, in the same question_attempt. marking_results has held a
+ * per-row model_version since 0028 for exactly this audit; passing one version
+ * for a whole call would have stamped Tier 1's verdict with a model that never
+ * saw it, which is the sort of quiet falsehood a review queue is built on.
+ */
+type PersistablePoint = PointVerdict & {
+  modelVersion: string | null;
+  promptVersion: string | null;
+};
+
+/** Tier 1 reached it: no model, no prompt. */
+const byTier1 = (p: PointVerdict): PersistablePoint => ({
+  ...p,
+  modelVersion: null,
+  promptVersion: null,
+});
+/** Tier 2 reached it: stamped, so a reviewer can see what judged it. */
+const byTier2 = (p: PointVerdict): PersistablePoint => ({
+  ...p,
+  modelVersion: MARKING_MODEL,
+  promptVersion: PROMPT_VERSION,
+});
+
 async function persist(
   db: ReturnType<typeof createAdminClient>,
   questionAttemptId: string,
   awarded: number,
   confidence: "deterministic" | "requires_review",
-  points: PointVerdict[],
-  modelVersion: string | null,
-  promptVersion: string | null,
+  points: PersistablePoint[],
 ): Promise<void> {
   if (points.length > 0) {
     const { data, error } = await db
@@ -786,8 +1273,8 @@ async function persist(
           point_code: p.pointCode,
           awarded: p.awarded,
           evidence: p.evidence,
-          model_version: modelVersion,
-          prompt_version: promptVersion,
+          model_version: p.modelVersion,
+          prompt_version: p.promptVersion,
         })),
         { onConflict: "question_attempt_id,point_code" },
       )

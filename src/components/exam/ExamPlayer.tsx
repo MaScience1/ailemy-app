@@ -373,6 +373,7 @@ export function ExamPlayer({
                   // IME composition) into the next question.
                   key={question.questionAttemptId}
                   answerType={question.answerType}
+                  maxMarks={question.maxMarks}
                   value={answers[question.questionAttemptId] ?? null}
                   onChange={handleChange}
                   disabled={submitted}
@@ -546,7 +547,12 @@ function hasAnswer(payload: ResponsePayload | null | undefined): boolean {
     case "text":
       return payload.text.trim().length > 0;
     case "numeric":
-      return payload.value.trim().length > 0;
+      // ⚠ WORKING COUNTS. A student who runs out of time, types their method
+      // and leaves the value blank IS marked — markNumeric routes exactly that
+      // state to Tier 2 for the method marks. Counting only `value` told them
+      // the question was unanswered, warned them about it on submit, and was
+      // wrong about work that was about to be credited.
+      return payload.value.trim().length > 0 || (payload.working ?? "").trim().length > 0;
     default:
       return false;
   }

@@ -78,6 +78,36 @@ export type PointVerdict = {
  */
 export const WORKING_NOT_CAPTURED = "working not captured — needs review";
 
+/**
+ * The counterpart, for tariff this marker cannot reach BUT Tier 2 now can.
+ *
+ * The distinction is the whole point of capturing working. Before, every
+ * method mark on a multi-mark numeric question ended at WORKING_NOT_CAPTURED —
+ * a dead end, and honest, because nothing had the evidence to judge it. When a
+ * student HAS shown their method those same marks are assessable; saying "not
+ * captured" over working the student can see on their own screen would be
+ * plainly false.
+ */
+export const WORKING_UNDER_REVIEW = "method marks assessed from your working — provisional until reviewed";
+
+/**
+ * The student's working, or null. ABSENT AND BLANK ARE THE SAME STATE.
+ *
+ * Every branch that changes behaviour keys off this one function, so "did the
+ * student show working" cannot be answered two different ways in two places.
+ * Whitespace does not count: a stray newline from a textarea must not flip a
+ * question into a marking path the student did not ask for.
+ *
+ * ⚠ This returning null must leave EVERY downstream decision exactly as it was
+ * before working existed. That is what "not penalised for leaving it blank"
+ * means structurally, rather than as an intention.
+ */
+export function workingFrom(response: ResponsePayload | null): string | null {
+  if (!response || response.kind !== "numeric") return null;
+  const text = (response.working ?? "").trim();
+  return text.length > 0 ? text : null;
+}
+
 export type DeterministicResult =
   | {
       markable: true;
@@ -324,7 +354,20 @@ export function markNumeric(
   // marksOnCorrectAnswer as `number | null` REQUIRED — omitting it is a
   // compile error, so a null in the database is always a keystroke somebody
   // made on purpose. Do not make that field optional again.
+  //
+  // ⚠ AND THIS IS THE BRANCH WORKING WAS BUILT FOR. "Correct answer with SOME
+  // WORKING scores 3" is a condition this app could not test, which is exactly
+  // why the figure is null. With the working in hand the question is no longer
+  // unanswerable — it is answerable by a reader, which is Tier 2. Tier 1 still
+  // awards nothing here, because "some working" is a judgement and Tier 1 does
+  // not make judgements.
   if (spec.marksOnCorrectAnswer === null) {
+    if (workingFrom(response) !== null) {
+      return {
+        markable: false,
+        reason: `The marks for this question depend on your working, so it has been sent for review — ${WORKING_UNDER_REVIEW}.`,
+      };
+    }
     return {
       markable: false,
       reason:
@@ -337,11 +380,26 @@ export function markNumeric(
     return { markable: false, reason: "This question has no mark scheme." };
   }
 
-  // Multi-mark numeric questions carry method marks this app cannot see: the
-  // editor captured one value, not the student's working. That is what makes
-  // a mismatch unassessable rather than wrong — transferred error might have
-  // earned most of the tariff on paper.
-  const hasUnseeableWorking = maxMarks > 1;
+  // Multi-mark numeric questions carry method marks Tier 1 cannot judge: it
+  // compares one number against one expected value, and M1–M5 of 20(b)(iii)
+  // are five separate calculation steps. That is what makes a mismatch
+  // unassessable rather than wrong — transferred error might have earned most
+  // of the tariff on paper.
+  //
+  // ⚠ THE ONLY THING WORKING CHANGES HERE IS WHO IS ASKED NEXT.
+  //
+  // Tier 1's own verdicts are untouched by it: the final-answer mark is still
+  // decided by comparing the value against expected_value, and
+  // marks_on_correct_answer is still what a correct answer scores. 20(a) takes
+  // 4/4 on a bare correct answer with or without working, because its scheme
+  // says "Correct answer with no working scores (4)" and nothing below reads
+  // the working to decide that.
+  //
+  // What changes is the SUCCESSOR of the marks Tier 1 leaves: with working
+  // they go to Tier 2 as provisional method marks; without it they stay
+  // exactly where they were, unassessed. Never a confirmed zero either way.
+  const working = workingFrom(response);
+  const hasUnseeableWorking = maxMarks > 1 && working === null;
 
   const answered =
     response !== null && response.kind === "numeric" && response.value.trim().length > 0;
@@ -351,6 +409,15 @@ export function markNumeric(
       return {
         markable: false,
         reason: `Nothing was entered for this question and ${WORKING_NOT_CAPTURED}.`,
+      };
+    }
+    // Working but no final answer — a student who ran out of time mid-method.
+    // Tier 1 has nothing to compare, but the method marks are real and the
+    // evidence for them is on the page.
+    if (maxMarks > 1 && working !== null) {
+      return {
+        markable: false,
+        reason: `No final answer was given, but your working has been sent for review — ${WORKING_UNDER_REVIEW}.`,
       };
     }
     return {
@@ -416,6 +483,15 @@ export function markNumeric(
         reason: `Your answer (${shown}) doesn't match the expected one, and ${WORKING_NOT_CAPTURED}. Your method may still have earned marks.`,
       };
     }
+    if (maxMarks > 1 && working !== null) {
+      // Same abstention, different successor. Tier 1 still refuses to call
+      // this a zero — with transferred error the method may have earned most
+      // of the tariff, and now there is something to read that against.
+      return {
+        markable: false,
+        reason: `Your answer (${shown}) doesn't match the expected one, so your working has been sent for review — ${WORKING_UNDER_REVIEW}.`,
+      };
+    }
     // One mark, no working to assess: a genuine zero.
     return {
       markable: true,
@@ -455,7 +531,13 @@ export function markNumeric(
     // The remainder is excluded from the denominator, not counted as lost.
     assessedOutOf: awarded,
     unassessedMarks: unassessed,
-    unassessedReason: unassessed > 0 ? WORKING_NOT_CAPTURED : null,
+    // ⚠ WHICH REASON DEPENDS ON WHAT THE STUDENT ACTUALLY DID. Saying "working
+    // not captured" over working the student can see on their own screen is
+    // false, and it is the kind of false that makes a reader stop reading. The
+    // marks are unassessed BY TIER 1 either way; what differs is whether
+    // anything can assess them next.
+    unassessedReason:
+      unassessed > 0 ? (working !== null ? WORKING_UNDER_REVIEW : WORKING_NOT_CAPTURED) : null,
     confidence: "deterministic",
     points,
   };
