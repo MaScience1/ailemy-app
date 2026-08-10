@@ -122,10 +122,23 @@ COMMENT ON COLUMN public.mark_scheme_items.point_kind IS
 -- ----------------------------------------------------------------------------
 -- Not a CREATE TABLE, so the standing REVOKE rule does not apply — no new table
 -- means no fresh default grants. Restated rather than assumed, because the rule
--- exists precisely because that assumption was wrong once. A new COLUMN
--- inherits the table's existing grants, and mark_scheme_items already holds
--- SELECT-only for authenticated (0028), which is correct for this column: it is
--- marking metadata and no client writes it.
+-- exists precisely because that assumption was wrong once.
+--
+-- ⚠ AN EARLIER DRAFT OF THIS COMMENT SAID mark_scheme_items HOLDS "SELECT-only
+-- for authenticated". IT DOES NOT. 0028 line 737 reads:
+--
+--   GRANT SELECT, INSERT, UPDATE, DELETE ON public.mark_scheme_items TO authenticated;
+--
+-- so point_kind inherits INSERT/UPDATE/DELETE for authenticated like every
+-- other column on the table, and what actually stops a student writing it is
+-- the mark_scheme_items_write POLICY (marker or admin), not a grant. That is
+-- the same posture as criterion, accept[] and reject[], so no change is made
+-- here — but the sentence asserting otherwise was wrong, and a migration whose
+-- prose describes a privilege posture the database does not have is the exact
+-- assumption the REVOKE rule exists because of.
+--
+-- No column-level grant is added: diverging from the table's own shape for one
+-- column would be a second posture to remember, and the policy already gates it.
 
 COMMIT;
 

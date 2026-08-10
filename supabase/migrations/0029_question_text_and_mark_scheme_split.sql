@@ -140,6 +140,21 @@
 -- ACCESS EXCLUSIVE lock. On empty tables it is instant regardless.
 -- ============================================================================
 
+-- ⚠ DO NOT RE-RUN THIS FILE STANDALONE ONCE 0034 HAS BEEN APPLIED.
+--
+-- Line 209 below is LIVE SQL, not a comment:
+--   COMMENT ON COLUMN public.mark_scheme_items.accepted_alternatives IS ...
+-- 0034 drops that column. An in-order rebuild is fine — 0028 creates it, this
+-- file comments it, 0034 drops it, in that sequence. But re-running THIS FILE
+-- on its own against a post-0034 database raises 42703, and because everything
+-- here is inside one BEGIN..COMMIT that abort rolls back the whole migration,
+-- including the guidance / accept[] / reject[] columns it adds. The repair
+-- habit in this repo is to re-run a migration by hand; this is the one that
+-- must not be.
+--
+-- Comment-only addition, made when 0034 was prepared. It cannot change what a
+-- replay does.
+
 BEGIN;
 
 -- ----------------------------------------------------------------------------
