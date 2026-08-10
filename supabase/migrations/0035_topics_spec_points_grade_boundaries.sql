@@ -2,11 +2,45 @@
 -- 0035 — question_topics, question_spec_points, grade_boundaries
 -- ============================================================================
 --
--- ⚠ PROPOSED. NOT APPLIED. The _PROPOSED_ prefix is load-bearing: a rebuild
--- replays this folder in order, so an unapplied file sitting under its plain
--- number manufactures the exact drift that rule exists to prevent. Rename to
--- 0035_topics_spec_points_grade_boundaries.sql only once it is live, and write
--- the verification result into this header at the same time.
+-- ⚠ APPLIED 2026-08-10, by hand in the SQL Editor. VERIFIED — both halves.
+--
+-- CATALOGUE HALF
+--   (a) three dangerous privileges across the schema ....... 0 rows
+--   (b) anon holds nothing on any of the three ............. 0 rows
+--   (c) no WRITE policy mentions auth.uid() ................ 0 rows
+--   (d) RLS on for all three .............................. 3 rows, all true
+--
+-- BEHAVIOURAL HALF — and this is the half that is evidence.
+--   Baseline first: all three tables confirmed EMPTY before anything was
+--   inserted, so a non-zero count afterwards could be attributed rather than
+--   explained away.
+--
+--   (e) service role: question_topics 2, question_spec_points 1,
+--       grade_boundaries 2. Both guards fired with 23514 —
+--       grade_boundaries_estimate_explained on an 'estimated' row with no
+--       source_note, and grade_boundaries_source_check on boundary_source
+--       = 'probably'.
+--
+--   (f) a real student session, holding NO user_roles row: read 2 / 1 / 2 —
+--       correct and intended, this is catalogue metadata about a live paper.
+--       INSERT into question_topics refused 42501. UPDATE on grade_boundaries
+--       affected 0 rows, and the stored values were re-read as (58, 51),
+--       unchanged. Zero rows from an empty table looks identical to zero rows
+--       from a working policy, which is why (e) ran first.
+--
+--   (f2) cleanup: 2 / 1 / 2 rows deleted by paper_id, then all three tables
+--       re-counted at 0, and no row anywhere with boundary_source = 'official'.
+--       The test student was deleted BY THE ID CAPTURED AT CREATION — never a
+--       sweep; a sweep destroyed a real sitting once.
+--
+--   (g) SKIPPED, deliberately. It flips the only live paper to 'draft' to
+--       re-prove a `p.status = 'live'` branch copied verbatim from
+--       paper_questions_read and in production since 0028. WCH11/01 was
+--       confirmed still 'live' after the run.
+--
+-- ⚠ The boundary rows used above (A at 58, B at 51) were INVENTED and are
+-- gone. Nobody has looked up the real May-June 2025 boundaries. Until someone
+-- does, this table is empty and every results screen must say "estimated".
 --
 -- ----------------------------------------------------------------------------
 -- WHY JOIN TABLES AND NOT COLUMNS
