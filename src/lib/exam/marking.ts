@@ -14,6 +14,7 @@ import {
   markNumeric,
   tierFor,
   workingFrom,
+  WORKING_BEYOND_TIER1,
   WORKING_UNDER_REVIEW,
   type DeterministicResult,
   type PointVerdict,
@@ -904,8 +905,11 @@ export async function markSubmittedAttempt(
           awardedMarks: outcome.awarded,
           assessedOutOf: outcome.points.length,
           unassessedMarks: Math.max(0, qa.max_marks - outcome.points.length),
+          // The REMAINDER is what Tier 2 did not judge, so it cannot be
+          // described as having been assessed from the working. Only the marks
+          // in provisionalPoints were.
           unassessedReason:
-            qa.max_marks - outcome.points.length > 0 ? WORKING_UNDER_REVIEW : null,
+            qa.max_marks - outcome.points.length > 0 ? WORKING_BEYOND_TIER1 : null,
           tier,
           confidence: "requires_review",
           points: outcome.points,
@@ -965,12 +969,18 @@ export async function markSubmittedAttempt(
         // shown. The only case it cannot know about is Tier 2 failing after
         // the fact, where promising a review that did not happen would be the
         // same false reassurance in a different place.
+        // ⚠ ONLY THIS LINE MAY PROMISE A REVIEW, because only here is it known
+        // whether one happened. Tier 1 returns WORKING_BEYOND_TIER1 — a fact
+        // about its own reach — and it is upgraded to WORKING_UNDER_REVIEW
+        // exactly when the method pass ran and succeeded on some of the marks.
         unassessedReason:
           leftUnassessed === 0
             ? null
             : outcome.ran && outcome.error !== null
               ? outcome.error
-              : result.unassessedReason,
+              : outcome.ran && outcome.points.length > 0
+                ? WORKING_UNDER_REVIEW
+                : result.unassessedReason,
         tier,
         confidence: "deterministic",
         points: result.points,

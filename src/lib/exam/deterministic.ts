@@ -91,6 +91,25 @@ export const WORKING_NOT_CAPTURED = "working not captured — needs review";
 export const WORKING_UNDER_REVIEW = "method marks assessed from your working — provisional until reviewed";
 
 /**
+ * What Tier 1 says about method marks when the student HAS shown working.
+ *
+ * ⚠ IT STATES A FACT, IT DOES NOT MAKE A PROMISE, and the difference is the
+ * whole reason this constant exists separately from WORKING_UNDER_REVIEW.
+ *
+ * markNumeric used to return WORKING_UNDER_REVIEW ("assessed from your
+ * working") the moment working was present — a claim about something that had
+ * not happened yet and might not. If Tier 2 then failed, or was skipped because
+ * the scheme's point count and marks_on_correct_answer disagreed, the card read
+ * "5 marks could not be assessed — method marks assessed from your working",
+ * asserting both halves of a contradiction in one sentence.
+ *
+ * Tier 1 can only speak for Tier 1. markAttempt, which knows whether the method
+ * pass actually ran and succeeded, is the only thing entitled to upgrade this
+ * to WORKING_UNDER_REVIEW.
+ */
+export const WORKING_BEYOND_TIER1 = "method marks — not assessed by automatic marking";
+
+/**
  * The student's working, or null. ABSENT AND BLANK ARE THE SAME STATE.
  *
  * Every branch that changes behaviour keys off this one function, so "did the
@@ -365,7 +384,8 @@ export function markNumeric(
     if (workingFrom(response) !== null) {
       return {
         markable: false,
-        reason: `The marks for this question depend on your working, so it has been sent for review — ${WORKING_UNDER_REVIEW}.`,
+        reason:
+          "The marks for this question depend on your working, which automatic marking can't judge — so it wasn't marked here.",
       };
     }
     return {
@@ -417,7 +437,8 @@ export function markNumeric(
     if (maxMarks > 1 && working !== null) {
       return {
         markable: false,
-        reason: `No final answer was given, but your working has been sent for review — ${WORKING_UNDER_REVIEW}.`,
+        reason:
+          "No final answer was given. Your working is the only thing here to mark, and automatic marking can't judge it.",
       };
     }
     return {
@@ -489,7 +510,7 @@ export function markNumeric(
       // of the tariff, and now there is something to read that against.
       return {
         markable: false,
-        reason: `Your answer (${shown}) doesn't match the expected one, so your working has been sent for review — ${WORKING_UNDER_REVIEW}.`,
+        reason: `Your answer (${shown}) doesn't match the expected one. Your method may still have earned marks, which automatic marking can't judge.`,
       };
     }
     // One mark, no working to assess: a genuine zero.
@@ -537,7 +558,7 @@ export function markNumeric(
     // marks are unassessed BY TIER 1 either way; what differs is whether
     // anything can assess them next.
     unassessedReason:
-      unassessed > 0 ? (working !== null ? WORKING_UNDER_REVIEW : WORKING_NOT_CAPTURED) : null,
+      unassessed > 0 ? (working !== null ? WORKING_BEYOND_TIER1 : WORKING_NOT_CAPTURED) : null,
     confidence: "deterministic",
     points,
   };

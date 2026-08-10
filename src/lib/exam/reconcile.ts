@@ -55,9 +55,31 @@
  * set of verdicts and store none of them.
  */
 
-/** One marked question, reduced to the only field reconciliation cares about. */
+/**
+ * One marked question, reduced to what reconciliation checks.
+ *
+ * ⚠ THE MARK FIELDS ARE HERE BECAUSE A QUESTION CENSUS IS NOT ENOUGH. This type
+ * used to be `{ confidence }` alone, so every failure branch below compared
+ * COUNTS OF QUESTIONS — and no combination of mark values could make the check
+ * fail. Working capture then introduced a per-question mark invariant that
+ * marking.ts states in a comment ("the totals would stop adding up") and that
+ * nothing asserted: a question could report more marks of outcome than it is
+ * worth and still reconcile perfectly, because one question went in and one
+ * came out.
+ *
+ * A summary documented as "proof that nothing was dropped" has to be proof
+ * about the marks too, or it is proof about the wrong thing.
+ */
 export type ReconcilableQuestion = {
   confidence: "deterministic" | "requires_review" | null;
+  /** The tariff snapshotted on the attempt. The ceiling for everything below. */
+  maxMarks: number;
+  /** Denominator Tier 1 assessed. */
+  assessedOutOf: number | null;
+  /** Marks Tier 2 judged provisionally. Beside the confirmed total, never in it. */
+  provisionalOutOf: number;
+  /** Tariff nobody reached. */
+  unassessedMarks: number;
 };
 
 export type MarkingReconciliation = {
@@ -77,6 +99,10 @@ export type MarkingReconciliation = {
   persisted: number;
   /** Marks worked out and then lost on the way to the database. */
   persistFailed: number;
+  /** Sum of every question's tariff. The ceiling the three buckets share. */
+  marksIn: number;
+  /** assessedOutOf + provisionalOutOf + unassessedMarks, across the paper. */
+  marksAccountedFor: number;
 };
 
 export type ReconcileResult =
@@ -94,6 +120,21 @@ export function reconcileMarking(input: {
   const provisional = input.marked.filter((m) => m.confidence === "requires_review").length;
   const notMarked = input.marked.filter((m) => m.confidence === null).length;
 
+  const marksIn = input.marked.reduce((n, m) => n + m.maxMarks, 0);
+  // ⚠ A WHOLLY AI-MARKED QUESTION COUNTS ITS MARKS ONCE, NOT TWICE. On those,
+  // assessedOutOf and provisionalOutOf describe THE SAME MARKS — the question
+  // is provisional in its entirety, so its denominator is its tariff and
+  // provisionalOutOf merely says how many points carried it. Summing both would
+  // report a 2-mark long_text as 4 and abort a completely healthy paper, which
+  // is the cry-wolf failure this file exists to avoid. The summary already
+  // buckets it this way; this mirrors it rather than inventing a second rule.
+  const accountedFor = (m: ReconcilableQuestion) =>
+    m.confidence === "requires_review"
+      ? (m.assessedOutOf ?? 0) + m.unassessedMarks
+      : (m.assessedOutOf ?? 0) + m.provisionalOutOf + m.unassessedMarks;
+
+  const marksAccountedFor = input.marked.reduce((n, m) => n + accountedFor(m), 0);
+
   const reconciliation: MarkingReconciliation = {
     questionsIn: input.questionsIn,
     responsesIn: input.responsesIn,
@@ -103,6 +144,8 @@ export function reconcileMarking(input: {
     notMarked,
     persisted: input.persisted,
     persistFailed: input.persistFailed,
+    marksIn,
+    marksAccountedFor,
   };
 
   // BOTH halves are checked. A bug that dropped one question and double-counted
@@ -121,6 +164,31 @@ export function reconcileMarking(input: {
       ok: false,
       reconciliation,
       problem: `${reconciliation.questionsOut} verdicts but ${bucketed} bucketed (${confirmed} confirmed + ${provisional} provisional + ${notMarked} not marked)`,
+    };
+  }
+
+  // ⚠ PER QUESTION, NOT JUST IN TOTAL. A paper-wide sum can hide one question
+  // over-reporting while another under-reports, and the two faults have
+  // different causes. This catches the shape working capture made possible:
+  // Tier 1 confirming k marks for one point while Tier 2 is handed every
+  // remaining point, so a 6-mark question reports 7 marks of outcome.
+  const over = input.marked.find((m) => accountedFor(m) > m.maxMarks);
+  if (over) {
+    return {
+      ok: false,
+      reconciliation,
+      problem:
+        `a question worth ${over.maxMarks} mark(s) reports ${accountedFor(over)} ` +
+        `(${over.assessedOutOf ?? 0} assessed + ${over.provisionalOutOf} provisional + ` +
+        `${over.unassessedMarks} unassessed)`,
+    };
+  }
+
+  if (marksAccountedFor > marksIn) {
+    return {
+      ok: false,
+      reconciliation,
+      problem: `${marksAccountedFor} marks of outcome reported on a paper worth ${marksIn}`,
     };
   }
 

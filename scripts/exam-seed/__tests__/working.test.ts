@@ -23,6 +23,7 @@ import {
   workingFrom,
   WORKING_NOT_CAPTURED,
   WORKING_UNDER_REVIEW,
+  WORKING_BEYOND_TIER1,
   type DeterministicResult,
 } from "../../../src/lib/exam/deterministic.ts";
 import type { ResponsePayload } from "../../../src/lib/exam/attempts.ts";
@@ -145,22 +146,32 @@ console.log("\n── 20(b)(iii) WITH working: the 5 method marks become assessa
   t("...still 1 out of 1", correct.markable && correct.assessedOutOf === 1);
   t("...still 5 marks outside Tier 1", correct.markable && correct.unassessedMarks === 5);
   // ...but they are no longer a dead end.
-  t("the 5 are now UNDER REVIEW, not 'not captured'",
-    correct.markable && correct.unassessedReason === WORKING_UNDER_REVIEW, correct);
-  t("...and the false claim is gone",
+  // ⚠ TIER 1 STATES A FACT AND PROMISES NOTHING. It does not know whether Tier 2
+  // will run, succeed, or be skipped, so it must not say "assessed from your
+  // working" — that sentence, printed after a Tier 2 outage, asserted both
+  // halves of a contradiction on one card. markAttempt owns the upgrade.
+  t("the 5 are marked as beyond Tier 1, not 'not captured'",
+    correct.markable && correct.unassessedReason === WORKING_BEYOND_TIER1, correct);
+  t("...and the false 'not captured' claim is gone",
     correct.markable && correct.unassessedReason !== WORKING_NOT_CAPTURED);
+  t("...and Tier 1 does NOT promise a review it cannot guarantee",
+    correct.markable && correct.unassessedReason !== WORKING_UNDER_REVIEW, correct);
 
   const wrong = run(Q20BIII, answer("250", { working: W }));
   t("a wrong answer with working is STILL not a confirmed zero", wrong.markable === false, wrong);
-  t("...and says the working went for review",
-    !wrong.markable && wrong.reason.includes(WORKING_UNDER_REVIEW));
+  t("...and says the method may still have earned marks",
+    !wrong.markable && /method may still have earned marks/.test(wrong.reason), wrong);
   t("...without claiming the working was not captured",
     !wrong.markable && !wrong.reason.includes(WORKING_NOT_CAPTURED));
+  t("...and without promising a review",
+    !wrong.markable && !wrong.reason.includes(WORKING_UNDER_REVIEW));
 
   const noFinal = run(Q20BIII, answer("", { working: W }));
   t("working but no final answer is not markable by Tier 1", noFinal.markable === false);
-  t("...and is sent for review rather than dead-ended",
-    !noFinal.markable && noFinal.reason.includes(WORKING_UNDER_REVIEW), noFinal);
+  t("...and says the working is the only thing there is to mark",
+    !noFinal.markable && /only thing here to mark/.test(noFinal.reason), noFinal);
+  t("...without promising a review",
+    !noFinal.markable && !noFinal.reason.includes(WORKING_UNDER_REVIEW));
   t("...never a zero", !("awarded" in noFinal));
 }
 
@@ -177,8 +188,10 @@ console.log("\n── 22(c): marks_on_correct_answer is deliberately null ──
   t("with working: still not markable BY TIER 1", shown.markable === false);
   t("...because 'some working' is a judgement, and Tier 1 does not judge",
     !("awarded" in shown));
-  t("...but it now goes to review with the working",
-    !shown.markable && shown.reason.includes(WORKING_UNDER_REVIEW), shown);
+  t("...and says so without promising a review Tier 1 cannot deliver",
+    !shown.markable &&
+      /automatic marking can't judge/.test(shown.reason) &&
+      !shown.reason.includes(WORKING_UNDER_REVIEW), shown);
 }
 
 console.log("\n── A ONE-MARK NUMERIC HAS NO METHOD MARKS, WITH OR WITHOUT WORKING ──");
