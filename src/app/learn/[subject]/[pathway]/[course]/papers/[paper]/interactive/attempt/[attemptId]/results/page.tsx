@@ -13,6 +13,7 @@ import { getSubjectThemeStyle } from "@/lib/catalogue/subject-theme";
 import { getAttemptForPlayer } from "@/lib/exam/attempts";
 import { claudeMarker } from "@/lib/exam/ai-marker";
 import { markAttempt } from "@/lib/exam/marking";
+import { getResultsContext } from "@/lib/exam/results-context";
 
 /**
  * The marked paper.
@@ -99,10 +100,37 @@ export default async function ResultsPage({ params }: { params: Params }) {
     );
   }
 
+  // ⚠ AFTER MARKING, AND FROM WHAT MARKING ACTUALLY PRODUCED. Every input below
+  // is a fact about this attempt — the questions, what was awarded, what was
+  // assessed — so no section can be rendered from anything other than what the
+  // student did. A failed read inside returns a REFUSAL naming the failure, not
+  // an empty section: question_topics and grade_boundaries are empty today, so
+  // "no rows" is the normal state and a swallowed error would be invisible.
+  const context = await getResultsContext({
+    paperId: paper.id,
+    paperTotal: paper.total_marks ?? 0,
+    confirmedMarks: result.data.confirmedAwarded,
+    questions: result.data.questions.map((q) => ({
+      // ⚠ THE QUESTION, NOT THE ATTEMPT. question_topics and
+      // examiner_report_insights key on paper_questions(id). The first version
+      // of this passed questionAttemptId, which matches nothing — and on tables
+      // that are empty anyway, matching nothing looks exactly like "not mapped
+      // yet". It would have shipped as a permanently blank section.
+      questionId: q.questionId,
+      questionNumber: q.questionNumber,
+      maxMarks: q.maxMarks,
+      awardedMarks: q.awardedMarks,
+      assessedOutOf: q.assessedOutOf,
+      answerType: q.answerType,
+      studentAnswer: q.studentAnswer,
+    })),
+  });
+
   return (
     <div style={getSubjectThemeStyle(subject)}>
       <ResultsView
         summary={result.data}
+        context={context}
         paperTitle={paper.paper_name}
         paperCode={paper.paper_code}
         paperHref={paperHref}

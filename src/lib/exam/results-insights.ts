@@ -347,3 +347,16 @@ export function whereMarksWent(questions: MarkedQuestionLite[]): LossVerdict {
     totalLost,
   };
 }
+
+
+/**
+ * The four verdicts a results screen renders. Declared HERE, in the pure
+ * module, so a client component can name the type without importing the
+ * server-only loader that produces it.
+ */
+export type ResultsContext = {
+  grade: GradeVerdict;
+  topics: TopicVerdict;
+  insights: InsightVerdict;
+  loss: LossVerdict;
+};

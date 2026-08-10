@@ -239,6 +239,29 @@ export const UNWIRED_MARKER: AiMarker = async () => ({
  * marks, and "no final answer was given" is a materially different situation
  * from a wrong one. Saying nothing would let it assume an answer it cannot see.
  */
+/**
+ * The student's answer as plain text, for their own results screen.
+ *
+ * Returns null rather than "" for an unanswered question: an examiner insight
+ * may only be attached to a student's own words, and an empty string is not
+ * words — it is the absence of them. See attachInsights().
+ */
+function answerTextOf(response: ResponsePayload | null): string | null {
+  if (!response) return null;
+  switch (response.kind) {
+    case "text":
+      return response.text.trim() || null;
+    case "mcq":
+      return response.choice.trim() || null;
+    case "numeric": {
+      const parts = [response.value?.trim(), response.unit?.trim()].filter(Boolean);
+      return parts.length ? parts.join(" ") : null;
+    }
+    default:
+      return null;
+  }
+}
+
 function describeNumericAnswer(response: ResponsePayload | null): string {
   if (!response || response.kind !== "numeric") return "(no final answer was given)";
   const value = response.value.trim();
@@ -357,6 +380,17 @@ async function markMethodFromWorking(
 
 export type MarkedQuestion = {
   questionAttemptId: string;
+  /**
+   * paper_questions.id — the question ITSELF, not this student's attempt at it.
+   *
+   * ⚠ BOTH IDS ARE NEEDED AND THEY ARE NOT INTERCHANGEABLE. question_topics,
+   * question_spec_points and examiner_report_insights all key on
+   * paper_questions(id); marking_results and student_responses key on
+   * question_attempts(id). Passing the attempt id where the question id belongs
+   * matches nothing and returns an empty list — which, on tables that are empty
+   * anyway, is indistinguishable from "nothing mapped yet".
+   */
+  questionId: string;
   questionNumber: string;
   answerType: string;
   maxMarks: number;
@@ -373,6 +407,12 @@ export type MarkedQuestion = {
   /** WORKING_NOT_CAPTURED, or null. */
   unassessedReason: string | null;
   tier: "deterministic" | "ai" | "unmarkable";
+  /**
+   * What the student wrote, as text, or null where they wrote nothing or the
+   * type has no text form. Their own answer, returned to them — no mark-scheme
+   * content passes through here.
+   */
+  studentAnswer: string | null;
   /** 'requires_review' on every AI-marked question, without exception. */
   confidence: "deterministic" | "requires_review" | null;
   points: PointVerdict[];
@@ -673,8 +713,10 @@ export async function markSubmittedAttempt(
     );
     return {
       questionAttemptId: qa.id,
+      questionId: q.id,
       questionNumber: q.question_number,
       answerType: q.answer_type,
+      studentAnswer: null /* not in scope here, and a persistence failure shows no insight anyway */,
       maxMarks: qa.max_marks,
       awardedMarks: null,
       assessedOutOf: null,
@@ -724,8 +766,10 @@ export async function markSubmittedAttempt(
     if (tier === "unmarkable") {
       marked.push({
         questionAttemptId: qa.id,
+        questionId: q.id,
         questionNumber: q.question_number,
         answerType: q.answer_type,
+        studentAnswer: answerTextOf(response),
         maxMarks: qa.max_marks,
         awardedMarks: null,
         assessedOutOf: null,
@@ -772,8 +816,10 @@ export async function markSubmittedAttempt(
         if (!eq.markable) {
           marked.push({
             questionAttemptId: qa.id,
+            questionId: q.id,
             questionNumber: q.question_number,
             answerType: q.answer_type,
+            studentAnswer: answerTextOf(response),
             maxMarks: qa.max_marks,
             awardedMarks: null,
             assessedOutOf: null,
@@ -799,8 +845,10 @@ export async function markSubmittedAttempt(
         }
         marked.push({
           questionAttemptId: qa.id,
+          questionId: q.id,
           questionNumber: q.question_number,
           answerType: q.answer_type,
+          studentAnswer: answerTextOf(response),
           maxMarks: qa.max_marks,
           awardedMarks: eqAwarded,
           assessedOutOf: eq.assessedOutOf,
@@ -954,8 +1002,10 @@ export async function markSubmittedAttempt(
             outcome.error !== null ? `${result.reason} (${outcome.error})` : result.reason;
           marked.push({
             questionAttemptId: qa.id,
+            questionId: q.id,
             questionNumber: q.question_number,
             answerType: q.answer_type,
+            studentAnswer: answerTextOf(response),
             maxMarks: qa.max_marks,
             awardedMarks: null,
             assessedOutOf: null,
@@ -982,8 +1032,10 @@ export async function markSubmittedAttempt(
         }
         marked.push({
           questionAttemptId: qa.id,
+          questionId: q.id,
           questionNumber: q.question_number,
           answerType: q.answer_type,
+          studentAnswer: answerTextOf(response),
           maxMarks: qa.max_marks,
           awardedMarks: outcome.awarded,
           assessedOutOf: outcome.points.length,
@@ -1034,8 +1086,10 @@ export async function markSubmittedAttempt(
             : "";
       marked.push({
         questionAttemptId: qa.id,
+        questionId: q.id,
         questionNumber: q.question_number,
         answerType: q.answer_type,
+        studentAnswer: answerTextOf(response),
         maxMarks: qa.max_marks,
         // ⚠ Tier 1's figure ONLY. The provisional method marks are reported
         // beside it, never added into it.
@@ -1101,8 +1155,10 @@ export async function markSubmittedAttempt(
       }
       marked.push({
         questionAttemptId: qa.id,
+        questionId: q.id,
         questionNumber: q.question_number,
         answerType: q.answer_type,
+        studentAnswer: answerTextOf(response),
         maxMarks: qa.max_marks,
         awardedMarks: 0,
         assessedOutOf: qa.max_marks,
@@ -1137,8 +1193,10 @@ export async function markSubmittedAttempt(
       const already = clamp(storedAi.filter((p) => p.awarded).length, qa.max_marks, q.question_number);
       marked.push({
         questionAttemptId: qa.id,
+        questionId: q.id,
         questionNumber: q.question_number,
         answerType: q.answer_type,
+        studentAnswer: answerTextOf(response),
         maxMarks: qa.max_marks,
         awardedMarks: already,
         assessedOutOf: qa.max_marks,
@@ -1176,8 +1234,10 @@ export async function markSubmittedAttempt(
     if (!aiResult.ok) {
       marked.push({
         questionAttemptId: qa.id,
+        questionId: q.id,
         questionNumber: q.question_number,
         answerType: q.answer_type,
+        studentAnswer: answerTextOf(response),
         maxMarks: qa.max_marks,
         awardedMarks: null,
         assessedOutOf: null,
@@ -1211,8 +1271,10 @@ export async function markSubmittedAttempt(
     }
     marked.push({
       questionAttemptId: qa.id,
+      questionId: q.id,
       questionNumber: q.question_number,
       answerType: q.answer_type,
+      studentAnswer: answerTextOf(response),
       maxMarks: qa.max_marks,
       awardedMarks: awarded,
       assessedOutOf: qa.max_marks,
