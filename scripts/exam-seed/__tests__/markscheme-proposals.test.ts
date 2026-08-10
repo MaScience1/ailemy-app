@@ -1,0 +1,274 @@
+/**
+ * The review model: doubt first, and nothing publishes on a default.
+ *
+ * Run:  node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON \
+ *         scripts/exam-seed/__tests__/markscheme-proposals.test.ts
+ *
+ * ============================================================================
+ * WHAT THESE GUARD
+ * ============================================================================
+ * 68 lines in WCH11/01 carry an examiner ruling the extractor refused to make.
+ * The one thing a review surface must never do is turn those into a
+ * click-through — so the assertions below are mostly about REFUSAL: unruled
+ * lines are not emitted, unapproved questions are not emitted, and a ruling is
+ * never inferred from the absence of one.
+ *
+ * ⚠ THE PROPOSAL SET IS READ FROM THE REAL ARTEFACT, not a copy. A hand-written
+ * model of production data pins yesterday's behaviour — reconcile.test.ts spent
+ * a week asserting 20(b)(ii) was unmarkable after it stopped being.
+ */
+import { readFileSync } from "node:fs";
+import {
+  buildReview,
+  sortForReview,
+  countUnruled,
+  countApproved,
+  toFixture,
+  emitFixtureSource,
+  type ProposalSet,
+  type RulingBook,
+} from "../../../src/lib/exam/markscheme-proposals.ts";
+
+let pass = 0, fail = 0;
+const t = (n: string, c: boolean, got?: unknown) => {
+  c ? (pass++, console.log("  ✓ " + n))
+    : (fail++, console.log("  ✗ " + n + (got !== undefined ? "  got: " + JSON.stringify(got) : "")));
+};
+
+const SET = JSON.parse(
+  readFileSync("scripts/exam-seed/proposals/unit-1-may-june-2025.markscheme.json", "utf8"),
+) as ProposalSet;
+
+const APPROVER = "00000000-0000-4000-8000-000000000001";
+const NOW = "2026-08-10T12:00:00.000Z";
+
+console.log("── THE ARTEFACT IS THE REAL EXTRACTION ──");
+{
+  t("47 question blocks", SET.questions.length === 47, SET.questions.length);
+  t("every block carries a mark total", SET.questions.every((q) => q.marks !== null));
+  t("it says outright that nothing is published", /PROPOSALS/.test(SET.status), SET.status);
+  const ruling = SET.questions.reduce((n, q) => n + q.requiresRuling.length, 0);
+  t("68 lines need a ruling", ruling === 68, ruling);
+  t("every one of them says WHY",
+    SET.questions.every((q) => q.requiresRuling.every((l) => (l.requiresRuling ?? []).length > 0)));
+  t("every proposal carries page, y and the source line",
+    SET.questions.every((q) =>
+      q.points.every((p) => p.page > 0 && typeof p.y === "number" && p.sourceLine.length > 0)));
+}
+
+console.log("\n── DOUBT FIRST, OR THE SORT IS DECORATION ──");
+{
+  const items = sortForReview(buildReview(SET, {}));
+  t("nothing is approved before anyone has approved anything", countApproved(items) === 0);
+  t("the unruled count matches the artefact", countUnruled(items) === 68, countUnruled(items));
+  const withWork = items.filter((i) => i.unruled.length > 0);
+  t("questions needing a decision sort above those that do not",
+    items.indexOf(withWork[0]) === 0 && items.slice(0, withWork.length).every((i) => i.unruled.length > 0));
+  const first = items[0];
+  t("...and within a question the least confident line comes first",
+    first.unruled.every((l, i, a) => i === 0 || a[i - 1].confidence <= l.confidence),
+    first.unruled.map((l) => l.confidence));
+}
+
+console.log("\n── A RULING IS NEVER A DEFAULT ──");
+{
+  // ⚠ THE CENTRAL GUARANTEE. There is no code path that fills in a ruling, so
+  // a reviewer who clicks past a question cannot publish it by accident.
+  const items = buildReview(SET, {});
+  const anyPreRuled = items.some((i) => i.ruledCount > 0);
+  t("no line arrives pre-ruled", !anyPreRuled);
+  t("...and totalDecisions equals unruled before any ruling",
+    items.every((i) => i.totalDecisions === i.unruled.length));
+}
+
+console.log("\n── toFixture() REFUSES RATHER THAN GUESSING ──");
+{
+  const q1 = SET.questions.find((q) => q.questionNumber === "1")!;
+
+  t("nothing approved -> refuses outright",
+    (() => { const r = toFixture(SET, {}); return !r.ok && r.refusals.length > 0; })());
+
+  // approved, but its lines are still unruled
+  const halfDone: RulingBook = {
+    "1": { points: {}, lines: {}, approvedAt: NOW, approvedBy: APPROVER },
+  };
+  const r1 = toFixture(SET, halfDone);
+  t("approved with unruled lines -> still refuses",
+    !r1.ok && r1.refusals.some((x) => x.startsWith("1:") && /unruled/.test(x)),
+    !r1.ok ? r1.refusals.slice(0, 3) : r1);
+
+  // every line ruled, but nobody approved it
+  const ruledNotApproved: RulingBook = {
+    "1": {
+      points: {},
+      lines: Object.fromEntries(q1.requiresRuling.map((l) => [l.sourceLine, { kind: "discard" as const }])),
+    },
+  };
+  const r2 = toFixture(SET, ruledNotApproved);
+  t("fully ruled but unapproved -> refuses, naming approval",
+    !r2.ok && r2.refusals.some((x) => x.startsWith("1:") && /not approved/.test(x)),
+    !r2.ok ? r2.refusals.slice(0, 3) : r2);
+
+  // ⚠ HALF-APPROVED IS NOT APPROVED. 0028 pairs the two fields for regions
+  // because a timestamp with no approver is not interpretable.
+  for (const partial of [
+    { approvedAt: NOW }, { approvedBy: APPROVER },
+  ]) {
+    const book: RulingBook = {
+      "1": {
+        points: {},
+        lines: Object.fromEntries(q1.requiresRuling.map((l) => [l.sourceLine, { kind: "discard" as const }])),
+        ...partial,
+      },
+    };
+    const r = toFixture(SET, book);
+    t(`only ${Object.keys(partial)[0]} set -> refuses`, !r.ok, r);
+  }
+}
+
+console.log("\n── A COMPLETE RULING EMITS, AND EMITS WHAT WAS RULED ──");
+{
+  const q1 = SET.questions.find((q) => q.questionNumber === "1")!;
+  const [d1, d2, d3] = q1.requiresRuling;
+  const book: RulingBook = {
+    "1": {
+      points: {},
+      lines: {
+        [d1.sourceLine]: { kind: "reject" },
+        [d2.sourceLine]: { kind: "accept", editedText: "Allow the 79Br- form" },
+        [d3.sourceLine]: { kind: "discard" },
+      },
+      approvedAt: NOW, approvedBy: APPROVER,
+    },
+  };
+  const r = toFixture(SET, book);
+  t("it emits", r.ok, r);
+  if (r.ok) {
+    const emitted = r.questions.find((x) => x.questionNumber === "1")!;
+    t("...only the approved question", r.questions.length === 1, r.questions.map((x) => x.questionNumber));
+    t("...with the paper's own tariff", emitted.marks === 1, emitted.marks);
+    const last = emitted.markScheme[emitted.markScheme.length - 1];
+    t("...the rejected line under reject[]", (last.reject ?? []).includes(d1.text), last.reject);
+    t("...the EDITED wording, not the printed one",
+      (last.accept ?? []).includes("Allow the 79Br- form") && !(last.accept ?? []).includes(d2.text),
+      last.accept);
+    t("...and the discarded line nowhere",
+      JSON.stringify(emitted).includes(d3.text) === false);
+  }
+}
+
+console.log("\n── ALTERNATIVE ROUTES: ROUTE 1 ONLY, NEVER SUMMED ──");
+{
+  // 22(c) prints three marks twice, once per route to the answer. A script
+  // takes one and earns three. Emitting both would be six points on a
+  // three-mark question — and would collide on UNIQUE (question_id, point_code).
+  const q = SET.questions.find((x) => x.questionNumber === "22(c)")!;
+  t("the artefact flags it as having alternatives", q.hasAlternativeMethods === true);
+  t("...and carries 6 proposed points across 2 routes",
+    q.points.length === 6 && new Set(q.points.map((p) => p.route)).size === 2,
+    q.points.map((p) => [p.pointCode, p.route]));
+
+  const book: RulingBook = {
+    "22(c)": {
+      points: {},
+      lines: Object.fromEntries(q.requiresRuling.map((l) => [l.sourceLine, { kind: "discard" as const }])),
+      approvedAt: NOW, approvedBy: APPROVER,
+    },
+  };
+  const r = toFixture(SET, book);
+  t("it emits", r.ok, r);
+  if (r.ok) {
+    const emitted = r.questions[0];
+    t("...3 points, not 6", emitted.markScheme.length === 3, emitted.markScheme.map((p) => p.pointCode));
+    t("...and never more points than the tariff", emitted.markScheme.length <= emitted.marks);
+    t("...with no ALT-prefixed code", emitted.markScheme.every((p) => !p.pointCode.startsWith("ALT")));
+  }
+}
+
+console.log("\n── AN EDITED OR REJECTED POINT ──");
+{
+  const q = SET.questions.find((x) => x.questionNumber === "20(a)")!;
+  const book: RulingBook = {
+    "20(a)": {
+      points: {
+        M1: { verdict: "edit", criterion: "convert the temperature to kelvin" },
+        M2: { verdict: "reject", why: "duplicated by M3" },
+      },
+      lines: Object.fromEntries(q.requiresRuling.map((l) => [l.sourceLine, { kind: "guidance" as const }])),
+      approvedAt: NOW, approvedBy: APPROVER,
+    },
+  };
+  const r = toFixture(SET, book);
+  t("it emits", r.ok, r);
+  if (r.ok) {
+    const m = r.questions[0].markScheme;
+    t("the edited criterion replaces the printed one",
+      m.some((p) => p.criterion === "convert the temperature to kelvin"));
+    t("...and the rejected point is gone", !m.some((p) => p.pointCode === "M2"));
+    t("guidance rulings land on the last point",
+      Boolean(m[m.length - 1].guidance), m[m.length - 1]);
+  }
+}
+{
+  // Rejecting everything leaves no mark scheme — which is a refusal, not an
+  // empty question written to a table that decides marks.
+  const q = SET.questions.find((x) => x.questionNumber === "20(a)")!;
+  const book: RulingBook = {
+    "20(a)": {
+      points: Object.fromEntries(q.points.map((p) => [p.pointCode, { verdict: "reject" as const, why: "x" }])),
+      lines: Object.fromEntries(q.requiresRuling.map((l) => [l.sourceLine, { kind: "discard" as const }])),
+      approvedAt: NOW, approvedBy: APPROVER,
+    },
+  };
+  const r = toFixture(SET, book);
+  t("rejecting every point refuses rather than emitting an empty scheme",
+    !r.ok && r.refusals.some((x) => /leaving no mark scheme/.test(x)), r);
+}
+
+console.log("\n── THE EMITTED SOURCE SAYS WHAT IT IS ──");
+{
+  const refused = emitFixtureSource({ ok: false, refusals: ["1: not approved"] }, "wch11", NOW);
+  t("a refusal emits NO fixture", !refused.includes("markScheme: ["), refused.slice(0, 60));
+  t("...and lists what is not ready", refused.includes("1: not approved"));
+
+  const q1 = SET.questions.find((q) => q.questionNumber === "1")!;
+  const ok = toFixture(SET, {
+    "1": {
+      points: {},
+      lines: Object.fromEntries(q1.requiresRuling.map((l) => [l.sourceLine, { kind: "discard" as const }])),
+      approvedAt: NOW, approvedBy: APPROVER,
+    },
+  });
+  const src = emitFixtureSource(ok, "wch11-01-2025-may-june", NOW);
+  t("an emission carries the seeder commands", src.includes("--commit") && src.includes("--set="));
+
+  // ⚠ TESTED WITH A STRING THAT ACTUALLY CONTAINS A QUOTE. The first version of
+  // this assertion pattern-matched the whole emitted file and flagged ordinary
+  // content — a check that fires on correct output is a check that gets deleted.
+  // The real question is whether a criterion carrying " and \\ survives the
+  // round trip into a pasteable literal.
+  const nasty = 'he said "no" \\ and left';
+  const edited = toFixture(SET, {
+    "1": {
+      points: { M1: { verdict: "edit", criterion: nasty } },
+      lines: Object.fromEntries(q1.requiresRuling.map((l) => [l.sourceLine, { kind: "discard" as const }])),
+      approvedAt: NOW, approvedBy: APPROVER,
+    },
+  });
+  const nastySrc = emitFixtureSource(edited, "wch11", NOW);
+  const literal = /criterion: ("(?:[^"\\]|\\.)*")/.exec(nastySrc)?.[1];
+  t("a criterion containing a quote and a backslash emits as a valid literal",
+    literal !== undefined && JSON.parse(literal) === nasty, literal);
+}
+
+console.log("\n── EVERY REFUSAL NAMES THE QUESTION ──");
+{
+  // A refusal a reviewer cannot act on is a refusal they will ignore.
+  const r = toFixture(SET, {});
+  t("refusals are per question, not one summary line",
+    !r.ok && r.refusals.length > 1 && r.refusals.every((x) => /^[\w()]+:/.test(x)),
+    !r.ok ? r.refusals.slice(0, 3) : r);
+}
+
+console.log(`\n${fail === 0 ? "✓ ALL" : "✗"} ${pass} passed, ${fail} failed`);
+process.exit(fail ? 1 : 0);
