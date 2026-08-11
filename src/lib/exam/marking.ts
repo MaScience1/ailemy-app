@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { groundedEvidence } from "@/lib/exam/evidence";
 import { createClient } from "@/lib/supabase/server";
 
 import type { ResponsePayload } from "./attempts";
@@ -239,6 +240,29 @@ export const UNWIRED_MARKER: AiMarker = async () => ({
  * marks, and "no final answer was given" is a materially different situation
  * from a wrong one. Saying nothing would let it assume an answer it cannot see.
  */
+/**
+ * The student's answer as plain text, for their own results screen.
+ *
+ * Returns null rather than "" for an unanswered question: an examiner insight
+ * may only be attached to a student's own words, and an empty string is not
+ * words — it is the absence of them. See attachInsights().
+ */
+function answerTextOf(response: ResponsePayload | null): string | null {
+  if (!response) return null;
+  switch (response.kind) {
+    case "text":
+      return response.text.trim() || null;
+    case "mcq":
+      return response.choice.trim() || null;
+    case "numeric": {
+      const parts = [response.value?.trim(), response.unit?.trim()].filter(Boolean);
+      return parts.length ? parts.join(" ") : null;
+    }
+    default:
+      return null;
+  }
+}
+
 function describeNumericAnswer(response: ResponsePayload | null): string {
   if (!response || response.kind !== "numeric") return "(no final answer was given)";
   const value = response.value.trim();
@@ -357,6 +381,17 @@ async function markMethodFromWorking(
 
 export type MarkedQuestion = {
   questionAttemptId: string;
+  /**
+   * paper_questions.id — the question ITSELF, not this student's attempt at it.
+   *
+   * ⚠ BOTH IDS ARE NEEDED AND THEY ARE NOT INTERCHANGEABLE. question_topics,
+   * question_spec_points and examiner_report_insights all key on
+   * paper_questions(id); marking_results and student_responses key on
+   * question_attempts(id). Passing the attempt id where the question id belongs
+   * matches nothing and returns an empty list — which, on tables that are empty
+   * anyway, is indistinguishable from "nothing mapped yet".
+   */
+  questionId: string;
   questionNumber: string;
   answerType: string;
   maxMarks: number;
@@ -373,6 +408,12 @@ export type MarkedQuestion = {
   /** WORKING_NOT_CAPTURED, or null. */
   unassessedReason: string | null;
   tier: "deterministic" | "ai" | "unmarkable";
+  /**
+   * What the student wrote, as text, or null where they wrote nothing or the
+   * type has no text form. Their own answer, returned to them — no mark-scheme
+   * content passes through here.
+   */
+  studentAnswer: string | null;
   /** 'requires_review' on every AI-marked question, without exception. */
   confidence: "deterministic" | "requires_review" | null;
   points: PointVerdict[];
@@ -673,8 +714,10 @@ export async function markSubmittedAttempt(
     );
     return {
       questionAttemptId: qa.id,
+      questionId: q.id,
       questionNumber: q.question_number,
       answerType: q.answer_type,
+      studentAnswer: null /* not in scope here, and a persistence failure shows no insight anyway */,
       maxMarks: qa.max_marks,
       awardedMarks: null,
       assessedOutOf: null,
@@ -724,8 +767,10 @@ export async function markSubmittedAttempt(
     if (tier === "unmarkable") {
       marked.push({
         questionAttemptId: qa.id,
+        questionId: q.id,
         questionNumber: q.question_number,
         answerType: q.answer_type,
+        studentAnswer: answerTextOf(response),
         maxMarks: qa.max_marks,
         awardedMarks: null,
         assessedOutOf: null,
@@ -772,8 +817,10 @@ export async function markSubmittedAttempt(
         if (!eq.markable) {
           marked.push({
             questionAttemptId: qa.id,
+            questionId: q.id,
             questionNumber: q.question_number,
             answerType: q.answer_type,
+            studentAnswer: answerTextOf(response),
             maxMarks: qa.max_marks,
             awardedMarks: null,
             assessedOutOf: null,
@@ -799,8 +846,10 @@ export async function markSubmittedAttempt(
         }
         marked.push({
           questionAttemptId: qa.id,
+          questionId: q.id,
           questionNumber: q.question_number,
           answerType: q.answer_type,
+          studentAnswer: answerTextOf(response),
           maxMarks: qa.max_marks,
           awardedMarks: eqAwarded,
           assessedOutOf: eq.assessedOutOf,
@@ -954,8 +1003,10 @@ export async function markSubmittedAttempt(
             outcome.error !== null ? `${result.reason} (${outcome.error})` : result.reason;
           marked.push({
             questionAttemptId: qa.id,
+            questionId: q.id,
             questionNumber: q.question_number,
             answerType: q.answer_type,
+            studentAnswer: answerTextOf(response),
             maxMarks: qa.max_marks,
             awardedMarks: null,
             assessedOutOf: null,
@@ -982,8 +1033,10 @@ export async function markSubmittedAttempt(
         }
         marked.push({
           questionAttemptId: qa.id,
+          questionId: q.id,
           questionNumber: q.question_number,
           answerType: q.answer_type,
+          studentAnswer: answerTextOf(response),
           maxMarks: qa.max_marks,
           awardedMarks: outcome.awarded,
           assessedOutOf: outcome.points.length,
@@ -1034,8 +1087,10 @@ export async function markSubmittedAttempt(
             : "";
       marked.push({
         questionAttemptId: qa.id,
+        questionId: q.id,
         questionNumber: q.question_number,
         answerType: q.answer_type,
+        studentAnswer: answerTextOf(response),
         maxMarks: qa.max_marks,
         // ⚠ Tier 1's figure ONLY. The provisional method marks are reported
         // beside it, never added into it.
@@ -1101,8 +1156,10 @@ export async function markSubmittedAttempt(
       }
       marked.push({
         questionAttemptId: qa.id,
+        questionId: q.id,
         questionNumber: q.question_number,
         answerType: q.answer_type,
+        studentAnswer: answerTextOf(response),
         maxMarks: qa.max_marks,
         awardedMarks: 0,
         assessedOutOf: qa.max_marks,
@@ -1137,8 +1194,10 @@ export async function markSubmittedAttempt(
       const already = clamp(storedAi.filter((p) => p.awarded).length, qa.max_marks, q.question_number);
       marked.push({
         questionAttemptId: qa.id,
+        questionId: q.id,
         questionNumber: q.question_number,
         answerType: q.answer_type,
+        studentAnswer: answerTextOf(response),
         maxMarks: qa.max_marks,
         awardedMarks: already,
         assessedOutOf: qa.max_marks,
@@ -1151,6 +1210,46 @@ export async function markSubmittedAttempt(
         provisionalOutOf: storedAi.length,
         provisionalPoints: storedAi,
         note: null,
+      });
+      continue;
+    }
+
+    // ⚠ NO MARK SCHEME MEANS UNMARKED, NOT ZERO.
+    //
+    // With no mark_scheme_items the model was still called, with an empty
+    // points list. It can only return judgements for points it was sent, so it
+    // returned none — and `awarded` therefore came out 0, which was persisted
+    // and shown to the student as a hard zero on a question NOBODY HAD WRITTEN
+    // A MARK SCHEME FOR. Indistinguishable, on the card, from an answer that
+    // was read and found wrong.
+    //
+    // Every other tier already refuses in this situation: markNumeric returns
+    // "This question has no mark scheme", and so does markMcq. This is the
+    // same refusal on the path that lacked it — and it saves a model call that
+    // could not have produced a mark.
+    if (criteria.length === 0) {
+      console.error(
+        `[marking] ${q.question_number}: no mark_scheme_items for a ${q.answer_type} question. ` +
+          `Reporting it unmarked rather than scoring it zero.`,
+      );
+      marked.push({
+        questionAttemptId: qa.id,
+        questionId: q.id,
+        questionNumber: q.question_number,
+        answerType: q.answer_type,
+        studentAnswer: answerTextOf(response),
+        maxMarks: qa.max_marks,
+        awardedMarks: null,
+        assessedOutOf: null,
+        unassessedMarks: qa.max_marks,
+        unassessedReason: "No mark scheme has been recorded for this question yet.",
+        tier,
+        confidence: null,
+        points: [],
+        provisionalMarks: 0,
+        provisionalOutOf: 0,
+        provisionalPoints: [],
+        note: "This question hasn't been given a mark scheme yet, so it couldn't be marked.",
       });
       continue;
     }
@@ -1176,8 +1275,10 @@ export async function markSubmittedAttempt(
     if (!aiResult.ok) {
       marked.push({
         questionAttemptId: qa.id,
+        questionId: q.id,
         questionNumber: q.question_number,
         answerType: q.answer_type,
+        studentAnswer: answerTextOf(response),
         maxMarks: qa.max_marks,
         awardedMarks: null,
         assessedOutOf: null,
@@ -1194,12 +1295,82 @@ export async function markSubmittedAttempt(
       continue;
     }
 
+    // ⚠ THE MODEL'S SENTENCE IS SCRUBBED BEFORE A STUDENT SEES IT.
+    //
+    // This path used to pass `j.evidence` through untouched for awarded AND
+    // not-awarded points alike — the one filter the method pass has (see
+    // METHOD_NOT_SHOWN above) was missing here, on the path that marks the
+    // free-text questions.
+    //
+    // The student's answer shares a prompt with that question's full mark
+    // scheme: criterion, guidance, accept[] and reject[]. 20(b)(i)'s accept[]
+    // includes "Allow a reaction in which all of the atoms in the fuel are
+    // fully oxidised" — a concession that tells a candidate exactly how to
+    // answer it. `evidence` is free text chosen by the model and was the field
+    // that would carry any of it back out, to the same student, on their own
+    // results page and in their own marking_results rows.
+    //
+    // The prompt asks the model to quote only the student. As the method pass
+    // already says twenty lines up: a prompt instruction is a request, not an
+    // invariant. This is the invariant.
+    const schemeText = criteria.flatMap((c) => [
+      c.criterion,
+      c.guidance ?? "",
+      ...(c.accept ?? []),
+      ...(c.reject ?? []),
+    ]);
     const points: PointVerdict[] = aiResult.judgements.map((j) => ({
       pointCode: j.pointCode,
       awarded: j.awarded,
-      evidence: j.evidence,
+      evidence: groundedEvidence({
+        evidence: j.evidence,
+        awarded: j.awarded,
+        studentAnswer: text,
+        schemeText,
+      }),
     }));
-    const awarded = clamp(points.filter((p) => p.awarded).length, qa.max_marks, q.question_number);
+    // ⚠ IF THE CAP WOULD BIND, REFUSE THE WHOLE QUESTION — do not clamp the
+    // total and persist the points anyway.
+    //
+    // clamp() only bounded the scalar. The per-point rows went to
+    // marking_results untouched, so a 2-mark question could store three
+    // awarded points beside a total of 2: the card would list three ticks
+    // over "2 marks", and anyone reconciling the rows against the total would
+    // find they disagree with no record of which is right.
+    //
+    // The method pass already refuses in exactly this situation and says why
+    // (methodFits, above). This is the same rule on the sibling path. A cap
+    // that binds means the model returned more awarded points than the
+    // question is worth, which is not a result worth storing half of.
+    const rawAwarded = points.filter((p) => p.awarded).length;
+    if (rawAwarded > qa.max_marks) {
+      console.error(
+        `[marking] ${q.question_number}: Tier 2 awarded ${rawAwarded} point(s) on a ` +
+          `${qa.max_marks}-mark question. Refusing the judgement rather than storing a ` +
+          `clamped total beside unclamped rows.`,
+      );
+      marked.push({
+        questionAttemptId: qa.id,
+        questionId: q.id,
+        questionNumber: q.question_number,
+        answerType: q.answer_type,
+        studentAnswer: answerTextOf(response),
+        maxMarks: qa.max_marks,
+        awardedMarks: null,
+        assessedOutOf: null,
+        unassessedMarks: qa.max_marks,
+        unassessedReason: "This answer could not be marked reliably, so it's gone for review.",
+        tier,
+        confidence: null,
+        points: [],
+        provisionalMarks: 0,
+        provisionalOutOf: 0,
+        provisionalPoints: [],
+        note: "This answer couldn't be marked reliably and has gone for review.",
+      });
+      continue;
+    }
+    const awarded = clamp(rawAwarded, qa.max_marks, q.question_number);
 
     // 'requires_review' is hardcoded, not derived from anything the model
     // returned. A model cannot promote its own marking to authoritative.
@@ -1211,8 +1382,10 @@ export async function markSubmittedAttempt(
     }
     marked.push({
       questionAttemptId: qa.id,
+      questionId: q.id,
       questionNumber: q.question_number,
       answerType: q.answer_type,
+      studentAnswer: answerTextOf(response),
       maxMarks: qa.max_marks,
       awardedMarks: awarded,
       assessedOutOf: qa.max_marks,

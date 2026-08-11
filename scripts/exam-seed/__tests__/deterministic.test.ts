@@ -51,8 +51,16 @@ console.log("\n── regression: scientific notation must match an exact-match 
   t("4.15x10-4 matches 0.000415 with NO examiner tolerance", rr.markable && rr.awarded===1, rr);
   rr = markNumeric({kind:"numeric",value:"0.000415"},1,specExact,one);
   t("plain decimal still matches", rr.markable && rr.awarded===1);
-  rr = markNumeric({kind:"numeric",value:"0.00042"},1,specExact,one);
+  // ⚠ 0.00042 USED TO BE THIS ASSERTION'S "genuinely different" VALUE, and it is
+  // not: it is 0.000415 to 2 s.f. Scoring it a CONFIRMED ZERO was a real mark
+  // asserting a possibly-correct answer was wrong, which is the defect
+  // looksLikeSameValueToFewerFigures() now prevents. The anti-vacuity intent of
+  // this line is preserved with a value that is different at every s.f. count.
+  rr = markNumeric({kind:"numeric",value:"0.00051"},1,specExact,one);
   t("a genuinely different value still fails", rr.markable && rr.awarded===0, rr.awarded);
+  rr = markNumeric({kind:"numeric",value:"0.00042"},1,specExact,one);
+  t("...but the SAME value to fewer figures abstains rather than scoring zero",
+    rr.markable === false, rr);
 }
 
 console.log("\n── numeric: 20(a), scheme OVERRIDES to 4 (why no general rule is possible) ──");

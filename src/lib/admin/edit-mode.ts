@@ -46,9 +46,13 @@ export const getEditContext = cache(async (): Promise<EditContext> => {
     .some((c) => c.name.startsWith("sb-") && c.name.includes("auth-token"));
   if (!hasSupabaseSession) return STUDENT_VIEW;
 
-  // getAdminStatus() throws when ADMIN_EMAIL is unset. That must NOT take the
-  // public site down for signed-in students on a misconfigured deploy — a
-  // missing admin config means "nobody is admin", not "500 for everyone".
+  // getAdminStatus() no longer throws on missing config — it reads a role row,
+  // and there is no config to be missing. The try/catch stays anyway: it now
+  // covers a network or database failure during the roles read, and the
+  // handling is the same either way. A failed admin check must NOT take the
+  // public site down for signed-in students; on this path "we could not find
+  // out" and "not an admin" both mean the student view, which is the safe
+  // answer and the one the overwhelming majority of callers want.
   let ok = false;
   try {
     ({ ok } = await getAdminStatus());

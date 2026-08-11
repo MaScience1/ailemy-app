@@ -1,3 +1,7 @@
+import {
+  lossCategoryLabel,
+  type ResultsContext,
+} from "@/lib/exam/results-insights";
 import Link from "next/link";
 import { ArrowLeft, Check, CircleAlert, Sparkles, X } from "lucide-react";
 
@@ -27,12 +31,19 @@ import type { MarkedQuestion, MarkingSummary } from "@/lib/exam/marking";
  */
 export function ResultsView({
   summary,
+  context,
   paperTitle,
   paperCode,
   paperHref,
   submittedAt,
 }: {
   summary: MarkingSummary;
+  /**
+   * ⚠ OPTIONAL, AND ABSENT MEANS ABSENT. When it is not passed, none of the
+   * sections render at all — they do not render empty. A section that appears
+   * with nothing in it reads as "you have no weak topics", which is a claim.
+   */
+  context?: ResultsContext;
   paperTitle: string;
   paperCode: string | null;
   paperHref: string;
@@ -170,6 +181,8 @@ export function ResultsView({
             and are not part of the totals above.
           </p>
         )}
+
+        {context && <ResultsContextSections context={context} />}
 
         {/* ── PER QUESTION ────────────────────────────────────────────────── */}
         <section className="mt-12">
@@ -309,5 +322,122 @@ function QuestionResult({ question: q }: { question: MarkedQuestion }) {
         </p>
       )}
     </li>
+  );
+}
+
+
+/**
+ * The four sections 0035 unblocked — each of which may refuse.
+ *
+ * ⚠ A REFUSAL IS RENDERED, NOT HIDDEN. Hiding an unavailable section would let
+ * a student assume it did not apply to them; showing it with the reason tells
+ * them the truth, which is that nobody has mapped this paper yet. What is never
+ * rendered is a section with no data in it and no explanation — that is the
+ * shape that reads as a finding.
+ */
+function ResultsContextSections({ context }: { context: ResultsContext }) {
+  const { grade, topics, insights, loss } = context;
+  return (
+    <section className="mt-8 space-y-4">
+      {/* ── grade ─────────────────────────────────────────────────────── */}
+      <div className="rounded-lg border border-ink/10 bg-snow p-5">
+        <h3 className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/50">Grade</h3>
+        {grade.available ? (
+          <>
+            <p className="font-display mt-2 text-3xl font-medium">{grade.grade}</p>
+            <p className="mt-1 text-sm text-ink/60">
+              {grade.rawMark} of {grade.outOf} ·{" "}
+              {/* The label is the feature. An estimate presented as official is
+                  a claim about a real examination that nobody has checked. */}
+              <strong className={grade.basis === "official" ? "text-ink" : "text-ink/70"}>
+                {grade.basis === "official" ? "official boundaries" : "estimated — not published boundaries"}
+              </strong>
+              {grade.sourceNote ? ` · ${grade.sourceNote}` : ""}
+            </p>
+          </>
+        ) : (
+          <p className="mt-2 text-sm text-ink/60">{grade.reason}</p>
+        )}
+      </div>
+
+      {/* ── where the marks went ──────────────────────────────────────── */}
+      <div className="rounded-lg border border-ink/10 bg-snow p-5">
+        <h3 className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/50">
+          Where your marks went
+        </h3>
+        {loss.available ? (
+          <ul className="mt-3 space-y-2">
+            {loss.rows.map((row) => (
+              <li key={row.category} className="flex items-baseline gap-3 text-sm">
+                <span className="font-mono w-8 shrink-0 text-right text-ink">{row.marks}</span>
+                <span className="text-ink/70">{lossCategoryLabel(row.category)}</span>
+                <span className="ml-auto font-mono text-[11px] text-ink/40">
+                  {row.questions.join(", ")}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-2 text-sm text-ink/60">{loss.reason}</p>
+        )}
+      </div>
+
+      {/* ── topics ────────────────────────────────────────────────────── */}
+      <div className="rounded-lg border border-ink/10 bg-snow p-5">
+        <h3 className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/50">By topic</h3>
+        {topics.available ? (
+          <ul className="mt-3 space-y-2">
+            {topics.rows.map((row) => (
+              <li key={row.topic} className="flex items-baseline gap-3 text-sm">
+                <span className="font-mono w-12 shrink-0 text-right text-ink">
+                  {row.awarded}/{row.outOf}
+                </span>
+                <span className="text-ink/70">{row.topic}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-2 text-sm text-ink/60">{topics.reason}</p>
+        )}
+      </div>
+
+      {/* ── examiner insights ─────────────────────────────────────────── */}
+      <div className="rounded-lg border border-ink/10 bg-snow p-5">
+        <h3 className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/50">
+          What examiners saw
+        </h3>
+        {insights.available ? (
+          <ul className="mt-3 space-y-3">
+            {insights.insights.map((i, n) => (
+              <li key={`${i.questionNumber}-${n}`} className="text-sm">
+                <span className="font-mono mr-2 text-[10px] uppercase tracking-[0.15em] text-ink/40">
+                  {i.questionNumber}
+                </span>
+                {/*
+                  ⚠ TWO SENTENCES, AND THE DIFFERENCE IS NOT COSMETIC. `matched`
+                  quotes the student's own answer back and may say "you".
+                  `observed` may only report what the cohort did — they may have
+                  left it blank or made a different error, and being told
+                  confidently what they did wrong when they did something else
+                  is worse than being told nothing.
+                */}
+                {i.strength === "matched" ? (
+                  <span className="text-ink/80">
+                    Your answer contains <code className="font-mono">{i.evidence}</code> — {i.insightText}
+                  </span>
+                ) : (
+                  <span className="text-ink/65">
+                    Examiners reported on this question: {i.insightText}{" "}
+                    <em className="text-ink/45">(we can&apos;t tell from your answer whether this was your mistake)</em>
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="mt-2 text-sm text-ink/60">{insights.reason}</p>
+        )}
+      </div>
+    </section>
   );
 }

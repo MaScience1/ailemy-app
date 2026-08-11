@@ -74,14 +74,45 @@ export async function updateSession(request: NextRequest) {
     return forwardCookies(NextResponse.redirect(loginUrl), supabaseResponse);
   }
 
-  // Authenticated user hitting /admin/* who is NOT the configured admin →
+  // Authenticated user hitting /admin/* who does not hold the `admin` ROLE →
   // bounce to /dashboard. This is the first line of defence; every admin
   // server action ALSO re-checks via assertAdmin() (see src/lib/admin/auth.ts)
   // because middleware doesn't protect direct server-action invocations.
+  //
+  // ⚠ READS user_roles, NOT ADMIN_EMAIL. Authorisation is a row in the
+  // database — the same row 0028's write policies check — so the page gate and
+  // the write gate cannot disagree. See lib/admin/auth.ts for why the env var
+  // went. The read is safe under RLS: 0027's user_roles_read_own is a bare
+  // `user_id = auth.uid()` comparison, so a session sees its own roles and
+  // nobody else's, and no EXECUTE grant is involved.
+  //
+  // ⚠ THE REDIRECT IS UNCHANGED — /dashboard, exactly as before. Someone who
+  // is not an admin must land where they always landed. A 404 here would be a
+  // lie about the route existing and sends people debugging the wrong thing;
+  // a 403 page would confirm the path to anyone probing for it.
   if (user && isAdminPath(pathname)) {
-    const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
-    const userEmail = user.email?.trim().toLowerCase();
-    if (!adminEmail || !userEmail || adminEmail !== userEmail) {
+    const { data, error } = await supabase.from("user_roles").select("role");
+
+    // ⚠ FAIL CLOSED, AND SAY SO IN THE LOG.
+    //
+    // An outage is not "you are not an admin", and everywhere else in this
+    // codebase that distinction is preserved for the user. Here it cannot be:
+    // the only two things middleware can do are admit and redirect, and
+    // admitting on a failed check would turn a database blip into an open
+    // admin area. So it redirects — but it must never do that SILENTLY, or a
+    // locked-out admin has nothing to go on but a bounce that looks exactly
+    // like a permissions problem with their account.
+    if (error) {
+      console.error(
+        `[proxy] admin role check failed for ${user.id} on ${pathname} — ` +
+          `redirecting (fail closed): ${error.code ?? "?"}: ${error.message}`,
+      );
+    }
+
+    const isAdmin =
+      !error && ((data ?? []) as { role: string }[]).some((r) => r.role === "admin");
+
+    if (!isAdmin) {
       const dashUrl = url.clone();
       dashUrl.pathname = "/dashboard";
       dashUrl.search = "";
