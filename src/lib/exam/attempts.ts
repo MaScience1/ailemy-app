@@ -509,11 +509,37 @@ export async function submitAttempt(
   attemptId: string,
 ): Promise<AttemptResult<{ submittedAt: string }>> {
   const db = await createClient();
-  const submittedAt = new Date().toISOString();
 
+  // ⚠ `"now"` — THE SERVER STAMPS THIS, NOT US. And NOT `"now()"`.
+  //
+  // `now` is one of PostgreSQL's special datetime input strings: it is
+  // resolved when the value is cast during the UPDATE, i.e. on the database,
+  // at the moment of the write. `now()` is not — it is not valid timestamptz
+  // input and fails with 22007.
+  //
+  // This used to send `new Date().toISOString()`. That is the APPLICATION
+  // SERVER'S clock, while `started_at` was stamped by the DATABASE'S, and
+  // 0028 constrains the pair:
+  //
+  //   CONSTRAINT exam_attempts_submitted_after_start
+  //     CHECK (submitted_at IS NULL OR submitted_at >= started_at)
+  //
+  // So whenever the app server ran behind the database — measured at 0.5s
+  // when this was found — a paper submitted SOON AFTER STARTING had
+  // submitted_at < started_at and the write was refused with 23514. Narrow,
+  // because a real sitting lasts minutes; fatal in the case it hits, which is
+  // a student opening the wrong paper and submitting straight back out.
+  //
+  // Found by running 0037's (b2) check against production: the same PATCH
+  // failed with a client timestamp and succeeded with `"now"`, same columns,
+  // same role, same grant.
+  //
+  // Mobile has done it this way since it was written — see exam-outbox.ts,
+  // which reaches the same conclusion from the other direction: on a device,
+  // the clock belongs to the student. Two clients, one rule.
   const { data, error } = await db
     .from("exam_attempts")
-    .update({ submitted_at: submittedAt, updated_at: submittedAt })
+    .update({ submitted_at: "now", updated_at: "now" })
     .eq("id", attemptId)
     .is("submitted_at", null)
     .select("submitted_at");
@@ -544,5 +570,18 @@ export async function submitAttempt(
     return { ok: false, error: "That attempt could not be submitted." };
   }
 
-  return { ok: true, data: { submittedAt } };
+  // ⚠ THE STORED VALUE, NOT ONE WE CHOSE. This used to return the local
+  // `submittedAt` variable — a time the database never saw, and after the
+  // change above there is no such variable to return. `.select()` is what
+  // makes the server's stamp readable, so the timestamp the caller shows a
+  // student is the one on the row.
+  const stored = (data[0] as { submitted_at: string | null }).submitted_at;
+  if (!stored) {
+    // A row came back with no timestamp on it. Nothing should produce this —
+    // the filter required submitted_at IS NULL and the update set it — so it
+    // is reported rather than passed on as an empty string.
+    console.error(`[submitAttempt] ${attemptId}: updated a row but submitted_at came back null`);
+    return { ok: false, error: "We couldn't confirm whether that was submitted. Reload the page to check." };
+  }
+  return { ok: true, data: { submittedAt: stored } };
 }
