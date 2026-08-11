@@ -3,6 +3,30 @@
 --        new table to anon and authenticated
 -- ============================================================================
 --
+-- ⚠ NOT YET APPLIED, AND NOT YET DECIDED. The _PROPOSED_ in the filename was
+--   the only thing saying so; it is said here too now, because a filename is
+--   not read by someone who already has the file open.
+--
+--   AN ATTEMPT TO DECIDE IT WAS MADE ON 2026-08-11 AND COULD NOT BE COMPLETED,
+--   which is recorded so nobody spends the same hour twice:
+--
+--   * Section 2 cannot be run from this repository. It reads pg_default_acl,
+--     pg_namespace, pg_class, pg_roles and information_schema; PostgREST
+--     exposes only `public`, and all five return PGRST205. There is no
+--     DATABASE_URL, no psql and no pg driver here. Tested, not assumed.
+--   * The repository cannot answer it indirectly either. Every one of the
+--     fifteen tables created after 0019's snapshot sweep carries its OWN
+--     revoke — user_roles in 0027, nine in 0028, one in 0031, three in 0035.
+--     So a clean catalogue today is FULLY EXPLAINED by those revokes and is
+--     exactly what you would see whether the default ACL is still set or not.
+--   * The one data point that is informative points at the hole being OPEN:
+--     `announcements` was created by 0022 with no revoke, and 0025 records
+--     finding that both roles held all three on it. Nothing since has tested
+--     the default, because everything since has revoked defensively.
+--
+--   So reading (a) below — never applied, gap in the folder is the whole story
+--   — is not ruled out. Section 2(a) run in the SQL Editor is what decides.
+--
 -- ⚠ RECONSTRUCTED, NOT TRANSCRIBED. This file was written to close the 0026 gap
 --   in this folder. The author could NOT read production's `pg_default_acl`:
 --   the reconstruction was done from a mobile client, and PostgREST exposes no
@@ -77,55 +101,68 @@
 --
 -- ============================================================================
 -- 2. VERIFY BEFORE APPLYING — read-only. RUN THIS FIRST.
+-- ----------------------------------------------------------------------------
+-- ⚠ COMMENTED OUT ON PURPOSE. COPY A QUERY OUT AND UNCOMMENT IT; DO NOT PASTE
+--   THIS FILE TO "JUST LOOK".
+--
+--   These three SELECTs used to be live SQL sitting in the same file as the
+--   migration, above a section 3 that was also live. So the file said "VERIFY
+--   BEFORE APPLYING — RUN THIS FIRST" while pasting it did both, in order,
+--   with no pause between deciding and doing. The heading was an instruction
+--   to the reader that the file itself did not follow.
+--
+--   Now nothing in section 2 executes, and section 3 refuses to run unless
+--   somebody has said so out loud — see the guard immediately above it. The
+--   two halves of "inspect, then decide" cannot be performed by one paste.
 -- ============================================================================
 
 -- (a) WHAT THE DEFAULTS ACTUALLY ARE, per grantor role. This is the query the
 --     whole file turns on. `defaclacl` entries read as grantee=privs/grantor,
 --     where the privilege letters include D = TRUNCATE, t = TRIGGER,
 --     x = REFERENCES.
-SELECT
-  pg_get_userbyid(d.defaclrole) AS granted_by_role,
-  n.nspname                     AS schema,
-  d.defaclobjtype               AS object_type,   -- r table, S sequence, f function
-  d.defaclacl                   AS access_list
-FROM pg_default_acl d
-JOIN pg_namespace n ON n.oid = d.defaclnamespace
-WHERE n.nspname = 'public'
-ORDER BY granted_by_role, object_type;
+-- SELECT
+--   pg_get_userbyid(d.defaclrole) AS granted_by_role,
+--   n.nspname                     AS schema,
+--   d.defaclobjtype               AS object_type,   -- r table, S sequence, f function
+--   d.defaclacl                   AS access_list
+-- FROM pg_default_acl d
+-- JOIN pg_namespace n ON n.oid = d.defaclnamespace
+-- WHERE n.nspname = 'public'
+-- ORDER BY granted_by_role, object_type;
 
 -- (b) WHICH EXISTING TABLES STILL CARRY ANY OF THE THREE. Expect zero rows if
 --     0019, 0025 and 0028 between them covered everything. Any row here is a
 --     table someone can TRUNCATE today, and section 3's sweep fixes it.
-SELECT c.relname AS table_name,
-       array_agg(DISTINCT a.privilege_type ORDER BY a.privilege_type) AS still_held,
-       array_agg(DISTINCT a.grantee ORDER BY a.grantee)               AS by_role
-FROM information_schema.role_table_grants a
-JOIN pg_class     c ON c.relname = a.table_name
-JOIN pg_namespace n ON n.oid = c.relnamespace AND n.nspname = a.table_schema
-WHERE a.table_schema = 'public'
-  AND a.grantee IN ('anon', 'authenticated')
-  AND a.privilege_type IN ('TRUNCATE', 'TRIGGER', 'REFERENCES')
-GROUP BY c.relname
-ORDER BY c.relname;
+-- SELECT c.relname AS table_name,
+--        array_agg(DISTINCT a.privilege_type ORDER BY a.privilege_type) AS still_held,
+--        array_agg(DISTINCT a.grantee ORDER BY a.grantee)               AS by_role
+-- FROM information_schema.role_table_grants a
+-- JOIN pg_class     c ON c.relname = a.table_name
+-- JOIN pg_namespace n ON n.oid = c.relnamespace AND n.nspname = a.table_schema
+-- WHERE a.table_schema = 'public'
+--   AND a.grantee IN ('anon', 'authenticated')
+--   AND a.privilege_type IN ('TRUNCATE', 'TRIGGER', 'REFERENCES')
+-- GROUP BY c.relname
+-- ORDER BY c.relname;
 
 -- (c) The same question without going through information_schema, which is
 --     FILTERED to roles the caller belongs to — an empty result from (b) means
 --     "nothing visible to me", not "nothing there". This one cannot come back
 --     falsely empty.
-SELECT c.relname AS table_name,
-       r.rolname AS role,
-       has_table_privilege(r.rolname, c.oid, 'TRUNCATE')   AS truncate_,
-       has_table_privilege(r.rolname, c.oid, 'TRIGGER')    AS trigger_,
-       has_table_privilege(r.rolname, c.oid, 'REFERENCES') AS references_
-FROM pg_class c
-JOIN pg_namespace n ON n.oid = c.relnamespace
-CROSS JOIN pg_roles r
-WHERE n.nspname = 'public' AND c.relkind = 'r'
-  AND r.rolname IN ('anon', 'authenticated')
-  AND (has_table_privilege(r.rolname, c.oid, 'TRUNCATE')
-    OR has_table_privilege(r.rolname, c.oid, 'TRIGGER')
-    OR has_table_privilege(r.rolname, c.oid, 'REFERENCES'))
-ORDER BY c.relname, r.rolname;
+-- SELECT c.relname AS table_name,
+--        r.rolname AS role,
+--        has_table_privilege(r.rolname, c.oid, 'TRUNCATE')   AS truncate_,
+--        has_table_privilege(r.rolname, c.oid, 'TRIGGER')    AS trigger_,
+--        has_table_privilege(r.rolname, c.oid, 'REFERENCES') AS references_
+-- FROM pg_class c
+-- JOIN pg_namespace n ON n.oid = c.relnamespace
+-- CROSS JOIN pg_roles r
+-- WHERE n.nspname = 'public' AND c.relkind = 'r'
+--   AND r.rolname IN ('anon', 'authenticated')
+--   AND (has_table_privilege(r.rolname, c.oid, 'TRUNCATE')
+--     OR has_table_privilege(r.rolname, c.oid, 'TRIGGER')
+--     OR has_table_privilege(r.rolname, c.oid, 'REFERENCES'))
+-- ORDER BY c.relname, r.rolname;
 
 -- ============================================================================
 -- 3. THE CHANGE
@@ -133,6 +170,34 @@ ORDER BY c.relname, r.rolname;
 -- Idempotent in both halves: ALTER DEFAULT PRIVILEGES ... REVOKE on an entry
 -- that is already gone is a no-op, and so is REVOKE on a table that no longer
 -- holds the privilege.
+
+-- ----------------------------------------------------------------------------
+-- ⚠ THE TRIPWIRE. SECTION 3 WILL NOT RUN BY ACCIDENT.
+-- ----------------------------------------------------------------------------
+-- Commenting section 2 out stops an inspection becoming an application only if
+-- nobody pastes the file anyway. This makes it structural: applying now takes a
+-- deliberate second statement that says what you are about to do.
+--
+-- To apply, run this line FIRST, in the same session:
+--
+--   SET ailemy.apply_0026 = 'yes';
+--
+-- Then paste from here down. Without it the DO block below raises and the
+-- transaction never opens, so the file is safe to paste, read, and abandon.
+--
+-- ⚠ current_setting(..., true) — THE `true` IS THE MISSING-OK FLAG. Without it
+--   an unset variable raises 42704 instead of returning NULL, which would still
+--   stop the migration but for a reason nobody could read.
+DO $guard$
+BEGIN
+  IF current_setting('ailemy.apply_0026', true) IS DISTINCT FROM 'yes' THEN
+    RAISE EXCEPTION
+      '0026 was pasted without being asked for. Nothing has been changed.'
+      USING HINT = 'This file is BOTH the inspection queries and the migration. '
+                || 'Run section 2 first and decide. To apply, run '
+                || 'SET ailemy.apply_0026 = ''yes''; in this session, then paste again.';
+  END IF;
+END $guard$;
 
 SET lock_timeout = '5s';
 SET statement_timeout = '120s';
