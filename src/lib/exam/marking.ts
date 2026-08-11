@@ -445,6 +445,14 @@ export type MarkingSummary = {
   attemptId: string;
   /** Marks from Tier 1 only. This is the number that can be trusted. */
   confirmedAwarded: number;
+  /**
+   * Whether confirmedAwarded reached exam_attempts.total_awarded.
+   *
+   * False means the marks are correct and stored per question, but the
+   * attempt-level total is stale or absent. Surfaced rather than swallowed so
+   * nobody reads that column believing it is always current.
+   */
+  totalAwardedPersisted: boolean;
   confirmedAvailable: number;
   /** Marks from Tier 2. Provisional — never added to the confirmed total. */
   provisionalAwarded: number;
@@ -690,6 +698,8 @@ export async function markSubmittedAttempt(
 
   const marked: MarkedQuestion[] = [];
   let persistenceFailures = 0;
+  /** Question attempts whose persist already failed — never retried below. */
+  const persistFailedIds = new Set<string>();
   // Rows this run wrote AND read back — persist() asserts the row count, so
   // this counts landings, not attempts.
   let persistedRows = 0;
@@ -709,6 +719,7 @@ export async function markSubmittedAttempt(
     error: unknown,
   ): MarkedQuestion => {
     persistenceFailures += 1;
+    persistFailedIds.add(qa.id);
     console.error(
       `[marking] ${q.question_number}: mark computed but NOT SAVED — ${error instanceof Error ? error.message : String(error)}`,
     );
@@ -1403,6 +1414,44 @@ export async function markSubmittedAttempt(
     });
   }
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // CLEAR ANY QUESTION THIS RUN COULD NOT MARK
+  // ══════════════════════════════════════════════════════════════════════════
+  // Six of the seven branches that report a question unmarked pushed
+  // `awardedMarks: null` and wrote nothing, so a mark from an EARLIER run
+  // survived in question_attempts while this run's screen said "not marked".
+  // The student saw the right thing — the screen renders from `marked`, in
+  // memory — but the stored row disagreed with it, and every other reader of
+  // that column (a teacher view, a reconciliation, and total_awarded below)
+  // reads the stored row.
+  //
+  // ⚠ ONE PASS RATHER THAN SIX EDITS. Doing this at each branch means the next
+  // branch someone adds is the next one that forgets. Deriving it from the
+  // outcome — anything with no awarded mark must have no stored mark — cannot
+  // be forgotten by construction.
+  //
+  // marking_results is deliberately LEFT ALONE. Those rows are the evidence
+  // gathered, not the current verdict; keeping them lets a later run reuse an
+  // AI judgement instead of paying for it again, and that path recomputes the
+  // total from the rows rather than trusting this column.
+  for (const m of marked) {
+    if (m.awardedMarks !== null) continue;
+    // A question whose persist ALREADY failed is skipped: the write that would
+    // clear it is the write that just failed, and retrying it here would
+    // replace one honest error with two.
+    if (persistFailedIds.has(m.questionAttemptId)) continue;
+    try {
+      const cleared = await clearMark(db, m.questionAttemptId);
+      persistedRows += cleared;
+    } catch (error) {
+      persistenceFailures += 1;
+      console.error(
+        `[marking] ${m.questionNumber}: could not clear a stale mark — ` +
+          `${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
   const confirmed = marked.filter((m) => m.confidence === "deterministic");
   const provisional = marked.filter((m) => m.confidence === "requires_review");
 
@@ -1429,11 +1478,60 @@ export async function markSubmittedAttempt(
   }
   const reconciliation = check.reconciliation;
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // exam_attempts.total_awarded — CONFIRMED MARKS ONLY
+  // ══════════════════════════════════════════════════════════════════════════
+  // The column has existed since 0028 and nothing in either repo has ever
+  // written it, so every submitted sitting carries NULL. This is its writer.
+  //
+  // ⚠ IT IS THE CONFIRMED TOTAL, AND ONLY THAT. `confirmed` is questions whose
+  // confidence is 'deterministic' — marked by exact comparison against the
+  // scheme. Provisional marks are excluded on purpose: they are an unproven
+  // model's judgement, they are labelled as such everywhere on screen, and a
+  // stored total is exactly the kind of number that later gets read by
+  // something that has forgotten the distinction. A figure in this column must
+  // mean "this many marks are final", or it means nothing.
+  //
+  // ⚠ SERVICE ROLE, AND IT MUST BE. `db` is createAdminClient. Once the
+  // column-level grant lands, `authenticated` may write only submitted_at,
+  // updated_at and total_available — total_awarded becomes unwritable by any
+  // client, which is the point: a student must not be able to set their own
+  // mark. Until that migration is applied a client still could, so this being
+  // the only writer is a convention today and an enforced fact afterwards.
+  //
+  // A failure here does NOT fail the run. The per-question marks are already
+  // persisted and the screen is built from them; refusing to show a correct
+  // result because a derived total did not land would be the wrong trade. It
+  // is logged loudly and reported in the summary instead.
+  const confirmedAwarded = sum(confirmed.map((m) => m.awardedMarks ?? 0));
+  let totalAwardedPersisted = false;
+  {
+    const { data, error } = await db
+      .from("exam_attempts")
+      .update({ total_awarded: confirmedAwarded })
+      .eq("id", attemptId)
+      .select("id");
+    // Row count, not the absence of an error: an update matching nothing
+    // returns neither. Same rule as persist() and clearMark().
+    if (error) {
+      console.error(
+        `[marking] attempt ${attemptId}: total_awarded NOT saved — ${error.code ?? "?"}: ${error.message}`,
+      );
+    } else if ((data?.length ?? 0) !== 1) {
+      console.error(
+        `[marking] attempt ${attemptId}: total_awarded update touched ${data?.length ?? 0} rows, expected 1`,
+      );
+    } else {
+      totalAwardedPersisted = true;
+    }
+  }
+
   return {
     ok: true,
     data: {
       attemptId,
-      confirmedAwarded: sum(confirmed.map((m) => m.awardedMarks ?? 0)),
+      confirmedAwarded,
+      totalAwardedPersisted,
       // assessedOutOf, NOT maxMarks. Tariff this marker could not reach is
       // excluded from the denominator as well as the numerator: counting it
       // would present unassessable marks as marks the student lost.
@@ -1555,6 +1653,31 @@ const byTier2 = (p: PointVerdict): PersistablePoint => ({
   modelVersion: MARKING_MODEL,
   promptVersion: PROMPT_VERSION,
 });
+
+/**
+ * Null a question's stored mark, because this run could not produce one.
+ *
+ * ⚠ .select("id") IS LOAD-BEARING HERE FOR THE SAME REASON IT IS IN persist().
+ * PostgREST returns neither rows nor an error when an update matches nothing,
+ * so without it "the stale mark is gone" and "the row was never touched" are
+ * the same empty response — and this function exists precisely to stop those
+ * two being confused.
+ */
+async function clearMark(
+  db: ReturnType<typeof createAdminClient>,
+  questionAttemptId: string,
+): Promise<number> {
+  const { data, error } = await db
+    .from("question_attempts")
+    .update({ awarded_marks: null, confidence: null })
+    .eq("id", questionAttemptId)
+    .select("id");
+  if (error) throw new PersistError("question_attempts", error.code ?? "?", error.message);
+  if ((data?.length ?? 0) !== 1) {
+    throw new PersistError("question_attempts", "row_count", `cleared ${data?.length ?? 0} rows, expected 1`);
+  }
+  return 1;
+}
 
 async function persist(
   db: ReturnType<typeof createAdminClient>,

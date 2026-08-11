@@ -377,15 +377,52 @@ export function parseNumber(raw: string): number | null {
 }
 
 /** Units differ only by presentation far more often than by meaning. */
+const SUPERSCRIPT_DIGITS: Record<string, string> = {
+  "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4",
+  "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9",
+};
+
+/**
+ * `mol/dm3` and `mol dm-3` are the SAME UNIT. Rewrite the solidus form.
+ *
+ * Each term after a `/` has its exponent negated: dm3 -> dm-3, dm -> dm-1.
+ * Chained divisions negate each in turn, so `J/mol/K` becomes `jmol-1k-1`,
+ * which is exactly what `J mol-1 K-1` normalises to.
+ *
+ * ⚠ A TERM IT CANNOT PARSE IS RETURNED UNCHANGED, slash and all — so it fails
+ * to match rather than matching something else. An unrecognised shape must
+ * become a mark sent for review, never a false accept.
+ */
+function expandSolidus(s: string): string {
+  if (!s.includes("/")) return s;
+  const [head, ...rest] = s.split("/");
+  let out = head;
+  for (const term of rest) {
+    const m = /^([a-z]+)(-?\d+)?$/.exec(term);
+    if (!m) return s;
+    const negated = -(m[2] ? Number(m[2]) : 1);
+    out += m[1] + (negated === 1 ? "" : String(negated));
+  }
+  return out;
+}
+
+
 function normaliseUnit(raw: string): string {
-  return raw
+  const mapped = raw
     .toLowerCase()
     .replace(/[\s ]/g, "")
     .replace(/[·⋅*]/g, "") // middle dots / asterisks in compound units
     .replace(/\^/g, "")
-    .replace(/[⁻−]/g, "-") // superscript minus
-    .replace(/³/g, "3")
-    .replace(/²/g, "2");
+    // ⚠ EVERY SUPERSCRIPT DIGIT, NOT JUST ² AND ³. The ¹ in "J mol⁻¹ K⁻¹"
+    // survived as a superscript and never matched "J mol-1 K-1".
+    .replace(/[⁰¹²³⁴-⁹]/g, (c) => SUPERSCRIPT_DIGITS[c] ?? c)
+    // ⚠ AND EVERY DASH. parseNumber has mapped [−–—] to "-" since it was
+    // written; this mapped only [⁻−], so an EN DASH — what a word processor
+    // and several keyboards produce for a minus — failed here while the
+    // number half of the same answer accepted it. Two halves of one answer
+    // disagreeing about one character.
+    .replace(/[⁻−–—]/g, "-");
+  return expandSolidus(mapped);
 }
 
 /**

@@ -1,0 +1,344 @@
+-- ============================================================================
+-- 0037_PROPOSED_exam_attempts_column_level_update.sql
+-- ----------------------------------------------------------------------------
+-- ⚠ NOT YET APPLIED. Rename to 0037_exam_attempts_column_level_update.sql and
+--   record the verification result in this header at the same time.
+--
+-- ⚠ NUMBERED 0037, NOT 0034. 0034 and 0035 are applied and live; 0036 is
+--   reserved for the approval-immutability trigger and is not written yet.
+--   Reusing 0034 would overwrite an applied migration, and this folder is the
+--   only rebuild path.
+--
+-- Creates no table, no column, no policy, and no function.
+--
+-- ============================================================================
+-- WHAT THIS DOES
+-- ============================================================================
+-- exam_attempts currently carries a TABLE-WIDE update grant from 0028:
+--
+--   GRANT SELECT, INSERT, UPDATE ON public.exam_attempts TO authenticated;
+--
+-- and an RLS policy that scopes updates to the caller's own rows:
+--
+--   CREATE POLICY exam_attempts_update
+--     ON public.exam_attempts FOR UPDATE TO authenticated
+--     USING (student_id = auth.uid()) WITH CHECK (student_id = auth.uid());
+--
+-- ⚠ RLS FILTERS ROWS, NEVER COLUMNS. The policy decides WHICH ROW a student
+--   may update; it says nothing about which COLUMNS. So a student holding a
+--   table-wide UPDATE may rewrite ANY column OF THEIR OWN ROW — including
+--   total_awarded, the mark. That is the same gap 0018 closed on profiles and
+--   0032 closed on question_attempts, and this file is the third instance.
+--
+-- After this migration `authenticated` may write exactly three columns:
+--
+--   submitted_at      the student submitting their own paper
+--   updated_at        written alongside it by the web client's payload
+--   total_available   written by create_exam_attempt, which is INVOKER
+--
+-- and these become unwritable by any client, service role only:
+--
+--   total_awarded     THE MARK. Nothing in either repo writes it today; when
+--                     something does, it must be the marking layer through the
+--                     service role, the same way awarded_marks already is.
+--   student_id        whose sitting it is
+--   paper_id          which paper
+--   mode              exam or practice
+--   started_at        when the clock started
+--   duration_seconds  how long it ran
+--
+-- ============================================================================
+-- WHY total_available IS IN THE GRANTED LIST, AND WHY THAT IS NOT OPTIONAL
+-- ============================================================================
+-- It looks like a server-owned field and it is not written by any application
+-- code. It is written by create_exam_attempt (0030), whose last statement is:
+--
+--   UPDATE public.exam_attempts
+--      SET total_available = (SELECT coalesce(sum(qa.max_marks), 0) ...)
+--    WHERE id = v_attempt_id;
+--
+-- That function is SECURITY INVOKER — deliberately, and 0030's header is
+-- explicit that it must stay that way — so the UPDATE runs with the CALLING
+-- STUDENT'S privileges. Revoking UPDATE without granting this column back
+-- makes create_exam_attempt raise 42501, which rolls back its whole
+-- transaction: no exam_attempts row, no question_attempts rows.
+--
+-- ⚠ THE SYMPTOM WOULD BE "NOBODY CAN START A PAPER", ON WEB AND MOBILE, and
+--   nothing in the failure message would mention total_available. This is the
+--   single most likely way to get this migration wrong.
+--
+-- This file does NOT convert create_exam_attempt to SECURITY DEFINER. Doing so
+-- would let the grant be narrower still, and 0030's header explains at length
+-- why it must not: as INVOKER, its paper-availability check
+-- (`past_papers ... status = 'live'`) is enforced by RLS because it runs as
+-- the caller — "the check and the permission are the same thing". Under
+-- DEFINER that SELECT bypasses RLS and any paper hidden from a student becomes
+-- sittable, unless the function re-implements the visibility rule and the two
+-- are kept in step by hand.
+--
+-- ============================================================================
+-- WHY updated_at IS IN THE LIST, WHICH IS SUBTLER THAN IT LOOKS
+-- ============================================================================
+-- 0028 puts a BEFORE UPDATE trigger (touch_exam_attempts) on this table that
+-- sets NEW.updated_at. That trigger does NOT need the grant: PostgreSQL checks
+-- column privileges against the columns named in the statement's SET clause,
+-- and a trigger modifying NEW runs after that check.
+--
+-- The grant is needed because the WEB CLIENT names the column itself:
+--
+--   src/lib/exam/attempts.ts:515
+--   .update({ submitted_at: submittedAt, updated_at: submittedAt })
+--
+-- Mobile does not (exam-outbox.ts sends only submitted_at), so mobile would
+-- survive without it and web would not. Left in the grant because removing it
+-- means editing application code in the same change as a grant change, and a
+-- grant change should be revertible on its own.
+--
+-- ============================================================================
+-- WHAT IS DELIBERATELY NOT CHANGED
+-- ============================================================================
+-- - No RLS policy is created, altered or dropped. exam_attempts_update keeps
+--   scoping updates to student_id = auth.uid(); this migration narrows the
+--   COLUMNS, the policy keeps deciding the ROWS. Both are required and neither
+--   substitutes for the other.
+-- - SELECT and INSERT are untouched. create_exam_attempt inserts as the caller
+--   and every screen reads these rows.
+-- - The service role is unaffected. `REVOKE ... FROM authenticated` names one
+--   role; service_role's grants are its own. Marking already writes through
+--   createAdminClient and touches only question_attempts and marking_results.
+-- - anon holds nothing on this table (0019 swept the blanket grants; 0028
+--   granted only to authenticated), so there is nothing to revoke from it.
+-- - The 0030 triggers stay exactly as they are. reject_unsubmit still makes
+--   submission one-way and student_id/paper_id immutable. This narrows WHO may
+--   attempt those writes; the trigger still decides whether they are legal.
+--
+-- ============================================================================
+-- ROLLBACK
+-- ============================================================================
+--   REVOKE UPDATE (submitted_at, updated_at, total_available)
+--     ON public.exam_attempts FROM authenticated;
+--   GRANT UPDATE ON public.exam_attempts TO authenticated;
+--
+-- ============================================================================
+
+BEGIN;
+
+REVOKE UPDATE ON public.exam_attempts FROM authenticated;
+GRANT  UPDATE (submitted_at, updated_at, total_available)
+    ON public.exam_attempts TO authenticated;
+
+COMMIT;
+
+
+-- ============================================================================
+-- VERIFICATION — run after applying. BOTH halves. Neither is sufficient alone.
+-- ----------------------------------------------------------------------------
+-- ⚠ ZERO ROWS IS NOT A PASS ANYWHERE BELOW. Every half reads a value back and
+--   compares it, so "no error" can never be mistaken for "it worked", and a
+--   failure RAISES naming which half broke rather than returning empty.
+--
+-- ⚠ HALF (a) RUNS AS THE OWNER, WHICH IS NOT THE ROLE UNDER TEST. The SQL
+--   Editor connects as `postgres`, which bypasses both grants and RLS — so (a)
+--   proves the columns and triggers still accept the writes, and proves
+--   NOTHING about `authenticated`. That is what (b) is for, and it is the same
+--   trap as is_staff() returning false in the SQL Editor for a function that
+--   works perfectly from a session.
+-- ============================================================================
+--
+-- ----------------------------------------------------------------------------
+-- (a) AS THE OWNER — the three granted columns still write, and land.
+-- ----------------------------------------------------------------------------
+--
+-- DO $verify_a$
+-- DECLARE
+--   v_user uuid; v_paper uuid; v_q uuid; v_attempt uuid;
+--   v_submitted timestamptz; v_avail integer; v_updated timestamptz;
+-- BEGIN
+--   SELECT id INTO v_user FROM auth.users LIMIT 1;
+--   -- Pick the QUESTION first and derive its paper: most live papers have no
+--   -- questions seeded, so choosing a paper first reports INCONCLUSIVE on a
+--   -- schema that is in fact fine.
+--   SELECT q.id, q.paper_id INTO v_q, v_paper
+--     FROM public.paper_questions q
+--     JOIN public.past_papers p ON p.id = q.paper_id AND p.status = 'live'
+--    LIMIT 1;
+--   IF v_user IS NULL OR v_q IS NULL THEN
+--     RAISE EXCEPTION 'INCONCLUSIVE: need one auth user and one seeded live paper';
+--   END IF;
+--
+--   INSERT INTO public.exam_attempts (student_id, paper_id, mode)
+--        VALUES (v_user, v_paper, 'exam')
+--     RETURNING id INTO v_attempt;
+--
+--   UPDATE public.exam_attempts
+--      SET submitted_at    = now(),
+--          total_available = 25,
+--          updated_at      = now()
+--    WHERE id = v_attempt;
+--
+--   SELECT submitted_at, total_available, updated_at
+--     INTO v_submitted, v_avail, v_updated
+--     FROM public.exam_attempts WHERE id = v_attempt;
+--
+--   DELETE FROM public.exam_attempts WHERE id = v_attempt;   -- cascades
+--
+--   -- Read back and COMPARE. A write that raised nothing but stored nothing
+--   -- is the failure this whole check exists to catch.
+--   IF v_submitted IS NULL OR v_avail IS DISTINCT FROM 25 OR v_updated IS NULL THEN
+--     RAISE EXCEPTION
+--       'HALF (a) FAILED — submitted_at: %, total_available: %, updated_at: %',
+--       v_submitted, v_avail, v_updated;
+--   END IF;
+-- END $verify_a$;
+--
+-- SELECT 'HALF (a) PASS: submitted_at, total_available and updated_at all written and read back' AS verification;
+--
+--
+-- ----------------------------------------------------------------------------
+-- (b1) AS `authenticated` — total_awarded is refused 42501, submitted_at is not.
+-- ----------------------------------------------------------------------------
+-- SET LOCAL ROLE switches the role the GRANT is checked against, and the jwt
+-- claim makes auth.uid() return the fixture's owner so the RLS policy passes.
+-- Both are needed: without the claim this fails the POLICY (0 rows) rather
+-- than the GRANT (42501), and 0 rows would look like a pass for the wrong
+-- reason — the exact confusion this half exists to rule out.
+--
+-- DO $verify_b$
+-- DECLARE
+--   v_user uuid; v_paper uuid; v_q uuid; v_attempt uuid;
+--   v_awarded_blocked boolean := false;
+--   v_submit_ok       boolean := false;
+--   v_submitted       timestamptz;
+--   v_sqlstate        text;
+-- BEGIN
+--   SELECT id INTO v_user FROM auth.users LIMIT 1;
+--   SELECT q.id, q.paper_id INTO v_q, v_paper
+--     FROM public.paper_questions q
+--     JOIN public.past_papers p ON p.id = q.paper_id AND p.status = 'live'
+--    LIMIT 1;
+--   IF v_user IS NULL OR v_q IS NULL THEN
+--     RAISE EXCEPTION 'INCONCLUSIVE: need one auth user and one seeded live paper';
+--   END IF;
+--
+--   INSERT INTO public.exam_attempts (student_id, paper_id, mode)
+--        VALUES (v_user, v_paper, 'exam')
+--     RETURNING id INTO v_attempt;
+--
+--   PERFORM set_config('request.jwt.claims',
+--                      json_build_object('sub', v_user::text, 'role', 'authenticated')::text,
+--                      true);
+--   SET LOCAL ROLE authenticated;
+--
+--   -- HALF b1.1 — THE MARK. Must be refused by the GRANT, with 42501.
+--   BEGIN
+--     UPDATE public.exam_attempts SET total_awarded = 99 WHERE id = v_attempt;
+--   EXCEPTION
+--     WHEN insufficient_privilege THEN v_awarded_blocked := true;   -- 42501
+--     WHEN OTHERS THEN
+--       GET STACKED DIAGNOSTICS v_sqlstate = RETURNED_SQLSTATE;
+--       RAISE WARNING 'b1.1 raised the WRONG error % (%): %', v_sqlstate, SQLERRM, 'expected 42501';
+--   END;
+--
+--   -- HALF b1.2 — ANTI-VACUITY. A revoke that blocked everything would pass
+--   -- b1.1 and break the exam. Submitting must still work as the student.
+--   BEGIN
+--     UPDATE public.exam_attempts SET submitted_at = now() WHERE id = v_attempt;
+--     SELECT submitted_at INTO v_submitted
+--       FROM public.exam_attempts WHERE id = v_attempt;
+--     v_submit_ok := (v_submitted IS NOT NULL);   -- read back, not "no error"
+--   EXCEPTION WHEN OTHERS THEN
+--     GET STACKED DIAGNOSTICS v_sqlstate = RETURNED_SQLSTATE;
+--     RAISE WARNING 'b1.2 could not submit as the student: % %', v_sqlstate, SQLERRM;
+--   END;
+--
+--   RESET ROLE;
+--   PERFORM set_config('request.jwt.claims', NULL, true);
+--   DELETE FROM public.exam_attempts WHERE id = v_attempt;   -- cascades
+--
+--   IF NOT (v_awarded_blocked AND v_submit_ok) THEN
+--     RAISE EXCEPTION
+--       'HALF (b1) FAILED — total_awarded refused 42501: %, submit still worked: %',
+--       v_awarded_blocked, v_submit_ok;
+--   END IF;
+-- END $verify_b$;
+--
+-- SELECT 'HALF (b1) PASS: total_awarded refused 42501 as authenticated; submitted_at still written' AS verification;
+--
+--
+-- ----------------------------------------------------------------------------
+-- (b2) END TO END ON WEB — the half no SQL can stand in for.
+-- ----------------------------------------------------------------------------
+-- b1 proves the grant with a hand-set JWT claim. It does NOT exercise
+-- PostgREST, which builds the SET clause from the client's payload — and it is
+-- the payload that decides which columns the grant is checked against. Web
+-- sends {submitted_at, updated_at}; a change to that object is a change to
+-- what this migration must permit, and only the real request shows it.
+--
+-- Signed in as a real student, in the running app:
+--
+--   1. Start a paper.        Expect: the player opens with a real question
+--                            count and an out-of total. That total IS
+--                            total_available, so a paper that opens showing it
+--                            is create_exam_attempt's UPDATE succeeding under
+--                            the new grant. If starting fails at all, the
+--                            grant is missing total_available — see the header.
+--
+--   2. Answer one question and submit.
+--                            Expect: submission completes and the results
+--                            screen renders. No "Could not submit this
+--                            attempt." — that string is attempts.ts:515
+--                            reporting exactly this grant being wrong.
+--
+--   3. Confirm it landed, as the OWNER (service role or SQL Editor):
+--
+--        SELECT submitted_at IS NOT NULL AS submitted, total_available
+--          FROM public.exam_attempts WHERE id = '<the attempt id>';
+--
+--                            Expect: submitted = true, total_available > 0.
+--                            Both non-null is the pass. Either null is a fail
+--                            even though the screen looked correct.
+--
+-- Repeat step 1 on MOBILE if it is being exercised: it submits with
+-- {submitted_at} only, so it is strictly narrower than web and cannot fail
+-- where web passed — but it has never been run against a column-level grant.
+--
+--
+-- ----------------------------------------------------------------------------
+-- (c) THE GRANT MATRIX — expect EXACTLY three rows.
+--     submitted_at | UPDATE,  total_available | UPDATE,  updated_at | UPDATE
+-- ----------------------------------------------------------------------------
+--
+--   SELECT column_name, privilege_type
+--     FROM information_schema.column_privileges
+--    WHERE table_schema = 'public' AND table_name = 'exam_attempts'
+--      AND grantee = 'authenticated' AND privilege_type = 'UPDATE'
+--    ORDER BY column_name;
+--
+-- (d) No TABLE-level UPDATE survives for authenticated. MUST return zero rows.
+--
+--   SELECT privilege_type
+--     FROM information_schema.role_table_grants
+--    WHERE table_schema = 'public' AND table_name = 'exam_attempts'
+--      AND grantee = 'authenticated' AND privilege_type = 'UPDATE';
+--
+-- ⚠ (d) IS THE ONLY CHECK HERE WHERE ZERO ROWS IS THE PASS, and it is only
+--   meaningful next to (c) returning three. (c) alone would pass if the
+--   table-wide grant were still in place; (d) alone would pass if the whole
+--   grant had been revoked and the exam were broken. Run both, together.
+--
+-- (e) SELECT and INSERT must be UNCHANGED. Expect exactly INSERT and SELECT.
+--
+--   SELECT privilege_type
+--     FROM information_schema.role_table_grants
+--    WHERE table_schema = 'public' AND table_name = 'exam_attempts'
+--      AND grantee = 'authenticated'
+--    ORDER BY privilege_type;
+--
+-- (f) The RLS policies must be untouched by this migration. Expect the three
+--     from 0028, with exam_attempts_update still scoped to auth.uid().
+--
+--   SELECT policyname, cmd, qual, with_check
+--     FROM pg_policies
+--    WHERE schemaname = 'public' AND tablename = 'exam_attempts'
+--    ORDER BY policyname;
+-- ============================================================================
