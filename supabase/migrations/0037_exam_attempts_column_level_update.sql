@@ -1,8 +1,38 @@
 -- ============================================================================
--- 0037_PROPOSED_exam_attempts_column_level_update.sql
+-- 0037_exam_attempts_column_level_update.sql
 -- ----------------------------------------------------------------------------
--- ⚠ NOT YET APPLIED. Rename to 0037_exam_attempts_column_level_update.sql and
---   record the verification result in this header at the same time.
+-- ⚠ APPLIED 2026-08-11, by hand in the SQL Editor. This file now exists so a
+--   rebuild from migrations matches what is already live.
+--
+--   VERIFIED — six of the seven checks below were run and reported passing by
+--   the project owner:
+--
+--     (a)  as owner: submitted_at, total_available and updated_at all written
+--          and read back                                              PASS
+--     (b1) as authenticated: total_awarded refused 42501, and — the
+--          anti-vacuity half — submitted_at still written              PASS
+--     (c)  exactly three column grants                                 PASS
+--     (d)  no table-level UPDATE survives for authenticated            PASS
+--     (e)  SELECT and INSERT unchanged                                 PASS
+--     (f)  the three 0028 policies untouched, exam_attempts_update
+--          still scoped to student_id = auth.uid()                     PASS
+--
+-- ⚠ (b2) WAS NOT REPORTED, AND THIS HEADER DOES NOT CLAIM IT. It is the end-
+--   to-end web check — start a paper, answer, submit — and it is the ONLY one
+--   that exercises PostgREST, which builds the UPDATE's SET clause from the
+--   CLIENT'S PAYLOAD. (b1) proves the grant against a hand-set JWT claim and
+--   hand-written SQL; it cannot see a column the web client names that the
+--   grant does not cover.
+--
+--   The exposure is believed small — attempts.ts:515 sends exactly
+--   {submitted_at, updated_at}, both granted, and mobile sends only
+--   {submitted_at} — but "believed" is the word, and the failure it would
+--   produce is a student unable to submit a finished paper. Run (b2) before
+--   the next sitting, or treat the first real submission as the test.
+--
+--   Recorded here rather than left implicit for the same reason 0035 records
+--   its skipped steps: a header that says VERIFIED must not be readable as
+--   claiming more than was actually checked.
 --
 -- ⚠ NUMBERED 0037, NOT 0034. 0034 and 0035 are applied and live; 0036 is
 --   reserved for the approval-immutability trigger and is not written yet.
