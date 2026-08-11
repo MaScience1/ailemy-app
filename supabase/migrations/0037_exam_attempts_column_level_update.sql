@@ -17,22 +17,36 @@
 --     (f)  the three 0028 policies untouched, exam_attempts_update
 --          still scoped to student_id = auth.uid()                     PASS
 --
--- ⚠ (b2) WAS NOT REPORTED, AND THIS HEADER DOES NOT CLAIM IT. It is the end-
---   to-end web check — start a paper, answer, submit — and it is the ONLY one
---   that exercises PostgREST, which builds the UPDATE's SET clause from the
---   CLIENT'S PAYLOAD. (b1) proves the grant against a hand-set JWT claim and
---   hand-written SQL; it cannot see a column the web client names that the
---   grant does not cover.
+--     (b2) end to end through PostgREST as a real signed-in student, against
+--          this production project                                   PASS
 --
---   The exposure is believed small — attempts.ts:515 sends exactly
---   {submitted_at, updated_at}, both granted, and mobile sends only
---   {submitted_at} — but "believed" is the word, and the failure it would
---   produce is a student unable to submit a finished paper. Run (b2) before
---   the next sitting, or treat the first real submission as the test.
+-- ⚠ (b2) WAS RUN SEPARATELY, AFTER THE SIX ABOVE, and it found something the
+--   other six structurally cannot see. It is the only check that exercises
+--   PostgREST, which builds the UPDATE's SET clause from the CLIENT'S PAYLOAD;
+--   (b1) proves the grant against a hand-set JWT claim and hand-written SQL.
 --
---   Recorded here rather than left implicit for the same reason 0035 records
---   its skipped steps: a header that says VERIFIED must not be readable as
---   claiming more than was actually checked.
+--   Measured on a throwaway student, deleted by id:
+--     start a paper                       total_available = 25   PASS
+--     PATCH {submitted_at, updated_at}    HTTP 400, SQLSTATE 23514
+--     PATCH {submitted_at:'now', ...}     HTTP 200, 1 row        PASS
+--     PATCH {total_awarded: 99}           HTTP 403, SQLSTATE 42501 (refused)
+--
+--   ⚠ THE 23514 IS NOT THIS MIGRATION. 23514 is a CHECK violation, not 42501
+--     — the constraint is exam_attempts_submitted_after_start. The second and
+--     third rows are the proof: SAME columns, SAME role, SAME grant, and the
+--     only difference is who chose the timestamp. The grant is correct.
+--
+--     What it exposes is a separate, pre-existing defect on the WEB submit
+--     path: attempts.ts:515 sends a timestamp from the APPLICATION SERVER'S
+--     clock, while started_at was stamped by the DATABASE'S. Where the app
+--     server is behind the database — 0.5s when this was run — a paper
+--     submitted soon after starting has submitted_at < started_at and the
+--     constraint refuses it. Mobile already avoids this: exam-outbox.ts sends
+--     the string 'now' so the server stamps itself, and says why.
+--
+--     Narrow in practice (a real sitting is minutes long) and fatal in the one
+--     case it hits: open a paper, submit immediately, get an error. Tracked
+--     separately; it is not a grant fault and does not affect this file.
 --
 -- ⚠ NUMBERED 0037, NOT 0034. 0034 and 0035 are applied and live; 0036 is
 --   reserved for the approval-immutability trigger and is not written yet.
