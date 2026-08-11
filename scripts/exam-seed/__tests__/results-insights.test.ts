@@ -42,7 +42,7 @@ const q = (o: Partial<MarkedQuestionLite> & { questionNumber: string }): MarkedQ
 
 console.log("── AN EMPTY DATABASE MUST PRODUCE A REFUSAL, NOT A ZERO ──");
 {
-  const g = gradeFor({ paperId: PAPER, confirmedMarks: 40, paperTotal: 80, boundaries: [] });
+  const g = gradeFor({ paperId: PAPER, confirmedMarks: 40, confirmedAvailable: 80, paperTotal: 80, boundaries: [] });
   t("no boundaries -> no grade at all, not even estimated", g.available === false, g);
   t("...and says why in a sentence a person can act on",
     !g.available && /no grade boundaries are stored/i.test(g.reason), g);
@@ -62,14 +62,14 @@ console.log("\n── 'official' IS A CLAIM ABOUT A REAL EXAMINATION ──");
     { paperId: PAPER, grade: "A", rawMarkMin: 58, boundarySource: "estimated", sourceNote: "interpolated" },
     { paperId: PAPER, grade: "B", rawMarkMin: 51, boundarySource: "estimated", sourceNote: "interpolated" },
   ];
-  const g = gradeFor({ paperId: PAPER, confirmedMarks: 60, paperTotal: 80, boundaries: estimated });
+  const g = gradeFor({ paperId: PAPER, confirmedMarks: 60, confirmedAvailable: 80, paperTotal: 80, boundaries: estimated });
   t("an estimated ladder gives a grade", g.available === true && g.grade === "A", g);
   t("...labelled estimated", g.available && g.basis === "estimated", g);
 
   const official: GradeBoundary[] = estimated.map((b) => ({
     ...b, boundarySource: "official" as const, sourceNote: "published",
   }));
-  const g2 = gradeFor({ paperId: PAPER, confirmedMarks: 60, paperTotal: 80, boundaries: official });
+  const g2 = gradeFor({ paperId: PAPER, confirmedMarks: 60, confirmedAvailable: 80, paperTotal: 80, boundaries: official });
   t("an all-official ladder is official", g2.available && g2.basis === "official", g2);
 
   // ⚠ MIXED DEGRADES. A grade is decided by where the mark sits on the WHOLE
@@ -79,7 +79,7 @@ console.log("\n── 'official' IS A CLAIM ABOUT A REAL EXAMINATION ──");
     { paperId: PAPER, grade: "A", rawMarkMin: 58, boundarySource: "official", sourceNote: "published" },
     { paperId: PAPER, grade: "B", rawMarkMin: 51, boundarySource: "estimated", sourceNote: "guess" },
   ];
-  const g3 = gradeFor({ paperId: PAPER, confirmedMarks: 60, paperTotal: 80, boundaries: mixed });
+  const g3 = gradeFor({ paperId: PAPER, confirmedMarks: 60, confirmedAvailable: 80, paperTotal: 80, boundaries: mixed });
   t("one estimated rung makes the whole verdict estimated",
     g3.available && g3.basis === "estimated", g3);
 
@@ -88,11 +88,11 @@ console.log("\n── 'official' IS A CLAIM ABOUT A REAL EXAMINATION ──");
   const wrongPaper: GradeBoundary[] = [
     { paperId: OTHER, grade: "A", rawMarkMin: 58, boundarySource: "official", sourceNote: "published" },
   ];
-  const g4 = gradeFor({ paperId: PAPER, confirmedMarks: 60, paperTotal: 80, boundaries: wrongPaper });
+  const g4 = gradeFor({ paperId: PAPER, confirmedMarks: 60, confirmedAvailable: 80, paperTotal: 80, boundaries: wrongPaper });
   t("boundaries for a DIFFERENT paper are refused, not borrowed", g4.available === false, g4);
 
   const below = gradeFor({
-    paperId: PAPER, confirmedMarks: 10, paperTotal: 80, boundaries: official,
+    paperId: PAPER, confirmedMarks: 10, confirmedAvailable: 80, paperTotal: 80, boundaries: official,
   });
   t("a mark below every boundary refuses rather than inventing a bottom grade",
     below.available === false, below);
@@ -227,7 +227,7 @@ console.log("\n── THE WHOLE PAPER, AS IT STANDS TODAY: EVERY SECTION REFUSES
     q({ questionNumber: "1", awardedMarks: 1, assessedOutOf: 1, maxMarks: 1 }),
     q({ questionNumber: "20(a)", awardedMarks: 4, assessedOutOf: 4, maxMarks: 4 }),
   ];
-  const g = gradeFor({ paperId: PAPER, confirmedMarks: 5, paperTotal: 80, boundaries: [] });
+  const g = gradeFor({ paperId: PAPER, confirmedMarks: 5, confirmedAvailable: 80, paperTotal: 80, boundaries: [] });
   const tp = topicPerformance({ questions, topics: [] });
   const ins = attachInsights({ questions, insights: [] });
   t("grade: unavailable", g.available === false);

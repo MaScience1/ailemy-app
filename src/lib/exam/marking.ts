@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { groundedEvidence } from "@/lib/exam/evidence";
 import { createClient } from "@/lib/supabase/server";
 
 import type { ResponsePayload } from "./attempts";
@@ -1254,12 +1255,82 @@ export async function markSubmittedAttempt(
       continue;
     }
 
+    // ⚠ THE MODEL'S SENTENCE IS SCRUBBED BEFORE A STUDENT SEES IT.
+    //
+    // This path used to pass `j.evidence` through untouched for awarded AND
+    // not-awarded points alike — the one filter the method pass has (see
+    // METHOD_NOT_SHOWN above) was missing here, on the path that marks the
+    // free-text questions.
+    //
+    // The student's answer shares a prompt with that question's full mark
+    // scheme: criterion, guidance, accept[] and reject[]. 20(b)(i)'s accept[]
+    // includes "Allow a reaction in which all of the atoms in the fuel are
+    // fully oxidised" — a concession that tells a candidate exactly how to
+    // answer it. `evidence` is free text chosen by the model and was the field
+    // that would carry any of it back out, to the same student, on their own
+    // results page and in their own marking_results rows.
+    //
+    // The prompt asks the model to quote only the student. As the method pass
+    // already says twenty lines up: a prompt instruction is a request, not an
+    // invariant. This is the invariant.
+    const schemeText = criteria.flatMap((c) => [
+      c.criterion,
+      c.guidance ?? "",
+      ...(c.accept ?? []),
+      ...(c.reject ?? []),
+    ]);
     const points: PointVerdict[] = aiResult.judgements.map((j) => ({
       pointCode: j.pointCode,
       awarded: j.awarded,
-      evidence: j.evidence,
+      evidence: groundedEvidence({
+        evidence: j.evidence,
+        awarded: j.awarded,
+        studentAnswer: text,
+        schemeText,
+      }),
     }));
-    const awarded = clamp(points.filter((p) => p.awarded).length, qa.max_marks, q.question_number);
+    // ⚠ IF THE CAP WOULD BIND, REFUSE THE WHOLE QUESTION — do not clamp the
+    // total and persist the points anyway.
+    //
+    // clamp() only bounded the scalar. The per-point rows went to
+    // marking_results untouched, so a 2-mark question could store three
+    // awarded points beside a total of 2: the card would list three ticks
+    // over "2 marks", and anyone reconciling the rows against the total would
+    // find they disagree with no record of which is right.
+    //
+    // The method pass already refuses in exactly this situation and says why
+    // (methodFits, above). This is the same rule on the sibling path. A cap
+    // that binds means the model returned more awarded points than the
+    // question is worth, which is not a result worth storing half of.
+    const rawAwarded = points.filter((p) => p.awarded).length;
+    if (rawAwarded > qa.max_marks) {
+      console.error(
+        `[marking] ${q.question_number}: Tier 2 awarded ${rawAwarded} point(s) on a ` +
+          `${qa.max_marks}-mark question. Refusing the judgement rather than storing a ` +
+          `clamped total beside unclamped rows.`,
+      );
+      marked.push({
+        questionAttemptId: qa.id,
+        questionId: q.id,
+        questionNumber: q.question_number,
+        answerType: q.answer_type,
+        studentAnswer: answerTextOf(response),
+        maxMarks: qa.max_marks,
+        awardedMarks: null,
+        assessedOutOf: null,
+        unassessedMarks: qa.max_marks,
+        unassessedReason: "This answer could not be marked reliably, so it's gone for review.",
+        tier,
+        confidence: null,
+        points: [],
+        provisionalMarks: 0,
+        provisionalOutOf: 0,
+        provisionalPoints: [],
+        note: "This answer couldn't be marked reliably and has gone for review.",
+      });
+      continue;
+    }
+    const awarded = clamp(rawAwarded, qa.max_marks, q.question_number);
 
     // 'requires_review' is hardcoded, not derived from anything the model
     // returned. A model cannot promote its own marking to authoritative.

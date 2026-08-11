@@ -248,6 +248,46 @@ export function markMcq(
  * unparseable answer becomes "not marked" rather than "wrong". A student who
  * types "about 307" should not be marked incorrect by a parser's silence.
  */
+/**
+ * Resolve a comma in a typed number, or refuse.
+ *
+ *   thousands   1,234,567  — every comma separates exactly three digits, and
+ *               there are TWO OR MORE of them. Nobody writes two decimal
+ *               commas, so this reading is unambiguous.
+ *   thousands   1,234.56   — a decimal POINT is already present, so the comma
+ *               cannot also be one.
+ *   decimal     3,07 / 0,0172 / 1,5  — one comma whose tail is not a group of
+ *               three, so it cannot be a thousands separator.
+ *   REFUSED     1,234      — one comma, exactly three digits after it, nothing
+ *               else to disambiguate. This is 1234 to a British candidate and
+ *               1.234 to a French one and there is NO evidence in the string
+ *               that picks between them.
+ *
+ * ⚠ THE LAST CASE RETURNS null, WHICH MEANS "NOT MARKED", NOT "WRONG".
+ * That is the same contract parseNumber already documents for "about 307": an
+ * answer this layer cannot read goes to a human. A 1-in-2 guess on a mark is
+ * not marking, and the failure it replaces was exactly such a guess made
+ * silently and confidently.
+ */
+function readCommas(s: string): string | null {
+  if (!s.includes(",")) return s;
+  const strip = () => s.replace(/,/g, "");
+  // A decimal point settles it: the comma must be grouping.
+  if (s.includes(".")) {
+    return /^[+-]?\d{1,3}(,\d{3})+\.\d+$/.test(s) ? strip() : null;
+  }
+  // Two or more well-formed groups: unambiguously thousands.
+  if (/^[+-]?\d{1,3}(,\d{3}){2,}$/.test(s)) return strip();
+  // Exactly one comma.
+  const one = /^([+-]?\d+),(\d+)$/.exec(s);
+  if (one) {
+    // A three-digit tail is ambiguous and only ambiguous — refuse it.
+    if (one[2].length === 3) return null;
+    return `${one[1]}.${one[2]}`;
+  }
+  return null;
+}
+
 export function parseNumber(raw: string): number | null {
   if (typeof raw !== "string") return null;
   let s = raw.trim();
@@ -256,8 +296,29 @@ export function parseNumber(raw: string): number | null {
   s = s
     .replace(/[−–—]/g, "-") // unicode minus / dashes
     .replace(/[×✕✖]/g, "x") // × → x
-    .replace(/[\s  ,]/g, "") // spaces (incl. nbsp/thin) and comma separators
+    .replace(/[\s  ]/g, "") // spaces (incl. nbsp/thin) as thousands separators
     .replace(/%$/, "");
+
+  // ⚠ A COMMA IS NOT ALWAYS A THOUSANDS SEPARATOR, AND GUESSING AWARDED A
+  // REAL MARK FOR AN ANSWER TWO ORDERS OF MAGNITUDE WRONG.
+  //
+  // This used to strip every comma along with the spaces. WCH11/01 is an
+  // INTERNATIONAL A Level and most of Europe writes 3.07 as "3,07", so a
+  // candidate answering 20(b)(iii) (expected 307) with "3,07" — meaning 3.07 —
+  // parsed to 307, matched, and was awarded a DETERMINISTIC mark. The evidence
+  // printed on their own results card read "You answered 3,07, which matches
+  // 307." The contradiction was on the screen and nothing acted on it.
+  //
+  // The same keystroke was already handled correctly one module away:
+  // chemistry/equation.ts maps /(\d),(\d)/ to a decimal point and says why.
+  // Two Tier 1 parsers disagreeing about one character is not a policy.
+  //
+  // So the comma is now READ, and where it genuinely cannot be read the answer
+  // is REFUSED rather than guessed. Refusing costs a review; guessing costs a
+  // wrong mark on a real paper.
+  const commas = readCommas(s);
+  if (commas === null) return null;
+  s = commas;
 
   // "4.15x10-4" / "4.15x10^-4" / "4.15e-4" → 4.15e-4
   const sci = /^([+-]?\d*\.?\d+)x10\^?([+-]?\d+)$/i.exec(s);

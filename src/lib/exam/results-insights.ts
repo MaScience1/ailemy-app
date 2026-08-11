@@ -80,6 +80,18 @@ export type GradeVerdict =
 export function gradeFor(input: {
   paperId: string;
   confirmedMarks: number;
+  /**
+   * The tariff actually assessed at Tier 1 — NOT the paper total.
+   *
+   * ⚠ A GRADE BOUNDARY IS DEFINED AGAINST A WHOLE PAPER, and this function was
+   * being handed a Tier-1-only mark to place against one. On WCH11/01 today
+   * that is at most 6 confirmed marks out of a paper total of 80: every
+   * free-text and unmarkable question is excluded from the numerator while the
+   * denominator keeps all 80. The verdict was arithmetically valid and
+   * completely meaningless — a candidate who answered everything correctly
+   * would still be placed at the bottom of the ladder, and told it as a grade.
+   */
+  confirmedAvailable: number;
   paperTotal: number;
   boundaries: GradeBoundary[];
 }): GradeVerdict {
@@ -95,6 +107,25 @@ export function gradeFor(input: {
   }
   if (input.paperTotal <= 0) {
     return { available: false, reason: "This paper has no recorded total, so a grade cannot be placed." };
+  }
+
+  // ⚠ REFUSE UNLESS THE WHOLE PAPER WAS ACTUALLY MARKED.
+  //
+  // Placing a partial mark on a full-paper ladder is not an approximation of a
+  // grade, it is a different measurement wearing a grade's name — and it fails
+  // in the direction a student will believe, because a low grade reads as bad
+  // news rather than as a bug. Provisional marks cannot fill the gap either:
+  // they are exactly the marks nobody has confirmed, so counting them would
+  // put an AI judgement inside a letter grade.
+  if (input.confirmedAvailable < input.paperTotal) {
+    const missing = input.paperTotal - input.confirmedAvailable;
+    return {
+      available: false,
+      reason:
+        `Only ${input.confirmedAvailable} of this paper's ${input.paperTotal} marks have been confirmed ` +
+        `by automatic marking, so a grade can't be placed yet — the remaining ${missing} would count as ` +
+        `zero and put you in the wrong band. Grades appear once the whole paper has been marked.`,
+    };
   }
 
   const sorted = [...mine].sort((a, b) => b.rawMarkMin - a.rawMarkMin);

@@ -35,6 +35,8 @@ export async function getResultsContext(input: {
   paperId: string;
   paperTotal: number;
   confirmedMarks: number;
+  /** Tariff actually confirmed at Tier 1. See gradeFor — it is NOT paperTotal. */
+  confirmedAvailable: number;
   questions: MarkedQuestionLite[];
 }): Promise<ResultsContext> {
   const db = createAdminClient();
@@ -70,6 +72,7 @@ export async function getResultsContext(input: {
       : gradeFor({
           paperId: input.paperId,
           confirmedMarks: input.confirmedMarks,
+          confirmedAvailable: input.confirmedAvailable,
           paperTotal: input.paperTotal,
           boundaries: (data ?? []).map((r) => ({
             paperId: r.paper_id,

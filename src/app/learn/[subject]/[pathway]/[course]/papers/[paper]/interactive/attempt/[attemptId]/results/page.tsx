@@ -110,6 +110,7 @@ export default async function ResultsPage({ params }: { params: Params }) {
     paperId: paper.id,
     paperTotal: paper.total_marks ?? 0,
     confirmedMarks: result.data.confirmedAwarded,
+    confirmedAvailable: result.data.confirmedAvailable,
     questions: result.data.questions.map((q) => ({
       // ⚠ THE QUESTION, NOT THE ATTEMPT. question_topics and
       // examiner_report_insights key on paper_questions(id). The first version
