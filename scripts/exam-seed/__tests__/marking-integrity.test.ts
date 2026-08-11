@@ -292,5 +292,63 @@ console.log("\n── 8. the MCQ answer is recorded twice and the two must agree
     oldKey("A") === "A");
 }
 
+
+// ══════════════════════════════════════════════════════════════════════════
+// 9. A UNIT WRITTEN CORRECTLY MUST NOT LOSE THE MARK
+//
+// Re-tested from the PR's filed findings and reproduced: five of ten ways of
+// writing a real chemistry unit were refused. normaliseUnit mapped only ² and
+// ³ and only [⁻−], and did not handle the solidus at all — so mol/dm³,
+// mol dm–3 (en dash) and J mol⁻¹ K⁻¹ all scored zero on the unit.
+//
+// ⚠ parseNumber HAS MAPPED [−–—] SINCE IT WAS WRITTEN. The two halves of one
+// answer disagreed about one character: the number accepted an en dash, the
+// unit did not.
+// ══════════════════════════════════════════════════════════════════════════
+console.log("\n── 9. UNIT EQUIVALENCE ──");
+{
+  const C = [{ pointCode: "M1", criterion: "evaluation" }];
+  const spec = (expectedUnit: string) => ({
+    expectedValue: "0.12", expectedUnit, tolerance: 0.01,
+    acceptedValues: null, marksOnCorrectAnswer: 1, requiresUnit: true,
+  });
+  const mark = (expected: string, typed: string) => {
+    const r = markNumeric({ kind: "numeric", value: "0.12", unit: typed } as never, 1, spec(expected), C);
+    return r.markable === true && r.awarded === 1;
+  };
+
+  const CONC = "mol dm-3";
+  t("mol dm-3 — the transcribed form", mark(CONC, "mol dm-3"));
+  t("mol dm⁻³ — superscript minus and superscript three", mark(CONC, "mol dm⁻³"));
+  t("mol/dm3 — the solidus form of the same unit", mark(CONC, "mol/dm3"));
+  t("mol/dm³ — solidus and superscript together", mark(CONC, "mol/dm³"));
+  t("mol dm–3 — an EN DASH, which parseNumber already accepted", mark(CONC, "mol dm–3"));
+
+  const GAS = "J mol-1 K-1";
+  t("J mol⁻¹ K⁻¹ — the superscript ONE that was never mapped", mark(GAS, "J mol⁻¹ K⁻¹"));
+  t("J/mol/K — chained division negates each term in turn", mark(GAS, "J/mol/K"));
+
+  t("dm³ still matches dm3", mark("dm3", "dm³"));
+  t("dm^3 still matches dm3", mark("dm3", "dm^3"));
+  t("case is still ignored", mark("cm3", "CM3"));
+
+  // ⚠ ANTI-VACUITY. A normaliser that collapsed everything would pass all ten
+  // above and award a unit mark for any string a student typed.
+  t("ANTI-VACUITY — mol dm3 does NOT match mol dm-3: dm³ is a volume, dm⁻³ is not",
+    !mark(CONC, "mol dm3"));
+  t("ANTI-VACUITY — g does not match kg", !mark("kg", "g"));
+  t("ANTI-VACUITY — a bare mol does not match mol dm-3", !mark(CONC, "mol"));
+  t("an unparseable solidus form refuses rather than guessing", !mark(CONC, "mol/(dm3)"));
+
+  // SABOTAGE: the old normaliser, reproduced.
+  const oldNormalise = (u: string) =>
+    u.toLowerCase().replace(/[\s]/g, "").replace(/\^/g, "")
+     .replace(/[⁻−]/g, "-").replace(/³/g, "3").replace(/²/g, "2");
+  t("SABOTAGE — the old rule read 'mol/dm³' as 'mol/dm3', which never matched 'moldm-3'",
+    oldNormalise("mol/dm³") === "mol/dm3" && oldNormalise("mol dm-3") === "moldm-3");
+  t("SABOTAGE — and left the superscript ONE untouched",
+    oldNormalise("J mol⁻¹ K⁻¹").includes("¹"));
+}
+
 console.log(`\n${fail === 0 ? "✓ ALL" : "✗"} ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
