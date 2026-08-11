@@ -283,9 +283,29 @@ export function parseSpecies(raw: string): Parsed<Species> {
         charge = sign * Number(digits[digits.length - 1]);
         body = before + digits.slice(0, -1);
       } else {
-        // Exactly one digit: charge only if what precedes it is one element.
-        charge = isSingleElement(before) ? sign * Number(digits) : sign;
-        body = isSingleElement(before) ? before : before + digits;
+        // Exactly one digit: charge only if what precedes it is one element…
+        //
+        // ⚠ …OR A CLOSED GROUP. [CuCl4]2- and [Cu(H2O)6]2+ are the notation
+        // IUPAC prescribes for complex ions, and every one of them was read
+        // wrong: `before` is "[CuCl4]", not a single element, so the digit was
+        // pushed back into the formula — where it became the MULTIPLIER on the
+        // bracketed group. [CuCl4]2- parsed as Cu2Cl8 with charge -1, and
+        // [Cu(H2O)6]2+ as Cu2H24O12 with charge +1.
+        //
+        // The consequence was not a refusal. A correct transition-metal
+        // equation marked against ITSELF scored 0 and the student was shown a
+        // fabricated atom tally for their own answer: "Cl (4 on the left, 8 on
+        // the right)". Confidently wrong, under Tier 1 authority.
+        //
+        // A group multiplier cannot be followed by a charge sign — "]2-" has
+        // nothing for the 2 to multiply INTO before the sign — so a digit
+        // between a closing bracket and a sign is unambiguously the charge.
+        // The ^ spelling ([CuCl4]^2-) already parsed correctly, which is what
+        // isolated this to the bare form.
+        const closesGroup = /[)\]]$/.test(before);
+        const isCharge = isSingleElement(before) || closesGroup;
+        charge = isCharge ? sign * Number(digits) : sign;
+        body = isCharge ? before : before + digits;
       }
     }
   }
@@ -654,32 +674,58 @@ export function compareStates(
   expected: Equation,
   accepted: Map<string, StateSymbol[]> = new Map(),
 ): StateComparison {
+  // ⚠ KEYED BY SIDE AS WELL AS SPECIES, AND THAT IS THE WHOLE POINT.
+  //
+  // This was one Map keyed on speciesKey alone. A species appearing on BOTH
+  // sides therefore collapsed to a single entry and the LAST write won — which
+  // is exactly what a phase change is:
+  //
+  //   H2O(l) -> H2O(g)   marked against ITSELF   scored 1/2
+  //                      "H2O(l) is (l) but should be (g)"
+  //   H2O(g) -> H2O(g)   against H2O(l) -> H2O(g)  scored 2/2
+  //                      "Every state symbol is correct."
+  //
+  // Wrong in BOTH directions from one cause: a perfect answer losing the mark,
+  // and an answer with no phase change at all getting it. Every enthalpy of
+  // vaporisation, atomisation and sublimation equation on the spec has this
+  // shape, and so does every dissolution written with water on both sides.
+  //
+  // A state belongs to a species ON A SIDE, not to a species.
+  const sideKey = (side: "L" | "R", t: { species: Species }) => `${side}|${speciesKey(t.species)}`;
   const wanted = new Map<string, StateSymbol[]>();
-  for (const t of [...expected.left, ...expected.right]) {
-    const k = speciesKey(t.species);
+  const addWanted = (side: "L" | "R", t: { species: Species }) => {
+    const k = sideKey(side, t);
     // ⚠ UNION, NOT OVERRIDE. "Accept 13H2O(g)" ADDS gas to water's allowed
     // states; it does not replace the (l) the expected equation states. The
     // first version substituted, so the mark scheme's own concession made the
     // canonical answer wrong — every correct script lost the state mark.
+    //
+    // accepted[] is keyed on species alone, deliberately: a concession names a
+    // substance, not a side of an arrow.
     const fromExpected = t.species.state ? [t.species.state] : [];
-    const allow = [...new Set([...fromExpected, ...(accepted.get(k) ?? [])])];
-    if (allow.length > 0) wanted.set(k, allow);
-  }
+    const allow = [
+      ...new Set([...fromExpected, ...(accepted.get(speciesKey(t.species)) ?? [])]),
+    ];
+    if (allow.length > 0) wanted.set(k, [...new Set([...(wanted.get(k) ?? []), ...allow])]);
+  };
+  for (const t of expected.left) addWanted("L", t);
+  for (const t of expected.right) addWanted("R", t);
 
   const missing: string[] = [];
   const wrong: StateComparison["wrong"] = [];
-  for (const t of [...student.left, ...student.right]) {
-    const k = speciesKey(t.species);
-    const allow = wanted.get(k);
-    if (!allow) continue; // the expected answer states nothing for it either
+  const check = (side: "L" | "R", t: { species: Species }) => {
+    const allow = wanted.get(sideKey(side, t));
+    if (!allow) return; // the expected answer states nothing for it either
     if (t.species.state === null) {
       missing.push(t.species.text);
-      continue;
+      return;
     }
     if (!allow.includes(t.species.state)) {
       wrong.push({ species: t.species.text, got: t.species.state, wanted: allow });
     }
-  }
+  };
+  for (const t of student.left) check("L", t);
+  for (const t of student.right) check("R", t);
   return { allCorrect: missing.length === 0 && wrong.length === 0, missing, wrong };
 }
 
@@ -839,7 +885,22 @@ function demandsWholeNumbers(criterion: string, accept: string[] | null | undefi
  * uses it to mean "award despite", which is a permission.
  */
 function forbids(phrase: string): boolean {
-  return /\b(do not|don't|dont|not|never|reject|except|neither|nor)\b/i.test(phrase);
+  // ⚠ EVERY WAY AN EXAMINER SAYS NO, because one that slips through does not
+  // merely fail to forbid — it ADDS the forbidden state to the allowed set and
+  // awards the mark for the exact error the prohibition names.
+  //
+  // "No credit for C12H26(g)" scored 2/2 for a script that wrote the gas. It
+  // contains no "not", no "reject" and no "except", so it read as an ordinary
+  // concession and handed dodecane a gaseous state. "Do not accept" and
+  // "Reject" were already caught; this is the same trap in a wording nobody
+  // had listed.
+  //
+  // Bare "no" is deliberately included and deliberately word-bounded: "no
+  // credit", "no marks", "no ecf" are all prohibitions, while "nothing" and
+  // "know" must not match.
+  return /\b(do not|don't|dont|not|never|no|none|reject|refuse|deny|except|excluding|disallow|neither|nor|penalise|penalize|withhold)\b/i.test(
+    phrase,
+  );
 }
 
 export function acceptedStatesFrom(criteria: EquationCriterion[]): Map<string, StateSymbol[]> {
@@ -989,8 +1050,36 @@ export function markChemicalEquation(input: {
     };
   }
 
+  // ⚠ A STATE-SYMBOL POINT NEEDS STATES IN THE MARK SCHEME TO JUDGE IT.
+  //
+  // compareStates only checks species the EXPECTED equation states something
+  // about. Where the transcribed equation carries no state symbols at all,
+  // there was nothing to check, every student term was skipped, and
+  // allCorrect came back true — so the point was awarded to everybody. A
+  // script reading "C12H26(g) + 18.5O2(s) -> 12CO2(aq) + 13H2O(s)", every
+  // state wrong, scored the state mark and was told "Every state symbol is
+  // correct."
+  //
+  // Awarded vacuously is worse than not awarded: it is a real Tier 1 mark
+  // resting on no comparison, and it looks identical to a real one. So the
+  // question goes to a human, the same refusal markNumeric makes when
+  // marks_on_correct_answer was never transcribed. Not a guess, and not a
+  // silent pass.
+  const acceptedStates = acceptedStatesFrom(criteria);
+  const wantsStates = kinds.some((k) => k.kind === "states" || k.kind === "both");
+  const expectedHasStates =
+    [...expected.value.left, ...expected.value.right].some((t) => t.species.state !== null) ||
+    acceptedStates.size > 0;
+  if (wantsStates && !expectedHasStates) {
+    return {
+      markable: false,
+      reason:
+        "This question's mark scheme asks for state symbols, but the expected equation recorded for it has none — so there is nothing to check them against. It has been left for a human to mark.",
+    };
+  }
+
   const cmp = compareEquations(student.value, expected.value);
-  const states = compareStates(student.value, expected.value, acceptedStatesFrom(criteria));
+  const states = compareStates(student.value, expected.value, acceptedStates);
   const shown = render(student.value);
   const target = render(expected.value);
 

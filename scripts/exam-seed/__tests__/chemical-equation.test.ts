@@ -550,5 +550,113 @@ console.log("\n── DETERMINISM ──");
       scored(mark("C12H26(l) + 18.5O2(g) -> 12CO2(g) + 13H2O(l)")));
 }
 
+
+// ══════════════════════════════════════════════════════════════════════════
+// FOUR WAYS THE MARKER GAVE A WRONG MARK, found by adversarial attack
+//
+// The 136 assertions above were all passing while every one of these was live.
+// They are here because a suite that only tests what its author thought of
+// measures the author, not the marker.
+// ══════════════════════════════════════════════════════════════════════════
+
+const EQP = { pointCode: "M1", criterion: "correctly balanced equation", accept: null, reject: null };
+const STP = { pointCode: "M2", criterion: "state symbols correct", accept: null, reject: null };
+const mk = (answer: string, expectedEquation: string, criteria: unknown[], maxMarks = 2) =>
+  markChemicalEquation({ answer, maxMarks, expectedEquation, criteria } as never);
+const scoreOf = (r: ReturnType<typeof mk>) => (r.markable ? r.awarded : -1);
+
+console.log("\n── A PHASE CHANGE IS THE SAME SPECIES ON BOTH SIDES ──");
+{
+  // ⚠ WRONG IN BOTH DIRECTIONS FROM ONE CAUSE. The wanted-states map was keyed
+  // on species alone, so a species on both sides collapsed and the last write
+  // won. Every enthalpy of vaporisation, atomisation and sublimation equation
+  // on the spec has this shape.
+  for (const eq of ["H2O(l) -> H2O(g)", "Na(s) -> Na(g)", "I2(s) -> I2(g)"]) {
+    t(`${eq} marked against ITSELF scores full marks`, scoreOf(mk(eq, eq, [EQP, STP])) === 2, eq);
+  }
+  // The converse, and the reason this is not just "be more lenient": an answer
+  // with NO phase change must LOSE the state mark.
+  const noChange = mk("H2O(g) -> H2O(g)", "H2O(l) -> H2O(g)", [EQP, STP]);
+  t("...while an answer with no phase change at all loses the state mark",
+    scoreOf(noChange) === 1, noChange);
+  // And a genuinely wrong state on a one-sided species still fails.
+  t("a wrong state elsewhere is still wrong",
+    scoreOf(mk("C12H26(g) + 18.5O2(g) -> 12CO2(g) + 13H2O(l)",
+               "C12H26(l) + 18.5O2(g) -> 12CO2(g) + 13H2O(l)", [EQP, STP])) === 1);
+}
+
+console.log("\n── A CHARGE DIGIT AFTER A CLOSING BRACKET IS A CHARGE ──");
+{
+  // ⚠ [CuCl4]2- IS THE NOTATION IUPAC PRESCRIBES, and it parsed as Cu2Cl8 with
+  // charge -1: the digit was pushed back into the formula and became the
+  // multiplier on the bracketed group.
+  const cases: [string, number, [string, number][]][] = [
+    ["[CuCl4]2-", -2, [["Cu", 1], ["Cl", 4]]],
+    ["[Cu(H2O)6]2+", 2, [["Cu", 1], ["H", 12], ["O", 6]]],
+    ["[Fe(H2O)6]3+", 3, [["Fe", 1], ["H", 12], ["O", 6]]],
+    ["[Zn(OH)4]2-", -2, [["Zn", 1], ["O", 4], ["H", 4]]],
+  ];
+  for (const [formula, charge, atoms] of cases) {
+    const p = parseSpecies(formula);
+    t(`${formula} has charge ${charge}`, p.ok && p.value.charge === charge, p.ok ? p.value.charge : p);
+    t(`...and the right atoms`,
+      p.ok && atoms.every(([el, n]) => p.value.atoms.get(el) === n), p.ok ? [...p.value.atoms] : p);
+  }
+  // The ^ spelling already worked and must keep working — it is what isolated
+  // the bug.
+  const caret = parseSpecies("[CuCl4]^2-");
+  t("the ^ spelling still parses identically", caret.ok && caret.value.charge === -2);
+  // ⚠ ANTI-VACUITY: a real group multiplier must NOT become a charge.
+  const multiplier = parseSpecies("Ca(OH)2");
+  t("ANTI-VACUITY — Ca(OH)2's 2 is still a multiplier, not a charge",
+    multiplier.ok && multiplier.value.charge === 0 && multiplier.value.atoms.get("O") === 2,
+    multiplier.ok ? [multiplier.value.charge, [...multiplier.value.atoms]] : multiplier);
+
+  const complex = "[Cu(H2O)6]2+(aq) + 4Cl-(aq) -> [CuCl4]2-(aq) + 6H2O(l)";
+  t("a complex-ion equation marked against itself is awarded",
+    scoreOf(mk(complex, complex, [EQP], 1)) === 1);
+}
+
+console.log("\n── EVERY WAY AN EXAMINER SAYS NO ──");
+{
+  // ⚠ THE POLARITY TRAP, REOPENED BY ONE WORDING. "No credit for C12H26(g)"
+  // has no "not", no "reject" and no "except", so it read as a concession and
+  // ADDED gas to dodecane — awarding the exact error it forbade.
+  const wrongState = "C12H26(g) + 18.5O2(g) -> 12CO2(g) + 13H2O(l)";
+  const canonical = "C12H26(l) + 18.5O2(g) -> 12CO2(g) + 13H2O(l)";
+  for (const phrase of [
+    "No credit for C12H26(g)", "No marks for C12H26(g)", "Do not accept C12H26(g)",
+    "Reject C12H26(g)", "Do not allow C12H26(g)", "Penalise C12H26(g)",
+  ]) {
+    const c = [EQP, { pointCode: "M2", criterion: "state symbols correct", accept: [phrase], reject: null }];
+    t(`"${phrase}" does not become a permission`, scoreOf(mk(wrongState, canonical, c)) === 1, phrase);
+  }
+  // ⚠ ANTI-VACUITY. A rule that treated every accept[] as a prohibition would
+  // pass all six above and silently disable concessions.
+  const real = [EQP, { pointCode: "M2", criterion: "state symbols correct", accept: ["Accept 13H2O(g)"], reject: null }];
+  t("ANTI-VACUITY — a genuine concession is still honoured",
+    scoreOf(mk("C12H26(l) + 18.5O2(g) -> 12CO2(g) + 13H2O(g)", canonical, real)) === 2);
+}
+
+console.log("\n── A STATE POINT NEEDS STATES TO JUDGE IT ──");
+{
+  // ⚠ AWARDED VACUOUSLY. With no states in the expected equation there was
+  // nothing to compare, so every student term was skipped and allCorrect came
+  // back true: every state wrong, and "Every state symbol is correct."
+  const r = mk("C12H26(g) + 18.5O2(s) -> 12CO2(aq) + 13H2O(s)",
+               "C12H26 + 18.5O2 -> 12CO2 + 13H2O", [EQP, STP]);
+  t("a state point against a stateless mark scheme REFUSES rather than awarding",
+    r.markable === false, r);
+  t("...and says why, so it is fixable", !r.markable && /state symbols/i.test(r.reason), r);
+  // ANTI-VACUITY: with states recorded, it marks normally again.
+  t("ANTI-VACUITY — with states recorded it marks as before",
+    scoreOf(mk("C12H26(l) + 18.5O2(g) -> 12CO2(g) + 13H2O(l)",
+               "C12H26(l) + 18.5O2(g) -> 12CO2(g) + 13H2O(l)", [EQP, STP])) === 2);
+  // An equation-only mark scheme is unaffected — no state point, no refusal.
+  t("an equation-only point against a stateless scheme still marks",
+    scoreOf(mk("C12H26 + 18.5O2 -> 12CO2 + 13H2O",
+               "C12H26 + 18.5O2 -> 12CO2 + 13H2O", [EQP], 1)) === 1);
+}
+
 console.log(`\n${fail === 0 ? "✓ ALL" : "✗"} ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
