@@ -658,5 +658,83 @@ console.log("\n── A STATE POINT NEEDS STATES TO JUDGE IT ──");
                "C12H26 + 18.5O2 -> 12CO2 + 13H2O", [EQP], 1)) === 1);
 }
 
+
+console.log("\n── A MENTION OF STATE SYMBOLS CAN BE A WAIVER ──");
+{
+  // ⚠ "ignore state symbols" classified as "both" — a kind awarded only when
+  // EVERY part holds — so the marker DEMANDED the states the criterion had
+  // just excused. A correct, deliberately state-free answer scored 0/1 and was
+  // told its state symbols were missing.
+  const waivers = [
+    "correctly balanced equation, ignore state symbols",
+    "balanced equation; state symbols not required",
+    "balanced equation, state symbols may be omitted",
+  ];
+  for (const c of waivers) t(`"${c}" is an EQUATION point`, classifyPoint(c) === "equation", classifyPoint(c));
+
+  const E = "C12H26(l) + 18.5O2(g) -> 12CO2(g) + 13H2O(l)";
+  const ignore = [{ pointCode: "M1", criterion: waivers[0], accept: null, reject: null }];
+  t("a balanced answer with NO states earns a point that says to ignore them",
+    scoreOf(mk("C12H26 + 18.5O2 -> 12CO2 + 13H2O", E, ignore, 1)) === 1);
+  // ⚠ ANTI-VACUITY: waiving the states must not waive the equation.
+  t("ANTI-VACUITY — an UNBALANCED answer still fails that same point",
+    scoreOf(mk("C12H26 + 18O2 -> 12CO2 + 13H2O", E, ignore, 1)) === 0);
+
+  // ⚠ AND A REQUIREMENT CONTAINING "not" IS STILL A REQUIREMENT. A bare /not/
+  // test would have caught this and inverted it the other way.
+  t("ANTI-VACUITY — \"state symbols must not be omitted\" is still a STATES point",
+    classifyPoint("state symbols must not be omitted") === "states");
+  t("ANTI-VACUITY — a genuinely combined point is still \"both\"",
+    classifyPoint("balanced equation with correct state symbols") === "both");
+}
+
+console.log("\n── A WEAK NOUN MUST NOT PROMOTE A STATE POINT ──");
+{
+  // ⚠ "state symbols for all four species" mentioned states AND "species", so
+  // it became "both" and demanded a correct equation for a mark the scheme
+  // awards for LABELS — collapsing the very split this design exists for.
+  t("\"state symbols for all four species\" is a STATES point",
+    classifyPoint("state symbols for all four species") === "states");
+  t("...as is one worded with reactants and products",
+    classifyPoint("state symbols for the reactants and products") === "states");
+  // The weak nouns still identify an equation point when no states are named.
+  t("ANTI-VACUITY — \"correct formulae of all species\" is still an EQUATION point",
+    classifyPoint("correct formulae of all species") === "equation");
+
+  const E = "C12H26(l) + 18.5O2(g) -> 12CO2(g) + 13H2O(l)";
+  const statesOnly = [{ pointCode: "M1", criterion: "state symbols for all four species", accept: null, reject: null }];
+  t("every state right but the coefficients wrong still earns the STATE point",
+    scoreOf(mk("C12H26(l) + 2O2(g) -> 3CO2(g) + 4H2O(l)", E, statesOnly, 1)) === 1);
+}
+
+console.log("\n── A SCHEME WITH MORE POINTS THAN MARKS DISAGREES WITH ITSELF ──");
+{
+  // ⚠ NOT A WRONG NUMBER — a self-contradictory one. Math.min only lowers the
+  // denominator, so the absolute mark was never inflated. But a two-point
+  // scheme on a one-mark question printed "1 of 1" beside a point marked ✗,
+  // and maxMarks 0 printed "0 of 0".
+  const E = "C12H26(l) + 18.5O2(g) -> 12CO2(g) + 13H2O(l)";
+  const two = [
+    { pointCode: "M1", criterion: "correctly balanced equation", accept: null, reject: null },
+    { pointCode: "M2", criterion: "state symbols correct", accept: null, reject: null },
+  ];
+  const failsStates = "C12H26(g) + 18.5O2(g) -> 12CO2(g) + 13H2O(l)";
+  for (const mm of [0, 1]) {
+    const r = mk(failsStates, E, two, mm);
+    t(`2 points against maxMarks ${mm} REFUSES rather than printing a contradiction`,
+      r.markable === false, r);
+  }
+  t("...and the reason names both numbers", (() => {
+    const r = mk(failsStates, E, two, 1);
+    return !r.markable && /2 marking points/.test(r.reason) && /1 mark/.test(r.reason);
+  })());
+  // ⚠ ANTI-VACUITY: the ordinary case must be untouched, or this refuses every
+  // question on the paper.
+  t("ANTI-VACUITY — 2 points against 2 marks still marks normally",
+    scoreOf(mk(failsStates, E, two, 2)) === 1);
+  t("...and a tariff LARGER than the point count is fine too",
+    scoreOf(mk(failsStates, E, two, 3)) === 1);
+}
+
 console.log(`\n${fail === 0 ? "✓ ALL" : "✗"} ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

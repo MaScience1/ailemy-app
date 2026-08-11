@@ -828,14 +828,53 @@ export type EquationCriterion = {
  */
 export function classifyPoint(criterion: string): EquationPointKind | null {
   const c = criterion.toLowerCase();
-  const mentionsStates = /state\s*symbol/.test(c);
-  const mentionsEquation =
-    /\bbalanc/.test(c) ||
-    /\bequation\b/.test(c) ||
-    /\bformulae?\b/.test(c) ||
-    /\bspecies\b/.test(c) ||
-    /\breactants?\b/.test(c) ||
-    /\bproducts?\b/.test(c);
+
+  // ⚠ A MENTION OF STATE SYMBOLS CAN BE A WAIVER, AND A WAIVER IS THE OPPOSITE
+  // OF A REQUIREMENT.
+  //
+  // "correctly balanced equation, ignore state symbols" mentions both, so it
+  // classified as "both" — a kind awarded only when EVERY part holds. The
+  // point said to ignore states and the marker then required them: a balanced,
+  // correct, deliberately state-free answer scored 0/1 and was told "the state
+  // symbols aren't right — missing from C12H26, O2, CO2, H2O", under a
+  // criterion that had explicitly excused exactly that.
+  //
+  // An examiner writing "ignore state symbols" has made a ruling; inverting it
+  // is worse than not reading it. Where states are waived the point is about
+  // the equation alone.
+  //
+  // ⚠ SCOPED TO THE PHRASE, NOT THE WHOLE CRITERION. A bare /not/ anywhere in
+  // the string would catch "state symbols must not be omitted", which is a
+  // REQUIREMENT. So the waiver has to sit next to the mention.
+  const waivesStates =
+    /\b(ignore|ignoring|disregard|do not need|don'?t need|not needed|not required|no need for|not necessary|need not)\b[^.;]{0,24}state\s*symbol/.test(c) ||
+    /state\s*symbol[^.;]{0,24}\b(not needed|not required|not necessary|are optional|is optional|may be omitted|can be omitted|need not be given)\b/.test(c);
+
+  const mentionsStates = /state\s*symbol/.test(c) && !waivesStates;
+
+  // ⚠ TWO STRENGTHS OF EQUATION WORD, AND ONLY ONE OF THEM CAN PROMOTE.
+  //
+  // "balanced", "equation" and "formulae" name a requirement about the
+  // equation. "species", "reactants" and "products" are just nouns for the
+  // things in it — and a state-symbol point almost always names them:
+  //
+  //   "state symbols for all four species"
+  //
+  // mentioned states AND "species", so it classified as "both" and demanded a
+  // correct equation for a mark the scheme awards for LABELS. A student with
+  // every state right and the coefficients wrong scored 0 on the state point
+  // — the exact split the whole states/equation design exists to keep apart.
+  //
+  // So the weak nouns still identify an equation point on their own (a
+  // criterion mentioning no states at all is unaffected), but they cannot
+  // promote a state-symbol point into a combined one.
+  const strongEquationWord =
+    /\bbalanc/.test(c) || /\bequation\b/.test(c) || /\bformulae?\b/.test(c);
+  const weakEquationNoun =
+    /\bspecies\b/.test(c) || /\breactants?\b/.test(c) || /\bproducts?\b/.test(c);
+  const mentionsEquation = mentionsStates
+    ? strongEquationWord
+    : strongEquationWord || weakEquationNoun;
 
   // ⚠ A POINT THAT ASKS FOR BOTH IS ONE MARK FOR BOTH. "Balanced equation with
   // state symbols" is a common Edexcel shape, and filing it under "states"
@@ -994,6 +1033,36 @@ export function markChemicalEquation(input: {
       markable: false,
       reason:
         "This question's mark scheme has more than one state-symbol point, which isn't supported yet — it was left for a human to mark.",
+    };
+  }
+
+  // ⚠ MORE POINTS THAN THE QUESTION IS WORTH MEANS THE TRANSCRIPTION DISAGREES
+  // WITH ITSELF, AND THE CLAMP WAS HIDING IT.
+  //
+  // assessedOutOf was Math.min(kinds.length, maxMarks). On a two-point scheme
+  // recorded against a one-mark question, an answer that earned the equation
+  // and FAILED the state symbols came out as:
+  //
+  //   awarded 1 of 1   [M1 ✓  M2 ✗]
+  //
+  // — full marks printed beside a point marked wrong, on the same card. The
+  // absolute mark is not inflated (Math.min only ever lowers the denominator),
+  // so this is not a wrong number; it is a self-contradictory one, and a
+  // student reading "1/1" next to a red cross cannot tell which to believe.
+  // maxMarks 0 was worse still: "0 of 0".
+  //
+  // The cause is not markable either way: two points cannot be scored out of
+  // one mark, and which of them the single mark is for is a decision the
+  // examiner made and nobody transcribed. Same rule the Tier 2 marker now
+  // follows when its own clamp would bind — refuse rather than store a clamped
+  // total beside unclamped rows.
+  if (input.maxMarks < kinds.length) {
+    return {
+      markable: false,
+      reason:
+        `This question's mark scheme has ${kinds.length} marking points but the question is ` +
+        `recorded as worth ${input.maxMarks} mark${input.maxMarks === 1 ? "" : "s"}, so they ` +
+        `disagree — it was left for a human to mark.`,
     };
   }
 
