@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getEditContext } from "@/lib/admin/edit-mode";
 import { getPaperPublicUrl } from "@/lib/storage/papers";
+import { choosePaper } from "./paper-lookup";
 import {
   DOC_TYPES as DOC_TYPE_LIST,
   FILTER_ORDER as ORDER,
@@ -500,11 +501,25 @@ export async function getPaperBySlug(
 ): Promise<PaperResult | null> {
   const db = await getReader();
 
+  // ⚠ ACCEPTS A PAPER ID AS WELL AS A SLUG, and the id needs no course.
+  //
+  // The refusal below is correct and stays: a slug is unique only within a
+  // course, and guessing once served a Biology link the Chemistry paper. Every
+  // link the app builds carries ?course=, so the app itself was never broken.
+  //
+  // What an id fixes is the link the app did NOT build: one bookmarked,
+  // shared, or typed without the query string. That URL 404s with "Paper not
+  // found" for a paper that plainly exists — an honest-sounding message about
+  // the wrong thing, for 72 of the 90 slugs that more than one subject uses.
+  // An id cannot be ambiguous, so it needs no disambiguation to survive being
+  // copied. Same rule as regions.ts and markscheme-review.ts.
+  const looksLikeId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+
   const { data, error } = await withOptionalColumns<RawPaperRow[]>((select) =>
     db
       .from("past_papers")
       .select(select)
-      .eq("slug", slug)
+      .eq(looksLikeId ? "id" : "slug", slug)
       .order("year", { ascending: false })
       .limit(4) as unknown as PromiseLike<{
       data: RawPaperRow[] | null;
@@ -517,34 +532,30 @@ export async function getPaperBySlug(
     return null;
   }
 
-  const rows = (data ?? []).filter((r) => r.course);
+  // ⚠ THE DECISION LIVES IN paper-lookup.ts, WHICH IS PURE AND TESTED.
+  // This module is server-only, so the rule that stops a Biology link serving
+  // the Chemistry paper could not otherwise be pinned by a test.
+  const chosen = choosePaper(data ?? [], courseSlug);
 
-  // A slug is unique only WITHIN a course. Chemistry and Biology both have a
-  // "unit-1-january-2019", so the course has to take part in the lookup.
-  if (courseSlug) {
-    const scoped = rows.filter((r) => r.course?.slug === courseSlug);
-    if (scoped.length > 1) {
-      // Impossible while UNIQUE (course_id, slug) holds; refuse rather than pick.
+  if (!chosen.ok) {
+    // Each refusal is logged with its OWN reason. "not_found" is silent — a
+    // missing paper is a normal 404 and logging it would bury the two that
+    // are actually diagnostic.
+    if (chosen.reason === "ambiguous") {
       console.error(
-        `[past-paper-filters] slug "${slug}" matches ${scoped.length} papers within course "${courseSlug}" — the unique constraint is not holding.`,
+        `[past-paper-filters] slug "${slug}" matches ${chosen.matches} papers across courses ` +
+          `and no course was supplied; refusing to guess. Pass courseSlug, or use the paper id.`,
       );
-      return null;
+    } else if (chosen.reason === "constraint_violated") {
+      console.error(
+        `[past-paper-filters] slug "${slug}" matches ${chosen.matches} papers within course ` +
+          `"${courseSlug}" — UNIQUE (course_id, slug) is not holding.`,
+      );
     }
-    return scoped[0] ? mapPaperRow(scoped[0]) : null;
-  }
-
-  // No course given and the slug is ambiguous. Previously this took "the
-  // newest", which silently served one subject's paper under another's link —
-  // a student opening a Biology paper got the Chemistry one, with no error
-  // anywhere. Refusing is the only safe answer: the caller must say which
-  // course it means.
-  if (rows.length > 1) {
-    console.error(
-      `[past-paper-filters] slug "${slug}" matches ${rows.length} papers across courses and no course was supplied; refusing to guess. Pass courseSlug.`,
-    );
     return null;
   }
-  return rows[0] ? mapPaperRow(rows[0]) : null;
+
+  return mapPaperRow(chosen.paper);
 }
 
 /** Apply the filters and return matching papers, newest first. */
