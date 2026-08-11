@@ -500,11 +500,25 @@ export async function getPaperBySlug(
 ): Promise<PaperResult | null> {
   const db = await getReader();
 
+  // ⚠ ACCEPTS A PAPER ID AS WELL AS A SLUG, and the id needs no course.
+  //
+  // The refusal below is correct and stays: a slug is unique only within a
+  // course, and guessing once served a Biology link the Chemistry paper. Every
+  // link the app builds carries ?course=, so the app itself was never broken.
+  //
+  // What an id fixes is the link the app did NOT build: one bookmarked,
+  // shared, or typed without the query string. That URL 404s with "Paper not
+  // found" for a paper that plainly exists — an honest-sounding message about
+  // the wrong thing, for 72 of the 90 slugs that more than one subject uses.
+  // An id cannot be ambiguous, so it needs no disambiguation to survive being
+  // copied. Same rule as regions.ts and markscheme-review.ts.
+  const looksLikeId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+
   const { data, error } = await withOptionalColumns<RawPaperRow[]>((select) =>
     db
       .from("past_papers")
       .select(select)
-      .eq("slug", slug)
+      .eq(looksLikeId ? "id" : "slug", slug)
       .order("year", { ascending: false })
       .limit(4) as unknown as PromiseLike<{
       data: RawPaperRow[] | null;
