@@ -20,7 +20,7 @@
  * The engine's own defence is that a wrong answer becomes "not marked" rather
  * than "wrong". These are the cases where it became RIGHT instead.
  */
-import { parseNumber, markNumeric } from "../../../src/lib/exam/deterministic.ts";
+import { parseNumber, markNumeric, markMcq } from "../../../src/lib/exam/deterministic.ts";
 import { groundedEvidence } from "../../../src/lib/exam/evidence.ts";
 import { gradeFor, type GradeBoundary } from "../../../src/lib/exam/results-insights.ts";
 
@@ -163,6 +163,133 @@ console.log("\n── 3. A GRADE NEEDS THE WHOLE PAPER, NOT THE PART WE COULD MA
   });
   t("...and the same marks, reported honestly, refuse instead of grading",
     honest.available === false, honest);
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════
+// SIX MORE THAT COULD PUT A WRONG MARK IN FRONT OF A STUDENT
+//
+// Selected from the audit's remaining findings by ONE test: can it produce a
+// wrong mark a student actually sees? The rest — attribution, labelling,
+// stale rows, a misleading note on an abstention — are real and are filed as
+// issues, but none of them changes a number on the card.
+// ══════════════════════════════════════════════════════════════════════════
+
+console.log("\n── 4. accepted_values must not merge into one wide band ──");
+{
+  // The live 20(b)(iii) row. 0.5% of 306 is 1.53, so the windows around 306
+  // and 307 merged into 304.47–308.53 and 305 was awarded a REAL mark.
+  const spec = {
+    expectedValue: "307", expectedUnit: null, tolerance: 0.005,
+    acceptedValues: ["306"], marksOnCorrectAnswer: 1, requiresUnit: false,
+  };
+  const C = [{ pointCode: "M6", criterion: "evaluation" }];
+  const at = (v: string) => markNumeric({ kind: "numeric", value: v } as never, 6, spec, C);
+  t("307 (the expected value) is awarded", at("307").markable === true);
+  t("306 (a listed alternative) is awarded", at("306").markable === true);
+  t("306.4 — inside half the gap — is still awarded", at("306.4").markable === true);
+  t("305 is NOT awarded: the scheme lists 306 and 307, not 305", at("305").markable === false, at("305"));
+  t("304.5 is NOT awarded", at("304.5").markable === false);
+
+  // SABOTAGE: the old rule, each candidate carrying the full relative window.
+  const merged = (student: number) =>
+    [307, 306].some((c) => Math.abs(student - c) <= Math.abs(c) * 0.005);
+  t("SABOTAGE — per-candidate windows award 305 for a scheme that allows 306 or 307",
+    merged(305) === true);
+}
+
+console.log("\n── 5. the same value to fewer figures is not a zero ──");
+{
+  // 20(a) expects 0.0172 and the scheme says "Ignore SF except 1 SF", so 0.017
+  // is a correct answer — but it is 1.16% away and the tolerance is 0.5%.
+  const spec = {
+    expectedValue: "0.0172", expectedUnit: null, tolerance: 0.005,
+    acceptedValues: null, marksOnCorrectAnswer: 1, requiresUnit: false,
+  };
+  const C = [{ pointCode: "M4", criterion: "evaluation" }];
+  const at = (v: string) => markNumeric({ kind: "numeric", value: v } as never, 1, spec, C);
+  t("the exact value is awarded", at("0.0172").markable === true);
+  t("0.017 (2 s.f.) is NOT scored a confirmed zero", at("0.017").markable === false, at("0.017"));
+  t("0.02 (1 s.f.) also abstains — that rule is one of the 68 still unruled",
+    at("0.02").markable === false);
+  // ⚠ ANTI-VACUITY. A rule that abstained on everything would pass the two
+  // above and stop Tier 1 marking anything at all.
+  const wrong = at("0.9");
+  t("a genuinely wrong answer is STILL a confirmed zero",
+    wrong.markable === true && wrong.awarded === 0, wrong);
+}
+
+console.log("\n── 6. a unit-bearing question with no recorded unit is not markable ──");
+{
+  const spec = {
+    expectedValue: "307", expectedUnit: null, tolerance: 0.005,
+    acceptedValues: null, marksOnCorrectAnswer: 1, requiresUnit: true,
+  };
+  const C = [{ pointCode: "M1", criterion: "evaluation" }];
+  const at = (u?: string) =>
+    markNumeric({ kind: "numeric", value: "307", ...(u ? { unit: u } : {}) } as never, 1, spec, C);
+  t("a wrong unit is not awarded", at("furlongs").markable === false);
+  t("NO unit at all is not awarded", at().markable === false, at());
+  t("...and a plausible unit is not awarded either — we don't know what to check",
+    at("kg").markable === false);
+
+  // Anti-vacuity: with the unit actually recorded, marking resumes.
+  const known = { ...spec, expectedUnit: "kg" };
+  const withUnit = (u: string) =>
+    markNumeric({ kind: "numeric", value: "307", unit: u } as never, 1, known, C);
+  t("with expected_unit recorded, the right unit IS awarded", withUnit("kg").markable === true);
+  const bad = withUnit("g");
+  t("...and the wrong unit is a confirmed zero", bad.markable === true && bad.awarded === 0, bad);
+}
+
+console.log("\n── 7. an absurd relative tolerance is a transcription fault ──");
+{
+  // "accept ± 0.5" typed into a field that means "± 50%".
+  const spec = {
+    expectedValue: "307", expectedUnit: null, tolerance: 0.5,
+    acceptedValues: null, marksOnCorrectAnswer: 1, requiresUnit: false,
+  };
+  const C = [{ pointCode: "M1", criterion: "evaluation" }];
+  const at = (v: string) => markNumeric({ kind: "numeric", value: v } as never, 1, spec, C);
+  const right = at("307");
+  t("the correct answer is still awarded", right.markable === true && right.awarded === 1);
+  const far = at("460");
+  t("460 is no longer awarded for an expected 307", far.markable === true && far.awarded === 0, far);
+  const low = at("160");
+  t("160 is no longer awarded either", low.markable === true && low.awarded === 0);
+
+  // Anti-vacuity: a real chemistry tolerance still works.
+  const sane = { ...spec, tolerance: 0.01 };
+  const near = markNumeric({ kind: "numeric", value: "309" } as never, 1, sane, C);
+  t("a sane 1% tolerance still awards a near value", near.markable === true && near.awarded === 1, near);
+}
+
+console.log("\n── 8. the MCQ answer is recorded twice and the two must agree ──");
+{
+  const crit = [{
+    pointCode: "M1",
+    criterion: "The only correct answer is B (neutron number 44, electron number 36)",
+  }];
+  const at = (expected: string | null, chose: string) =>
+    markMcq({ kind: "mcq", choice: chose } as never, 1, expected, crit);
+
+  t("both sources agreeing on B awards a B", at("B", "B").markable === true);
+  t("...and marks a D wrong", at("B", "D").markable === true);
+
+  // ⚠ THE DEFECT. expected_value won unconditionally, so a stale "A" scored a
+  // correct B as zero — a real, authoritative, persisted wrong mark.
+  t("expected_value 'A' against a criterion saying B is REFUSED, not obeyed",
+    at("A", "B").markable === false, at("A", "B"));
+  t("a non-letter expected_value is refused rather than used as the key",
+    at("Banana", "B").markable === false);
+  t("a blank expected_value falls back to the criterion and still marks",
+    at("", "B").markable === true);
+  t("...as does a missing one", at(null, "B").markable === true);
+
+  // SABOTAGE: the old precedence.
+  const oldKey = (expected: string | null) => (expected?.trim().toUpperCase() || null) ?? "B";
+  t("SABOTAGE — expected_value winning unconditionally makes 'A' the key and zeroes a correct B",
+    oldKey("A") === "A");
 }
 
 console.log(`\n${fail === 0 ? "✓ ALL" : "✗"} ${pass} passed, ${fail} failed`);

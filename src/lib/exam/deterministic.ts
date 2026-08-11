@@ -188,7 +188,49 @@ export function markMcq(
     return { markable: false, reason: "This question has no mark scheme." };
   }
 
-  const key = (expectedValue?.trim().toUpperCase() || null) ?? extractMcqKey(point.criterion);
+  // ⚠ TWO INDEPENDENT RECORDS OF THE ANSWER, AND THEY MUST AGREE.
+  //
+  // The correct option is written down TWICE: once in
+  // question_expected_answers.expected_value, and once inside the mark
+  // scheme's own criterion ("The only correct answer is B (neutron number 44,
+  // electron number 36)"). expected_value simply won, with no validation and
+  // no cross-check, so a stale or mistyped row silently marked the right
+  // answer wrong — expected_value "A" against a criterion saying B scored a
+  // correct B as zero, and "Banana" did the same, both as REAL deterministic
+  // marks with nothing logged.
+  //
+  // Having the same fact in two places is only useful if the disagreement is
+  // an error rather than a precedence question. Where they disagree this
+  // REFUSES and says so, because there is no basis for preferring either.
+  const stated = expectedValue?.trim().toUpperCase() || null;
+  const fromCriterion = extractMcqKey(point.criterion);
+
+  if (stated && fromCriterion && stated !== fromCriterion) {
+    console.error(
+      `[marking] MCQ ${point.pointCode}: expected_value "${stated}" disagrees with the mark ` +
+        `scheme criterion, which says "${fromCriterion}". Refusing to mark. Fix the transcription.`,
+    );
+    return {
+      markable: false,
+      reason:
+        "This question's recorded answer doesn't match its mark scheme, so it hasn't been marked automatically — a person needs to check it.",
+    };
+  }
+
+  // ⚠ A STATED VALUE THAT IS NOT AN OPTION LETTER IS NOT AN ANSWER. "Banana"
+  // used to be accepted as the key and marked every real choice wrong.
+  if (stated && !/^[A-Z]$/.test(stated)) {
+    console.error(
+      `[marking] MCQ ${point.pointCode}: expected_value "${stated}" is not a single option letter. Refusing to mark.`,
+    );
+    return {
+      markable: false,
+      reason:
+        "This question's recorded answer isn't a valid option, so it hasn't been marked automatically — a person needs to check it.",
+    };
+  }
+
+  const key = stated ?? fromCriterion;
   if (!key) {
     return {
       markable: false,
@@ -369,6 +411,17 @@ const FLOAT_SLACK = 1e-9;
  * capture ever lands.
  */
 
+/**
+ * ⚠ A RELATIVE TOLERANCE THIS WIDE IS A TRANSCRIPTION FAULT, NOT A WINDOW.
+ *
+ * answer_tolerance is a FRACTION — 0.005 means 0.5%. The database only checks
+ * `>= 0`, so someone transcribing "accept +/- 0.5" into the field writes 0.5
+ * and opens a +/-50% window: on 20(b)(iii) that awards 160 and 460 for an
+ * expected 307, both as REAL deterministic marks. No chemistry mark scheme
+ * means that, so the value cannot be honoured as written.
+ */
+const MAX_SANE_TOLERANCE = 0.25;
+
 function withinTolerance(
   student: number,
   expected: number,
@@ -380,8 +433,36 @@ function withinTolerance(
   const slack = Math.max(Math.abs(expected) * FLOAT_SLACK, Number.MIN_VALUE);
   if (Math.abs(student - expected) <= slack) return true;
   if (tolerance === null || tolerance <= 0) return false;
+  if (tolerance > MAX_SANE_TOLERANCE) return false;
   const window = Math.max(Math.abs(expected) * tolerance, slack);
   return Math.abs(student - expected) <= window;
+}
+
+/**
+ * Is the student's value just the expected value written to fewer figures?
+ *
+ * ⚠ THIS DOES NOT IMPLEMENT AN SF RULE, and the comment above about not adding
+ * one still stands. It answers a narrower question: could this answer be
+ * RIGHT? 20(a) expects 0.0172 and the scheme says "Ignore SF except 1 SF", so
+ * 0.017 is a correct answer — but the relative tolerance is 0.5% and 0.017 is
+ * 1.16% away, so on a ONE-MARK numeric it was scored a CONFIRMED ZERO. The
+ * marker asserting a correct answer is wrong is the one thing Tier 1 must
+ * never do.
+ *
+ * Where this is true the question ABSTAINS rather than awarding or zeroing.
+ * That deliberately also covers the 1-s.f. case the scheme rejects: "Ignore SF
+ * except 1 SF" is one of the 68 lines still awaiting an examiner ruling, and
+ * deferring an unruled rule to a human is this codebase's standing answer.
+ */
+function looksLikeSameValueToFewerFigures(studentRaw: string, expected: number): boolean {
+  const digits = studentRaw.replace(/[^0-9]/g, "").replace(/^0+/, "");
+  const sf = digits.length;
+  if (sf < 1 || sf > 15) return false;
+  const student = parseNumber(studentRaw);
+  if (student === null || student === 0 || expected === 0) return false;
+  // Round the EXPECTED value to the number of figures the student used.
+  const rounded = Number(expected.toPrecision(sf));
+  return Math.abs(student - rounded) <= Math.abs(rounded) * 1e-9;
 }
 
 export function markNumeric(
@@ -534,7 +615,46 @@ export function markNumeric(
     };
   }
 
-  const hit = candidates.find((c) => withinTolerance(student, c.num, spec.tolerance));
+  // ⚠ A TOLERANCE WIDER THAN THE GAP BETWEEN LISTED ANSWERS IS SELF-CONTRADICTORY.
+  //
+  // The window is RELATIVE, and it was applied to every candidate
+  // independently. On the live 20(b)(iii) row — expected 307, accepted_values
+  // ["306"], tolerance 0.005 — 0.5% of 306 is 1.53, so the two windows merged
+  // into one band covering 304.47 to 308.53. A student answering 305 was
+  // awarded a REAL deterministic mark for a value the scheme does not allow.
+  //
+  // If the examiner had to list 306 SEPARATELY from 307, the scheme plainly
+  // distinguishes them at one-unit granularity, so no window may be wider than
+  // half the smallest gap between the values it lists. With one candidate
+  // there is no gap and the tolerance stands as transcribed.
+  const gaps = candidates
+    .map((c) => c.num)
+    .sort((a, b) => a - b)
+    .flatMap((n, i, arr) => (i === 0 ? [] : [Math.abs(n - arr[i - 1])]))
+    .filter((g) => g > 0);
+  const maxWindow = gaps.length ? Math.min(...gaps) / 2 : Infinity;
+
+  const hit = candidates.find(
+    (c) =>
+      withinTolerance(student, c.num, spec.tolerance) &&
+      Math.abs(student - c.num) <= maxWindow,
+  );
+
+  // ⚠ A UNIT-BEARING QUESTION WITH NO EXPECTED UNIT IS NOT MARKABLE.
+  //
+  // The gate below was `requiresUnit && expectedUnit`, and unitOk starts true,
+  // so an answer_type of numeric_with_unit whose expected_unit was never
+  // transcribed skipped the comparison entirely and awarded full marks for ANY
+  // unit — "furlongs", or none at all. The question asks for a unit; if we do
+  // not know which, we do not know whether they got it right. Same rule as
+  // marks_on_correct_answer being null: report it, do not guess it.
+  if (spec.requiresUnit && !spec.expectedUnit) {
+    return {
+      markable: false,
+      reason:
+        "This question needs a unit, but the expected unit hasn't been recorded for it — so it's gone for review rather than being marked here.",
+    };
+  }
 
   // Unit is checked only where the scheme requires one — a percentage yield is
   // dimensionless, and demanding a unit there would fail a correct answer.
@@ -574,6 +694,21 @@ export function markNumeric(
         reason: `Your answer (${shown}) doesn't match the expected one. Your method may still have earned marks, which automatic marking can't judge.`,
       };
     }
+    // ⚠ NOT A ZERO IF IT IS THE SAME NUMBER TO FEWER FIGURES.
+    //
+    // The tolerance is the whole comparison, and it is far tighter than this
+    // paper's SF instructions. On a one-mark numeric that turned a correct
+    // 0.017 (2 s.f. of 0.0172) into a CONFIRMED zero — a real, authoritative
+    // mark asserting a right answer was wrong.
+    if (hit === undefined && unitOk && looksLikeSameValueToFewerFigures(given.value, candidates[0].num)) {
+      return {
+        markable: false,
+        reason:
+          `Your answer (${shown}) is the expected value to fewer significant figures. ` +
+          `Whether that earns the mark is an examiner's decision, so it's gone for review rather than being marked here.`,
+      };
+    }
+
     // One mark, no working to assess: a genuine zero.
     return {
       markable: true,

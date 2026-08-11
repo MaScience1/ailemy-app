@@ -1214,6 +1214,46 @@ export async function markSubmittedAttempt(
       continue;
     }
 
+    // ⚠ NO MARK SCHEME MEANS UNMARKED, NOT ZERO.
+    //
+    // With no mark_scheme_items the model was still called, with an empty
+    // points list. It can only return judgements for points it was sent, so it
+    // returned none — and `awarded` therefore came out 0, which was persisted
+    // and shown to the student as a hard zero on a question NOBODY HAD WRITTEN
+    // A MARK SCHEME FOR. Indistinguishable, on the card, from an answer that
+    // was read and found wrong.
+    //
+    // Every other tier already refuses in this situation: markNumeric returns
+    // "This question has no mark scheme", and so does markMcq. This is the
+    // same refusal on the path that lacked it — and it saves a model call that
+    // could not have produced a mark.
+    if (criteria.length === 0) {
+      console.error(
+        `[marking] ${q.question_number}: no mark_scheme_items for a ${q.answer_type} question. ` +
+          `Reporting it unmarked rather than scoring it zero.`,
+      );
+      marked.push({
+        questionAttemptId: qa.id,
+        questionId: q.id,
+        questionNumber: q.question_number,
+        answerType: q.answer_type,
+        studentAnswer: answerTextOf(response),
+        maxMarks: qa.max_marks,
+        awardedMarks: null,
+        assessedOutOf: null,
+        unassessedMarks: qa.max_marks,
+        unassessedReason: "No mark scheme has been recorded for this question yet.",
+        tier,
+        confidence: null,
+        points: [],
+        provisionalMarks: 0,
+        provisionalOutOf: 0,
+        provisionalPoints: [],
+        note: "This question hasn't been given a mark scheme yet, so it couldn't be marked.",
+      });
+      continue;
+    }
+
     const aiResult = await aiMarker({
       questionNumber: q.question_number,
       questionText: q.question_text,
