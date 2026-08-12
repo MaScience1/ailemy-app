@@ -119,6 +119,35 @@ const bail = (code: number): never => {
 let userId: string | null = null;
 
 try {
+  // ── 0. REFUSE AN ADDRESS THAT ALREADY HAS AN ACCOUNT ────────────────────
+  //
+  // This script signs up and then deletes what it signed up. Pointed at an
+  // address that is already a real user, the best case is a confusing failure
+  // and the worst case is deleting someone's account — so it does not start.
+  //
+  // Checked BEFORE the signup, because afterwards there is no way to tell the
+  // account we made from the one that was already there.
+  {
+    const existing = await (
+      await fetch(`${url}/auth/v1/admin/users?per_page=200`, { headers: svc })
+    ).json();
+    const clash = (existing.users ?? []).find(
+      (u: { email?: string }) => u.email?.toLowerCase() === inbox.toLowerCase(),
+    );
+    if (clash) {
+      console.error(
+        `✗ REFUSING — ${inbox} already has an account (id ${clash.id}).\n` +
+          `  This script creates a user and deletes it again. Against an existing\n` +
+          `  account that risks deleting real data, which cascades through\n` +
+          `  profiles, exam_attempts, question_attempts, student_responses and\n` +
+          `  marking_results.\n\n` +
+          `  Use a plus-address that reaches the same inbox but is a distinct\n` +
+          `  account, e.g. ${inbox.replace("@", "+ailemytest@")}`,
+      );
+      bail(1);
+    }
+  }
+
   // ── 1. a real signup, through the real endpoint ──────────────────────────
   const started = Date.now();
   const signup = await fetch(`${url}/auth/v1/signup`, {
@@ -137,7 +166,20 @@ try {
   // ── 2. the SEND side — necessary, and nowhere near sufficient ────────────
   const users = await (await fetch(`${url}/auth/v1/admin/users?per_page=200`, { headers: svc })).json();
   const row = (users.users ?? []).find((u: { email?: string }) => u.email?.toLowerCase() === inbox.toLowerCase());
-  if (!userId && row?.id) userId = row.id;
+  // ⚠ THE ID MUST COME FROM THE SIGNUP, NEVER FROM A LOOKUP BY EMAIL.
+  //
+  // This used to be `if (!userId && row?.id) userId = row.id;` — "if the
+  // signup didn't tell me an id, find the account with this address and use
+  // that one". The finally block then DELETES that id.
+  //
+  // Signing up an address that already exists does not reliably return an id:
+  // GoTrue obfuscates it to prevent email enumeration. So the fallback
+  // resolved to the REAL, PRE-EXISTING account for that address, and the
+  // cleanup deleted it — cascading through profiles, exam_attempts,
+  // question_attempts, student_responses and marking_results.
+  //
+  // Deleting only what you created means only what you created — by the id it
+  // handed back, not by anything you went looking for afterwards.
   console.log(`  supabase confirmation_sent_at = ${row?.confirmation_sent_at ?? "NULL"}`);
   if (!row?.confirmation_sent_at) {
     console.error("✗ Supabase never even attempted a send. SMTP is not configured, or the template is off.");
