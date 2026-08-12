@@ -88,6 +88,34 @@ if (!resendKey) {
 }
 
 const svc = { apikey: service, Authorization: `Bearer ${service}`, "Content-Type": "application/json" };
+/**
+ * ⚠ NEVER process.exit() INSIDE THE try BELOW — IT SKIPS THE finally.
+ *
+ * Every failure path called process.exit() directly, and process.exit()
+ * terminates immediately: the cleanup in the finally block never ran. Each one
+ * therefore LEAKED the test user it had just created into auth.users — on the
+ * very script whose contract is to create one and delete it by the id it
+ * captured. The happy path cleaned up; every unhappy path did not, and the
+ * unhappy paths are the ones this script exists to reach.
+ *
+ * Throwing lets finally run. process.exitCode is set on the way out, which
+ * records the outcome without terminating early.
+ */
+class Bail {
+  // ⚠ A PLAIN FIELD, NOT `constructor(readonly code: number)`. A parameter
+  // property is one of the few TypeScript constructs that EMITS code rather
+  // than being erased, so node's type-stripping rejects it outright with
+  // ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX — at run time, after tsc has already
+  // passed. Typecheck-clean and unrunnable is the worst pair in this repo.
+  readonly code: number;
+  constructor(code: number) {
+    this.code = code;
+  }
+}
+const bail = (code: number): never => {
+  throw new Bail(code);
+};
+
 let userId: string | null = null;
 
 try {
@@ -101,7 +129,7 @@ try {
   const body = await signup.json();
   if (!signup.ok) {
     console.error(`✗ signup failed: HTTP ${signup.status} ${JSON.stringify(body)}`);
-    process.exit(1);
+    bail(1);
   }
   userId = body?.user?.id ?? body?.id ?? null;
   console.log(`  signup accepted, user id=${userId ?? "(not returned)"}`);
@@ -113,7 +141,7 @@ try {
   console.log(`  supabase confirmation_sent_at = ${row?.confirmation_sent_at ?? "NULL"}`);
   if (!row?.confirmation_sent_at) {
     console.error("✗ Supabase never even attempted a send. SMTP is not configured, or the template is off.");
-    process.exit(1);
+    bail(1);
   }
 
   // ── 3. the RECEIVING side — the only half that answers the question ──────
@@ -125,9 +153,37 @@ try {
     const res = await fetch("https://api.resend.com/emails?limit=25", {
       headers: { Authorization: `Bearer ${resendKey}` },
     });
+    // ⚠ A SEND-ONLY KEY CANNOT ANSWER THIS, AND THAT IS NOT A DELIVERY FAILURE.
+    //
+    // The right key for the application to hold is restricted to sending —
+    // least privilege, and all Supabase's SMTP settings need. Reading /emails
+    // needs a broader scope. Treating that 401 as "not delivered" would report
+    // a PERMISSIONS fact as a MAIL fact and send someone to debug DNS over an
+    // API scope.
+    //
+    // So it takes the inconclusive channel and says exactly what is and is not
+    // established. It does not print a tick.
+    if (res.status === 401) {
+      const why = (await res.text()).slice(0, 140);
+      console.log(
+        `\n⚠ CANNOT CONFIRM DELIVERY FROM HERE — this Resend key is send-only.\n` +
+          `  ${why}\n\n` +
+          `  ESTABLISHED:     Supabase accepted the signup and stamped\n` +
+          `                   confirmation_sent_at, so GoTrue handed the message\n` +
+          `                   to SMTP without an error. A misconfigured SMTP\n` +
+          `                   fails that step with a 500, so this is real\n` +
+          `                   evidence — just not evidence of ARRIVAL.\n` +
+          `  NOT ESTABLISHED: that any mail server accepted it, and so nothing\n` +
+          `                   whatsoever about the inbox.\n\n` +
+          `  Open ${inbox} and look — that was always the real proof — or re-run\n` +
+          `  with a Resend key that has emails:read.`,
+      );
+      bail(SKIP);
+    }
+
     if (!res.ok) {
       console.error(`✗ Resend API said HTTP ${res.status}. Cannot confirm delivery.`);
-      process.exit(1);
+      bail(1);
     }
     const list = await res.json();
     const mine = (list?.data ?? []).find(
@@ -151,7 +207,7 @@ try {
         `  'sent' means Resend accepted it from us — the same claim confirmation_sent_at\n` +
         `  already makes. Only 'delivered' means a mail server accepted it.`,
     );
-    process.exit(1);
+    bail(1);
   }
 
   console.log(
@@ -161,6 +217,12 @@ try {
       `  Open ${inbox}, check the INBOX and then the spam folder, and screenshot\n` +
       `  what actually arrived. If it is in spam, the DNS is the problem, not SMTP.`,
   );
+} catch (e) {
+  // ⚠ CAUGHT SO THE finally BELOW STILL RUNS. process.exitCode does not
+  // terminate — it sets the code the process leaves with once it unwinds — so
+  // the test user is deleted and the caller still sees a non-zero exit.
+  if (e instanceof Bail) process.exitCode = e.code;
+  else throw e;
 } finally {
   // ⚠ BY THE ID CAPTURED AT CREATION. Never a sweep over auth.users.
   if (userId) {
