@@ -277,7 +277,48 @@ def question_blocks(page, bounds):
         nxt = labels[i + 1][0] if i + 1 < len(labels) else None
         bottom = min([h for h in after] + ([nxt] if nxt else []) + [page.rect.height])
         blocks.append({"label": label, "top": y - LINE_TOLERANCE, "bottom": bottom})
-    return blocks
+
+    # ⚠ A TABLE THAT ANNOUNCES A QUESTION AND THEN DOES NOT NAME IT.
+    #
+    # 21(b)(i) on WCH11/01 May-June 2025 is not in the text layer AT ALL. Its
+    # mark, "(2)", was typeset into the QUESTION-NUMBER cell (x=57.7, where
+    # 21(a) puts "21(a)") and the mark column beside it is empty. So there was
+    # no label, no block, and the whole question vanished — two marks gone with
+    # nothing reported. The paper's own printed total said "Total for Question
+    # 21 = 13" while the extracted parts summed to 11, and nothing compared the
+    # two.
+    #
+    # The number cannot be recovered by reading, and this file does not guess:
+    # inferring "the block between 21(a) and 21(b)(ii) must be 21(b)(i)" is an
+    # assumption about a document, and a wrong one would attach a mark scheme to
+    # the wrong question. So the block is REPORTED, with its page, its position
+    # and whatever mark was found in the wrong cell, and a human transcribes it.
+    #
+    # Detected structurally: every "Question / Number" header row starts a
+    # block, so a header with no label before the next header is a question the
+    # table declared and did not name.
+    orphans = []
+    # ⚠ "Question" AND "Number" ARE TWO ROWS OF ONE HEADER, and treating them as
+    # two headers made every real header look like an unnamed block — 45 false
+    # orphans on a paper with one. Collapse rows closer together than a table
+    # row can be into a single header.
+    header_starts = []
+    for h in sorted(headers):
+        if header_starts and h - header_starts[-1] <= 25:
+            continue
+        header_starts.append(h)
+    for i, h in enumerate(header_starts):
+        nxt_header = header_starts[i + 1] if i + 1 < len(header_starts) else page.rect.height
+        if any(h <= y < nxt_header for y, _ in labels):
+            continue
+        # Anything bracketed in the number column here is the misplaced mark.
+        stray = [
+            joined(line)
+            for y, line in qcol.items()
+            if h <= y < nxt_header and BRACKETED_INT.match(joined(line))
+        ]
+        orphans.append({"y": round(h, 1), "strayMark": stray[0] if stray else None})
+    return blocks, orphans
 
 
 def extract_page(page, page_no):
@@ -293,7 +334,8 @@ def extract_page(page, page_no):
     marks = words_in(page, bounds["mark0"], bounds["right"])
 
     out = []
-    for block in question_blocks(page, bounds):
+    blocks, orphans = question_blocks(page, bounds)
+    for block in blocks:
         top, bottom = block["top"], block["bottom"]
         in_block = lambda d: {y: v for y, v in d.items() if top <= y < bottom}
         a, g, m = in_block(answers), in_block(guidance), in_block(marks)
@@ -552,6 +594,18 @@ def extract_page(page, page_no):
                 if len(method_rows) > 1 else None
             ),
         })
+    # ⚠ A BLOCK THE TABLE DECLARED AND DID NOT NAME IS REPORTED, NEVER DROPPED.
+    # See question_blocks() for how 21(b)(i) vanished. The position and the
+    # misplaced mark are what a person needs to transcribe it by hand.
+    if orphans:
+        return out, {
+            "page": page_no + 1,
+            "problem": (
+                f"{len(orphans)} question block(s) on this page have no readable question "
+                f"number, so nothing was extracted for them"
+            ),
+            "unnamedBlocks": orphans,
+        }
     return out, None
 
 
@@ -601,6 +655,41 @@ def main():
             problems.append(problem)
         questions.extend(found)
 
+    # ========================================================================
+    # ⚠ RECONCILE AGAINST THE PAPER'S OWN PRINTED TOTALS
+    # ========================================================================
+    # Everything above counts what was READ. This is the only check that counts
+    # what SHOULD have been read, and it is the check that catches a question
+    # the extractor never saw at all.
+    #
+    # 21(b)(i) on WCH11/01 May-June 2025 is missing from the text layer, so no
+    # block was made for it and nothing anywhere reported a gap: 47 blocks, 83
+    # marking points, a clean exit, and two marks of a real paper simply absent.
+    # The paper says "Total for Question 21 = 13"; the parts extracted summed to
+    # 11. That subtraction is the whole guard.
+    #
+    # It is the same shape as the fixture-orphans rule and the marking
+    # reconciliation: a count of inputs against a count of outputs, aborting on
+    # a shortfall, because a plausible-looking artefact is exactly how a missing
+    # question hides.
+    shortfalls = []
+    for total in totals:
+        parent = total["question"]
+        parts = [
+            q for q in questions
+            if q["questionNumber"] == parent
+            or q["questionNumber"].startswith(parent + "(")
+        ]
+        got = sum((q.get("marks") or {}).get("value", 0) for q in parts)
+        if got != total["marks"]:
+            shortfalls.append({
+                "question": parent,
+                "printed": total["marks"],
+                "extracted": got,
+                "missing": total["marks"] - got,
+                "blocks": [q["questionNumber"] for q in parts],
+            })
+
     payload = {
         "source": pdf_path,
         "pages": doc.page_count,
@@ -611,6 +700,7 @@ def main():
         "questions": questions,
         "questionTotals": totals,
         "problems": problems,
+        "shortfalls": shortfalls,
     }
     with open(out_path, "w") as f:
         json.dump(payload, f, indent=2, ensure_ascii=False)
@@ -645,6 +735,21 @@ def main():
     # understand the page, and the only safe report is a non-zero exit. The
     # artefact is still written, because it carries `problems` and is the thing
     # a person needs in order to diagnose the run.
+    if shortfalls:
+        print("\n⚠ EXTRACTED MARKS DO NOT MATCH THE PAPER'S PRINTED TOTALS:")
+        for sf in shortfalls:
+            print(f"    Q{sf['question']}: printed {sf['printed']}, extracted {sf['extracted']} "
+                  f"— SHORT BY {sf['missing']} — from {', '.join(sf['blocks']) or '(no blocks)'}")
+        print("    A question the extractor never saw is invisible in every other count.")
+        print("    Check `problems` for an unnamed block at the page and position given.")
+
+    # ⚠ A SHORTFALL IS A FAILED RUN. The artefact is still written — it carries
+    # `shortfalls` and `problems`, which is what a person needs in order to fix
+    # it — but the exit code must not report a complete extraction when the
+    # paper's own arithmetic says it is not.
+    if shortfalls:
+        sys.exit(1)
+
     if not questions:
         print(
             "\n✗ EXTRACTED NOTHING. 0 question blocks from a "
