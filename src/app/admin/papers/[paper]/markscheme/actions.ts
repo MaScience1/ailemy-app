@@ -2,7 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 
-import { saveRulings, type SaveResult } from "@/lib/exam/markscheme-review";
+import {
+  saveRulings,
+  emitFixture,
+  type SaveResult,
+  type EmitResultReport,
+} from "@/lib/exam/markscheme-review";
 import type { QuestionRulings } from "@/lib/exam/markscheme-proposals";
 
 /**
@@ -42,4 +47,13 @@ export async function saveQuestionRulingsAction(
     revalidatePath(`/admin/papers/${paperSlug}/markscheme`);
   }
   return result;
+}
+
+/**
+ * ⚠ RE-CHECKS THE ROLE, like the save action. A server action is a public
+ * endpoint; the page having rendered says nothing about who is calling now.
+ */
+export async function emitFixtureAction(paperSlug: string): Promise<EmitResultReport> {
+  if (!paperSlug) return { ok: false, error: "Missing paper." };
+  return emitFixture(paperSlug);
 }

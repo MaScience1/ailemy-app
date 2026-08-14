@@ -12,6 +12,8 @@ import {
   countUnruled,
   countApproved,
   nextRevision,
+  toFixture,
+  emitFixtureSource,
   type ProposalSet,
   type RulingBook,
   type ReviewItem,
@@ -301,4 +303,76 @@ export async function saveRulings(
     return { ok: false, error: `Could not write the proposals file: ${e instanceof Error ? e.message : String(e)}` };
   }
   return { ok: true, revision: verdict.revision };
+}
+
+export type EmitResultReport =
+  | { ok: true; path: string; questions: number; bytes: number }
+  | { ok: false; error: string; refusals?: string[] };
+
+/**
+ * Turn approved rulings into a fixture module the seeder can load.
+ *
+ * ============================================================================
+ * ⚠ IT WRITES TO A `.generated.ts` PATH AND NOWHERE ELSE
+ * ============================================================================
+ * `scripts/exam-seed/wch11-01-2025-may-june.ts` is HAND-TRANSCRIBED. It is the
+ * source of truth for the five questions the extractor is measured against,
+ * and it is imported by seven files — the seeder and five test suites, one of
+ * which (markscheme-verified) exists precisely to compare the extractor's
+ * output to it. Overwriting it would destroy the only independent record of
+ * what the right answer is, AND make the test that would have caught the
+ * damage compare the extractor to itself.
+ *
+ * So the target path is derived from the slug, forced to `.generated.ts`, and
+ * checked against that suffix before a single byte is written. A generated
+ * file and a transcribed one never share a name.
+ *
+ * ⚠ AND IT REFUSES IN PRODUCTION, like saveRulings, because this writes to the
+ * repository working tree — which a deployed instance does not have.
+ */
+export async function emitFixture(paperSlug: string): Promise<EmitResultReport> {
+  const staff = await getStaffStatus();
+  if (!staff.ok || !canWriteFrom(staff.roles)) {
+    return { ok: false, error: "Emitting a fixture needs a marker or admin role." };
+  }
+  if (process.env.NODE_ENV === "production") {
+    return {
+      ok: false,
+      error:
+        "A fixture is written into the repository working tree, which a deployed instance does not have. Run this tool locally.",
+    };
+  }
+
+  let file: StoredFile;
+  try {
+    file = JSON.parse(await readFile(proposalsPath(paperSlug), "utf8")) as StoredFile;
+  } catch (e) {
+    return { ok: false, error: `Could not read the proposals file: ${e instanceof Error ? e.message : String(e)}` };
+  }
+
+  const result = toFixture(file, file.rulings ?? {});
+  if (!result.ok) {
+    // ⚠ THE REFUSALS ARE THE ANSWER, NOT AN ERROR. toFixture declines a
+    // question that is unapproved, has an unruled line, or has no tariff — and
+    // naming which is what tells a reviewer where to go next.
+    return { ok: false, error: "Nothing was emitted — some questions are not ready.", refusals: result.refusals };
+  }
+
+  const target = resolve(process.cwd(), "scripts/exam-seed", `${paperSlug}.generated.ts`);
+  if (!target.endsWith(".generated.ts")) {
+    return { ok: false, error: "Refusing to write: the target is not a .generated.ts path." };
+  }
+
+  const source = emitFixtureSource(result, paperSlug, new Date().toISOString());
+  try {
+    await writeFile(target, source, "utf8");
+  } catch (e) {
+    return { ok: false, error: `Could not write the fixture: ${e instanceof Error ? e.message : String(e)}` };
+  }
+  return {
+    ok: true,
+    path: `scripts/exam-seed/${paperSlug}.generated.ts`,
+    questions: result.questions.length,
+    bytes: source.length,
+  };
 }

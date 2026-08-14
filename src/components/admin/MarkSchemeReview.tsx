@@ -13,7 +13,10 @@ import type {
   ReviewItem,
 } from "@/lib/exam/markscheme-proposals";
 import type { ReviewData } from "@/lib/exam/markscheme-review";
-import { saveQuestionRulingsAction } from "@/app/admin/papers/[paper]/markscheme/actions";
+import {
+  saveQuestionRulingsAction,
+  emitFixtureAction,
+} from "@/app/admin/papers/[paper]/markscheme/actions";
 
 /**
  * Rule on extracted mark-scheme proposals against the published PDF.
@@ -137,6 +140,12 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
     { kind: "ok" | "bad" | "conflict"; text: string } | null
   >(null);
   const [onlyUnruled, setOnlyUnruled] = useState(false);
+
+  /** Result of the last emit. Refusals are the useful part, so they are kept. */
+  const [emit, setEmit] = useState<
+    { ok: true; path: string; questions: number } | { ok: false; error: string; refusals?: string[] } | null
+  >(null);
+  const [emitting, setEmitting] = useState(false);
 
   // ── measure, synchronously on mount ──────────────────────────────────────
   // An observer alone never fires in a browser that reports a stable size, and
@@ -449,6 +458,24 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
             that a refresh would lose, and the reviewer is the only one who can
             decide to press save. Folding the two together is what made the
             count reach zero while nothing had been written. */}
+        {/* ⚠ EMIT IS SEPARATE FROM APPROVE, AND DELIBERATELY MANUAL. Approving a
+            question records a ruling; emitting turns every approved question
+            into the module the seeder reads. Doing it automatically on each
+            approval would rewrite that file 47 times during one sitting, and
+            the reviewer would never see the refusals that say what is left. */}
+        <button
+          type="button"
+          disabled={!data.canWrite || !data.canPersist || emitting}
+          onClick={async () => {
+            setEmitting(true);
+            setEmit(await emitFixtureAction(data.paperSlug));
+            setEmitting(false);
+          }}
+          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:border-slate-500 disabled:opacity-40"
+        >
+          {emitting ? "Emitting…" : "Emit fixture"}
+        </button>
+
         {unsavedQuestions > 0 && (
           <span className="flex items-center gap-1.5 rounded-md border border-amber-300 bg-amber-50 px-2 py-1 text-sm text-amber-900">
             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
@@ -464,6 +491,34 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
           only questions needing a ruling
         </label>
       </div>
+
+      {emit && (
+        <div
+          className={`rounded-lg border px-4 py-3 text-sm ${
+            emit.ok ? "border-emerald-300 bg-emerald-50 text-emerald-900" : "border-amber-300 bg-amber-50 text-amber-900"
+          }`}
+        >
+          {emit.ok ? (
+            <p>
+              Wrote <span className="font-mono">{emit.path}</span> — {emit.questions} question(s).
+              Dry-run the seeder against it before committing.
+            </p>
+          ) : (
+            <>
+              <p className="font-medium">{emit.error}</p>
+              {/* ⚠ THE REFUSALS ARE THE ANSWER. Each names a question and why it
+                  is not ready, which is the list of what to do next. */}
+              {emit.refusals && (
+                <ul className="mt-2 max-h-48 overflow-y-auto font-mono text-xs">
+                  {emit.refusals.map((r) => (
+                    <li key={r}>{r}</li>
+                  ))}
+                </ul>
+              )}
+            </>
+          )}
+        </div>
+      )}
 
       {!data.canPersist && (
         <p className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
