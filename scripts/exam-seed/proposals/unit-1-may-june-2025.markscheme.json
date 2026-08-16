@@ -10,7 +10,7 @@
       "page": 4,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 4,
@@ -48,7 +48,7 @@
         {
           "text": "C is incorrect because the number of neutrons is for a 81Br atom",
           "page": 4,
-          "y": 168.0,
+          "y": 168,
           "sourceLine": "C is incorrect because the number of neutrons is for a 81Br atom",
           "confidence": 0.9,
           "derivedFrom": "distractor explanation in the Answer column",
@@ -80,7 +80,7 @@
       "page": 4,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 4,
@@ -150,7 +150,7 @@
       "page": 5,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 5,
@@ -220,11 +220,11 @@
       "page": 5,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 5,
-        "y": 252.0
+        "y": 252
       },
       "points": [
         {
@@ -290,7 +290,7 @@
       "page": 5,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 5,
@@ -360,7 +360,7 @@
       "page": 6,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 6,
@@ -430,7 +430,7 @@
       "page": 6,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 6,
@@ -457,7 +457,7 @@
         {
           "text": "B is incorrect because II and III are not polar molecules",
           "page": 6,
-          "y": 281.0,
+          "y": 281,
           "sourceLine": "B is incorrect because II and III are not polar molecules",
           "confidence": 0.9,
           "derivedFrom": "distractor explanation in the Answer column",
@@ -500,7 +500,7 @@
       "page": 7,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 7,
@@ -549,7 +549,7 @@
         {
           "text": "C is incorrect because carbon has giant covalent lattice",
           "page": 7,
-          "y": 168.0,
+          "y": 168,
           "sourceLine": "C is incorrect because carbon has giant covalent lattice",
           "confidence": 0.9,
           "derivedFrom": "distractor explanation in the Answer column",
@@ -570,7 +570,7 @@
       "page": 7,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 7,
@@ -640,7 +640,7 @@
       "page": 7,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 7,
@@ -710,7 +710,7 @@
       "page": 8,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 8,
@@ -759,7 +759,7 @@
         {
           "text": "D is incorrect because this is double the volume of butane that could be burned in 130 cm3 oxygen",
           "page": 8,
-          "y": 168.0,
+          "y": 168,
           "sourceLine": "D is incorrect because this is double the volume of butane that could be burned in 130 cm3 oxygen",
           "confidence": 0.9,
           "derivedFrom": "distractor explanation in the Answer column",
@@ -780,7 +780,7 @@
       "page": 8,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 8,
@@ -850,7 +850,7 @@
       "page": 8,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 8,
@@ -920,7 +920,7 @@
       "page": 9,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 9,
@@ -990,7 +990,7 @@
       "page": 9,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 9,
@@ -1060,7 +1060,7 @@
       "page": 10,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 10,
@@ -1130,7 +1130,7 @@
       "page": 10,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 10,
@@ -1200,7 +1200,7 @@
       "page": 11,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 11,
@@ -1249,7 +1249,7 @@
         {
           "text": "D is incorrect because the first structure is C5H12 and the second C4H10",
           "page": 11,
-          "y": 237.0,
+          "y": 237,
           "sourceLine": "D is incorrect because the first structure is C5H12 and the second C4H10",
           "confidence": 0.9,
           "derivedFrom": "distractor explanation in the Answer column",
@@ -1270,7 +1270,7 @@
       "page": 11,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 11,
@@ -1340,7 +1340,7 @@
       "page": 12,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 12,
@@ -1410,7 +1410,7 @@
       "page": 13,
       "marks": {
         "value": 4,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(4)",
         "page": 13,
@@ -1583,7 +1583,7 @@
           "heading": "Method",
           "page": 13,
           "y": 111.6,
-          "confidence": 1.0,
+          "confidence": 1,
           "derivedFrom": "heading in the Answer column",
           "sourceLine": "Method"
         }
@@ -1599,7 +1599,7 @@
       "page": 13,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 13,
@@ -1626,7 +1626,7 @@
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "Allow a reaction in which all of the atoms in the",
           "page": 13,
-          "y": 362.0
+          "y": 362
         },
         {
           "text": "Ignore any reference to carbon dioxide and water",
@@ -1661,7 +1661,7 @@
       "page": 13,
       "marks": {
         "value": 2,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(2)",
         "page": 13,
@@ -1735,7 +1735,7 @@
       "page": 14,
       "marks": {
         "value": 6,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(6)",
         "page": 14,
@@ -1788,7 +1788,7 @@
           "derivedFrom": "bullet in the Answer column",
           "sourceLine": "• calculation of mol of carbon dioxide (1)",
           "page": 14,
-          "y": 212.0
+          "y": 212
         },
         {
           "pointCode": "M5",
@@ -1861,7 +1861,7 @@
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "(105 450) × 0.749 (× 1000) = 78 982 000 (7.8982 × 107)(g)",
           "page": 14,
-          "y": 153.0,
+          "y": 153,
           "unparsed": true,
           "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
         },
@@ -1965,7 +1965,7 @@
           "heading": "Method",
           "page": 14,
           "y": 97.8,
-          "confidence": 1.0,
+          "confidence": 1,
           "derivedFrom": "heading in the Answer column",
           "sourceLine": "Method"
         }
@@ -1981,7 +1981,7 @@
       "page": 15,
       "marks": {
         "value": 2,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(2)",
         "page": 15,
@@ -2020,7 +2020,7 @@
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "Ignore any names even if incorrect",
           "page": 15,
-          "y": 84.0
+          "y": 84
         },
         {
           "text": "Allow 1 mark for two correct non skeletal formulae",
@@ -2039,7 +2039,7 @@
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "(Total for Question 20 = 15",
           "page": 15,
-          "y": 224.0
+          "y": 224
         }
       ],
       "requiresRuling": [],
@@ -2055,7 +2055,7 @@
       "page": 16,
       "marks": {
         "value": 3,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(3)",
         "page": 16,
@@ -2141,7 +2141,7 @@
       "page": 16,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 16,
@@ -2158,7 +2158,7 @@
           "derivedFrom": "bullet in the Answer column with NO per-point mark found nearby",
           "sourceLine": "• (there is a gradual) increase (in the first ionisation energies",
           "page": 16,
-          "y": 455.0
+          "y": 455
         }
       ],
       "accept": [],
@@ -2177,7 +2177,7 @@
       "page": 17,
       "marks": {
         "value": 3,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(3)",
         "page": 17,
@@ -2228,7 +2228,7 @@
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "Allow x axis as atomic numbers",
           "page": 17,
-          "y": 360.0
+          "y": 360
         },
         {
           "text": "Allow log axis on y axis",
@@ -2287,7 +2287,7 @@
       "page": 18,
       "marks": {
         "value": 2,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(2)",
         "page": 18,
@@ -2326,7 +2326,7 @@
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "Ignore correct electronic configurations",
           "page": 18,
-          "y": 153.0
+          "y": 153
         },
         {
           "text": "Accept the (2)p orbital is more shielded",
@@ -2369,7 +2369,7 @@
       "page": 19,
       "marks": {
         "value": 2,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(2)",
         "page": 19,
@@ -2408,7 +2408,7 @@
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "Allow same orbital / subshell",
           "page": 19,
-          "y": 153.0
+          "y": 153
         },
         {
           "text": "Ignore comments about similar/same shielding",
@@ -2476,7 +2476,7 @@
       "page": 20,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 20,
@@ -2512,7 +2512,7 @@
       "page": 20,
       "marks": {
         "value": 2,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(2)",
         "page": 20,
@@ -2578,7 +2578,7 @@
       "page": 21,
       "marks": {
         "value": 2,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(2)",
         "page": 21,
@@ -2636,7 +2636,7 @@
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "The radical could be anywhere on the organic materials",
           "page": 21,
-          "y": 84.0
+          "y": 84
         },
         {
           "text": "CH3CH2CH2CH3 + Cl• → CH3CH2CH2CH2• + HCl",
@@ -2652,7 +2652,7 @@
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "C4H10 + Cl• → C4H9• + HCl",
           "page": 21,
-          "y": 141.0
+          "y": 141
         },
         {
           "text": "CH3CH2CH2CH2• + Cl2 → CH3CH2CH2CH2Cl + Cl•",
@@ -2692,11 +2692,11 @@
       "page": 21,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 21,
-        "y": 296.0
+        "y": 296
       },
       "points": [
         {
@@ -2709,7 +2709,7 @@
           "derivedFrom": "bullet in the Answer column with NO per-point mark found nearby",
           "sourceLine": "• termination step fusion of two butyl radicals",
           "page": 21,
-          "y": 325.0
+          "y": 325
         }
       ],
       "accept": [
@@ -2771,7 +2771,7 @@
       "page": 22,
       "marks": {
         "value": 3,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(3)",
         "page": 22,
@@ -2836,7 +2836,7 @@
           "derivedFrom": "bullet in the Answer column",
           "sourceLine": "• calculation of actual moles of trichlorobutane",
           "page": 22,
-          "y": 268.0
+          "y": 268
         },
         {
           "pointCode": "ALT1.M3",
@@ -2860,7 +2860,7 @@
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "Example of calculation",
           "page": 22,
-          "y": 84.0,
+          "y": 84,
           "unparsed": true,
           "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
         },
@@ -2890,7 +2890,7 @@
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "0.17241 x 161.5 = 27.844(g)",
           "page": 22,
-          "y": 153.0,
+          "y": 153,
           "unparsed": true,
           "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
         },
@@ -2930,7 +2930,7 @@
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "[6.19195 x 10-3 / 0.17241] x 100",
           "page": 22,
-          "y": 291.0,
+          "y": 291,
           "unparsed": true,
           "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
         },
@@ -2962,7 +2962,7 @@
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "TE throughout, but final answer must be less than",
           "page": 22,
-          "y": 360.0,
+          "y": 360,
           "requiresRuling": [
             "transferred-error rule — scope must be decided",
             "states a requirement that may or may not be testable"
@@ -2997,8 +2997,8 @@
         {
           "heading": "Method",
           "page": 22,
-          "y": 84.0,
-          "confidence": 1.0,
+          "y": 84,
+          "confidence": 1,
           "derivedFrom": "heading in the Answer column",
           "sourceLine": "Method"
         },
@@ -3006,7 +3006,7 @@
           "heading": "Alternative method",
           "page": 22,
           "y": 210.7,
-          "confidence": 1.0,
+          "confidence": 1,
           "derivedFrom": "heading in the Answer column",
           "sourceLine": "Alternative method"
         }
@@ -3022,7 +3022,7 @@
       "page": 23,
       "marks": {
         "value": 2,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(2)",
         "page": 23,
@@ -3096,7 +3096,7 @@
       "page": 24,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 24,
@@ -3150,7 +3150,7 @@
       "page": 24,
       "marks": {
         "value": 2,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(2)",
         "page": 24,
@@ -3264,7 +3264,7 @@
       "page": 25,
       "marks": {
         "value": 2,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(2)",
         "page": 25,
@@ -3337,7 +3337,7 @@
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "Do not award Na+2",
           "page": 25,
-          "y": 153.0
+          "y": 153
         },
         {
           "text": "Do not award all dots or all crosses for the oxide",
@@ -3371,7 +3371,7 @@
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "ion",
           "page": 25,
-          "y": 222.0
+          "y": 222
         }
       ],
       "requiresRuling": [],
@@ -3387,7 +3387,7 @@
       "page": 26,
       "marks": {
         "value": 2,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(2)",
         "page": 26,
@@ -3436,7 +3436,7 @@
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "Do not award M1 if suggestion that sodium",
           "page": 26,
-          "y": 360.0
+          "y": 360
         }
       ],
       "guidance": [
@@ -3526,7 +3526,7 @@
       "page": 27,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 27,
@@ -3562,7 +3562,7 @@
       "page": 27,
       "marks": {
         "value": 3,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(3)",
         "page": 27,
@@ -3622,7 +3622,7 @@
       "page": 28,
       "marks": {
         "value": 3,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(3)",
         "page": 28,
@@ -3747,7 +3747,7 @@
       "page": 28,
       "marks": {
         "value": 2,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(2)",
         "page": 28,
@@ -3776,7 +3776,7 @@
           "derivedFrom": "bullet in the Answer column with NO per-point mark found nearby",
           "sourceLine": "• lone pairs (of electrons) repel more than bonded pairs.",
           "page": 28,
-          "y": 380.0
+          "y": 380
         }
       ],
       "accept": [
@@ -3821,7 +3821,7 @@
       "page": 29,
       "marks": {
         "value": 2,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(2)",
         "page": 29,
@@ -3952,7 +3952,7 @@
       "page": 29,
       "marks": {
         "value": 1,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(1)",
         "page": 29,
@@ -3988,7 +3988,7 @@
       "page": 30,
       "marks": {
         "value": 2,
-        "confidence": 1.0,
+        "confidence": 1,
         "derivedFrom": "bracketed integer in the ruled Mark column",
         "sourceLine": "(2)",
         "page": 30,
@@ -4028,7 +4028,7 @@
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "Do not award ions move",
           "page": 30,
-          "y": 291.0
+          "y": 291
         }
       ],
       "guidance": [
@@ -4046,7 +4046,7 @@
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "diagram",
           "page": 30,
-          "y": 153.0
+          "y": 153
         },
         {
           "text": "(Total for Question 23 = 21",
@@ -4116,5 +4116,28 @@
       "page": 3,
       "problem": "no table rules found — page not read"
     }
-  ]
+  ],
+  "rulings": {
+    "2": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "B is incorrect because it has not allowed for the correct stoichiometry (not divided by 2)": {
+          "kind": "discard"
+        },
+        "C is incorrect because it has not allowed for the correct stoichiometry (multiplied by 2)": {
+          "kind": "discard"
+        },
+        "D is incorrect because the concentration has not been divided by 1000": {
+          "kind": "discard"
+        }
+      },
+      "approvedAt": "2026-08-15T14:37:22.221Z",
+      "approvedBy": "self",
+      "revision": 3
+    }
+  }
 }
