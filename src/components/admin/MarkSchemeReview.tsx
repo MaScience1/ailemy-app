@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import type { PDFDocumentLoadingTask, PDFDocumentProxy, RenderTask } from "pdfjs-dist";
 import { AlertTriangle, Check, ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
 
@@ -13,6 +13,13 @@ import type {
   ReviewItem,
 } from "@/lib/exam/markscheme-proposals";
 import type { ReviewData } from "@/lib/exam/markscheme-review";
+import {
+  locateBlock,
+  toViewerPage,
+  toViewerTarget,
+  navMove,
+  type SourceLocation,
+} from "@/lib/exam/question-nav";
 import {
   saveQuestionRulingsAction,
   emitFixtureAction,
@@ -101,7 +108,25 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
   const [painted, setPainted] = useState(false);
 
   const [selected, setSelected] = useState<string>(data.items[0]?.question.questionNumber ?? "");
-  const [highlightY, setHighlightY] = useState<number | null>(null);
+
+  /**
+   * Where the selected question's evidence is, in the SOURCE document's own
+   * coordinates — page (1-based, converted once by question-nav) and a band in
+   * PDF points.
+   *
+   * ⚠ POINTS, NOT PERCENTAGES, IN STATE. The percentage depends on the height
+   * of the page currently rendered, which is not known until it renders; keep
+   * the source-of-truth in the units the artefact recorded and convert at paint
+   * time, so a selection made before the first render is not silently wrong.
+   */
+  const [locus, setLocus] = useState<SourceLocation | null>(null);
+  /** The band as the viewer needs it. Null until a page has been measured. */
+  const target = useMemo(
+    () => (locus ? toViewerTarget(locus, pageHeightPt) : null),
+    [locus, pageHeightPt],
+  );
+  const bandRef = useRef<HTMLDivElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
 
   /**
    * ⚠ SEEDED FROM WHAT IS ON DISK, NOT EMPTY.
@@ -257,19 +282,71 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
     [draft],
   );
 
-  /** Jump the page and put the highlight on the line, the way the mapper does. */
-  const goTo = useCallback((p: number, y: number | null) => {
-    setPage((prev) => (prev === p ? prev : p));
-    setHighlightY(y);
+  /**
+   * Jump to one recorded line — a point, a flagged line, "show on page".
+   *
+   * ⚠ THE ARGUMENT IS AN EXTRACTION PAGE, 0-BASED, exactly as the artefact
+   * records it, and the ONLY conversion to the viewer's 1-based numbering is
+   * locateBlock's. Every caller below passes an artefact page straight through
+   * for that reason; none of them may add one themselves.
+   */
+  const goTo = useCallback((extractionPage: number, y: number | null) => {
+    const loc =
+      y === null
+        ? ({ page: toViewerPage(extractionPage), top: 0, bottom: 0, basis: "block-provenance" } as const)
+        : locateBlock({ page: extractionPage, marks: { page: extractionPage, y } });
+    if (!loc) return;
+    setPage((prev) => (prev === loc.page ? prev : loc.page));
+    setLocus(y === null ? null : loc);
   }, []);
 
-  const selectQuestion = useCallback(
-    (item: ReviewItem) => {
-      setSelected(item.question.questionNumber);
-      goTo(item.question.page, item.question.marks?.y ?? null);
-    },
-    [goTo],
-  );
+  /**
+   * Selecting a question moves EVERY evidence surface at once.
+   *
+   * ⚠ THE BAND SPANS THE WHOLE BLOCK, not just its mark cell. Q1 and Q2 sit on
+   * one page: highlighting a single y would leave the reviewer to work out
+   * which of two identical-looking regions is the one on the card. The band
+   * covers the rows this question actually owns, and the effect below scrolls
+   * it to the middle of the viewport, so the answer is never in doubt.
+   *
+   * ⚠ AND IT NEVER DEAD-ENDS. Only 10 of the 47 blocks have a seeded
+   * paper_questions row; all 47 carry their own extraction provenance, which is
+   * what locateBlock reads. A question with no seeded row still moves the
+   * viewer.
+   */
+  const selectQuestion = useCallback((item: ReviewItem) => {
+    setSelected(item.question.questionNumber);
+    const loc = locateBlock(item.question);
+    if (!loc) return;
+    setPage((prev) => (prev === loc.page ? prev : loc.page));
+    setLocus(loc);
+  }, []);
+
+  /**
+   * Bring the band to the middle of the viewport, and put focus on the panel.
+   *
+   * ⚠ THIS IS THE HALF THAT WAS MISSING. Selecting a question used to call
+   * setPage and stop. When the new question was on the SAME page — Q1 to Q2 —
+   * setPage was a no-op and nothing on screen moved at all, which is
+   * indistinguishable from a broken click.
+   *
+   * ⚠ WAITS FOR `painted`. Scrolling to a band drawn over a cleared canvas
+   * lands on white; the canvas is resized, and so blanked, before every render.
+   *
+   * ⚠ FOCUS WITHOUT SCROLLING, and onto the panel rather than a control inside
+   * it. `preventScroll` stops the focus from fighting the scroll below, and the
+   * panel is a div because the keyboard handler deliberately ignores keystrokes
+   * aimed at an INPUT — focusing a radio would silently kill j/k.
+   */
+  const lastTargetRef = useRef<typeof target>(null);
+  useEffect(() => {
+    if (!target || !painted) return;
+    const move = navMove(lastTargetRef.current, target);
+    lastTargetRef.current = target;
+    if (move === "none") return;
+    panelRef.current?.focus({ preventScroll: true });
+    bandRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [target, painted]);
 
   const ruleLine = (qn: string, line: ProposedLine, kind: LineKind) => {
     setDirty((s) => ({ ...s, [qn]: true }));
@@ -587,12 +664,15 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
               <canvas ref={canvasRef} className="block w-full" />
               {/* The highlight is a percentage band, so it stays on the same
                   ink at any width — the mapper's reasoning, same trick. */}
-              {painted && highlightY !== null && pageHeightPt > 0 && (
+              {painted && target && target.page === page && (
                 <div
-                  className="pointer-events-none absolute left-0 right-0 border-y-2 border-amber-500 bg-amber-300/25"
+                  ref={bandRef}
+                  className="pointer-events-none absolute left-0 right-0 border-y-2 border-amber-500 bg-amber-300/25 transition-all duration-200"
                   style={{
-                    top: `${Math.max(0, (highlightY / pageHeightPt) * 100 - 1.2)}%`,
-                    height: "2.6%",
+                    // A row's recorded y is its baseline, so the band starts
+                    // just above it — the same 1.2% lead the mapper uses.
+                    top: `${Math.max(0, target.topPct - 1.2)}%`,
+                    height: `${Math.max(2.6, target.heightPct + 2.4)}%`,
                   }}
                 />
               )}
@@ -667,7 +747,14 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
               item={current}
               draft={draftFor(current.question.questionNumber)}
               painted={painted}
-              onSamePage={page === current.question.page}
+              panelRef={panelRef}
+              // ⚠ THE APPROVAL GATE HAD THE SAME OFF-BY-ONE, and it failed
+              // OPEN: `page` is 1-based and `question.page` was 0-based, but
+              // goTo had just set `page` FROM `question.page`, so the two were
+              // always equal and "the right page is showing" was always true —
+              // while the page on screen was the one before it. The gate now
+              // compares two numbers in the same numbering.
+              onSamePage={page === toViewerPage(current.question.page)}
               canWrite={data.canWrite && data.canPersist}
               saving={saving === current.question.questionNumber}
               onGoTo={goTo}
@@ -684,12 +771,13 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
 }
 
 function QuestionPanel({
-  item, draft, painted, onSamePage, canWrite, saving,
+  item, draft, painted, panelRef, onSamePage, canWrite, saving,
   onGoTo, onRuleLine, onEditLine, onRulePoint, onSave,
 }: {
   item: ReviewItem;
   draft: Draft;
   painted: boolean;
+  panelRef: RefObject<HTMLDivElement | null>;
   onSamePage: boolean;
   canWrite: boolean;
   saving: boolean;
@@ -707,11 +795,20 @@ function QuestionPanel({
   const canApprove = canWrite && remaining.length === 0 && pageIsShowing;
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4">
+    // ⚠ tabIndex -1 SO j/k SURVIVE FOCUS. Moving question focuses this panel so
+    // the reviewer's controls are under the cursor without a click; it must be
+    // a div, not a control, because the key handler ignores INPUT/TEXTAREA.
+    <div
+      ref={panelRef}
+      tabIndex={-1}
+      className="rounded-lg border border-slate-200 bg-white p-4 outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+    >
       <div className="flex items-baseline gap-3">
         <h2 className="font-display text-lg font-medium">{q.questionNumber}</h2>
         <span className="font-mono text-xs text-slate-500">
-          {q.marks ? `${q.marks.value} mark(s)` : "no tariff extracted"} · page {q.page}
+          {/* The page the PAGER shows, not the artefact's 0-based index. */}
+          {q.marks ? `${q.marks.value} mark(s)` : "no tariff extracted"} · page{" "}
+          {toViewerPage(q.page)}
         </span>
         <button
           type="button"
@@ -754,7 +851,7 @@ function QuestionPanel({
                 <span className="font-mono text-[10px] text-slate-400">{p.confidence.toFixed(2)}</span>
               </div>
               <p className="mt-1 font-mono text-[10px] text-slate-400">
-                p{p.page} · {p.derivedFrom}
+                p{toViewerPage(p.page)} · {p.derivedFrom}
               </p>
               <p className="mt-1 border-l-2 border-slate-200 pl-2 font-mono text-[10px] text-slate-500">
                 {p.sourceLine}
@@ -813,7 +910,7 @@ function QuestionPanel({
                     “{line.text}”
                   </button>
                   <p className="mt-1 font-mono text-[10px] text-slate-500">
-                    p{line.page} · confidence {line.confidence.toFixed(2)}
+                    p{toViewerPage(line.page)} · confidence {line.confidence.toFixed(2)}
                   </p>
                   {(line.requiresRuling ?? []).map((why) => (
                     <p key={why} className="mt-1 text-xs text-amber-800">
