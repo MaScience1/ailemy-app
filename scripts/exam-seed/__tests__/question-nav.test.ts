@@ -26,6 +26,9 @@ import {
   isSameQuestion,
   isAncestorOf,
   compareQuestionPaths,
+  compareQuestionNumbers,
+  sortByQuestionNumber,
+  romanValue,
   findExactRow,
   toViewerPage,
   locateBlock,
@@ -161,6 +164,119 @@ console.log("\n── TWO QUESTIONS ON ONE PAGE MUST MOVE THE VIEWER ──");
     Math.abs(t2.centreFraction - ((t2.topPct + t2.topPct + t2.heightPct) / 200)) < 1e-9, t2);
   t("percentages stay within the page", t3.topPct >= 0 && t3.topPct + t3.heightPct <= 100, t3);
   t("a page with no height yields no target", toViewerTarget(q1, 0) === null);
+}
+
+console.log("\n── CANONICAL EXAM ORDER ──");
+{
+  const order = (xs: string[]) => xs.map(P).sort(compareQuestionPaths).map((p) => p.raw).join(" ");
+
+  // ⚠ THE NUMERIC CASE. As strings, "10" sorts before "2".
+  t("2 before 10 before 20 — numbers, not strings",
+    order(["20", "10", "2", "3"]) === "2 3 10 20", order(["20", "10", "2", "3"]));
+  t("SABOTAGE — a plain string sort gets this WRONG",
+    ["20", "10", "2", "3"].slice().sort().join(" ") !== "2 3 10 20",
+    ["20", "10", "2", "3"].slice().sort().join(" "));
+
+  // ⚠ THE ROMAN CASE. As strings, "(ix)" sorts before "(viii)".
+  const romans = ["20(a)(x)", "20(a)(ix)", "20(a)(viii)", "20(a)(iv)", "20(a)(v)",
+                  "20(a)(i)", "20(a)(vii)", "20(a)(ii)", "20(a)(vi)", "20(a)(iii)"];
+  t("(i)…(x) sort as NUMBERS",
+    order(romans) === "20(a)(i) 20(a)(ii) 20(a)(iii) 20(a)(iv) 20(a)(v) 20(a)(vi) " +
+                      "20(a)(vii) 20(a)(viii) 20(a)(ix) 20(a)(x)", order(romans));
+  t("(viii) before (ix) — the pair a string sort inverts",
+    compareQuestionPaths(P("20(viii)"), P("20(ix)")) < 0);
+  t("SABOTAGE — a plain string sort puts (ix) before (viii)",
+    "20(a)(ix)" < "20(a)(viii)");
+
+  // The full hierarchy the spec spells out.
+  const spec = ["21(a)", "20(b)", "20(a)(ii)", "20", "21", "20(a)", "20(a)(i)"];
+  t("20 < 20(a) < 20(a)(i) < 20(a)(ii) < 20(b) < 21 < 21(a)",
+    order(spec) === "20 20(a) 20(a)(i) 20(a)(ii) 20(b) 21 21(a)", order(spec));
+  t("a parent sorts before its own parts", compareQuestionPaths(P("20"), P("20(a)")) < 0);
+  t("22(c) sorts after 22, not instead of it",
+    compareQuestionPaths(P("22"), P("22(c)")) < 0);
+  t("the comparator is antisymmetric",
+    compareQuestionPaths(P("20(b)"), P("20(a)")) > 0 &&
+    compareQuestionPaths(P("20(a)"), P("20(a)")) === 0);
+}
+
+console.log("\n── ROMAN NUMERALS, WITHOUT EATING THE PART LETTERS ──");
+{
+  t("i=1, iv=4, v=5, ix=9, x=10",
+    [romanValue("i"), romanValue("iv"), romanValue("v"), romanValue("ix"), romanValue("x")]
+      .join() === "1,4,5,9,10");
+  t("xiv=14, xxxix=39", romanValue("xiv") === 14 && romanValue("xxxix") === 39);
+
+  // ⚠ THE TRAP THIS AVOIDS. A general roman parser reads the part letter "(c)"
+  // as 100 and sorts it AFTER "(i)". Restricting the alphabet to {i,v,x} keeps
+  // every other letter a letter.
+  t("c is not 100 — it is the part letter (c)", romanValue("c") === null);
+  t("d, l, m are letters too",
+    romanValue("d") === null && romanValue("l") === null && romanValue("m") === null);
+  t("(c) still sorts before (d)", compareQuestionPaths(P("22(c)"), P("22(d)")) < 0);
+  t("(c) still sorts before (i)", compareQuestionPaths(P("22(c)"), P("22(i)")) < 0);
+  t("(b) before (c) before (d) before (e)",
+    ["22(e)", "22(c)", "22(b)", "22(d)"].map(P).sort(compareQuestionPaths)
+      .map((p) => p.raw).join(" ") === "22(b) 22(c) 22(d) 22(e)");
+
+  // ⚠ WHY THE RESTRICTION IS SAFE. For every single letter that stays
+  // ambiguous, roman order and alphabetic order give the same answer.
+  t("the ambiguous singles i<v<x agree either way",
+    romanValue("i")! < romanValue("v")! && romanValue("v")! < romanValue("x")! &&
+    "i" < "v" && "v" < "x");
+
+  // ⚠ NON-CANONICAL SPELLINGS ARE REFUSED, not valued. Inventing a number for
+  // "iiii" would impose an order the paper never printed.
+  t("iiii is refused", romanValue("iiii") === null);
+  t("vv and ixi are refused", romanValue("vv") === null && romanValue("ixi") === null);
+  t("a letter outside {i,v,x} is refused", romanValue("a") === null);
+  t("the empty string is refused", romanValue("") === null);
+}
+
+console.log("\n── SORTING THE NAVIGATOR ──");
+{
+  const raw = [{ q: "20(a)(ii)" }, { q: "2" }, { q: "20" }, { q: "10" },
+               { q: "20(a)(i)" }, { q: "20(b)" }, { q: "20(a)" }];
+  const sorted = sortByQuestionNumber(raw, (r) => r.q);
+  t("the navigator lands in exam order",
+    sorted.map((r) => r.q).join(" ") === "2 10 20 20(a) 20(a)(i) 20(a)(ii) 20(b)",
+    sorted.map((r) => r.q));
+
+  // ⚠ A COPY. The artefact's own order is provenance — the order the extractor
+  // read the mark scheme in — and this is a display concern.
+  t("the input array is NOT reordered", raw[0].q === "20(a)(ii)" && raw[1].q === "2");
+  t("...and it is a different array", sorted !== (raw as unknown));
+  t("nothing is dropped", sorted.length === raw.length);
+
+  // ⚠ A LABEL WE CANNOT PARSE STILL APPEARS. A navigator that silently omitted
+  // a question would hide work that still needs ruling.
+  const withJunk = sortByQuestionNumber(
+    [{ q: "Section B" }, { q: "20" }, { q: "QWC" }, { q: "2" }], (r) => r.q);
+  t("unparseable labels sort LAST, never dropped",
+    withJunk.map((r) => r.q).join(" ") === "2 20 Section B QWC", withJunk.map((r) => r.q));
+  t("...and keep their recorded order between themselves (stable sort)",
+    withJunk[2].q === "Section B" && withJunk[3].q === "QWC");
+
+  t("comparing printed numbers directly agrees with the paths",
+    compareQuestionNumbers("2", "10") < 0 &&
+    compareQuestionNumbers("20(a)(viii)", "20(a)(ix)") < 0 &&
+    compareQuestionNumbers("20(b)", "20(a)") > 0);
+  t("an unparseable label loses to a real one, whichever side it is on",
+    compareQuestionNumbers("Section B", "20") > 0 &&
+    compareQuestionNumbers("20", "Section B") < 0 &&
+    compareQuestionNumbers("Section B", "QWC") === 0);
+
+  // ⚠ j/k WALK THE SAME LIST THE EYE DOES. The filtered view is derived from
+  // the sorted one, so filtering cannot reintroduce the artefact's order.
+  const unruled = sorted.filter((r) => r.q !== "20");
+  t("filtering preserves exam order",
+    unruled.map((r) => r.q).join(" ") === "2 10 20(a) 20(a)(i) 20(a)(ii) 20(b)");
+
+  // ⚠ ANTI-VACUITY. If the comparator were a no-op the sort would return the
+  // input order, and every assertion above about ORDER would still be checking
+  // something — but this one would not.
+  t("ANTI-VACUITY — the sort actually reorders",
+    sorted.map((r) => r.q).join(" ") !== raw.map((r) => r.q).join(" "));
 }
 
 console.log(`\n${fail === 0 ? "✓ ALL" : "✗"} ${pass} passed, ${fail} failed`);

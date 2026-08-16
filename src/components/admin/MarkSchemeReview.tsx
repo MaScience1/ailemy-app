@@ -18,6 +18,7 @@ import {
   toViewerPage,
   toViewerTarget,
   navMove,
+  sortByQuestionNumber,
   type SourceLocation,
 } from "@/lib/exam/question-nav";
 import {
@@ -107,7 +108,27 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
    */
   const [painted, setPainted] = useState(false);
 
-  const [selected, setSelected] = useState<string>(data.items[0]?.question.questionNumber ?? "");
+  /**
+   * The questions in canonical exam order — 2 before 10, 20 before 20(a),
+   * 20(a)(i) before 20(a)(ii) before 20(b).
+   *
+   * ⚠ THE ONE ORDERED LIST, AND EVERYTHING READS IT. The navigator, j/k, the
+   * "first question" this opens on and the fallback when a selection goes
+   * stale all derive from `ordered`, so there is no way for the list on screen
+   * and the order the keys walk to drift apart.
+   *
+   * ⚠ DISPLAY ONLY. sortByQuestionNumber copies; `data.items` keeps the order
+   * the extractor read the paper in, which is provenance, and nothing here
+   * writes to the artefact or the database.
+   */
+  const ordered = useMemo(
+    () => sortByQuestionNumber(data.items, (i) => i.question.questionNumber),
+    [data.items],
+  );
+
+  const [selected, setSelected] = useState<string>(
+    () => ordered[0]?.question.questionNumber ?? "",
+  );
 
   /**
    * Where the selected question's evidence is, in the SOURCE document's own
@@ -271,11 +292,12 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
     };
   }, [status, page, shellWidth]);
 
+  // Filtering preserves order, so the unruled-only view is still in exam order.
   const items = useMemo(
-    () => (onlyUnruled ? data.items.filter((i) => i.unruled.length > 0) : data.items),
-    [data.items, onlyUnruled],
+    () => (onlyUnruled ? ordered.filter((i) => i.unruled.length > 0) : ordered),
+    [ordered, onlyUnruled],
   );
-  const current = data.items.find((i) => i.question.questionNumber === selected) ?? data.items[0];
+  const current = ordered.find((i) => i.question.questionNumber === selected) ?? ordered[0];
 
   const draftFor = useCallback(
     (qn: string): Draft => draft[qn] ?? { points: {}, lines: {} },

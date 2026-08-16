@@ -96,19 +96,115 @@ export function isAncestorOf(ancestor: QuestionPath, descendant: QuestionPath): 
   return ancestor.segments.every((s, i) => descendant.segments[i] === s);
 }
 
-/** Sort order: 2 before 20, 20 before 20(a), 20(a) before 20(b). */
+// ============================================================================
+// EXAM ORDER
+// ============================================================================
+
+/**
+ * A lowercase roman numeral's value, or null if the segment is not one.
+ *
+ * ⚠ ONLY i, v AND x, DELIBERATELY. C, D, L and M are also roman digits, so a
+ * general parser reads the part letter "(c)" as 100 and sorts it after "(i)".
+ * Restricting the alphabet to {i,v,x} makes the ambiguity provably harmless:
+ * for every SINGLE letter that remains ambiguous — i, v, x — the roman order
+ * and the alphabetic order agree (i<v<x is 1<5<10), and any pair involving a
+ * letter outside the set falls through to the string comparison below, which
+ * is the right answer for letters. The two orders only diverge from two
+ * characters up — (viii) vs (ix) — which is never a part letter.
+ *
+ * ⚠ ROUND-TRIPPED, so non-canonical spellings are REFUSED rather than
+ * silently valued. "iiii" and "vv" return null and sort as strings; inventing
+ * a number for them would impose an order the paper never printed.
+ */
+const ROMAN_DIGITS: Record<string, number> = { i: 1, v: 5, x: 10 };
+const ROMAN_UNITS: readonly [number, string][] = [
+  [10, "x"], [9, "ix"], [5, "v"], [4, "iv"], [1, "i"],
+];
+
+function toRoman(n: number): string {
+  let out = "";
+  let left = n;
+  for (const [value, glyph] of ROMAN_UNITS) {
+    while (left >= value) {
+      out += glyph;
+      left -= value;
+    }
+  }
+  return out;
+}
+
+export function romanValue(segment: string): number | null {
+  if (!/^[ivx]+$/.test(segment)) return null;
+  let total = 0;
+  for (let i = 0; i < segment.length; i++) {
+    const cur = ROMAN_DIGITS[segment[i]];
+    const next = ROMAN_DIGITS[segment[i + 1]] ?? 0;
+    total += cur < next ? -cur : cur;
+  }
+  return total > 0 && toRoman(total) === segment ? total : null;
+}
+
+/**
+ * Canonical exam order: 2 before 10 before 20, 20 before 20(a), 20(a)(i)
+ * before 20(a)(ii) before 20(b), 20(b) before 21.
+ *
+ * ⚠ THREE COMPARISONS, IN THIS ORDER, AND NONE OF THEM IS `<` ON THE WHOLE
+ * STRING. As printed strings, "10" sorts before "2" and "(ix)" before
+ * "(viii)"; both are wrong, and both are the kind of wrong a reviewer reads as
+ * a missing question rather than a sorting bug.
+ */
 export function compareQuestionPaths(a: QuestionPath, b: QuestionPath): number {
   const n = Math.min(a.segments.length, b.segments.length);
   for (let i = 0; i < n; i++) {
     const x = a.segments[i];
     const y = b.segments[i];
     if (x === y) continue;
+
+    // 1. Numbers as numbers. This is the top-level question number, always.
     const nx = Number(x);
     const ny = Number(y);
     if (Number.isFinite(nx) && Number.isFinite(ny)) return nx - ny;
+
+    // 2. Roman subparts as numbers.
+    const rx = romanValue(x);
+    const ry = romanValue(y);
+    if (rx !== null && ry !== null) return rx - ry;
+
+    // 3. Part letters as letters.
     return x < y ? -1 : 1;
   }
+  // A parent sorts before its own parts: 20 before 20(a).
   return a.segments.length - b.segments.length;
+}
+
+/**
+ * Compare two question numbers as printed, for sorting a list of them.
+ *
+ * ⚠ AN UNPARSEABLE LABEL SORTS LAST AND KEEPS ITS PLACE, rather than being
+ * dropped or thrown on. Array.prototype.sort is stable, so returning 0 between
+ * two unparseable labels leaves them in the order the artefact recorded. A
+ * navigator that silently omits a question it could not name would hide work
+ * that still needs ruling — the opposite of what the list is for.
+ */
+export function compareQuestionNumbers(a: string, b: string): number {
+  const pa = parseQuestionPath(a);
+  const pb = parseQuestionPath(b);
+  if (pa && pb) return compareQuestionPaths(pa, pb);
+  if (pa) return -1;
+  if (pb) return 1;
+  return 0;
+}
+
+/**
+ * Canonical exam order, as a NEW array.
+ *
+ * ⚠ A COPY, NEVER IN PLACE. The list this sorts is the loader's own data, and
+ * the artefact's recorded order is provenance: it is the order the extractor
+ * read the mark scheme in. This is a display concern and must not reach back
+ * into the thing being displayed.
+ */
+export function sortByQuestionNumber<T>(rows: readonly T[], of: (row: T) => string): T[] {
+  return [...rows].sort((x, y) => compareQuestionNumbers(of(x), of(y)));
 }
 
 /**
