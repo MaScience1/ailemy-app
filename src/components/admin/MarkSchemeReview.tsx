@@ -32,8 +32,27 @@ import {
 } from "@/lib/exam/distractor";
 import { extractMcqKey } from "@/lib/exam/deterministic";
 import {
+  suggestFor,
+  planBatch,
+  canAutoVerify,
+  spotCheckIndices,
+  type Suggestion,
+  type BatchPlan,
+  type BatchCandidate,
+} from "@/lib/exam/precedent";
+import {
+  BatchPanel,
+  VerifyPanel,
+  BulkApprovePanel,
+  ManualBlockPanel,
+  type VerifyCandidate,
+} from "@/components/admin/AcceleratorPanels";
+import {
   saveQuestionRulingsAction,
   emitFixtureAction,
+  applyBatchAction,
+  bulkApproveAction,
+  addManualBlockAction,
 } from "@/app/admin/papers/[paper]/markscheme/actions";
 
 /**
@@ -241,6 +260,25 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
   const [selected, setSelected] = useState<string>(
     () => ordered[0]?.question.questionNumber ?? "",
   );
+
+  /**
+   * Which accelerator screen is open, if any.
+   *
+   * ⚠ null IS THE ONLY STATE IN WHICH ANYTHING HAS HAPPENED. Every panel is a
+   * question: opening one computes, closing one discards. Nothing is written
+   * until its confirm handler calls a server action.
+   */
+  const [panel, setPanel] = useState<
+    | { kind: "batch"; plan: BatchPlan }
+    | { kind: "verify"; eligible: VerifyCandidate[]; excluded: { questionNumber: string; pointCode: string; criterion: string; reason: string }[] }
+    | { kind: "bulk"; candidates: { questionNumber: string; marks: number; points: number; lines: number }[] }
+    | { kind: "block" }
+    | null
+  >(null);
+  const [panelBusy, setPanelBusy] = useState(false);
+  /** Auto-verified points the founder has been asked to eyeball. */
+  const [spotCheck, setSpotCheck] = useState<VerifyCandidate[]>([]);
+  const [spotChecked, setSpotChecked] = useState<Record<string, true>>({});
 
   /**
    * Where the selected question's evidence is, in the SOURCE document's own
@@ -563,6 +601,174 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
     });
   };
 
+  /**
+   * Take back an auto-verification.
+   *
+   * ⚠ ONE CLICK, AND IT RETURNS THE POINT TO UNRULED — not to "accepted by
+   * hand". Revoking means "I looked and I am not satisfied", so the card must
+   * go back to asking, and the question must stop being approvable until it is
+   * answered. Anything less would let a doubt be recorded as a decision.
+   */
+  const revokePoint = (qn: string, code: string) => {
+    setDirty((s) => ({ ...s, [qn]: true }));
+    setDraft((d) => {
+      const cur = d[qn] ?? { points: {}, lines: {} };
+      const points = { ...cur.points };
+      delete points[code];
+      return { ...d, [qn]: { ...cur, points } };
+    });
+  };
+
+  /**
+   * The suggestion for each unruled line of the CURRENT question.
+   *
+   * ⚠ SCOPED TO ONE QUESTION, WHICH IS WHY j/k STAYS INSTANT. Suggesting for
+   * all 47 blocks on every render would run the matcher over ~68 lines on each
+   * keystroke; a question has a handful. The precedent store arrives with the
+   * page, so there is no round trip either.
+   *
+   * ⚠ AND IT IS A VIEW, NOT A DRAFT. Nothing here touches `draft`, so a
+   * suggested line is unruled to isResolved, to the Approve gate and to Emit.
+   */
+  const suggestions = useMemo(() => {
+    const out = new Map<string, Suggestion>();
+    if (!current) return out;
+    const d = draftFor(current.question.questionNumber);
+    const key = correctOptionOf(current);
+    for (const line of current.question.requiresRuling) {
+      if (d.lines[line.sourceLine]) continue;
+      const s = suggestFor(line.text, data.precedents, key);
+      if (s) out.set(line.sourceLine, s);
+    }
+    return out;
+  }, [current, draftFor, data.precedents]);
+
+  /** Confirm a suggestion — the same write path as pressing its number key. */
+  const acceptSuggestion = useCallback((qn: string, line: ProposedLine, s: Suggestion) => {
+    ruleLine(qn, line, s.verdict as LineKind);
+    if (s.option) setLineOption(qn, line, s.option);
+  }, []);
+
+  // ── the accelerator screens ───────────────────────────────────────────
+  const openBatch = () => {
+    // ⚠ COMPUTED HERE, ON THE CLICK. Never on load: the founder asked for it.
+    setPanel({
+      kind: "batch",
+      plan: planBatch(
+        ordered.map((i) => i.question),
+        Object.fromEntries(ordered.map((i) => [
+          i.question.questionNumber,
+          { lines: draftFor(i.question.questionNumber).lines, approvedAt: data.rulings[i.question.questionNumber]?.approvedAt },
+        ])),
+        data.precedents,
+        (q) => { const it = ordered.find((i) => i.question.questionNumber === q.questionNumber); return it ? correctOptionOf(it) : null; },
+      ),
+    });
+  };
+
+  const openVerify = () => {
+    const eligible: VerifyCandidate[] = [];
+    const excluded: { questionNumber: string; pointCode: string; criterion: string; reason: string }[] = [];
+    for (const item of ordered) {
+      const qn = item.question.questionNumber;
+      if (data.rulings[qn]?.approvedAt) continue;
+      const d = draftFor(qn);
+      for (const pt of item.question.points) {
+        if (d.points[pt.pointCode]) continue;
+        const decision = canAutoVerify(pt.criterion, pt.sourceLine);
+        if (decision.eligible) {
+          eligible.push({ questionNumber: qn, pointCode: pt.pointCode, criterion: pt.criterion, page: pt.page, y: pt.y });
+        } else if (decision.risky) {
+          excluded.push({ questionNumber: qn, pointCode: pt.pointCode, criterion: pt.criterion, reason: decision.reason });
+        }
+      }
+    }
+    setPanel({ kind: "verify", eligible, excluded });
+  };
+
+  const openBulk = () => {
+    const candidates = ordered
+      .filter((item) => {
+        const qn = item.question.questionNumber;
+        if (data.rulings[qn]?.approvedAt) return false;
+        const d = draftFor(qn);
+        const linesDone = item.question.requiresRuling.every((l) => isResolved(d.lines[l.sourceLine]));
+        const pointsDone = item.question.points.length > 0 &&
+          item.question.points.every((pt) => Boolean(d.points[pt.pointCode]));
+        return linesDone && pointsDone;
+      })
+      .map((item) => ({
+        questionNumber: item.question.questionNumber,
+        marks: item.question.marks?.value ?? 0,
+        points: item.question.points.length,
+        lines: item.question.requiresRuling.length,
+      }));
+    setPanel({ kind: "bulk", candidates });
+  };
+
+  const confirmBatch = async (chosen: BatchCandidate[]) => {
+    setPanelBusy(true);
+    const res = await applyBatchAction(data.paperSlug, chosen.map((c) => ({
+      questionNumber: c.questionNumber,
+      sourceLine: c.sourceLine,
+      kind: c.suggestion.verdict as LineKind,
+      option: c.suggestion.option,
+      precedentId: c.suggestion.precedentId,
+    })));
+    setPanelBusy(false);
+    setPanel(null);
+    setNotice({
+      kind: res.ok ? "ok" : "bad",
+      text: res.ok
+        ? `Ruled ${res.applied} line(s)${res.skipped.length ? `; skipped ${res.skipped.length}` : ""}.`
+        : `Applied ${res.applied}; ${res.errors.join(" · ")}`,
+    });
+    if (res.applied > 0) window.location.reload();
+  };
+
+  const confirmVerify = (chosen: VerifyCandidate[]) => {
+    // ⚠ WRITTEN THROUGH rulePoint, the same call the "Accept as-is" button
+    // makes. The only difference on disk is the provenance stamp.
+    for (const c of chosen) {
+      rulePoint(c.questionNumber, c.pointCode, { verdict: "accept", provenance: { method: "exact-match" } });
+    }
+    // ⚠ THE SPOT CHECK IS SET UP AT THE MOMENT OF VERIFYING, not later. A queue
+    // built on demand would be a queue nobody builds.
+    setSpotCheck(spotCheckIndices(chosen.length).map((i) => chosen[i]));
+    setPanel(null);
+    setNotice({
+      kind: "ok",
+      text: `${chosen.length} point(s) verified. ${spotCheckIndices(chosen.length).length} queued for a look at the page — they are unsaved until you press save.`,
+    });
+  };
+
+  const confirmBulk = async (chosen: string[]) => {
+    setPanelBusy(true);
+    const res = await bulkApproveAction(data.paperSlug, chosen, "self");
+    setPanelBusy(false);
+    setPanel(null);
+    setNotice({
+      kind: res.ok ? "ok" : "bad",
+      text: res.ok
+        ? `Approved ${res.approved.length} question(s)${res.refused.length ? `; refused ${res.refused.map((r) => `${r.questionNumber} (${r.reason})`).join(", ")}` : ""}.`
+        : res.errors.join(" · "),
+    });
+    if (res.approved.length > 0) window.location.reload();
+  };
+
+  const confirmBlock = async (input: Parameters<typeof addManualBlockAction>[1]) => {
+    setPanelBusy(true);
+    const res = await addManualBlockAction(data.paperSlug, input);
+    setPanelBusy(false);
+    if (!res.ok) { setNotice({ kind: "bad", text: res.error }); return; }
+    setPanel(null);
+    setNotice({
+      kind: "ok",
+      text: `${res.questionNumber} added. ${res.shortfallAfter === 0 ? "That question now adds up." : `Still ${res.shortfallAfter} short.`}`,
+    });
+    window.location.reload();
+  };
+
   /** Lines this tab has a decision for, saved or not. Drives the editor. */
   const localUnruled = (item: ReviewItem) => {
     const d = draftFor(item.question.questionNumber);
@@ -638,8 +844,8 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
   // page painted and on screen (see the header of this file); a key that could
   // approve would be a key that skips the one check this tool exists to
   // enforce. Cmd/Ctrl+S saves. Approval stays a deliberate click.
-  const keyRef = useRef({ current, ruleLine, save, items, selectQuestion });
-  keyRef.current = { current, ruleLine, save, items, selectQuestion };
+  const keyRef = useRef({ current, ruleLine, save, items, selectQuestion, suggestions, acceptSuggestion, panel });
+  keyRef.current = { current, ruleLine, save, items, selectQuestion, suggestions, acceptSuggestion, panel };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -648,6 +854,16 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
       // the edit-the-criterion textareas are the reason this tool is usable.
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
       if (e.altKey) return;
+
+      // ⚠ A PANEL IS MODAL, SO THE KEYS BELONG TO IT. Without this, pressing 1
+      // while the batch screen is open rules a line on the question hidden
+      // behind it — a ruling made on something the reviewer cannot see, by a
+      // key they pressed for a different screen. j/k would scroll a question
+      // list nobody is looking at, for the same reason.
+      if (keyRef.current.panel) {
+        if (e.key === "Escape") setPanel(null);
+        return;
+      }
 
       const { current: cur, ruleLine: rule, save: doSave, items: list, selectQuestion: pick } =
         keyRef.current;
@@ -669,6 +885,22 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
       if (e.key === "k" || e.key === "ArrowUp") {
         e.preventDefault();
         if (idx > 0) pick(list[idx - 1]);
+        return;
+      }
+
+      // ⚠ ENTER AGREES WITH THE SUGGESTION; IT DOES NOT SKIP THE DECISION.
+      // It fires only where a suggestion is actually on screen, and it writes
+      // exactly what the number key for that verdict would write. A line with
+      // no suggestion does nothing at all, rather than falling through to some
+      // default — which is the whole reason there is no default.
+      if (e.key === "Enter") {
+        const qn = cur.question.questionNumber;
+        const d = draftFor(qn);
+        const next = cur.question.requiresRuling.find(
+          (l) => !d.lines[l.sourceLine] && keyRef.current.suggestions.has(l.sourceLine));
+        if (!next) return;
+        e.preventDefault();
+        keyRef.current.acceptSuggestion(qn, next, keyRef.current.suggestions.get(next.sourceLine)!);
         return;
       }
 
@@ -723,6 +955,42 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
             into the module the seeder reads. Doing it automatically on each
             approval would rewrite that file 47 times during one sitting, and
             the reviewer would never see the refusals that say what is left. */}
+        {/* ⚠ EVERY BUTTON HERE OPENS A QUESTION, NOT AN ACTION. Each computes
+            a list and shows it; nothing is written until the panel's confirm.
+            None of them runs on load. */}
+        {data.canWrite && data.canPersist && (
+          <>
+            <button
+              type="button" onClick={openBatch}
+              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:border-slate-500"
+            >
+              Apply precedents
+            </button>
+            <button
+              type="button" onClick={openVerify}
+              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:border-slate-500"
+            >
+              Verify exact matches
+            </button>
+            <button
+              type="button" onClick={openBulk}
+              className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:border-slate-500"
+            >
+              Bulk approve
+            </button>
+            {data.shortfalls.length > 0 && (
+              <button
+                type="button" onClick={() => setPanel({ kind: "block" })}
+                className="flex items-center gap-1.5 rounded-md border border-amber-400 bg-amber-50 px-3 py-1.5 text-sm text-amber-900 hover:border-amber-600"
+                title={data.shortfalls.map((r) => `Q${r.question} short ${r.shortfall}`).join(", ")}
+              >
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Add missing block ({data.shortfalls.length})
+              </button>
+            )}
+          </>
+        )}
+
         <button
           type="button"
           disabled={!data.canWrite || !data.canPersist || emitting}
@@ -984,6 +1252,17 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
           </div>
 
           {current && (
+            <>
+            <SpotCheckStrip
+              items={spotCheck}
+              done={spotChecked}
+              onLook={(c) => { setSelected(c.questionNumber); goTo(c.page, c.y); }}
+              onSatisfied={(c) => setSpotChecked((x) => ({ ...x, [`${c.questionNumber}::${c.pointCode}`]: true }))}
+              onRevoke={(c) => {
+                revokePoint(c.questionNumber, c.pointCode);
+                setSpotCheck((q) => q.filter((i) => !(i.questionNumber === c.questionNumber && i.pointCode === c.pointCode)));
+              }}
+            />
             <QuestionPanel
               item={current}
               draft={draftFor(current.question.questionNumber)}
@@ -1001,13 +1280,105 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
               onGoTo={goTo}
               onRuleLine={(l, k) => ruleLine(current.question.questionNumber, l, k)}
               onSetOption={(l, o) => setLineOption(current.question.questionNumber, l, o)}
+              suggestions={suggestions}
+              onAcceptSuggestion={(l, sg) => acceptSuggestion(current.question.questionNumber, l, sg)}
+              onRevokePoint={(code) => revokePoint(current.question.questionNumber, code)}
               onEditLine={(l, txt) => editLine(current.question.questionNumber, l, txt)}
               onRulePoint={(code, r) => rulePoint(current.question.questionNumber, code, r)}
               onSave={(approve) => save(current, approve)}
             />
+            </>
           )}
         </div>
       </div>
+
+      {/* ── the accelerator screens ─────────────────────────────────────
+          Rendered last so they overlay everything. Each one is discarded by
+          closing it; nothing is written until its confirm handler runs. */}
+      {panel?.kind === "batch" && (
+        <BatchPanel plan={panel.plan} busy={panelBusy}
+          onCancel={() => setPanel(null)} onConfirm={confirmBatch} />
+      )}
+      {panel?.kind === "verify" && (
+        <VerifyPanel eligible={panel.eligible} excluded={panel.excluded} busy={panelBusy}
+          onCancel={() => setPanel(null)} onConfirm={confirmVerify} />
+      )}
+      {panel?.kind === "bulk" && (
+        <BulkApprovePanel candidates={panel.candidates} busy={panelBusy}
+          onCancel={() => setPanel(null)} onConfirm={confirmBulk} />
+      )}
+      {panel?.kind === "block" && (
+        <ManualBlockPanel shortfalls={data.shortfalls} busy={panelBusy}
+          onCancel={() => setPanel(null)} onSubmit={confirmBlock} />
+      )}
+    </div>
+  );
+}
+
+/**
+ * The spot check: look at the PAGE, not at the text again.
+ *
+ * ⚠ TEXT-VERSUS-TEXT IS THE CHECK THAT CANNOT FAIL HERE. These points were
+ * auto-verified BECAUSE their text matched byte for byte; re-reading that
+ * comparison proves nothing. So each entry drives the evidence viewer to its
+ * own band — the rendered page, pixels — and the founder looks at the ink.
+ * That is the only place a flattened superscript is visible.
+ */
+function SpotCheckStrip({
+  items, done, onLook, onSatisfied, onRevoke,
+}: {
+  items: VerifyCandidate[];
+  done: Record<string, true>;
+  onLook: (c: VerifyCandidate) => void;
+  onSatisfied: (c: VerifyCandidate) => void;
+  onRevoke: (c: VerifyCandidate) => void;
+}) {
+  if (items.length === 0) return null;
+  const remaining = items.filter((c) => !done[`${c.questionNumber}::${c.pointCode}`]);
+  return (
+    <div className="rounded-lg border border-sky-300 bg-sky-50 p-3">
+      <h3 className="font-mono text-[10px] uppercase tracking-[0.2em] text-sky-900">
+        spot check · {remaining.length} of {items.length} left
+      </h3>
+      <p className="mt-1 text-xs text-sky-900">
+        These were verified because the text matched exactly. Check the page itself —
+        the text layer flattens superscripts, so matching text cannot show that.
+      </p>
+      <ul className="mt-2 space-y-1.5">
+        {items.map((c) => {
+          const k = `${c.questionNumber}::${c.pointCode}`;
+          const settled = done[k];
+          return (
+            <li key={k} className={`rounded border bg-white p-2 ${settled ? "border-slate-200 opacity-60" : "border-sky-300"}`}>
+              <button type="button" onClick={() => onLook(c)}
+                className="text-left text-sm text-slate-900 hover:underline">
+                {c.criterion}
+              </button>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                <span className="font-mono text-[10px] text-slate-500">
+                  {c.questionNumber} · {c.pointCode} · p{toViewerPage(c.page)}
+                </span>
+                <button type="button" onClick={() => onLook(c)}
+                  className="rounded border border-slate-300 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-slate-600 hover:bg-slate-100">
+                  show the page
+                </button>
+                {!settled && (
+                  <>
+                    <button type="button" onClick={() => onSatisfied(c)}
+                      className="rounded border border-emerald-400 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-emerald-800 hover:bg-emerald-50">
+                      matches the page
+                    </button>
+                    <button type="button" onClick={() => onRevoke(c)}
+                      className="rounded border border-red-400 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-red-800 hover:bg-red-50">
+                      revoke
+                    </button>
+                  </>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
@@ -1015,6 +1386,7 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
 function QuestionPanel({
   item, draft, painted, panelRef, onSamePage, canWrite, saving,
   onGoTo, onRuleLine, onSetOption, onEditLine, onRulePoint, onSave,
+  suggestions, onAcceptSuggestion, onRevokePoint,
 }: {
   item: ReviewItem;
   draft: Draft;
@@ -1026,6 +1398,9 @@ function QuestionPanel({
   onGoTo: (page: number, y: number | null) => void;
   onRuleLine: (line: ProposedLine, kind: LineKind) => void;
   onSetOption: (line: ProposedLine, option: string) => void;
+  suggestions: Map<string, Suggestion>;
+  onAcceptSuggestion: (line: ProposedLine, s: Suggestion) => void;
+  onRevokePoint: (pointCode: string) => void;
   onEditLine: (line: ProposedLine, text: string) => void;
   onRulePoint: (code: string, ruling: PointRuling) => void;
   onSave: (approve: boolean) => void;
@@ -1107,6 +1482,25 @@ function QuestionPanel({
                 <Choice on={r?.verdict === "accept"} onClick={() => onRulePoint(p.pointCode, { verdict: "accept" })}>
                   Accept as-is
                 </Choice>
+                {/* ⚠ VISUALLY DISTINCT, AND REVOCABLE IN ONE CLICK. An
+                    auto-verified point was accepted because its text matched
+                    the page byte for byte — a narrower claim than "a person
+                    read it" — so it says which it was, and revoking returns it
+                    to UNRULED rather than to accepted-by-hand. */}
+                {r?.provenance?.method === "exact-match" && (
+                  <>
+                    <span className="rounded bg-sky-100 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-sky-900">
+                      exact match
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => onRevokePoint(p.pointCode)}
+                      className="rounded border border-red-300 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-red-800 hover:bg-red-50"
+                    >
+                      revoke
+                    </button>
+                  </>
+                )}
                 <Choice
                   on={r?.verdict === "edit"}
                   onClick={() => onRulePoint(p.pointCode, { verdict: "edit", criterion: p.criterion })}
@@ -1164,6 +1558,33 @@ function QuestionPanel({
                       ⚠ {why}
                     </p>
                   ))}
+                  {/* ⚠ A SUGGESTION, NOT A SELECTION. Nothing below is
+                      pre-picked; this is a separate chip that says what the
+                      precedents think and offers ONE key to agree. Until it is
+                      pressed the line is unruled to isResolved, to the Approve
+                      gate and to Emit — the chip changes what is on screen and
+                      nothing else. */}
+                  {!chosen && suggestions.get(line.sourceLine) && (() => {
+                    const sg = suggestions.get(line.sourceLine)!;
+                    return (
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5 rounded border border-sky-300 bg-sky-50 px-2 py-1.5">
+                        <span className="font-mono text-[10px] uppercase tracking-wider text-sky-900">
+                          suggested
+                        </span>
+                        <span className="rounded bg-white px-1.5 py-0.5 font-mono text-[11px] text-sky-900">
+                          {sg.verdict.replace(/_/g, " ")}{sg.option ? ` · ${sg.option}` : ""}
+                        </span>
+                        <span className="text-[11px] text-sky-900">{sg.reason}</span>
+                        <button
+                          type="button"
+                          onClick={() => onAcceptSuggestion(line, sg)}
+                          className="ml-auto rounded border border-sky-500 bg-white px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-sky-900 hover:bg-sky-100"
+                        >
+                          accept ⏎
+                        </button>
+                      </div>
+                    );
+                  })()}
                   {/* ⚠ NOTHING PRE-SELECTED. See the header. */}
                   <div className="mt-2 flex flex-wrap gap-1">
                     {LINE_CHOICES.map((c) => (

@@ -6,6 +6,7 @@ import { resolve } from "node:path";
 import { getStaffStatus } from "@/lib/admin/staff";
 import { createClient } from "@/lib/supabase/server";
 import { getPaperPublicUrl } from "@/lib/storage/papers";
+import { mergeBatchIntoBook, type Precedent } from "@/lib/exam/precedent";
 import {
   buildReview,
   sortForReview,
@@ -15,7 +16,13 @@ import {
   toFixture,
   emitFixtureSource,
   pointsFullyRuled,
+  isResolved,
+  tariffShortfalls,
+  reconcileTariffs,
+  type LineKind,
+  type LineRuling,
   type ProposalSet,
+  type TariffRow,
   type RulingBook,
   type ReviewItem,
 } from "@/lib/exam/markscheme-proposals";
@@ -66,6 +73,13 @@ export type ReviewData = {
   rulings: RulingBook;
   /** Questions already transcribed by hand and seeded — the accuracy evidence. */
   verifiedQuestions: string[];
+  /**
+   * The precedent store, shipped to the client so suggestions cost no round
+   * trip. ⚠ ADVICE ONLY — see precedent.ts. Nothing here can rule.
+   */
+  precedents: Precedent[];
+  /** Per-question printed total vs extracted total. Empty means it all adds up. */
+  shortfalls: TariffRow[];
   roles: string[];
   canWrite: boolean;
   /** False on a deployed instance: rulings cannot be persisted there. */
@@ -111,6 +125,24 @@ function verifiedFor(set: ProposalSet, rulings: RulingBook): string[] {
     if (pointsFullyRuled(q, rulings[q.questionNumber])) out.add(q.questionNumber);
   }
   return [...out];
+}
+
+/**
+ * Read the precedent store from the repo.
+ *
+ * ⚠ A MISSING OR BROKEN STORE IS NOT A REASON TO FAIL TO RENDER. Precedents
+ * are an accelerator; the surface must still work at manual speed without
+ * them, so this returns [] rather than throwing.
+ */
+async function loadPrecedents(): Promise<Precedent[]> {
+  try {
+    const raw = await readFile(
+      resolve(process.cwd(), "scripts/exam-seed/precedents.json"), "utf8");
+    const parsed = JSON.parse(raw) as { precedents?: Precedent[] };
+    return Array.isArray(parsed.precedents) ? parsed.precedents : [];
+  } catch {
+    return [];
+  }
 }
 
 const canWriteFrom = (roles: readonly string[]) =>
@@ -231,6 +263,8 @@ export async function getMarkSchemeReview(paperSlug: string): Promise<ReviewResu
       approved: countApproved(items),
       total: items.length,
       verifiedQuestions: verifiedFor(file, file.rulings ?? {}),
+      precedents: await loadPrecedents(),
+      shortfalls: tariffShortfalls(file),
       roles: staff.roles,
       canWrite: canWriteFrom(staff.roles),
       canPersist: process.env.NODE_ENV !== "production",
@@ -401,4 +435,314 @@ export async function emitFixture(paperSlug: string): Promise<EmitResultReport> 
     questions: result.questions.length,
     bytes: source.length,
   };
+}
+
+// ============================================================================
+// BATCH APPLY AND BULK APPROVE
+// ============================================================================
+
+/** One line the founder ticked on the batch review screen. */
+export type BatchConfirmation = {
+  questionNumber: string;
+  sourceLine: string;
+  kind: LineKind;
+  option?: string;
+  precedentId?: string;
+};
+
+export type BatchResult = {
+  ok: boolean;
+  applied: number;
+  /** Lines deliberately not written, each with the reason. Never silent. */
+  skipped: { questionNumber: string; sourceLine: string; reason: string }[];
+  errors: string[];
+};
+
+/**
+ * Write a batch of confirmed rulings — through saveRulings, one question at a
+ * time, exactly as manual ruling does.
+ *
+ * ============================================================================
+ * ⚠ THIS FUNCTION IS THE FOUNDER PRESSING CONFIRM. IT IS NOT A DECISION.
+ * ============================================================================
+ * Every entry in `confirmations` is a line they saw in full, beside its target
+ * verdict and its source location, and left ticked. Nothing computes its way
+ * into this list — the planner produces candidates, the screen shows them, and
+ * only what survives the founder's untickings arrives here.
+ *
+ * ⚠ THE SAME CODE PATH, AND THAT IS LOAD-BEARING. saveRulings owns the
+ * revision check, the re-read, the production refusal and the per-question
+ * write. A batch writer that opened the file itself would be a second set of
+ * those guarantees to keep correct, and the first one to drift would do so
+ * silently, on the path that writes the most rows at once.
+ *
+ * ⚠ THREE REFUSALS, EACH RECORDED RATHER THAN SWALLOWED:
+ *   - an APPROVED question is never touched, at all;
+ *   - a line that already carries a ruling is never overwritten;
+ *   - a distractor ruling with no valid option is not written, because
+ *     isResolved would call it unresolved and the founder would be told the
+ *     question was finished when it was not.
+ */
+export async function applyBatch(
+  paperSlug: string,
+  confirmations: readonly BatchConfirmation[],
+): Promise<BatchResult> {
+  const staff = await getStaffStatus();
+  if (!staff.ok || !canWriteFrom(staff.roles)) {
+    return { ok: false, applied: 0, skipped: [], errors: ["Ruling needs a marker or admin role."] };
+  }
+  if (confirmations.length === 0) {
+    return { ok: true, applied: 0, skipped: [], errors: [] };
+  }
+
+  let file: StoredFile;
+  try {
+    file = JSON.parse(await readFile(proposalsPath(paperSlug), "utf8")) as StoredFile;
+  } catch (e) {
+    return { ok: false, applied: 0, skipped: [], errors: [`Could not read the proposals file: ${e instanceof Error ? e.message : String(e)}`] };
+  }
+
+  const byQuestion = new Map<string, BatchConfirmation[]>();
+  for (const c of confirmations) {
+    if (!byQuestion.has(c.questionNumber)) byQuestion.set(c.questionNumber, []);
+    byQuestion.get(c.questionNumber)!.push(c);
+  }
+
+  const skipped: BatchResult["skipped"] = [];
+  const errors: string[] = [];
+  let applied = 0;
+
+  for (const [questionNumber, entries] of byQuestion) {
+    const existing = (file.rulings ?? {})[questionNumber];
+
+    // ⚠ AN APPROVED QUESTION IS FINISHED WORK. Adding to it would change a
+    // mark scheme a human has already signed, without them looking at it.
+    // ⚠ THE DECISION IS mergeBatchIntoBook's, and it is pure and tested. This
+    // function supplies the disk and the session; it does not re-implement the
+    // refusals, because two copies of a rule protecting examiner work is one
+    // copy too many.
+    const merged = mergeBatchIntoBook(existing, entries.map((e) => ({
+      sourceLine: e.sourceLine, kind: e.kind, option: e.option, precedentId: e.precedentId,
+    })), (r) => isResolved(r as LineRuling));
+    const lines = merged.lines as Record<string, LineRuling>;
+    const added = merged.added;
+    for (const s2 of merged.skipped) {
+      skipped.push({ questionNumber, sourceLine: s2.sourceLine, reason: s2.reason });
+    }
+
+    if (added === 0) continue;
+
+    // ⚠ APPROVAL IS NOT CARRIED ALONG. Batch fills in rulings; approving stays
+    // a separate, deliberate act. `existing` is unapproved here by the check
+    // above, so there is nothing to preserve, and nothing is invented.
+    const result = await saveRulings(
+      paperSlug,
+      questionNumber,
+      { points: existing?.points ?? {}, lines },
+      existing?.revision ?? 0,
+    );
+    if (result.ok) applied += added;
+    else errors.push(`${questionNumber}: ${result.error}`);
+  }
+
+  return { ok: errors.length === 0, applied, skipped, errors };
+}
+
+export type BulkApproveResult = {
+  ok: boolean;
+  approved: string[];
+  refused: { questionNumber: string; reason: string }[];
+  errors: string[];
+};
+
+/**
+ * Approve several fully-resolved questions at once, through saveRulings.
+ *
+ * ⚠ IT RE-CHECKS ELIGIBILITY SERVER-SIDE rather than trusting the screen. The
+ * list the founder ticked was computed from a view that may be minutes old; a
+ * question that has since gained an unruled line must not be approved because
+ * a stale tab thought it was finished. Emit gating and the reconciliation
+ * guard are untouched — this only sets the same two fields the single Approve
+ * button sets, and lets saveRulings increment the revision as it always does.
+ */
+export async function bulkApprove(
+  paperSlug: string,
+  questionNumbers: readonly string[],
+  approvedBy: string,
+): Promise<BulkApproveResult> {
+  const staff = await getStaffStatus();
+  if (!staff.ok || !canWriteFrom(staff.roles)) {
+    return { ok: false, approved: [], refused: [], errors: ["Approving needs a marker or admin role."] };
+  }
+  if (!approvedBy) {
+    return { ok: false, approved: [], refused: [], errors: ["An approver is required."] };
+  }
+
+  let file: StoredFile;
+  try {
+    file = JSON.parse(await readFile(proposalsPath(paperSlug), "utf8")) as StoredFile;
+  } catch (e) {
+    return { ok: false, approved: [], refused: [], errors: [`Could not read the proposals file: ${e instanceof Error ? e.message : String(e)}`] };
+  }
+
+  const approved: string[] = [];
+  const refused: BulkApproveResult["refused"] = [];
+  const errors: string[] = [];
+
+  for (const questionNumber of questionNumbers) {
+    const question = file.questions.find((q) => q.questionNumber === questionNumber);
+    if (!question) {
+      refused.push({ questionNumber, reason: "not in this proposal set" });
+      continue;
+    }
+    const book = (file.rulings ?? {})[questionNumber];
+    if (book?.approvedAt) {
+      refused.push({ questionNumber, reason: "already approved — left as it was" });
+      continue;
+    }
+
+    // ⚠ THE SAME TWO CONDITIONS THE SINGLE APPROVE BUTTON ENFORCES, read from
+    // disk. Every yellow line resolved, and every white card explicitly ruled.
+    const unruled = question.requiresRuling.filter((l) => !isResolved(book?.lines?.[l.sourceLine]));
+    if (unruled.length > 0) {
+      refused.push({ questionNumber, reason: `${unruled.length} line(s) still need a ruling` });
+      continue;
+    }
+    if (!pointsFullyRuled(question, book)) {
+      refused.push({ questionNumber, reason: "a marking point has not been ruled on" });
+      continue;
+    }
+
+    const result = await saveRulings(
+      paperSlug,
+      questionNumber,
+      {
+        points: book?.points ?? {},
+        lines: book?.lines ?? {},
+        approvedAt: new Date().toISOString(),
+        approvedBy,
+      },
+      book?.revision ?? 0,
+    );
+    if (result.ok) approved.push(questionNumber);
+    else errors.push(`${questionNumber}: ${result.error}`);
+  }
+
+  return { ok: errors.length === 0, approved, refused, errors };
+}
+
+// ============================================================================
+// MANUAL BLOCK ENTRY
+// ============================================================================
+
+export type ManualBlockInput = {
+  questionNumber: string;
+  page: number;
+  marks: number;
+  points: { pointCode: string; criterion: string }[];
+  guidance: string[];
+};
+
+export type ManualBlockResult =
+  | { ok: true; questionNumber: string; shortfallAfter: number }
+  | { ok: false; error: string };
+
+/**
+ * Add a block the extractor reported but could not propose.
+ *
+ * ============================================================================
+ * ⚠ 21(b)(i): THE MARKS EDEXCEL'S TYPESETTING LOST
+ * ============================================================================
+ * The block is in the published mark scheme and is worth 2. The extractor sees
+ * that it is missing — the printed total says 13 and the blocks add to 11 —
+ * and refuses to invent it, which is correct. So a person reads it off the page
+ * and types it in, and the block then goes through the ordinary white/yellow/
+ * approve flow like any other: nothing here approves anything.
+ *
+ * ⚠ derivedFrom IS "hand-transcribed", AND THAT IS THE WHOLE PROVENANCE STORY.
+ * Downstream, a mark a person read off the page counts exactly like one a
+ * parser found — it has to, or the reconciliation guard could never close —
+ * but WHERE IT CAME FROM stays on the record permanently. A block with no
+ * source line and no page geometry that claimed to be extracted would be a
+ * fabrication with a parser's credibility.
+ *
+ * ⚠ IT REFUSES TO OVERWRITE. If a block with this question number already
+ * exists — because the extractor was re-run, or because it was added twice —
+ * this stops. Replacing an existing block would silently discard whatever
+ * rulings had been made against it.
+ */
+export async function addManualBlock(
+  paperSlug: string,
+  input: ManualBlockInput,
+): Promise<ManualBlockResult> {
+  const staff = await getStaffStatus();
+  if (!staff.ok || !canWriteFrom(staff.roles)) {
+    return { ok: false, error: "Adding a block needs a marker or admin role." };
+  }
+  if (process.env.NODE_ENV === "production") {
+    return { ok: false, error: "This writes to the repository working tree. Run the tool locally." };
+  }
+
+  const path = proposalsPath(paperSlug);
+  let file: StoredFile;
+  try {
+    file = JSON.parse(await readFile(path, "utf8")) as StoredFile;
+  } catch (e) {
+    return { ok: false, error: `Could not read the proposals file: ${e instanceof Error ? e.message : String(e)}` };
+  }
+
+  const qn = input.questionNumber.trim();
+  if (!qn) return { ok: false, error: "A question number is required." };
+  if (file.questions.some((q) => q.questionNumber === qn)) {
+    return { ok: false, error: `${qn} already exists in this proposal set. Refusing to replace it.` };
+  }
+  if (!Number.isInteger(input.marks) || input.marks <= 0) {
+    return { ok: false, error: "The tariff must be a positive whole number." };
+  }
+  const points = input.points.filter((p) => p.criterion.trim());
+  if (points.length === 0) {
+    return { ok: false, error: "At least one marking point is required." };
+  }
+
+  const HAND = "hand-transcribed";
+  const stamp = (sourceLine: string) => ({
+    page: input.page,
+    y: 0,
+    sourceLine,
+    derivedFrom: HAND,
+    // ⚠ CONFIDENCE 1, HONESTLY. A human read this off the page; the number
+    // means "how sure is the EXTRACTOR", and no extractor was involved.
+    confidence: 1,
+  });
+
+  file.questions.push({
+    questionNumber: qn,
+    page: input.page,
+    marks: { value: input.marks, ...stamp(`${qn} — transcribed by hand (${input.marks} marks)`) },
+    points: points.map((p, i) => ({
+      ...stamp(p.criterion),
+      pointCode: p.pointCode.trim() || `M${i + 1}`,
+      criterion: p.criterion.trim(),
+      marks: null,
+      route: 1,
+      methodBlock: null,
+    })),
+    accept: [],
+    reject: [],
+    guidance: input.guidance.filter((g) => g.trim()).map((g) => ({ ...stamp(g), text: g.trim() })),
+    // ⚠ NO YELLOW LINES. A person typing a block in has already made every
+    // classification decision by choosing which field to type it into; asking
+    // them to then rule on their own typing would be theatre.
+    requiresRuling: [],
+    marksAvailable: input.marks,
+  });
+
+  try {
+    await writeFile(path, JSON.stringify(file, null, 2) + "\n", "utf8");
+  } catch (e) {
+    return { ok: false, error: `Could not write the proposals file: ${e instanceof Error ? e.message : String(e)}` };
+  }
+
+  const row = tariffShortfalls(file).find((r) => r.question === qn.replace(/\D.*$/, ""));
+  return { ok: true, questionNumber: qn, shortfallAfter: row?.shortfall ?? 0 };
 }

@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "note": "Examiner precedents. A repo file on purpose: every rule that can pre-fill a ruling must be readable, diffable and arguable in the planning chat, which a database row is not. ORDER MATTERS — most specific first. Matching stops at the first hit, so P1 must precede any general rule, or 'A is incorrect because...' reads as a plain reject. Nothing here writes a ruling; a precedent only ever produces a suggestion the founder confirms.",
+  "precedents": [
+    {
+      "id": "P1",
+      "title": "Wrong-option explanation",
+      "rationale": "Pearson prints, under each MCQ, why each wrong option is wrong. It is feedback for the student who picked that option and it is not marking content: it awards nothing, rejects nothing, and must never reach the mark scheme. The option letter is read by distractor.ts, which refuses rather than guesses.",
+      "pattern": "^\\s*(?:option\\s+)?[A-H]\\b[\\s.,…:;–—-]*(?:is|are)\\s+(?:incorrect|wrong|not\\s+correct)\\b",
+      "verdict": "distractor_feedback",
+      "needsOption": true,
+      "source": "canon"
+    },
+    {
+      "id": "P3",
+      "title": "Transferred-error scope",
+      "rationale": "TE and ecf lines say HOW to carry an error forward — which marks survive a wrong earlier answer. That qualifies the marking of points that already exist; it never adds one. Sits above P2 and the verb rules because 'Allow TE throughout' opens with Allow and would otherwise read as an Accept.",
+      "pattern": "\\bTE\\b|\\becf\\b|\\btransferred error\\b",
+      "verdict": "guidance",
+      "source": "canon"
+    },
+    {
+      "id": "P2",
+      "title": "Significant-figure scope",
+      "rationale": "An SF conditional is a permission and a condition in one sentence — 'Ignore SF except 1 SF' means do not penalise significant figures unless the answer is given to one. It scopes how an existing point is marked, so it is guidance, not a criterion and not an accept.",
+      "pattern": "\\b(?:ignore|except|allow|penalis|round)\\w*\\b[^.]*\\bSF\\b|\\bSF\\b[^.]*\\bexcept\\b|\\bsignificant figures?\\b",
+      "verdict": "guidance",
+      "source": "canon"
+    },
+    {
+      "id": "P4",
+      "title": "Tariff override",
+      "rationale": "'Correct answer with no working scores (4)' conditions a whole tariff: it says what a bare answer earns without changing what the points are. Recording it as a criterion would add a marking point and change what a student can score, which is precisely what it must not do.",
+      "pattern": "\\bcorrect answer\\b[^.]*\\bscores?\\b|\\bno working\\b[^.]*\\bscores?\\b|\\bscores?\\s*\\(?\\d+\\)?\\s*$",
+      "verdict": "guidance",
+      "source": "canon"
+    }
+  ]
+}

@@ -4357,6 +4357,276 @@
       "approvedAt": "2026-08-17T13:55:16.645Z",
       "approvedBy": "self",
       "revision": 5
+    },
+    "11": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "A is incorrect because this is half the volume of butane that could be burned in 130 cm3 oxygen": {
+          "kind": "distractor_feedback",
+          "option": "A"
+        },
+        "B is incorrect because this is three quarters of the volume of butane that could be burned in 130 cm3 oxygen": {
+          "kind": "distractor_feedback",
+          "option": "B"
+        },
+        "D is incorrect because this is double the volume of butane that could be burned in 130 cm3 oxygen": {
+          "kind": "distractor_feedback",
+          "option": "D"
+        }
+      },
+      "approvedAt": "2026-08-17T14:13:15.638Z",
+      "approvedBy": "self",
+      "revision": 1
+    },
+    "12": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "B is incorrect because there is too much hydrogen in the empirical formula": {
+          "kind": "distractor_feedback",
+          "option": "B"
+        },
+        "C is incorrect because there is too much carbon in the empirical formula": {
+          "kind": "distractor_feedback",
+          "option": "C"
+        },
+        "D is incorrect because there is too much oxygen in the empirical formula": {
+          "kind": "distractor_feedback",
+          "option": "D"
+        }
+      },
+      "approvedAt": "2026-08-17T14:13:35.935Z",
+      "approvedBy": "self",
+      "revision": 1
+    },
+    "13": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "A is incorrect because the alkane has not been burned": {
+          "kind": "distractor_feedback",
+          "option": "A"
+        },
+        "B is incorrect because the alkane has not been hydrolysed": {
+          "kind": "distractor_feedback",
+          "option": "B"
+        },
+        "C is incorrect because the alkane has not been neutralised": {
+          "kind": "distractor_feedback",
+          "option": "C"
+        }
+      },
+      "approvedAt": "2026-08-17T14:13:47.884Z",
+      "approvedBy": "self",
+      "revision": 1
+    },
+    "15": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "A is incorrect because 2(C2H4)+2(C3H6)+(C3H8) C8H18": {
+          "kind": "distractor_feedback",
+          "option": "A"
+        },
+        "B is incorrect because 2(C2H4)+2(C3H6)+(C3H8) ≠ C10H22": {
+          "kind": "distractor_feedback",
+          "option": "B"
+        },
+        "C is incorrect because 2(C2H4)+2(C3H6)+(C3H8) C11H24": {
+          "kind": "distractor_feedback",
+          "option": "C"
+        }
+      },
+      "approvedAt": "2026-08-17T14:15:00.962Z",
+      "approvedBy": "self",
+      "revision": 1
+    },
+    "16": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "A is incorrect because moles of methane correctly calculated multiplied by L": {
+          "kind": "distractor_feedback",
+          "option": "A"
+        },
+        "B is incorrect because moles of methane incorrectly calculated and then multiplied by L": {
+          "kind": "distractor_feedback",
+          "option": "B"
+        },
+        "D is incorrect because moles of methane incorrectly calculated and then multiplied by 4 and L": {
+          "kind": "distractor_feedback",
+          "option": "D"
+        }
+      },
+      "approvedAt": "2026-08-17T14:23:36.523Z",
+      "approvedBy": "self",
+      "revision": 2
+    },
+    "17": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "B is incorrect because the first structure is C5H12 and the second C6H14": {
+          "kind": "distractor_feedback",
+          "option": "B"
+        },
+        "C is incorrect because the first structure is C5H12 and the second C6H14": {
+          "kind": "distractor_feedback",
+          "option": "C"
+        },
+        "D is incorrect because the first structure is C5H12 and the second C4H10": {
+          "kind": "distractor_feedback",
+          "option": "D"
+        }
+      },
+      "approvedAt": "2026-08-17T14:23:51.760Z",
+      "approvedBy": "self",
+      "revision": 1
+    },
+    "18": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "A is incorrect because this molecule has two methyl groups at one end of the carbon to carbon double bond": {
+          "kind": "distractor_feedback",
+          "option": "A"
+        },
+        "B is incorrect because this molecule has two methyl groups at one end of the carbon to carbon double bond": {
+          "kind": "distractor_feedback",
+          "option": "B"
+        },
+        "C is incorrect because this molecule has two methyl groups at each end of the carbon to carbon double bond": {
+          "kind": "distractor_feedback",
+          "option": "C"
+        }
+      },
+      "approvedAt": "2026-08-17T14:24:06.118Z",
+      "approvedBy": "self",
+      "revision": 1
+    },
+    "19": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "A is incorrect because the arrow goes from the carbocation to the bromide ion": {
+          "kind": "distractor_feedback",
+          "option": "A"
+        },
+        "C is incorrect because the arrow goes from Hδ+ to the double bond": {
+          "kind": "distractor_feedback",
+          "option": "C"
+        },
+        "D is incorrect because the bromide ion has a partial negative charge": {
+          "kind": "distractor_feedback",
+          "option": "D"
+        }
+      },
+      "approvedAt": "2026-08-17T14:24:20.606Z",
+      "approvedBy": "self",
+      "revision": 1
+    },
+    "14(a)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "B is incorrect because hydrogen peroxide is not concentrated enough to be toxic, nor is it flammable": {
+          "kind": "distractor_feedback",
+          "option": "B"
+        },
+        "C is incorrect because hydrogen peroxide is not flammable": {
+          "kind": "distractor_feedback",
+          "option": "C"
+        },
+        "D is incorrect because hydrogen peroxide is not concentrated enough to be toxic": {
+          "kind": "distractor_feedback",
+          "option": "D"
+        }
+      },
+      "approvedAt": "2026-08-17T14:14:30.874Z",
+      "approvedBy": "self",
+      "revision": 1
+    },
+    "14(b)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "A is incorrect because using an alternative method that involves less hazardous materials would not work": {
+          "kind": "distractor_feedback",
+          "option": "A"
+        },
+        "B is incorrect because working on a smaller scale has not been included": {
+          "kind": "distractor_feedback",
+          "option": "B"
+        },
+        "D is incorrect because using an alternative method that involves less hazardous materials is not appropriate": {
+          "kind": "distractor_feedback",
+          "option": "D"
+        }
+      },
+      "approvedAt": "2026-08-17T14:14:45.192Z",
+      "approvedBy": "self",
+      "revision": 1
+    },
+    "20(a)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        },
+        "M2": {
+          "verdict": "accept"
+        },
+        "M3": {
+          "verdict": "accept"
+        },
+        "M4": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "Ignore SF except 1 SF": {
+          "kind": "guidance"
+        },
+        "TE on M1 and M2 but no TE from M3 to M4": {
+          "kind": "guidance"
+        },
+        "Correct answer with no working scores (4)": {
+          "kind": "guidance"
+        }
+      },
+      "approvedAt": "2026-08-17T15:58:34.882Z",
+      "approvedBy": "self",
+      "revision": 1
     }
   }
 }
