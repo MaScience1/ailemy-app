@@ -5,8 +5,16 @@ import { revalidatePath } from "next/cache";
 import {
   saveRulings,
   emitFixture,
+  applyBatch,
+  bulkApprove,
+  addManualBlock,
   type SaveResult,
   type EmitResultReport,
+  type BatchConfirmation,
+  type BatchResult,
+  type BulkApproveResult,
+  type ManualBlockInput,
+  type ManualBlockResult,
 } from "@/lib/exam/markscheme-review";
 import type { QuestionRulings } from "@/lib/exam/markscheme-proposals";
 
@@ -56,4 +64,55 @@ export async function saveQuestionRulingsAction(
 export async function emitFixtureAction(paperSlug: string): Promise<EmitResultReport> {
   if (!paperSlug) return { ok: false, error: "Missing paper." };
   return emitFixture(paperSlug);
+}
+
+/**
+ * ⚠ EVERY ACTION BELOW RE-CHECKS THE ROLE inside its library function, for the
+ * same reason saveQuestionRulingsAction does: a server action is a public
+ * endpoint, and the page having rendered says nothing about who is calling now.
+ */
+
+/**
+ * Write the batch the founder confirmed.
+ *
+ * ⚠ THE ARGUMENT IS A LIST OF TICKED LINES, NOT AN INSTRUCTION TO MATCH. The
+ * matching happened in the browser, the founder saw every line beside its
+ * verdict and source, and only what survived their untickings arrives here.
+ * applyBatch re-checks each one against the file on disk anyway.
+ */
+export async function applyBatchAction(
+  paperSlug: string,
+  confirmations: BatchConfirmation[],
+): Promise<BatchResult> {
+  if (!paperSlug) {
+    return { ok: false, applied: 0, skipped: [], errors: ["Missing paper."] };
+  }
+  const result = await applyBatch(paperSlug, confirmations);
+  if (result.applied > 0) revalidatePath(`/admin/papers/${paperSlug}/markscheme`);
+  return result;
+}
+
+/** Approve the questions the founder ticked. Eligibility is re-checked on disk. */
+export async function bulkApproveAction(
+  paperSlug: string,
+  questionNumbers: string[],
+  approvedBy: string,
+): Promise<BulkApproveResult> {
+  if (!paperSlug) {
+    return { ok: false, approved: [], refused: [], errors: ["Missing paper."] };
+  }
+  const result = await bulkApprove(paperSlug, questionNumbers, approvedBy);
+  if (result.approved.length > 0) revalidatePath(`/admin/papers/${paperSlug}/markscheme`);
+  return result;
+}
+
+/** Add a block the extractor reported but could not propose — 21(b)(i). */
+export async function addManualBlockAction(
+  paperSlug: string,
+  input: ManualBlockInput,
+): Promise<ManualBlockResult> {
+  if (!paperSlug) return { ok: false, error: "Missing paper." };
+  const result = await addManualBlock(paperSlug, input);
+  if (result.ok) revalidatePath(`/admin/papers/${paperSlug}/markscheme`);
+  return result;
 }

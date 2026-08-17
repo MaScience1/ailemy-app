@@ -39,6 +39,8 @@ import {
   pointsFullyRuled,
   toFixture,
   buildReview,
+  reconcileTariffs,
+  tariffShortfalls,
   type ProposalSet,
   type RulingBook,
 } from "../../../src/lib/exam/markscheme-proposals.ts";
@@ -404,6 +406,74 @@ console.log("\n── RETRODICTION AGAINST THE FOUNDER'S OWN RULINGS ──");
   const kinds = [...new Set(rows.map((r) => r.actual))];
   t("COVERAGE CAVEAT: the ruled corpus is still a single verdict kind",
     kinds.length === 1 && kinds[0] === "distractor_feedback", kinds);
+}
+
+console.log("\n── THE MARKS EDEXCEL'S TYPESETTING LOST ──");
+{
+  // ⚠ DERIVED FROM THE ARTEFACT. The blocks all look fine individually; only
+  // the arithmetic knows one is missing.
+  const short = tariffShortfalls(file);
+  t("exactly one question does not add up", short.length === 1, short.map((r) => r.question));
+  const q21 = short[0];
+  t("it is Q21", q21.question === "21", q21.question);
+  t("the paper prints 13", q21.printed === 13, q21.printed);
+  t("the blocks add to 11", q21.extracted === 11, q21.extracted);
+  t("so 2 marks are missing", q21.shortfall === 2, q21.shortfall);
+  t("21(b)(i) is genuinely absent",
+    !file.questions.some((q) => q.questionNumber === "21(b)(i)"));
+  t("...while its siblings are present",
+    ["21(a)", "21(b)(ii)", "21(c)(i)"].every((n) => file.questions.some((q) => q.questionNumber === n)));
+
+  // ⚠ THE GUARD MUST RECOGNISE A HAND-TRANSCRIBED BLOCK CLOSING THE GAP. A
+  // mark a person read off the page is not worth less than one a parser found.
+  const withBlock: ProposalSet = {
+    ...file,
+    questions: [...file.questions, {
+      questionNumber: "21(b)(i)",
+      page: 19,
+      marks: { value: 2, page: 19, y: 0, sourceLine: "21(b)(i) — transcribed by hand (2 marks)", derivedFrom: "hand-transcribed", confidence: 1 },
+      points: [{ page: 19, y: 0, sourceLine: "M1", derivedFrom: "hand-transcribed", confidence: 1,
+                 pointCode: "M1", criterion: "hand-entered criterion", marks: null, route: 1, methodBlock: null }],
+      accept: [], reject: [], guidance: [], requiresRuling: [], marksAvailable: 2,
+    }],
+  };
+  const after = reconcileTariffs(withBlock).find((r) => r.question === "21")!;
+  t("adding the block returns Q21 to 13", after.extracted === 13, after.extracted);
+  t("...and the shortfall is gone", after.shortfall === 0, after.shortfall);
+  t("...so the whole paper reconciles", tariffShortfalls(withBlock).length === 0,
+    tariffShortfalls(withBlock).map((r) => r.question));
+  t("the added block is marked hand-transcribed in the reconciliation",
+    after.blocks.some((b) => b.questionNumber === "21(b)(i)" && b.handTranscribed));
+  t("...and the extracted blocks are NOT",
+    after.blocks.filter((b) => b.questionNumber !== "21(b)(i)").every((b) => !b.handTranscribed));
+
+  // ⚠ ANTI-VACUITY. A reconciler that always said "fine" would pass the
+  // after-check above and miss the before-check entirely.
+  t("ANTI-VACUITY — the reconciler reports a shortfall before the block is added",
+    tariffShortfalls(file).length === 1 && tariffShortfalls(withBlock).length === 0);
+
+  // ⚠ A WRONG TARIFF IS CAUGHT TOO, in the other direction.
+  const tooMany: ProposalSet = {
+    ...file,
+    questions: [...file.questions, { ...withBlock.questions[withBlock.questions.length - 1],
+      marks: { ...withBlock.questions[withBlock.questions.length - 1].marks!, value: 5 } }],
+  };
+  const over = reconcileTariffs(tooMany).find((r) => r.question === "21")!;
+  t("a block with too big a tariff overshoots and is reported",
+    over.shortfall === -3, over.shortfall);
+
+  // Every other question already reconciles, which is why one shortfall stands out.
+  const rows = reconcileTariffs(file);
+  // ⚠ ONE ROW PER PRINTED TOTAL THE EXTRACTOR FOUND — derived, not guessed. It
+  // found four "Total for Question N" lines, so four questions can be checked
+  // at all. That is itself worth stating: reconciliation covers the questions
+  // whose totals were read, and says nothing about the rest.
+  t("there is one row per printed total", rows.length === file.questionTotals.length, rows.length);
+  t("more than one question is being checked", rows.length > 1, rows.length);
+  t("every row carries its contributing blocks", rows.every((r) => Array.isArray(r.blocks)));
+  t("the questions NOT covered are visible as an absence, not a pass",
+    file.questions.length > rows.length,
+    { blocks: file.questions.length, checkable: rows.length });
 }
 
 console.log(`\n${fail === 0 ? "✓ ALL" : "✗"} ${pass} passed, ${fail} failed`);

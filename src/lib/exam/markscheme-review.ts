@@ -6,7 +6,7 @@ import { resolve } from "node:path";
 import { getStaffStatus } from "@/lib/admin/staff";
 import { createClient } from "@/lib/supabase/server";
 import { getPaperPublicUrl } from "@/lib/storage/papers";
-import { mergeBatchIntoBook } from "@/lib/exam/precedent";
+import { mergeBatchIntoBook, type Precedent } from "@/lib/exam/precedent";
 import {
   buildReview,
   sortForReview,
@@ -17,9 +17,12 @@ import {
   emitFixtureSource,
   pointsFullyRuled,
   isResolved,
+  tariffShortfalls,
+  reconcileTariffs,
   type LineKind,
   type LineRuling,
   type ProposalSet,
+  type TariffRow,
   type RulingBook,
   type ReviewItem,
 } from "@/lib/exam/markscheme-proposals";
@@ -70,6 +73,13 @@ export type ReviewData = {
   rulings: RulingBook;
   /** Questions already transcribed by hand and seeded — the accuracy evidence. */
   verifiedQuestions: string[];
+  /**
+   * The precedent store, shipped to the client so suggestions cost no round
+   * trip. ⚠ ADVICE ONLY — see precedent.ts. Nothing here can rule.
+   */
+  precedents: Precedent[];
+  /** Per-question printed total vs extracted total. Empty means it all adds up. */
+  shortfalls: TariffRow[];
   roles: string[];
   canWrite: boolean;
   /** False on a deployed instance: rulings cannot be persisted there. */
@@ -115,6 +125,24 @@ function verifiedFor(set: ProposalSet, rulings: RulingBook): string[] {
     if (pointsFullyRuled(q, rulings[q.questionNumber])) out.add(q.questionNumber);
   }
   return [...out];
+}
+
+/**
+ * Read the precedent store from the repo.
+ *
+ * ⚠ A MISSING OR BROKEN STORE IS NOT A REASON TO FAIL TO RENDER. Precedents
+ * are an accelerator; the surface must still work at manual speed without
+ * them, so this returns [] rather than throwing.
+ */
+async function loadPrecedents(): Promise<Precedent[]> {
+  try {
+    const raw = await readFile(
+      resolve(process.cwd(), "scripts/exam-seed/precedents.json"), "utf8");
+    const parsed = JSON.parse(raw) as { precedents?: Precedent[] };
+    return Array.isArray(parsed.precedents) ? parsed.precedents : [];
+  } catch {
+    return [];
+  }
 }
 
 const canWriteFrom = (roles: readonly string[]) =>
@@ -235,6 +263,8 @@ export async function getMarkSchemeReview(paperSlug: string): Promise<ReviewResu
       approved: countApproved(items),
       total: items.length,
       verifiedQuestions: verifiedFor(file, file.rulings ?? {}),
+      precedents: await loadPrecedents(),
+      shortfalls: tariffShortfalls(file),
       roles: staff.roles,
       canWrite: canWriteFrom(staff.roles),
       canPersist: process.env.NODE_ENV !== "production",
@@ -599,4 +629,120 @@ export async function bulkApprove(
   }
 
   return { ok: errors.length === 0, approved, refused, errors };
+}
+
+// ============================================================================
+// MANUAL BLOCK ENTRY
+// ============================================================================
+
+export type ManualBlockInput = {
+  questionNumber: string;
+  page: number;
+  marks: number;
+  points: { pointCode: string; criterion: string }[];
+  guidance: string[];
+};
+
+export type ManualBlockResult =
+  | { ok: true; questionNumber: string; shortfallAfter: number }
+  | { ok: false; error: string };
+
+/**
+ * Add a block the extractor reported but could not propose.
+ *
+ * ============================================================================
+ * ⚠ 21(b)(i): THE MARKS EDEXCEL'S TYPESETTING LOST
+ * ============================================================================
+ * The block is in the published mark scheme and is worth 2. The extractor sees
+ * that it is missing — the printed total says 13 and the blocks add to 11 —
+ * and refuses to invent it, which is correct. So a person reads it off the page
+ * and types it in, and the block then goes through the ordinary white/yellow/
+ * approve flow like any other: nothing here approves anything.
+ *
+ * ⚠ derivedFrom IS "hand-transcribed", AND THAT IS THE WHOLE PROVENANCE STORY.
+ * Downstream, a mark a person read off the page counts exactly like one a
+ * parser found — it has to, or the reconciliation guard could never close —
+ * but WHERE IT CAME FROM stays on the record permanently. A block with no
+ * source line and no page geometry that claimed to be extracted would be a
+ * fabrication with a parser's credibility.
+ *
+ * ⚠ IT REFUSES TO OVERWRITE. If a block with this question number already
+ * exists — because the extractor was re-run, or because it was added twice —
+ * this stops. Replacing an existing block would silently discard whatever
+ * rulings had been made against it.
+ */
+export async function addManualBlock(
+  paperSlug: string,
+  input: ManualBlockInput,
+): Promise<ManualBlockResult> {
+  const staff = await getStaffStatus();
+  if (!staff.ok || !canWriteFrom(staff.roles)) {
+    return { ok: false, error: "Adding a block needs a marker or admin role." };
+  }
+  if (process.env.NODE_ENV === "production") {
+    return { ok: false, error: "This writes to the repository working tree. Run the tool locally." };
+  }
+
+  const path = proposalsPath(paperSlug);
+  let file: StoredFile;
+  try {
+    file = JSON.parse(await readFile(path, "utf8")) as StoredFile;
+  } catch (e) {
+    return { ok: false, error: `Could not read the proposals file: ${e instanceof Error ? e.message : String(e)}` };
+  }
+
+  const qn = input.questionNumber.trim();
+  if (!qn) return { ok: false, error: "A question number is required." };
+  if (file.questions.some((q) => q.questionNumber === qn)) {
+    return { ok: false, error: `${qn} already exists in this proposal set. Refusing to replace it.` };
+  }
+  if (!Number.isInteger(input.marks) || input.marks <= 0) {
+    return { ok: false, error: "The tariff must be a positive whole number." };
+  }
+  const points = input.points.filter((p) => p.criterion.trim());
+  if (points.length === 0) {
+    return { ok: false, error: "At least one marking point is required." };
+  }
+
+  const HAND = "hand-transcribed";
+  const stamp = (sourceLine: string) => ({
+    page: input.page,
+    y: 0,
+    sourceLine,
+    derivedFrom: HAND,
+    // ⚠ CONFIDENCE 1, HONESTLY. A human read this off the page; the number
+    // means "how sure is the EXTRACTOR", and no extractor was involved.
+    confidence: 1,
+  });
+
+  file.questions.push({
+    questionNumber: qn,
+    page: input.page,
+    marks: { value: input.marks, ...stamp(`${qn} — transcribed by hand (${input.marks} marks)`) },
+    points: points.map((p, i) => ({
+      ...stamp(p.criterion),
+      pointCode: p.pointCode.trim() || `M${i + 1}`,
+      criterion: p.criterion.trim(),
+      marks: null,
+      route: 1,
+      methodBlock: null,
+    })),
+    accept: [],
+    reject: [],
+    guidance: input.guidance.filter((g) => g.trim()).map((g) => ({ ...stamp(g), text: g.trim() })),
+    // ⚠ NO YELLOW LINES. A person typing a block in has already made every
+    // classification decision by choosing which field to type it into; asking
+    // them to then rule on their own typing would be theatre.
+    requiresRuling: [],
+    marksAvailable: input.marks,
+  });
+
+  try {
+    await writeFile(path, JSON.stringify(file, null, 2) + "\n", "utf8");
+  } catch (e) {
+    return { ok: false, error: `Could not write the proposals file: ${e instanceof Error ? e.message : String(e)}` };
+  }
+
+  const row = tariffShortfalls(file).find((r) => r.question === qn.replace(/\D.*$/, ""));
+  return { ok: true, questionNumber: qn, shortfallAfter: row?.shortfall ?? 0 };
 }

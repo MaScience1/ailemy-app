@@ -171,10 +171,22 @@ export type LineRuling = {
   provenance?: { method: "manual" | "batch"; precedentId?: string };
 };
 
-export type PointRuling =
+export type PointRuling = (
   | { verdict: "accept" }
   | { verdict: "edit"; criterion: string; pointCode?: string; marks?: number }
-  | { verdict: "reject"; why: string };
+  | { verdict: "reject"; why: string }
+) & {
+  /**
+   * How this point came to be ruled.
+   *
+   * ⚠ "exact-match" MEANS THE FOUNDER CONFIRMED A SCREEN OF THEM, not that a
+   * machine verified anything on its own. It is recorded so an auto-verified
+   * card can be told apart at a glance, revoked in one click, and sampled into
+   * the spot-check queue — none of which is possible if the route is forgotten
+   * the moment the ruling is written.
+   */
+  provenance?: { method: "manual" | "exact-match" };
+};
 
 export type QuestionRulings = {
   /** Keyed by pointCode. */
@@ -595,4 +607,69 @@ export function emitFixtureSource(result: EmitResult, paperSlug: string, capture
     ...blocks,
     ``,
   ].join("\n");
+}
+
+// ============================================================================
+// TARIFF RECONCILIATION
+// ============================================================================
+
+export type TariffRow = {
+  /** The top-level question number, as the paper prints its total: "21". */
+  question: string;
+  /** What the paper says the question is worth. */
+  printed: number;
+  /** What the extracted blocks actually add up to. */
+  extracted: number;
+  /** printed - extracted. Positive means marks are MISSING from the artefact. */
+  shortfall: number;
+  /** Which blocks contributed, so a shortfall can be chased to a part. */
+  blocks: { questionNumber: string; marks: number; handTranscribed: boolean }[];
+};
+
+/**
+ * Compare each question's printed total against the sum of its blocks.
+ *
+ * ⚠ THIS IS THE CHECK THAT CATCHES A SILENTLY DROPPED BLOCK. Edexcel's
+ * typesetting lost 21(b)(i) — the extractor reports it and cannot propose it —
+ * and the artefact still looked complete: 21(a), 21(b)(ii), 21(c)(i-iii) all
+ * present and plausible, adding to 11 against a printed 13. Nothing about the
+ * blocks themselves is wrong. Only the arithmetic knows.
+ *
+ * A hand-transcribed block counts exactly like an extracted one, because a
+ * mark a person read off the page is not worth less than one a parser did.
+ * That is what lets a manual entry close the gap and the guard agree.
+ */
+export function reconcileTariffs(set: ProposalSet): TariffRow[] {
+  const top = (qn: string): string => {
+    const m = /^\s*(\d+)/.exec(qn);
+    return m ? m[1] : qn.trim();
+  };
+
+  const sums = new Map<string, TariffRow["blocks"]>();
+  for (const q of set.questions) {
+    const key = top(q.questionNumber);
+    if (!sums.has(key)) sums.set(key, []);
+    sums.get(key)!.push({
+      questionNumber: q.questionNumber,
+      marks: q.marks?.value ?? 0,
+      handTranscribed: q.marks?.derivedFrom === "hand-transcribed",
+    });
+  }
+
+  return (set.questionTotals ?? []).map((tot) => {
+    const blocks = sums.get(top(tot.question)) ?? [];
+    const extracted = blocks.reduce((n, b) => n + b.marks, 0);
+    return {
+      question: top(tot.question),
+      printed: tot.marks,
+      extracted,
+      shortfall: tot.marks - extracted,
+      blocks,
+    };
+  });
+}
+
+/** Only the questions that do not add up. Empty means the paper reconciles. */
+export function tariffShortfalls(set: ProposalSet): TariffRow[] {
+  return reconcileTariffs(set).filter((r) => r.shortfall !== 0);
 }
