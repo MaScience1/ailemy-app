@@ -4118,6 +4118,30 @@
     }
   ],
   "rulings": {
+    "1": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "A is incorrect because the number of electrons is for a 79Br atom": {
+          "kind": "distractor_feedback",
+          "option": "A"
+        },
+        "C is incorrect because the number of neutrons is for a 81Br atom": {
+          "kind": "distractor_feedback",
+          "option": "C"
+        },
+        "D is incorrect because the number of neutrons is for a 81Br- ion": {
+          "kind": "distractor_feedback",
+          "option": "D"
+        }
+      },
+      "approvedAt": "2026-08-17T13:43:28.980Z",
+      "approvedBy": "self",
+      "revision": 1
+    },
     "2": {
       "points": {
         "M1": {
@@ -4126,18 +4150,93 @@
       },
       "lines": {
         "B is incorrect because it has not allowed for the correct stoichiometry (not divided by 2)": {
-          "kind": "discard"
+          "kind": "distractor_feedback",
+          "option": "B"
         },
         "C is incorrect because it has not allowed for the correct stoichiometry (multiplied by 2)": {
-          "kind": "discard"
+          "kind": "distractor_feedback",
+          "option": "C"
         },
         "D is incorrect because the concentration has not been divided by 1000": {
-          "kind": "discard"
+          "kind": "distractor_feedback",
+          "option": "D"
         }
       },
-      "approvedAt": "2026-08-15T14:37:22.221Z",
+      "approvedAt": "2026-08-17T13:44:32.734Z",
       "approvedBy": "self",
-      "revision": 3
+      "revision": 4
+    },
+    "3": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "A is incorrect because 0.33 mol water has a mass of 5.94 g": {
+          "kind": "distractor_feedback",
+          "option": "A"
+        },
+        "B is incorrect because 0.25 mol magnesium has a mass of 6.075 g": {
+          "kind": "distractor_feedback",
+          "option": "B"
+        },
+        "C is incorrect because 0.033 mol glucose has a mass of 5.94 g": {
+          "kind": "distractor_feedback",
+          "option": "C"
+        }
+      },
+      "approvedAt": "2026-08-17T13:44:48.192Z",
+      "approvedBy": "self",
+      "revision": 1
+    },
+    "4": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "A is incorrect because mole calculation has been inverted and multiplied by L": {
+          "kind": "distractor_feedback",
+          "option": "A"
+        },
+        "B is incorrect because L has been divided by incorrectly calculated moles": {
+          "kind": "distractor_feedback",
+          "option": "B"
+        },
+        "C is incorrect because 0.5 g has been used instead of 0.05 g of water": {
+          "kind": "distractor_feedback",
+          "option": "C"
+        }
+      },
+      "approvedAt": "2026-08-17T13:51:40.805Z",
+      "approvedBy": "self",
+      "revision": 1
+    },
+    "5": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "A is incorrect because 2 kg of sodium nitrate contains 329.4 g of nitrogen": {
+          "kind": "distractor_feedback",
+          "option": "A"
+        },
+        "C is incorrect because 1 kg of ammonium nitrate contains 350 g of nitrogen": {
+          "kind": "distractor_feedback",
+          "option": "C"
+        },
+        "D is incorrect because 1 kg of ammonium sulphate contains 212 g of nitrogen": {
+          "kind": "distractor_feedback",
+          "option": "D"
+        }
+      },
+      "approvedAt": "2026-08-17T13:53:37.697Z",
+      "approvedBy": "self",
+      "revision": 1
     }
   }
 }
