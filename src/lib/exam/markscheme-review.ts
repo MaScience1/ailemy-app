@@ -14,6 +14,7 @@ import {
   nextRevision,
   toFixture,
   emitFixtureSource,
+  pointsFullyRuled,
   type ProposalSet,
   type RulingBook,
   type ReviewItem,
@@ -86,6 +87,31 @@ export type ReviewResult =
  * tool is earned on cases where the answer is already known.
  */
 const HAND_VERIFIED = ["1", "2", "20(a)", "20(b)(iii)", "22(c)"];
+
+/**
+ * Which questions wear the VERIFIED badge.
+ *
+ * ⚠ A UNION, SO THE BADGE CAN ONLY EVER BE GAINED. The five hand-transcribed
+ * questions keep it because the claim they carry — "an independent
+ * transcription agreed with this" — is still true and is not something a
+ * reviewer can re-earn by clicking. Everything else earns it by having every
+ * proposed marking point explicitly ruled, which is the white card being
+ * accepted rather than defaulted through.
+ *
+ * That is why single-pass approval left it unstamped: it was a hardcoded list
+ * of five, so Q3 and Q4 could show APPROVED and never VERIFIED however
+ * carefully they were reviewed.
+ *
+ * ⚠ DISPLAY ONLY. toFixture does not read this, and Emit still gates on
+ * approvedAt/approvedBy and unruled lines exactly as before.
+ */
+function verifiedFor(set: ProposalSet, rulings: RulingBook): string[] {
+  const out = new Set(HAND_VERIFIED);
+  for (const q of set.questions) {
+    if (pointsFullyRuled(q, rulings[q.questionNumber])) out.add(q.questionNumber);
+  }
+  return [...out];
+}
 
 const canWriteFrom = (roles: readonly string[]) =>
   roles.includes("marker") || roles.includes("admin");
@@ -204,7 +230,7 @@ export async function getMarkSchemeReview(paperSlug: string): Promise<ReviewResu
       unruled: countUnruled(items),
       approved: countApproved(items),
       total: items.length,
-      verifiedQuestions: HAND_VERIFIED,
+      verifiedQuestions: verifiedFor(file, file.rulings ?? {}),
       roles: staff.roles,
       canWrite: canWriteFrom(staff.roles),
       canPersist: process.env.NODE_ENV !== "production",

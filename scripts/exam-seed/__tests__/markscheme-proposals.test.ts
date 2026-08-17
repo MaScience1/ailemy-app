@@ -25,6 +25,7 @@ import {
   countApproved,
   toFixture,
   emitFixtureSource,
+  pointsFullyRuled,
   type ProposalSet,
   type RulingBook,
 } from "../../../src/lib/exam/markscheme-proposals.ts";
@@ -268,6 +269,87 @@ console.log("\n── EVERY REFUSAL NAMES THE QUESTION ──");
   t("refusals are per question, not one summary line",
     !r.ok && r.refusals.length > 1 && r.refusals.every((x) => /^[\w()]+:/.test(x)),
     !r.ok ? r.refusals.slice(0, 3) : r);
+}
+
+console.log("\n── THE VERIFIED BADGE IS EARNED, NOT ENUMERATED ──");
+{
+  // ⚠ WHY IT WAS UNSTAMPED. toFixture defaults an unruled point to accept, so
+  // a question can be approved with the white card never touched. "Approved"
+  // therefore cannot distinguish "I read every criterion against the page"
+  // from "I ruled the yellow lines and pressed Approve". This is the second
+  // claim, and it is display-only.
+  const q = SET.questions.find((x) => x.questionNumber === "1")!;
+  const codes = q.points.map((p) => p.pointCode);
+
+  t("no ruling book at all is not verified", !pointsFullyRuled(q, undefined));
+  t("an empty book is not verified",
+    !pointsFullyRuled(q, { points: {}, lines: {} }));
+  t("approval ALONE is not verification",
+    !pointsFullyRuled(q, { points: {}, lines: {}, approvedAt: NOW, approvedBy: APPROVER }));
+  t("every point ruled IS verification",
+    pointsFullyRuled(q, {
+      points: Object.fromEntries(codes.map((c) => [c, { verdict: "accept" as const }])),
+      lines: {},
+    }));
+  t("an EDIT counts as having ruled the point",
+    pointsFullyRuled(q, {
+      points: Object.fromEntries(codes.map((c) => [c, { verdict: "edit" as const, criterion: "x" }])),
+      lines: {},
+    }));
+  t("so does a REJECT — the point was looked at either way",
+    pointsFullyRuled(q, {
+      points: Object.fromEntries(codes.map((c) => [c, { verdict: "reject" as const, why: "no" }])),
+      lines: {},
+    }));
+
+  // ⚠ PARTIAL IS NOT VERIFIED. A multi-point question with one point ruled.
+  const multi = SET.questions.find((x) => x.points.length > 1)!;
+  t("a fixture with more than one point exists to test this", multi.points.length > 1);
+  t("ruling SOME points is not verification",
+    !pointsFullyRuled(multi, {
+      points: { [multi.points[0].pointCode]: { verdict: "accept" } }, lines: {},
+    }), multi.questionNumber);
+  t("ruling ALL of them is",
+    pointsFullyRuled(multi, {
+      points: Object.fromEntries(multi.points.map((p) => [p.pointCode, { verdict: "accept" as const }])),
+      lines: {},
+    }));
+
+  // ⚠ A QUESTION WITH NOTHING TO CHECK IS NOT VERIFIED, IT IS SKIPPED.
+  // `every` over an empty array is true, which would stamp the badge on
+  // exactly the questions where no criterion was ever read.
+  t("a question with no points is NOT verified",
+    !pointsFullyRuled({ ...q, points: [] }, { points: {}, lines: {} }));
+
+  // ⚠ A RULING FOR A POINT THAT NO LONGER EXISTS DOES NOT COUNT.
+  t("rulings keyed to other point codes do not verify this question",
+    !pointsFullyRuled(q, { points: { ZZ9: { verdict: "accept" } }, lines: {} }));
+
+  // The real artefact: Section A was ruled through the surface.
+  const ruled = SET.questions.filter((x) =>
+    pointsFullyRuled(x, ((SET as ProposalSet & { rulings?: RulingBook }).rulings ?? {})[x.questionNumber]));
+  t("Section A earns the badge from the founder's own rulings",
+    ruled.length >= 10, ruled.map((x) => x.questionNumber));
+  t("...and unruled questions do not",
+    ruled.length < SET.questions.length, { ruled: ruled.length, total: SET.questions.length });
+
+  // ⚠ EMIT GATING IS UNTOUCHED. Verification is a badge, not a gate.
+  const book: RulingBook = {
+    "1": {
+      points: Object.fromEntries(codes.map((c) => [c, { verdict: "accept" as const }])),
+      lines: Object.fromEntries(q.requiresRuling.map((l) => [l.sourceLine, { kind: "discard" as const }])),
+      approvedAt: NOW, approvedBy: APPROVER,
+    },
+  };
+  const verifiedEmit = toFixture({ ...SET, questions: [q] }, book);
+  const unverifiedEmit = toFixture({ ...SET, questions: [q] }, {
+    "1": { ...book["1"], points: {} },
+  });
+  t("an unverified question still emits, exactly as before",
+    unverifiedEmit.ok === true, unverifiedEmit.ok ? "" : unverifiedEmit);
+  t("...producing the identical mark scheme",
+    verifiedEmit.ok && unverifiedEmit.ok &&
+    JSON.stringify(verifiedEmit.questions) === JSON.stringify(unverifiedEmit.questions));
 }
 
 console.log(`\n${fail === 0 ? "✓ ALL" : "✗"} ${pass} passed, ${fail} failed`);

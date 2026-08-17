@@ -73,8 +73,6 @@ console.log("── THE FIXTURE IS THE REAL PAPER (facts this suite rests on) �
   t("...and they are the A, C and D explanations",
     Q1.requiresRuling.map((l) => l.text.trim()[0]).join("") === "ACD",
     Q1.requiresRuling.map((l) => l.text.slice(0, 20)));
-  t("Q1 carries NO ruling in the artefact — this suite writes nothing",
-    (file.rulings ?? {})["1"] === undefined);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -194,17 +192,39 @@ console.log("\n── (7) APPROVAL UNLOCKS ONCE EVERY YELLOW LINE IS RESOLVED �
 console.log("\n── (8) EXISTING APPROVED QUESTIONS ARE UNCHANGED ──");
 {
   // ⚠ THE FOUNDER'S REAL Q2 RULING, RUN THROUGH THE CHANGED EMITTER.
-  const real = toFixture(file, file.rulings ?? {});
-  t("the approved question still emits", real.ok === true, real.ok ? "" : real);
+  const rulings = file.rulings ?? {};
+  const real = toFixture(file, rulings);
+  t("the founder's approved questions still emit", real.ok === true, real.ok ? "" : real);
   if (real.ok) {
-    const q2 = real.questions.find((q) => q.questionNumber === "2");
-    t("Q2 is still emitted", Boolean(q2));
-    t("Q2 gains NO distractors key", q2?.distractors === undefined, q2?.distractors);
-    t("Q2's tariff is untouched", q2?.marks === 1, q2?.marks);
-    t("Q2 still has its marking point", (q2?.markScheme.length ?? 0) >= 1);
-    t("its M1 ruling still reads as accepted (text preserved)",
-      Boolean(q2?.markScheme[0].criterion?.trim()));
+    t("something was actually emitted — an empty pass proves nothing",
+      real.questions.length > 0, real.questions.length);
+
+    // ⚠ DERIVED, NOT PINNED. Every claim below is computed from the artefact
+    // as it stands, so the founder ruling more questions changes the numbers
+    // and not the assertions.
+    for (const emittedQ of real.questions) {
+      const src = file.questions.find((q) => q.questionNumber === emittedQ.questionNumber)!;
+      const book = rulings[emittedQ.questionNumber];
+      const wanted = Object.values(book.lines ?? {})
+        .filter((r) => r.kind === "distractor_feedback").length;
+
+      t(`Q${emittedQ.questionNumber}: tariff is the extractor's, unchanged`,
+        emittedQ.marks === src.marks?.value, { got: emittedQ.marks, want: src.marks?.value });
+      t(`Q${emittedQ.questionNumber}: ${wanted} distractor ruling(s) -> ${wanted} entr(y/ies)`,
+        (emittedQ.distractors?.length ?? 0) === wanted,
+        { got: emittedQ.distractors?.length ?? 0, want: wanted });
+      t(`Q${emittedQ.questionNumber}: no explanation reached the mark scheme`,
+        !JSON.stringify(emittedQ.markScheme).includes("is incorrect because"));
+      t(`Q${emittedQ.questionNumber}: every point still carries a criterion`,
+        emittedQ.markScheme.every((pt) => Boolean(pt.criterion.trim())));
+    }
   }
+  // ⚠ NOT "Q1 HAS NO RULINGS". It had none when this was written; the founder
+  // has since ruled Section A, and an assertion pinned to that would fail for
+  // a reason that has nothing to do with the code. What matters is that this
+  // suite builds its own rulings and never reads or writes theirs.
+  t("this suite builds its own rulings rather than borrowing the founder's",
+    approvedQ1["1"] !== (file.rulings ?? {})["1"]);
   t("the artefact on disk was not modified by this suite",
     readFileSync(ARTEFACT, "utf8") === JSON.stringify(file, null, 2) + "\n");
 }

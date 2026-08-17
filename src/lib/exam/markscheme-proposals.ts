@@ -268,6 +268,32 @@ const decisionsFor = (q: ProposedQuestion): ProposedLine[] => q.requiresRuling;
  * explanation would be filed under no option, where no student selection could
  * ever retrieve it. Every other kind is complete as soon as it is chosen.
  */
+/**
+ * Has every proposed marking point been ruled on EXPLICITLY?
+ *
+ * ⚠ THE DEFAULT IN toFixture IS A SILENT ACCEPT — `book.points?.[code] ??
+ * { verdict: "accept" }` — so a question can be approved with the white card
+ * never touched, and the mark scheme still emits. That is a deliberate
+ * convenience and it is not being changed here. But it means "approved" alone
+ * does not distinguish "I read every criterion against the page" from "I ruled
+ * the yellow lines and pressed Approve", and those are different claims.
+ *
+ * This is the second one. Display only: nothing downstream reads it, and Emit
+ * gating is untouched.
+ */
+export function pointsFullyRuled(
+  question: ProposedQuestion,
+  book: QuestionRulings | undefined,
+): boolean {
+  if (!book) return false;
+  const ruled = book.points ?? {};
+  // ⚠ A QUESTION WITH NO POINTS HAS NOT BEEN VERIFIED, IT HAS BEEN SKIPPED.
+  // `every` over an empty array is true, which would stamp the badge on
+  // exactly the questions where there was nothing to check.
+  if (question.points.length === 0) return false;
+  return question.points.every((p) => Boolean(ruled[p.pointCode]));
+}
+
 export function isResolved(ruling: LineRuling | undefined): boolean {
   if (!ruling) return false;
   if (ruling.kind === "distractor_feedback") return isValidOption(ruling.option);

@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import type { PDFDocumentLoadingTask, PDFDocumentProxy, RenderTask } from "pdfjs-dist";
-import { AlertTriangle, Check, ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
+import {
+  AlertTriangle, Check, ChevronLeft, ChevronRight,
+  Loader2, Maximize2, Minimize2, X,
+} from "lucide-react";
 
 import { isResolved } from "@/lib/exam/markscheme-proposals";
 import type {
@@ -68,6 +71,17 @@ import {
  */
 
 type Draft = { points: Record<string, PointRuling>; lines: Record<string, LineRuling> };
+
+/** Where the pane layout is remembered. Display state only — never rulings. */
+const LAYOUT_KEY = "markscheme-review:layout";
+
+/**
+ * ⚠ THE REVIEW COLUMN NEVER DISAPPEARS BY DRAGGING. Below about 30% the
+ * ruling buttons start wrapping into an unusable stack, and a reviewer who
+ * dragged too far would think the tool had broken. Losing the column entirely
+ * is what the expand toggle is for, and that is reversible by one click.
+ */
+const clampSplit = (pct: number): number => Math.min(80, Math.max(30, Math.round(pct)));
 
 const LINE_CHOICES: { kind: LineKind; label: string; hint: string }[] = [
   { kind: "criterion", label: "Criterion", hint: "this line IS a marking point" },
@@ -140,6 +154,71 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
    * blank while the chrome would happily say it is showing page 12.
    */
   const [painted, setPainted] = useState(false);
+
+  /**
+   * How much of the width the evidence pane gets, and whether it has the lot.
+   *
+   * ⚠ THE PDF IS THE THING BEING READ. A reviewer is comparing a printed table
+   * against a proposal; half a screen was an even split between the document
+   * and the form, which is not what the work is. It starts at 58% and the
+   * splitter goes to 80.
+   *
+   * ⚠ INITIALISED TO THE DEFAULT, THEN LOADED IN AN EFFECT. Reading
+   * localStorage in the initialiser would render 58 on the server and 74 on
+   * the client, which is a hydration mismatch — React discards the tree and
+   * remounts, and a remount here means the PDF loads a second time.
+   */
+  const [splitPct, setSplitPct] = useState(58);
+  const [expanded, setExpanded] = useState(false);
+  const gridRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem(LAYOUT_KEY);
+      if (!saved) return;
+      const parsed = JSON.parse(saved) as { splitPct?: number; expanded?: boolean };
+      if (typeof parsed.splitPct === "number") setSplitPct(clampSplit(parsed.splitPct));
+      if (typeof parsed.expanded === "boolean") setExpanded(parsed.expanded);
+    } catch {
+      // A corrupt or unavailable store is not a reason to fail to render a
+      // review surface. The default layout is a perfectly good layout.
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(LAYOUT_KEY, JSON.stringify({ splitPct, expanded }));
+    } catch {
+      /* private browsing, quota — the layout simply does not persist. */
+    }
+  }, [splitPct, expanded]);
+
+  /**
+   * Drag the splitter.
+   *
+   * ⚠ POINTER EVENTS ON `window`, NOT ON THE HANDLE. A drag that leaves the
+   * 10px handle — which every drag does — would otherwise stop receiving moves
+   * and stick. Capture on the window and release on pointerup.
+   */
+  const startDrag = useCallback((e: React.PointerEvent) => {
+    e.preventDefault();
+    const el = gridRef.current;
+    if (!el) return;
+    const onMove = (ev: PointerEvent) => {
+      const r = el.getBoundingClientRect();
+      if (r.width <= 0) return;
+      setSplitPct(clampSplit(((ev.clientX - r.left) / r.width) * 100));
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      document.body.style.userSelect = "";
+    };
+    // Without this a drag selects the mark-scheme text under the pointer.
+    document.body.style.userSelect = "none";
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }, []);
 
   /**
    * The questions in canonical exam order — 2 before 10, 20 before 20(a),
@@ -233,9 +312,23 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
     const el = shellRef.current;
     if (!el) return;
     setShellWidth(el.clientWidth);
-    const ro = new ResizeObserver(([entry]) => setShellWidth(entry.contentRect.width));
+    // ⚠ DEBOUNCED, because the width is now DRAGGABLE. Every change to
+    // shellWidth re-renders the PDF at the new resolution; an undebounced
+    // observer turns one splitter drag into dozens of renders a second, each
+    // cancelling the last, with `painted` flickering false — which also
+    // flickers the Approve gate off. One render when the pointer settles is
+    // what was wanted all along; window resizing had the same problem quietly.
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const ro = new ResizeObserver(([entry]) => {
+      const width = entry.contentRect.width;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => setShellWidth(width), 120);
+    });
     ro.observe(el);
-    return () => ro.disconnect();
+    return () => {
+      if (timer) clearTimeout(timer);
+      ro.disconnect();
+    };
   }, []);
 
   // ── load ─────────────────────────────────────────────────────────────────
@@ -713,7 +806,20 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
         </p>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      {/* ⚠ THE SPLIT IS A CSS VARIABLE, NOT AN INLINE grid-template. Inline
+          styles cannot carry a media query, and the two columns must still
+          STACK below lg — a 58/42 split on a phone is two unreadable columns.
+          The variable feeds a Tailwind arbitrary value that only applies at lg,
+          so small screens keep the single-column layout untouched. */}
+      <div
+        ref={gridRef}
+        style={{ "--split": `${splitPct}%` } as React.CSSProperties}
+        className={`grid gap-4 ${
+          expanded
+            ? "lg:grid-cols-[minmax(0,1fr)]"
+            : "lg:grid-cols-[var(--split)_10px_minmax(0,1fr)]"
+        }`}
+      >
         {/* ── the published page ──────────────────────────────────────── */}
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
           <div className="mb-2 flex items-center gap-2">
@@ -743,6 +849,21 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
                 <Loader2 className="h-3 w-3 animate-spin" /> drawing
               </span>
             )}
+
+            {/* ⚠ THE WAY BACK IS THE SAME BUTTON, in the same place. Expanding
+                hides the ruling column, so a toggle that moved or vanished
+                would strand the reviewer on a page with no controls. Hidden
+                below lg, where there is only ever one column anyway. */}
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              aria-pressed={expanded}
+              title={expanded ? "Show the review column" : "Give the page the full width"}
+              className="ml-auto hidden items-center gap-1 rounded border border-slate-300 bg-white px-2 py-1 font-mono text-[10px] uppercase tracking-wider text-slate-600 hover:bg-slate-100 lg:flex"
+            >
+              {expanded ? <Minimize2 className="h-3 w-3" /> : <Maximize2 className="h-3 w-3" />}
+              {expanded ? "exit full width" : "full width"}
+            </button>
           </div>
 
           {status === "error" ? (
@@ -775,8 +896,38 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
           )}
         </div>
 
+        {/* ── the splitter ────────────────────────────────────────────────
+            Hidden below lg, where the columns stack and there is nothing to
+            split. role="separator" with aria-valuenow so the ratio is
+            announced rather than being a mystery grey bar.
+
+            ⚠ ARROW LEFT/RIGHT ONLY. Up/Down are bound globally to j/k
+            question navigation, and a focused splitter that swallowed them
+            would break the keyboard walk this surface is built around. */}
+        {!expanded && (
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize the evidence pane"
+            aria-valuenow={splitPct}
+            aria-valuemin={30}
+            aria-valuemax={80}
+            tabIndex={0}
+            onPointerDown={startDrag}
+            onDoubleClick={() => setSplitPct(58)}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowLeft") { e.preventDefault(); setSplitPct((p) => clampSplit(p - 2)); }
+              if (e.key === "ArrowRight") { e.preventDefault(); setSplitPct((p) => clampSplit(p + 2)); }
+            }}
+            title="Drag to resize · double-click to reset"
+            className="group hidden cursor-col-resize items-center justify-center rounded outline-none hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-slate-400 lg:flex"
+          >
+            <span className="h-16 w-1 rounded-full bg-slate-300 group-hover:bg-slate-500" />
+          </div>
+        )}
+
         {/* ── the proposals ───────────────────────────────────────────── */}
-        <div className="space-y-3">
+        <div className={`space-y-3 ${expanded ? "hidden" : ""}`}>
           <div className="max-h-[22rem] overflow-y-auto rounded-lg border border-slate-200 bg-white">
             {items.length === 0 ? (
               <p className="p-4 text-sm text-slate-600">
