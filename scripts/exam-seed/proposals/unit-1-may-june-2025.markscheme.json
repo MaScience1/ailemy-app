@@ -4597,6 +4597,36 @@
       "approvedAt": "2026-08-17T14:14:45.192Z",
       "approvedBy": "self",
       "revision": 1
+    },
+    "20(a)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        },
+        "M2": {
+          "verdict": "accept"
+        },
+        "M3": {
+          "verdict": "accept"
+        },
+        "M4": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "Ignore SF except 1 SF": {
+          "kind": "guidance"
+        },
+        "TE on M1 and M2 but no TE from M3 to M4": {
+          "kind": "guidance"
+        },
+        "Correct answer with no working scores (4)": {
+          "kind": "guidance"
+        }
+      },
+      "approvedAt": "2026-08-17T15:58:34.882Z",
+      "approvedBy": "self",
+      "revision": 1
     }
   }
 }
