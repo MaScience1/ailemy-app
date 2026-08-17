@@ -31,13 +31,35 @@
  * exists to make the remaining work visible, and `toFixture()` REFUSES while
  * any remain.
  *
- * Pure: no database, no filesystem, no imports. The suites load it under plain
- * `node`, which resolves ESM specifiers literally.
+ * Pure: no database, no filesystem. The suites load it under plain `node`,
+ * which resolves ESM specifiers LITERALLY — so the one import here carries its
+ * `.ts` extension, and any import added later must too. An extensionless
+ * specifier typechecks, bundles, and then fails at runtime with
+ * ERR_MODULE_NOT_FOUND in every suite that loads this file. (A `import type`
+ * is erased before node sees it and is exempt, which is why ./attempts is
+ * imported bare elsewhere.)
  */
 
 // ============================================================================
 // WHAT THE EXTRACTOR EMITS
 // ============================================================================
+
+import { isValidOption, type DistractorFeedback } from "./distractor.ts";
+
+export type { DistractorFeedback };
+
+/**
+ * ⚠ A COMPILE ERROR, NOT A RUNTIME ONE, IS THE POINT.
+ *
+ * Called from the `default` arm of a switch over a closed union. While every
+ * member is handled the argument narrows to `never` and this never runs; the
+ * moment a member is added and left unhandled, `tsc` rejects the call site.
+ * The throw is only there for data that reached us from JSON, which the type
+ * system cannot vouch for.
+ */
+function assertNever(value: never, context: string): never {
+  throw new Error(`${context}: ${JSON.stringify(value)}`);
+}
 
 export type Derivation = {
   /** 1-based page of the mark-scheme PDF. */
@@ -109,13 +131,30 @@ export type ProposalSet = {
  * not a classification at all. `criterion` is here because a line the extractor
  * filed as guidance may in fact BE the marking point.
  */
-export type LineKind = "criterion" | "accept" | "reject" | "guidance" | "discard";
+export type LineKind =
+  | "criterion"
+  | "accept"
+  | "reject"
+  | "guidance"
+  | "distractor_feedback"
+  | "discard";
 
 export type LineRuling = {
   kind: LineKind;
   /** The reviewer's wording, when they corrected it. Absent means "as printed". */
   editedText?: string;
   note?: string;
+  /**
+   * The MCQ option a `distractor_feedback` line explains — "A", "C", "D".
+   *
+   * ⚠ REQUIRED FOR THAT KIND AND MEANINGLESS FOR EVERY OTHER. It is optional
+   * in the type because the other five kinds do not have one; toFixture
+   * REFUSES a distractor_feedback ruling that arrives without it rather than
+   * filing the explanation under no option, where nothing could ever retrieve
+   * it. Detection lives in distractor.ts and never guesses — an undetectable
+   * line is answered by the reviewer, not by a default.
+   */
+  option?: string;
 };
 
 export type PointRuling =
@@ -216,12 +255,57 @@ export type ReviewItem = {
 
 const decisionsFor = (q: ProposedQuestion): ProposedLine[] => q.requiresRuling;
 
+/**
+ * Is this line's ruling COMPLETE — a decision nothing downstream will reject?
+ *
+ * ⚠ ONE PREDICATE, THREE CALLERS, DELIBERATELY. "Remaining rulings" is
+ * computed in buildReview (the navigator's count), in the review panel (the
+ * Approve gate) and in toFixture (the emit refusal). If they disagree, the
+ * screen says a question is finished and emit says it is not — and the
+ * reviewer discovers the gap after they have moved on.
+ *
+ * A `distractor_feedback` ruling is incomplete without its option: the
+ * explanation would be filed under no option, where no student selection could
+ * ever retrieve it. Every other kind is complete as soon as it is chosen.
+ */
+/**
+ * Has every proposed marking point been ruled on EXPLICITLY?
+ *
+ * ⚠ THE DEFAULT IN toFixture IS A SILENT ACCEPT — `book.points?.[code] ??
+ * { verdict: "accept" }` — so a question can be approved with the white card
+ * never touched, and the mark scheme still emits. That is a deliberate
+ * convenience and it is not being changed here. But it means "approved" alone
+ * does not distinguish "I read every criterion against the page" from "I ruled
+ * the yellow lines and pressed Approve", and those are different claims.
+ *
+ * This is the second one. Display only: nothing downstream reads it, and Emit
+ * gating is untouched.
+ */
+export function pointsFullyRuled(
+  question: ProposedQuestion,
+  book: QuestionRulings | undefined,
+): boolean {
+  if (!book) return false;
+  const ruled = book.points ?? {};
+  // ⚠ A QUESTION WITH NO POINTS HAS NOT BEEN VERIFIED, IT HAS BEEN SKIPPED.
+  // `every` over an empty array is true, which would stamp the badge on
+  // exactly the questions where there was nothing to check.
+  if (question.points.length === 0) return false;
+  return question.points.every((p) => Boolean(ruled[p.pointCode]));
+}
+
+export function isResolved(ruling: LineRuling | undefined): boolean {
+  if (!ruling) return false;
+  if (ruling.kind === "distractor_feedback") return isValidOption(ruling.option);
+  return true;
+}
+
 export function buildReview(set: ProposalSet, rulings: RulingBook): ReviewItem[] {
   return set.questions.map((question) => {
     const book = rulings[question.questionNumber];
     const decisions = decisionsFor(question);
     const unruled = decisions
-      .filter((l) => !book?.lines?.[l.sourceLine])
+      .filter((l) => !isResolved(book?.lines?.[l.sourceLine]))
       // ⚠ LOWEST CONFIDENCE FIRST. A reviewer's attention is the scarce
       // resource; spending it on the lines the extractor was surest about is
       // exactly backwards.
@@ -280,6 +364,20 @@ export type FixtureQuestion = {
   questionNumber: string;
   marks: number;
   markScheme: FixturePoint[];
+  /**
+   * Why a student who picked each WRONG option was wrong.
+   *
+   * ⚠ DELIBERATELY OUTSIDE markScheme, AND THAT IS THE ARCHITECTURE. Marking
+   * reads `markScheme` — criteria, accept, reject, guidance. Nothing in this
+   * array is reachable from there, so a distractor explanation cannot award,
+   * withhold or alter a mark however the marking layer changes later. It is
+   * feedback, and it is kept where feedback belongs.
+   *
+   * ⚠ INERT IN THE SEEDER FOR NOW. DB persistence is deferred post-gate, so
+   * the emitted module carries these as data the seeder does not read. The
+   * emitter reports the count rather than dropping them silently.
+   */
+  distractors?: DistractorFeedback[];
 };
 
 export type EmitResult =
@@ -306,7 +404,7 @@ export function toFixture(set: ProposalSet, rulings: RulingBook): EmitResult {
       refusals.push(`${q.questionNumber}: not approved`);
       continue;
     }
-    const unruled = decisionsFor(q).filter((l) => !book.lines?.[l.sourceLine]);
+    const unruled = decisionsFor(q).filter((l) => !isResolved(book.lines?.[l.sourceLine]));
     if (unruled.length > 0) {
       refusals.push(`${q.questionNumber}: ${unruled.length} line(s) still unruled`);
       continue;
@@ -344,6 +442,7 @@ export function toFixture(set: ProposalSet, rulings: RulingBook): EmitResult {
     // the fixture header says a whole-row guidance note belongs. A line ruled
     // `criterion` becomes a point of its own; `discard` becomes nothing.
     const last = points[points.length - 1];
+    const distractors: DistractorFeedback[] = [];
     for (const line of decisionsFor(q)) {
       const ruling = book.lines[line.sourceLine];
       const text = (ruling.editedText ?? line.text).trim();
@@ -361,12 +460,52 @@ export function toFixture(set: ProposalSet, rulings: RulingBook): EmitResult {
         case "criterion":
           points.push({ pointCode: `M${points.length + 1}`, criterion: text });
           break;
+
+        // ⚠ IT LEAVES THE MARKING CONTENT UNTOUCHED. Not a point, not an
+        // accept, not a reject, not guidance — so it cannot change the tariff,
+        // cannot award and cannot withhold. It is filed beside the mark
+        // scheme, never inside it.
+        case "distractor_feedback": {
+          if (!isValidOption(ruling.option)) {
+            // ⚠ REFUSE, DO NOT FILE IT UNDER NOTHING. An explanation with no
+            // option is unreachable — no student selection could ever retrieve
+            // it — so it would be a silent loss dressed as a success.
+            refusals.push(
+              `${q.questionNumber}: a distractor explanation has no option letter — ` +
+                `"${text.slice(0, 60)}"`,
+            );
+            break;
+          }
+          distractors.push({
+            option: ruling.option.toUpperCase(),
+            text,
+            sourceLine: line.sourceLine,
+          });
+          break;
+        }
+
         case "discard":
           break;
+
+        // ⚠ THE NEXT KIND CANNOT BE ADDED WITHOUT DECIDING WHAT EMIT DOES WITH
+        // IT. Before this existed the switch had no default: distractor_feedback
+        // would have fallen straight through and vanished from the fixture, and
+        // `tsc` would not have said a word, because widening a union does not
+        // break a non-exhaustive switch. This turns that silence into a
+        // compile error.
+        default:
+          return assertNever(ruling.kind, `${q.questionNumber}: unhandled ruling kind`);
       }
     }
 
-    questions.push({ questionNumber: q.questionNumber, marks: q.marks.value, markScheme: points });
+    // ⚠ `marks` IS THE EXTRACTED TARIFF, UNCHANGED. Distractor entries are
+    // attached beside it and are counted by nothing.
+    questions.push({
+      questionNumber: q.questionNumber,
+      marks: q.marks.value,
+      markScheme: points,
+      ...(distractors.length ? { distractors } : {}),
+    });
   }
 
   if (questions.length === 0) {
@@ -404,11 +543,28 @@ export function emitFixtureSource(result: EmitResult, paperSlug: string, capture
       lines.push(`        },`);
       return lines.join("\n");
     });
+    // ⚠ OUTSIDE markScheme, AND ANNOTATED AS INERT. The seeder does not read
+    // this key yet — DB persistence is deferred — so it is written where a
+    // reader can see it exists and see that nothing consumes it. The
+    // alternative, leaving it out until there is somewhere to put it, throws
+    // away the reviewer's work between now and then.
+    const distractors = question.distractors?.length
+      ? [
+          `      // FEEDBACK ONLY — never read by the marking layer, not yet seeded.`,
+          `      distractors: [`,
+          ...question.distractors.map(
+            (d) => `        { option: ${q(d.option)}, text: ${q(d.text)} },`,
+          ),
+          `      ],`,
+        ]
+      : [];
+
     return [
       `    // ${question.questionNumber} — ${question.marks} mark(s)`,
       `      markScheme: [`,
       ...points,
       `      ],`,
+      ...distractors,
     ].join("\n");
   });
   return [

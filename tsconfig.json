@@ -6,6 +6,12 @@
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,
+    // src/lib/exam modules are loaded BOTH by the bundler and, in the test
+    // suites, by plain `node` — which resolves ESM specifiers literally and so
+    // needs the real ".ts" on a value import. tsconfig.scripts.json has always
+    // allowed that; the app config now does too, so one file does not have to
+    // choose between typechecking and running. Legal because noEmit is set.
+    "allowImportingTsExtensions": true,
     "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
