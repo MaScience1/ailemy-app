@@ -399,13 +399,33 @@ console.log("\n── RETRODICTION AGAINST THE FOUNDER'S OWN RULINGS ──");
     wrongOption.length === 0,
     wrongOption.map((d) => ({ q: d.q, examiner: d.actualOpt, suggested: d.sugOpt })));
 
-  // ⚠ AND THE HONEST CAVEAT, PINNED AS AN ASSERTION. The corpus is one verdict
-  // kind, so this validates P1 and says nothing about P2/P3/P4. If the founder
-  // later rules a Guidance line, this assertion FAILS and forces the coverage
-  // claim in the report to be rewritten rather than quietly inherited.
-  const kinds = [...new Set(rows.map((r) => r.actual))];
-  t("COVERAGE CAVEAT: the ruled corpus is still a single verdict kind",
-    kinds.length === 1 && kinds[0] === "distractor_feedback", kinds);
+  // ⚠ THE COVERAGE CAVEAT, PINNED AS AN ASSERTION — AND IT HAS ALREADY FIRED
+  // ONCE, WHICH IS THE POINT.
+  //
+  // It first read "the corpus is a single verdict kind", because every ruled
+  // line was distractor feedback and the agreement figure therefore validated
+  // P1 and nothing else. When 20(a) was ruled — three scope lines, all
+  // Guidance — this assertion went red and forced the claim to be rewritten
+  // instead of quietly inheriting a number that no longer meant what it said.
+  //
+  // What is validated against real examiner decisions TODAY:
+  //   distractor_feedback (P1)        60 lines
+  //   guidance            (P2/P3/P4)   3 lines
+  // What is NOT: accept, reject and criterion. No line in this paper has been
+  // ruled any of those, so the verb classifier's Accept/Reject/Criterion arms
+  // have never been checked against a human. When the first one is ruled, this
+  // fails again and the claim gets rewritten again.
+  const kinds = [...new Set(rows.map((r) => r.actual))].sort();
+  t("COVERAGE CAVEAT: the ruled corpus covers exactly these verdict kinds",
+    JSON.stringify(kinds) === JSON.stringify(["distractor_feedback", "guidance"]), kinds);
+  t("...distractor feedback is validated on a substantial corpus",
+    rows.filter((r) => r.actual === "distractor_feedback").length >= 60);
+  t("...guidance is validated, but on very few lines — treat P2/P3/P4 as young",
+    rows.filter((r) => r.actual === "guidance").length >= 3 &&
+    rows.filter((r) => r.actual === "guidance").length < 10,
+    rows.filter((r) => r.actual === "guidance").length);
+  t("...and accept/reject/criterion remain UNVALIDATED by any human ruling",
+    !kinds.some((k) => ["accept", "reject", "criterion"].includes(k)), kinds);
 }
 
 console.log("\n── THE MARKS EDEXCEL'S TYPESETTING LOST ──");
