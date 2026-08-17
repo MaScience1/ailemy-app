@@ -155,6 +155,20 @@ export type LineRuling = {
    * line is answered by the reviewer, not by a default.
    */
   option?: string;
+  /**
+   * How this ruling came to be made.
+   *
+   * ⚠ IT RECORDS THE ROUTE, NOT THE AUTHORITY. Every value here describes a
+   * ruling a human confirmed in the browser: "batch" means they reviewed a
+   * screen of precedent matches and pressed confirm, not that a machine ruled
+   * on their behalf. Absent means the ruling predates this field, or was made
+   * one card at a time.
+   *
+   * The precedentId is kept so that a rule later found to be wrong can be
+   * traced to every line it touched — which is the only way to correct it
+   * without re-reading the paper.
+   */
+  provenance?: { method: "manual" | "batch"; precedentId?: string };
 };
 
 export type PointRuling =

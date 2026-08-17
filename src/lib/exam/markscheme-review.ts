@@ -6,6 +6,7 @@ import { resolve } from "node:path";
 import { getStaffStatus } from "@/lib/admin/staff";
 import { createClient } from "@/lib/supabase/server";
 import { getPaperPublicUrl } from "@/lib/storage/papers";
+import { mergeBatchIntoBook } from "@/lib/exam/precedent";
 import {
   buildReview,
   sortForReview,
@@ -15,6 +16,9 @@ import {
   toFixture,
   emitFixtureSource,
   pointsFullyRuled,
+  isResolved,
+  type LineKind,
+  type LineRuling,
   type ProposalSet,
   type RulingBook,
   type ReviewItem,
@@ -401,4 +405,198 @@ export async function emitFixture(paperSlug: string): Promise<EmitResultReport> 
     questions: result.questions.length,
     bytes: source.length,
   };
+}
+
+// ============================================================================
+// BATCH APPLY AND BULK APPROVE
+// ============================================================================
+
+/** One line the founder ticked on the batch review screen. */
+export type BatchConfirmation = {
+  questionNumber: string;
+  sourceLine: string;
+  kind: LineKind;
+  option?: string;
+  precedentId?: string;
+};
+
+export type BatchResult = {
+  ok: boolean;
+  applied: number;
+  /** Lines deliberately not written, each with the reason. Never silent. */
+  skipped: { questionNumber: string; sourceLine: string; reason: string }[];
+  errors: string[];
+};
+
+/**
+ * Write a batch of confirmed rulings — through saveRulings, one question at a
+ * time, exactly as manual ruling does.
+ *
+ * ============================================================================
+ * ⚠ THIS FUNCTION IS THE FOUNDER PRESSING CONFIRM. IT IS NOT A DECISION.
+ * ============================================================================
+ * Every entry in `confirmations` is a line they saw in full, beside its target
+ * verdict and its source location, and left ticked. Nothing computes its way
+ * into this list — the planner produces candidates, the screen shows them, and
+ * only what survives the founder's untickings arrives here.
+ *
+ * ⚠ THE SAME CODE PATH, AND THAT IS LOAD-BEARING. saveRulings owns the
+ * revision check, the re-read, the production refusal and the per-question
+ * write. A batch writer that opened the file itself would be a second set of
+ * those guarantees to keep correct, and the first one to drift would do so
+ * silently, on the path that writes the most rows at once.
+ *
+ * ⚠ THREE REFUSALS, EACH RECORDED RATHER THAN SWALLOWED:
+ *   - an APPROVED question is never touched, at all;
+ *   - a line that already carries a ruling is never overwritten;
+ *   - a distractor ruling with no valid option is not written, because
+ *     isResolved would call it unresolved and the founder would be told the
+ *     question was finished when it was not.
+ */
+export async function applyBatch(
+  paperSlug: string,
+  confirmations: readonly BatchConfirmation[],
+): Promise<BatchResult> {
+  const staff = await getStaffStatus();
+  if (!staff.ok || !canWriteFrom(staff.roles)) {
+    return { ok: false, applied: 0, skipped: [], errors: ["Ruling needs a marker or admin role."] };
+  }
+  if (confirmations.length === 0) {
+    return { ok: true, applied: 0, skipped: [], errors: [] };
+  }
+
+  let file: StoredFile;
+  try {
+    file = JSON.parse(await readFile(proposalsPath(paperSlug), "utf8")) as StoredFile;
+  } catch (e) {
+    return { ok: false, applied: 0, skipped: [], errors: [`Could not read the proposals file: ${e instanceof Error ? e.message : String(e)}`] };
+  }
+
+  const byQuestion = new Map<string, BatchConfirmation[]>();
+  for (const c of confirmations) {
+    if (!byQuestion.has(c.questionNumber)) byQuestion.set(c.questionNumber, []);
+    byQuestion.get(c.questionNumber)!.push(c);
+  }
+
+  const skipped: BatchResult["skipped"] = [];
+  const errors: string[] = [];
+  let applied = 0;
+
+  for (const [questionNumber, entries] of byQuestion) {
+    const existing = (file.rulings ?? {})[questionNumber];
+
+    // ⚠ AN APPROVED QUESTION IS FINISHED WORK. Adding to it would change a
+    // mark scheme a human has already signed, without them looking at it.
+    // ⚠ THE DECISION IS mergeBatchIntoBook's, and it is pure and tested. This
+    // function supplies the disk and the session; it does not re-implement the
+    // refusals, because two copies of a rule protecting examiner work is one
+    // copy too many.
+    const merged = mergeBatchIntoBook(existing, entries.map((e) => ({
+      sourceLine: e.sourceLine, kind: e.kind, option: e.option, precedentId: e.precedentId,
+    })), (r) => isResolved(r as LineRuling));
+    const lines = merged.lines as Record<string, LineRuling>;
+    const added = merged.added;
+    for (const s2 of merged.skipped) {
+      skipped.push({ questionNumber, sourceLine: s2.sourceLine, reason: s2.reason });
+    }
+
+    if (added === 0) continue;
+
+    // ⚠ APPROVAL IS NOT CARRIED ALONG. Batch fills in rulings; approving stays
+    // a separate, deliberate act. `existing` is unapproved here by the check
+    // above, so there is nothing to preserve, and nothing is invented.
+    const result = await saveRulings(
+      paperSlug,
+      questionNumber,
+      { points: existing?.points ?? {}, lines },
+      existing?.revision ?? 0,
+    );
+    if (result.ok) applied += added;
+    else errors.push(`${questionNumber}: ${result.error}`);
+  }
+
+  return { ok: errors.length === 0, applied, skipped, errors };
+}
+
+export type BulkApproveResult = {
+  ok: boolean;
+  approved: string[];
+  refused: { questionNumber: string; reason: string }[];
+  errors: string[];
+};
+
+/**
+ * Approve several fully-resolved questions at once, through saveRulings.
+ *
+ * ⚠ IT RE-CHECKS ELIGIBILITY SERVER-SIDE rather than trusting the screen. The
+ * list the founder ticked was computed from a view that may be minutes old; a
+ * question that has since gained an unruled line must not be approved because
+ * a stale tab thought it was finished. Emit gating and the reconciliation
+ * guard are untouched — this only sets the same two fields the single Approve
+ * button sets, and lets saveRulings increment the revision as it always does.
+ */
+export async function bulkApprove(
+  paperSlug: string,
+  questionNumbers: readonly string[],
+  approvedBy: string,
+): Promise<BulkApproveResult> {
+  const staff = await getStaffStatus();
+  if (!staff.ok || !canWriteFrom(staff.roles)) {
+    return { ok: false, approved: [], refused: [], errors: ["Approving needs a marker or admin role."] };
+  }
+  if (!approvedBy) {
+    return { ok: false, approved: [], refused: [], errors: ["An approver is required."] };
+  }
+
+  let file: StoredFile;
+  try {
+    file = JSON.parse(await readFile(proposalsPath(paperSlug), "utf8")) as StoredFile;
+  } catch (e) {
+    return { ok: false, approved: [], refused: [], errors: [`Could not read the proposals file: ${e instanceof Error ? e.message : String(e)}`] };
+  }
+
+  const approved: string[] = [];
+  const refused: BulkApproveResult["refused"] = [];
+  const errors: string[] = [];
+
+  for (const questionNumber of questionNumbers) {
+    const question = file.questions.find((q) => q.questionNumber === questionNumber);
+    if (!question) {
+      refused.push({ questionNumber, reason: "not in this proposal set" });
+      continue;
+    }
+    const book = (file.rulings ?? {})[questionNumber];
+    if (book?.approvedAt) {
+      refused.push({ questionNumber, reason: "already approved — left as it was" });
+      continue;
+    }
+
+    // ⚠ THE SAME TWO CONDITIONS THE SINGLE APPROVE BUTTON ENFORCES, read from
+    // disk. Every yellow line resolved, and every white card explicitly ruled.
+    const unruled = question.requiresRuling.filter((l) => !isResolved(book?.lines?.[l.sourceLine]));
+    if (unruled.length > 0) {
+      refused.push({ questionNumber, reason: `${unruled.length} line(s) still need a ruling` });
+      continue;
+    }
+    if (!pointsFullyRuled(question, book)) {
+      refused.push({ questionNumber, reason: "a marking point has not been ruled on" });
+      continue;
+    }
+
+    const result = await saveRulings(
+      paperSlug,
+      questionNumber,
+      {
+        points: book?.points ?? {},
+        lines: book?.lines ?? {},
+        approvedAt: new Date().toISOString(),
+        approvedBy,
+      },
+      book?.revision ?? 0,
+    );
+    if (result.ok) approved.push(questionNumber);
+    else errors.push(`${questionNumber}: ${result.error}`);
+  }
+
+  return { ok: errors.length === 0, approved, refused, errors };
 }
