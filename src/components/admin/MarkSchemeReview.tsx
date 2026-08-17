@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } fro
 import type { PDFDocumentLoadingTask, PDFDocumentProxy, RenderTask } from "pdfjs-dist";
 import { AlertTriangle, Check, ChevronLeft, ChevronRight, Loader2, X } from "lucide-react";
 
+import { isResolved } from "@/lib/exam/markscheme-proposals";
 import type {
   LineKind,
   LineRuling,
@@ -21,6 +22,12 @@ import {
   sortByQuestionNumber,
   type SourceLocation,
 } from "@/lib/exam/question-nav";
+import {
+  resolveDistractorOption,
+  isValidOption,
+  OPTION_ALPHABET,
+} from "@/lib/exam/distractor";
+import { extractMcqKey } from "@/lib/exam/deterministic";
 import {
   saveQuestionRulingsAction,
   emitFixtureAction,
@@ -67,8 +74,34 @@ const LINE_CHOICES: { kind: LineKind; label: string; hint: string }[] = [
   { kind: "accept", label: "Accept", hint: "still earns the mark" },
   { kind: "reject", label: "Reject", hint: "must NOT earn the mark" },
   { kind: "guidance", label: "Guidance", hint: "neither — examiner prose" },
+  // ⚠ BEFORE Discard, DELIBERATELY. These lines — "A is incorrect because…" —
+  // are the ones a reviewer was previously forced to throw away, and the
+  // button next to the one you would otherwise press is the one that gets
+  // pressed. Keyboard 1–6 follows this array, so Discard moves from 5 to 6.
+  {
+    kind: "distractor_feedback",
+    label: "Distractor feedback",
+    hint: "why a specific wrong option is wrong — kept for the student, never marked",
+  },
   { kind: "discard", label: "Discard", hint: "carries nothing we should store" },
 ];
+
+/**
+ * The correct option letter, read from the question's own criterion.
+ *
+ * ⚠ THE MARK SCHEME, NOT A SEEDED ROW. Rulings happen before seeding — 25 of
+ * 80 marks are seeded — so an answer key usually does not exist yet. The
+ * criterion ("The only correct answer is B") is the record that always does,
+ * and it is the same one the marking layer refuses to mark without. Null when
+ * the question is not an MCQ, which simply skips the cross-check.
+ */
+function correctOptionOf(item: ReviewItem): string | null {
+  for (const p of item.question.points) {
+    const key = extractMcqKey(p.criterion);
+    if (key) return key;
+  }
+  return null;
+}
 
 /**
  * Turn what is stored on disk back into the shape the editor holds.
@@ -374,9 +407,44 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
     setDirty((s) => ({ ...s, [qn]: true }));
     setDraft((d) => {
       const cur = d[qn] ?? { points: {}, lines: {} };
+      const prev = cur.lines[line.sourceLine];
+      const next: LineRuling = { ...prev, kind };
+
+      // ⚠ THE OPTION IS OFFERED, NEVER ASSUMED. resolveDistractorOption
+      // returns `manual` for anything that is not unmistakably "<letter> is
+      // incorrect…", and for a letter that contradicts the question's own
+      // correct answer. In those cases the ruling is stored WITHOUT an option
+      // and the card asks; it is not filled in with a plausible guess, because
+      // a wrong letter tells a student they were wrong about something they
+      // never said.
+      if (kind === "distractor_feedback") {
+        const item = ordered.find((i) => i.question.questionNumber === qn);
+        const found = resolveDistractorOption(
+          prev?.editedText ?? line.text,
+          item ? correctOptionOf(item) : null,
+        );
+        if (found.status === "detected") next.option = found.option;
+        else delete next.option;
+      } else {
+        // Changing the ruling away from distractor feedback drops the option,
+        // so a stale letter cannot ride along on an accept or a reject.
+        delete next.option;
+      }
+
+      return { ...d, [qn]: { ...cur, lines: { ...cur.lines, [line.sourceLine]: next } } };
+    });
+  };
+
+  /** The reviewer answering the card's question when detection refused. */
+  const setLineOption = (qn: string, line: ProposedLine, option: string) => {
+    setDirty((s) => ({ ...s, [qn]: true }));
+    setDraft((d) => {
+      const cur = d[qn] ?? { points: {}, lines: {} };
+      const prev = cur.lines[line.sourceLine];
+      if (!prev) return d;
       return {
         ...d,
-        [qn]: { ...cur, lines: { ...cur.lines, [line.sourceLine]: { ...cur.lines[line.sourceLine], kind } } },
+        [qn]: { ...cur, lines: { ...cur.lines, [line.sourceLine]: { ...prev, option } } },
       };
     });
   };
@@ -781,6 +849,7 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
               saving={saving === current.question.questionNumber}
               onGoTo={goTo}
               onRuleLine={(l, k) => ruleLine(current.question.questionNumber, l, k)}
+              onSetOption={(l, o) => setLineOption(current.question.questionNumber, l, o)}
               onEditLine={(l, txt) => editLine(current.question.questionNumber, l, txt)}
               onRulePoint={(code, r) => rulePoint(current.question.questionNumber, code, r)}
               onSave={(approve) => save(current, approve)}
@@ -794,7 +863,7 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
 
 function QuestionPanel({
   item, draft, painted, panelRef, onSamePage, canWrite, saving,
-  onGoTo, onRuleLine, onEditLine, onRulePoint, onSave,
+  onGoTo, onRuleLine, onSetOption, onEditLine, onRulePoint, onSave,
 }: {
   item: ReviewItem;
   draft: Draft;
@@ -805,12 +874,17 @@ function QuestionPanel({
   saving: boolean;
   onGoTo: (page: number, y: number | null) => void;
   onRuleLine: (line: ProposedLine, kind: LineKind) => void;
+  onSetOption: (line: ProposedLine, option: string) => void;
   onEditLine: (line: ProposedLine, text: string) => void;
   onRulePoint: (code: string, ruling: PointRuling) => void;
   onSave: (approve: boolean) => void;
 }) {
   const q = item.question;
-  const remaining = q.requiresRuling.filter((l) => !draft.lines[l.sourceLine]);
+  // ⚠ "A VALID CLASSIFICATION", NOT MERELY "A CLASSIFICATION". A distractor
+  // ruling with no option is one toFixture will refuse, so counting it as done
+  // would enable Approve and then fail at emit — the reviewer would be told
+  // the question was finished and find out later that it was not.
+  const remaining = q.requiresRuling.filter((l) => !isResolved(draft.lines[l.sourceLine]));
   // ⚠ BOTH CONDITIONS. "Approve" asserts the reviewer checked this against the
   // page, so the page must have painted AND be the right one.
   const pageIsShowing = painted && onSamePage;
@@ -952,6 +1026,40 @@ function QuestionPanel({
                       </Choice>
                     ))}
                   </div>
+                  {/* ⚠ THE OPTION IS PART OF THE CLASSIFICATION, so the card
+                      shows whether it is settled. Detected: a chip that says
+                      which. Not detected: the question, asked plainly, with
+                      the reason detection declined — a reviewer told "no
+                      pattern found" makes a better decision than one shown a
+                      silently empty field. */}
+                  {chosen?.kind === "distractor_feedback" && (
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      {isValidOption(chosen.option) ? (
+                        <span className="rounded bg-sky-100 px-2 py-0.5 font-mono text-[11px] text-sky-900">
+                          Distractor feedback · {chosen.option}
+                        </span>
+                      ) : (
+                        <>
+                          <span className="font-mono text-[10px] uppercase tracking-wider text-amber-800">
+                            which option?
+                          </span>
+                          {OPTION_ALPHABET.split("").slice(0, 4).map((letter) => (
+                            <button
+                              key={letter}
+                              type="button"
+                              onClick={() => onSetOption(line, letter)}
+                              className="rounded border border-amber-400 bg-white px-2 py-0.5 font-mono text-[11px] text-amber-900 hover:bg-amber-100"
+                            >
+                              {letter}
+                            </button>
+                          ))}
+                          <span className="text-[11px] text-amber-800">
+                            {resolveDistractorOption(chosen.editedText ?? line.text, null).reason}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  )}
                   {chosen && chosen.kind !== "discard" && (
                     <input
                       value={chosen.editedText ?? line.text}
