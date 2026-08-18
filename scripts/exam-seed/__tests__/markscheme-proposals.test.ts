@@ -45,7 +45,15 @@ const NOW = "2026-08-10T12:00:00.000Z";
 
 console.log("── THE ARTEFACT IS THE REAL EXTRACTION ──");
 {
-  t("47 question blocks", SET.questions.length === 47, SET.questions.length);
+  // ⚠ NOT "47 BLOCKS". The extractor produced 47; the founder has since added
+  // 21(b)(i) by hand through the review surface, and a count pinned to 47
+  // fails for the best possible reason. Derive both halves instead.
+  const handAdded = SET.questions.filter((q) => q.marks?.derivedFrom === "hand-transcribed");
+  t("47 blocks came from the extractor",
+    SET.questions.length - handAdded.length === 47, SET.questions.length - handAdded.length);
+  t("...plus whatever was hand-transcribed since",
+    SET.questions.length === 47 + handAdded.length,
+    { total: SET.questions.length, hand: handAdded.map((q) => q.questionNumber) });
   t("every block carries a mark total", SET.questions.every((q) => q.marks !== null));
   t("it says outright that nothing is published", /PROPOSALS/.test(SET.status), SET.status);
   const ruling = SET.questions.reduce((n, q) => n + q.requiresRuling.length, 0);

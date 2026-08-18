@@ -673,3 +673,26 @@ export function reconcileTariffs(set: ProposalSet): TariffRow[] {
 export function tariffShortfalls(set: ProposalSet): TariffRow[] {
   return reconcileTariffs(set).filter((r) => r.shortfall !== 0);
 }
+
+/**
+ * Strip a question's approval while keeping every ruling.
+ *
+ * ============================================================================
+ * ⚠ AN APPROVAL REFERS TO THE CONTENT THAT WAS ON SCREEN WHEN IT WAS GIVEN
+ * ============================================================================
+ * When a hand-transcribed line is added to a block that was already approved,
+ * the signature now covers content the examiner has never seen. 20(b)(iv) is
+ * the live case: approved, and missing two of its own guidance lines.
+ *
+ * Leaving `approvedAt` in place would let Emit — which gates on exactly that
+ * field — ship a mark scheme nobody approved in full. So the signature goes
+ * and the question returns to needs-ruling. The RULINGS STAY: the founder's
+ * earlier decisions about other lines are still theirs, and making them redo
+ * those would be a punishment for the extractor's mistake.
+ *
+ * Pure, so the property can be tested without a filesystem or a session.
+ */
+export function withdrawApproval(book: QuestionRulings): QuestionRulings {
+  const { approvedAt: _at, approvedBy: _by, ...rest } = book;
+  return rest;
+}

@@ -19,6 +19,7 @@ import {
   isResolved,
   tariffShortfalls,
   reconcileTariffs,
+  withdrawApproval,
   type LineKind,
   type LineRuling,
   type ProposalSet,
@@ -705,8 +706,15 @@ export async function addManualBlock(
   }
 
   const HAND = "hand-transcribed";
+  // ⚠ THE FORM ASKS FOR THE PAGE "AS THE PAGER SHOWS IT" — 1-based — and the
+  // artefact stores extraction pages, which are 0-based. Storing the typed
+  // number raw made a block entered as page 17 render as "page 18": the card
+  // runs it through toViewerPage, which adds one to a number that had already
+  // been counted from one. Converted HERE, once, at the boundary where a human
+  // number becomes an artefact number.
+  const extractionPage = Math.max(0, input.page - 1);
   const stamp = (sourceLine: string) => ({
-    page: input.page,
+    page: extractionPage,
     y: 0,
     sourceLine,
     derivedFrom: HAND,
@@ -717,7 +725,7 @@ export async function addManualBlock(
 
   file.questions.push({
     questionNumber: qn,
-    page: input.page,
+    page: extractionPage,
     marks: { value: input.marks, ...stamp(`${qn} — transcribed by hand (${input.marks} marks)`) },
     points: points.map((p, i) => ({
       ...stamp(p.criterion),
@@ -745,4 +753,138 @@ export async function addManualBlock(
 
   const row = tariffShortfalls(file).find((r) => r.question === qn.replace(/\D.*$/, ""));
   return { ok: true, questionNumber: qn, shortfallAfter: row?.shortfall ?? 0 };
+}
+
+// ============================================================================
+// ADD A MISSING LINE TO AN EXISTING BLOCK
+// ============================================================================
+
+export type ManualLineInput = {
+  questionNumber: string;
+  /** "point" adds a white card; "line" adds a yellow one needing a ruling. */
+  as: "point" | "line";
+  text: string;
+};
+
+export type ManualLineResult =
+  | { ok: true; questionNumber: string; approvalWithdrawn: boolean; unruledNow: number }
+  | { ok: false; error: string };
+
+/**
+ * Append a hand-transcribed line to a block that already exists.
+ *
+ * ============================================================================
+ * ⚠ ADDING A LINE TO AN APPROVED QUESTION WITHDRAWS THE APPROVAL
+ * ============================================================================
+ * This is the whole safety property. 20(b)(iv) is approved and is missing two
+ * of its guidance lines; when they are added, the examiner's signature on that
+ * question predates the content it now covers. Leaving `approvedAt` in place
+ * would mean the paper claims a human approved a mark scheme they have never
+ * seen in full — and Emit, which gates on exactly that field, would ship it.
+ *
+ * So approval is REMOVED and the question returns to needs-ruling. That is a
+ * deliberate step backwards: it costs the founder one re-approval and buys the
+ * guarantee that an approval always refers to the content that was on screen
+ * when it was given.
+ *
+ * ⚠ IT NEVER TOUCHES EXISTING RULINGS. The rulings already made on other lines
+ * stay exactly as they are; only the two approval fields are dropped. A line
+ * added as a "point" also makes pointsFullyRuled false, which is correct — a
+ * new marking point has not been ruled on.
+ *
+ * ⚠ AND IT GOES THROUGH saveRulings, so the revision increments and a second
+ * tab cannot overwrite the withdrawal without noticing.
+ */
+export async function addManualLine(
+  paperSlug: string,
+  input: ManualLineInput,
+): Promise<ManualLineResult> {
+  const staff = await getStaffStatus();
+  if (!staff.ok || !canWriteFrom(staff.roles)) {
+    return { ok: false, error: "Adding a line needs a marker or admin role." };
+  }
+  if (process.env.NODE_ENV === "production") {
+    return { ok: false, error: "This writes to the repository working tree. Run the tool locally." };
+  }
+
+  const text = input.text.trim();
+  if (!text) return { ok: false, error: "The line text is required." };
+
+  const path = proposalsPath(paperSlug);
+  let file: StoredFile;
+  try {
+    file = JSON.parse(await readFile(path, "utf8")) as StoredFile;
+  } catch (e) {
+    return { ok: false, error: `Could not read the proposals file: ${e instanceof Error ? e.message : String(e)}` };
+  }
+
+  const q = file.questions.find((x) => x.questionNumber === input.questionNumber);
+  if (!q) return { ok: false, error: `${input.questionNumber} is not in this proposal set.` };
+
+  // ⚠ THE SOURCE LINE IS THE KEY RULINGS ARE STORED UNDER, so a duplicate
+  // would collide with an existing ruling and silently reassign it.
+  const existingKeys = new Set([
+    ...q.requiresRuling.map((l) => l.sourceLine),
+    ...q.points.map((p) => p.sourceLine),
+  ]);
+  if (existingKeys.has(text)) {
+    return { ok: false, error: `${input.questionNumber} already has a line with exactly that text.` };
+  }
+
+  const stamp = {
+    page: q.page,
+    y: 0,
+    sourceLine: text,
+    derivedFrom: "hand-transcribed",
+    confidence: 1,
+  };
+
+  if (input.as === "point") {
+    q.points.push({
+      ...stamp,
+      pointCode: `H${q.points.filter((p) => p.pointCode.startsWith("H")).length + 1}`,
+      criterion: text,
+      marks: null,
+      route: 1,
+      methodBlock: null,
+    });
+  } else {
+    q.requiresRuling.push({
+      ...stamp,
+      text,
+      // ⚠ IT SAYS WHY IT NEEDS A RULING, like every other flagged line. A
+      // reviewer should not have to work out why this one is here.
+      requiresRuling: ["hand-transcribed from the mark scheme — classify it"],
+    });
+  }
+
+  const book = (file.rulings ?? {})[input.questionNumber];
+  const approvalWithdrawn = Boolean(book?.approvedAt);
+
+  try {
+    await writeFile(path, JSON.stringify(file, null, 2) + "\n", "utf8");
+  } catch (e) {
+    return { ok: false, error: `Could not write the proposals file: ${e instanceof Error ? e.message : String(e)}` };
+  }
+
+  if (approvalWithdrawn && book) {
+    // ⚠ THE RULINGS SURVIVE; ONLY THE SIGNATURE GOES. Written through
+    // saveRulings so the revision increments like any other change.
+    const withoutApproval = withdrawApproval(book);
+    const saved = await saveRulings(
+      paperSlug, input.questionNumber,
+      { points: withoutApproval.points ?? {}, lines: withoutApproval.lines ?? {} },
+      book.revision ?? 0,
+    );
+    if (!saved.ok) {
+      return { ok: false, error: `The line was added but the approval could not be withdrawn: ${saved.error}` };
+    }
+  }
+
+  const after = JSON.parse(await readFile(path, "utf8")) as StoredFile;
+  const q2 = after.questions.find((x) => x.questionNumber === input.questionNumber)!;
+  const b2 = (after.rulings ?? {})[input.questionNumber];
+  const unruledNow = q2.requiresRuling.filter((l) => !isResolved(b2?.lines?.[l.sourceLine])).length;
+
+  return { ok: true, questionNumber: input.questionNumber, approvalWithdrawn, unruledNow };
 }

@@ -8,6 +8,7 @@ import {
   applyBatch,
   bulkApprove,
   addManualBlock,
+  addManualLine,
   type SaveResult,
   type EmitResultReport,
   type BatchConfirmation,
@@ -15,6 +16,8 @@ import {
   type BulkApproveResult,
   type ManualBlockInput,
   type ManualBlockResult,
+  type ManualLineInput,
+  type ManualLineResult,
 } from "@/lib/exam/markscheme-review";
 import type { QuestionRulings } from "@/lib/exam/markscheme-proposals";
 
@@ -113,6 +116,23 @@ export async function addManualBlockAction(
 ): Promise<ManualBlockResult> {
   if (!paperSlug) return { ok: false, error: "Missing paper." };
   const result = await addManualBlock(paperSlug, input);
+  if (result.ok) revalidatePath(`/admin/papers/${paperSlug}/markscheme`);
+  return result;
+}
+
+/**
+ * Append a hand-transcribed line to an existing block.
+ *
+ * ⚠ IF THE QUESTION WAS APPROVED, THE APPROVAL IS WITHDRAWN — see addManualLine.
+ * An approval must always refer to the content that was on screen when it was
+ * given, and Emit gates on exactly that field.
+ */
+export async function addManualLineAction(
+  paperSlug: string,
+  input: ManualLineInput,
+): Promise<ManualLineResult> {
+  if (!paperSlug) return { ok: false, error: "Missing paper." };
+  const result = await addManualLine(paperSlug, input);
   if (result.ok) revalidatePath(`/admin/papers/${paperSlug}/markscheme`);
   return result;
 }

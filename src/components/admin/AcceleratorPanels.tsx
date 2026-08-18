@@ -410,3 +410,87 @@ export function ManualBlockPanel({
     </Shell>
   );
 }
+
+// ============================================================================
+// ADD A MISSING LINE TO AN EXISTING BLOCK
+// ============================================================================
+
+export function ManualLinePanel({
+  questionNumber, isApproved, busy, onCancel, onSubmit,
+}: {
+  questionNumber: string;
+  isApproved: boolean;
+  busy: boolean;
+  onCancel: () => void;
+  onSubmit: (input: { questionNumber: string; as: "point" | "line"; text: string }) => void;
+}) {
+  const [text, setText] = useState("");
+  const [as, setAs] = useState<"point" | "line">("line");
+
+  return (
+    <Shell
+      title={`Add a missing line to ${questionNumber}`}
+      subtitle="For a line that is in the published mark scheme but never reached this block. Recorded as hand-transcribed."
+      onCancel={onCancel}
+      footer={
+        <>
+          <button
+            type="button" disabled={busy || !text.trim()}
+            onClick={() => onSubmit({ questionNumber, as, text: text.trim() })}
+            className="rounded bg-slate-900 px-3 py-1.5 text-sm text-white disabled:opacity-40"
+          >
+            {busy ? "Adding…" : "Add line"}
+          </button>
+          <button type="button" onClick={onCancel} className="rounded border border-slate-300 px-3 py-1.5 text-sm">
+            Cancel
+          </button>
+        </>
+      }
+    >
+      {isApproved && (
+        // ⚠ SAID BEFORE THEY PRESS IT, NOT AFTER. Withdrawing an approval is
+        // the right behaviour and a surprising one; a founder who discovers it
+        // afterwards learns to distrust the button.
+        <div className="mb-4 flex gap-2 rounded border border-amber-400 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>
+            <strong>{questionNumber} is approved.</strong> Adding a line withdraws that approval and
+            returns the question to needs-ruling. Your existing rulings are kept — only the signature
+            is removed, because an approval has to refer to the content that was on screen when you
+            gave it.
+          </p>
+        </div>
+      )}
+
+      <fieldset className="mb-3">
+        <legend className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">
+          what kind of line is it?
+        </legend>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button type="button" onClick={() => setAs("line")}
+            className={`rounded border px-2 py-1 text-sm ${as === "line" ? "border-slate-900 bg-slate-900 text-white" : "border-slate-300"}`}>
+            Needs a ruling
+          </button>
+          <button type="button" onClick={() => setAs("point")}
+            className={`rounded border px-2 py-1 text-sm ${as === "point" ? "border-slate-900 bg-slate-900 text-white" : "border-slate-300"}`}>
+            A marking point
+          </button>
+        </div>
+        <p className="mt-1.5 text-xs text-slate-600">
+          {as === "line"
+            ? "It joins the yellow cards and you classify it like any other — Accept, Reject, Guidance, and so on."
+            : "It joins the white cards as a marking point, which you then rule on."}
+        </p>
+      </fieldset>
+
+      <label className="block text-xs font-medium text-slate-700">
+        The line, exactly as the mark scheme prints it
+        <textarea value={text} onChange={(e) => setText(e.target.value)} rows={3}
+          className="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+      </label>
+      <p className="mt-2 font-mono text-[11px] text-slate-500">
+        Type it verbatim — the text is the key its ruling is stored under.
+      </p>
+    </Shell>
+  );
+}

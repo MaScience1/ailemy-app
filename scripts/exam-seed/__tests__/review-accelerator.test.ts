@@ -121,19 +121,24 @@ console.log("\n── EVERY UNRULED LINE IN THE PAPER GETS THE INTENDED PRECEDEN
     "Correct answer with some working scores 3": "P4",
     "Ignore SF except for 1 SF": "P2",
   };
-  const unruled: { q: string; text: string }[] = [];
+  // ⚠ NOT "THE LINES THAT ARE STILL UNRULED". They all are ruled now — the
+  // founder finished the paper — and a loop over the unruled set silently
+  // became a loop over nothing, which is a test that passes by doing no work.
+  // These eight lines are checked because they EXIST in the paper, whatever
+  // their ruling state.
+  const present: { q: string; text: string }[] = [];
   for (const q of file.questions) {
-    const done = new Set(Object.keys((file.rulings ?? {})[q.questionNumber]?.lines ?? {}));
-    for (const l of q.requiresRuling) if (!done.has(l.sourceLine)) unruled.push({ q: q.questionNumber, text: l.text });
+    for (const l of q.requiresRuling) {
+      if (expected[l.text]) present.push({ q: q.questionNumber, text: l.text });
+    }
   }
-  t("there are unruled lines to check — an empty pass proves nothing", unruled.length > 0, unruled.length);
-  for (const u of unruled) {
+  t("all eight scope lines are present in the paper",
+    present.length === Object.keys(expected).length, present.length);
+  for (const u of present) {
     const want = expected[u.text];
     const got = suggestFor(u.text, P, null);
-    if (want) {
-      t(`Q${u.q}: "${u.text.slice(0, 42)}…" -> ${want}`, got?.precedentId === want, got);
-      t(`   …and its verdict is Guidance`, got?.verdict === "guidance", got?.verdict);
-    }
+    t(`Q${u.q}: "${u.text.slice(0, 42)}…" -> ${want}`, got?.precedentId === want, got);
+    t(`   …and its verdict is Guidance`, got?.verdict === "guidance", got?.verdict);
   }
 }
 
@@ -432,23 +437,35 @@ console.log("\n── THE MARKS EDEXCEL'S TYPESETTING LOST ──");
 {
   // ⚠ DERIVED FROM THE ARTEFACT. The blocks all look fine individually; only
   // the arithmetic knows one is missing.
-  const short = tariffShortfalls(file);
-  t("exactly one question does not add up", short.length === 1, short.map((r) => r.question));
+  // ⚠ THE GAP HAS BEEN CLOSED, SO THE TEST NOW RUNS IN BOTH DIRECTIONS. The
+  // founder hand-entered 21(b)(i) through the review surface; asserting "one
+  // question does not add up" would now fail for the best possible reason.
+  t("the paper reconciles today", tariffShortfalls(file).length === 0,
+    tariffShortfalls(file).map((r) => r.question));
+  t("21(b)(i) is present, and hand-transcribed",
+    file.questions.find((q) => q.questionNumber === "21(b)(i)")?.marks?.derivedFrom === "hand-transcribed");
+
+  // ⚠ AND THE GUARD IS STILL SHOWN TO BITE, by removing it again in memory.
+  // Otherwise "it reconciles" is a claim no failing case supports.
+  const withoutBlock: ProposalSet = {
+    ...file, questions: file.questions.filter((q) => q.questionNumber !== "21(b)(i)"),
+  };
+  const short = tariffShortfalls(withoutBlock);
+  t("remove the hand-added block and exactly one question stops adding up",
+    short.length === 1, short.map((r) => r.question));
   const q21 = short[0];
   t("it is Q21", q21.question === "21", q21.question);
   t("the paper prints 13", q21.printed === 13, q21.printed);
-  t("the blocks add to 11", q21.extracted === 11, q21.extracted);
-  t("so 2 marks are missing", q21.shortfall === 2, q21.shortfall);
-  t("21(b)(i) is genuinely absent",
-    !file.questions.some((q) => q.questionNumber === "21(b)(i)"));
+  t("the blocks add to 11 without it", q21.extracted === 11, q21.extracted);
+  t("so 2 marks would be missing", q21.shortfall === 2, q21.shortfall);
   t("...while its siblings are present",
     ["21(a)", "21(b)(ii)", "21(c)(i)"].every((n) => file.questions.some((q) => q.questionNumber === n)));
 
   // ⚠ THE GUARD MUST RECOGNISE A HAND-TRANSCRIBED BLOCK CLOSING THE GAP. A
   // mark a person read off the page is not worth less than one a parser found.
   const withBlock: ProposalSet = {
-    ...file,
-    questions: [...file.questions, {
+    ...withoutBlock,
+    questions: [...withoutBlock.questions, {
       questionNumber: "21(b)(i)",
       page: 19,
       marks: { value: 2, page: 19, y: 0, sourceLine: "21(b)(i) — transcribed by hand (2 marks)", derivedFrom: "hand-transcribed", confidence: 1 },
@@ -470,12 +487,12 @@ console.log("\n── THE MARKS EDEXCEL'S TYPESETTING LOST ──");
   // ⚠ ANTI-VACUITY. A reconciler that always said "fine" would pass the
   // after-check above and miss the before-check entirely.
   t("ANTI-VACUITY — the reconciler reports a shortfall before the block is added",
-    tariffShortfalls(file).length === 1 && tariffShortfalls(withBlock).length === 0);
+    tariffShortfalls(withoutBlock).length === 1 && tariffShortfalls(withBlock).length === 0);
 
   // ⚠ A WRONG TARIFF IS CAUGHT TOO, in the other direction.
   const tooMany: ProposalSet = {
-    ...file,
-    questions: [...file.questions, { ...withBlock.questions[withBlock.questions.length - 1],
+    ...withoutBlock,
+    questions: [...withoutBlock.questions, { ...withBlock.questions[withBlock.questions.length - 1],
       marks: { ...withBlock.questions[withBlock.questions.length - 1].marks!, value: 5 } }],
   };
   const over = reconcileTariffs(tooMany).find((r) => r.question === "21")!;

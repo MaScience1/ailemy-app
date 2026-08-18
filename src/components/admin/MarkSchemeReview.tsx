@@ -45,6 +45,7 @@ import {
   VerifyPanel,
   BulkApprovePanel,
   ManualBlockPanel,
+  ManualLinePanel,
   type VerifyCandidate,
 } from "@/components/admin/AcceleratorPanels";
 import {
@@ -53,6 +54,7 @@ import {
   applyBatchAction,
   bulkApproveAction,
   addManualBlockAction,
+  addManualLineAction,
 } from "@/app/admin/papers/[paper]/markscheme/actions";
 
 /**
@@ -273,6 +275,7 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
     | { kind: "verify"; eligible: VerifyCandidate[]; excluded: { questionNumber: string; pointCode: string; criterion: string; reason: string }[] }
     | { kind: "bulk"; candidates: { questionNumber: string; marks: number; points: number; lines: number }[] }
     | { kind: "block" }
+    | { kind: "line"; questionNumber: string; isApproved: boolean }
     | null
   >(null);
   const [panelBusy, setPanelBusy] = useState(false);
@@ -756,6 +759,19 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
     if (res.approved.length > 0) window.location.reload();
   };
 
+  const confirmLine = async (input: Parameters<typeof addManualLineAction>[1]) => {
+    setPanelBusy(true);
+    const res = await addManualLineAction(data.paperSlug, input);
+    setPanelBusy(false);
+    if (!res.ok) { setNotice({ kind: "bad", text: res.error }); return; }
+    setPanel(null);
+    setNotice({
+      kind: "ok",
+      text: `Added to ${res.questionNumber}. ${res.approvalWithdrawn ? "Its approval was withdrawn — re-approve once you have ruled the new line. " : ""}${res.unruledNow} line(s) now need a ruling.`,
+    });
+    window.location.reload();
+  };
+
   const confirmBlock = async (input: Parameters<typeof addManualBlockAction>[1]) => {
     setPanelBusy(true);
     const res = await addManualBlockAction(data.paperSlug, input);
@@ -769,10 +785,20 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
     window.location.reload();
   };
 
-  /** Lines this tab has a decision for, saved or not. Drives the editor. */
+  /**
+   * Lines this tab has a decision for, saved or not. Drives the editor.
+   *
+   * ⚠ isResolved, NOT "is there an entry" — THE LIST AND THE CARD MUST NOT BE
+   * ABLE TO DISAGREE. This counted mere presence while the question card
+   * counted resolution, so the two derived "how much is left" by different
+   * rules from the same draft. A distractor ruling with no option letter is
+   * present-but-unresolved, and after a reload the badge and the card told the
+   * founder different numbers about the same question. They now read the one
+   * predicate the Approve gate and Emit also read.
+   */
   const localUnruled = (item: ReviewItem) => {
     const d = draftFor(item.question.questionNumber);
-    return item.question.requiresRuling.filter((l) => !d.lines[l.sourceLine]).length;
+    return item.question.requiresRuling.filter((l) => !isResolved(d.lines[l.sourceLine])).length;
   };
 
   /**
@@ -1283,6 +1309,11 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
               suggestions={suggestions}
               onAcceptSuggestion={(l, sg) => acceptSuggestion(current.question.questionNumber, l, sg)}
               onRevokePoint={(code) => revokePoint(current.question.questionNumber, code)}
+              onAddLine={() => setPanel({
+                kind: "line",
+                questionNumber: current.question.questionNumber,
+                isApproved: Boolean(data.rulings[current.question.questionNumber]?.approvedAt),
+              })}
               onEditLine={(l, txt) => editLine(current.question.questionNumber, l, txt)}
               onRulePoint={(code, r) => rulePoint(current.question.questionNumber, code, r)}
               onSave={(approve) => save(current, approve)}
@@ -1306,6 +1337,10 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
       {panel?.kind === "bulk" && (
         <BulkApprovePanel candidates={panel.candidates} busy={panelBusy}
           onCancel={() => setPanel(null)} onConfirm={confirmBulk} />
+      )}
+      {panel?.kind === "line" && (
+        <ManualLinePanel questionNumber={panel.questionNumber} isApproved={panel.isApproved}
+          busy={panelBusy} onCancel={() => setPanel(null)} onSubmit={confirmLine} />
       )}
       {panel?.kind === "block" && (
         <ManualBlockPanel shortfalls={data.shortfalls} busy={panelBusy}
@@ -1386,7 +1421,7 @@ function SpotCheckStrip({
 function QuestionPanel({
   item, draft, painted, panelRef, onSamePage, canWrite, saving,
   onGoTo, onRuleLine, onSetOption, onEditLine, onRulePoint, onSave,
-  suggestions, onAcceptSuggestion, onRevokePoint,
+  suggestions, onAcceptSuggestion, onRevokePoint, onAddLine,
 }: {
   item: ReviewItem;
   draft: Draft;
@@ -1401,6 +1436,7 @@ function QuestionPanel({
   suggestions: Map<string, Suggestion>;
   onAcceptSuggestion: (line: ProposedLine, s: Suggestion) => void;
   onRevokePoint: (pointCode: string) => void;
+  onAddLine: () => void;
   onEditLine: (line: ProposedLine, text: string) => void;
   onRulePoint: (code: string, ruling: PointRuling) => void;
   onSave: (approve: boolean) => void;
@@ -1439,6 +1475,18 @@ function QuestionPanel({
         >
           show on page
         </button>
+        {/* ⚠ PER QUESTION, BESIDE THE QUESTION. A paper-level control would
+            make the founder retype which block they meant, on a screen that
+            already knows. */}
+        {canWrite && (
+          <button
+            type="button"
+            onClick={onAddLine}
+            className="font-mono text-[10px] uppercase tracking-wider text-slate-500 underline"
+          >
+            add missing line
+          </button>
+        )}
       </div>
 
       {q.markingRule && (
