@@ -282,9 +282,14 @@ console.log("\n── (13) EMIT + DRY RUN CARRY DISTRACTORS, NEVER DROP THEM ─
   const source = emitFixtureSource(emitted, "unit-1-may-june-2025", "2026-08-17T00:00:00.000Z");
   t("the generated module mentions every option", /option: "A"/.test(source) &&
     /option: "C"/.test(source) && /option: "D"/.test(source));
+  // ⚠ COUNT ENTRIES, NOT SUBSTRINGS. Each distractor now emits `text` AND
+  // `sourceLine` — the traceability the DistractorFeedback type requires — and
+  // for these lines the two are identical, so a substring count doubled.
   t("the explanations are written out, not summarised",
-    (source.match(/is incorrect because/g) ?? []).length === 3,
-    (source.match(/is incorrect because/g) ?? []).length);
+    (source.match(/^\s+\{ option: /gm) ?? []).length === 3,
+    (source.match(/^\s+\{ option: /gm) ?? []).length);
+  t("...each carrying its source line for traceability",
+    (source.match(/sourceLine: "/g) ?? []).length === 3);
   t("they are labelled as feedback the marking layer never reads",
     /FEEDBACK ONLY/.test(source));
   t("they sit OUTSIDE markScheme",

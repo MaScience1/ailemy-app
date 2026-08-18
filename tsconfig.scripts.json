@@ -31,12 +31,5 @@
     "types": ["node"]
   },
   "include": ["scripts/**/*.ts"],
-  // ⚠ *.generated.ts IS NOT A MODULE. emitFixtureSource writes paste-in
-  // FRAGMENTS — bare `markScheme: [...]` object properties under a comment
-  // naming the question — with no wrapper, no export and no valid top level.
-  // It does not parse, so including it turns `npm run typecheck` red the
-  // moment a paper is emitted. Excluded here rather than deleted, because the
-  // fragments are the reviewer's output and worth keeping; see the report on
-  // why the emitter should produce a real module instead.
-  "exclude": ["node_modules", "scripts/exam-seed/*.generated.ts"]
+  "exclude": ["node_modules"]
 }

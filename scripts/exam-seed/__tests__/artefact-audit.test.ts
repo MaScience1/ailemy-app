@@ -21,12 +21,15 @@
 import { readFileSync } from "node:fs";
 import { auditArtefact, moveLineToRuling, type AuditClass } from "../../../src/lib/exam/artefact-audit.ts";
 import {
+  emitFixtureSource,
+  identifierFor,
   withdrawApproval,
   buildReview,
   toFixture,
   pointsFullyRuled,
   isResolved,
   type QuestionRulings,
+  type RulingBook,
   type ProposalSet,
 } from "../../../src/lib/exam/markscheme-proposals.ts";
 
@@ -224,8 +227,18 @@ console.log("\n── ADDING A LINE TO AN APPROVED QUESTION WITHDRAWS THE APPROV
   };
   t("a hand-added point leaves the question unverified",
     !pointsFullyRuled(withNewPoint as never, after));
-  t("...while the original points alone were fully ruled",
-    pointsFullyRuled(q, after));
+  // ⚠ WAS "the original points alone were fully ruled". They are not, and
+  // that is the fix: 20(b)(iv)'s two points have EMPTY criteria, and this
+  // fixture rules them "accept". Accepting nothing is no longer a ruling, so
+  // the question is correctly unresolved until someone Edits in the words.
+  t("...and the original empty points are NOT fully ruled either, being blank",
+    !pointsFullyRuled(q, after), q.points.map((pt) => pt.criterion));
+  t("...whereas an EDIT supplying the words does resolve them",
+    pointsFullyRuled(q, {
+      ...after,
+      points: Object.fromEntries(q.points.map((pt) => [pt.pointCode,
+        { verdict: "edit" as const, criterion: "hand-transcribed from the drawing" }])),
+    }));
 
   // ⚠ ANTI-VACUITY: withdrawApproval must not simply return an empty object.
   t("ANTI-VACUITY — the returned book is not empty",
@@ -376,6 +389,116 @@ console.log("\n── A WHOLE SWEEP IN ONE PASS ──");
   t("a second sweep over the same question moves nothing",
     again.every((r) => !r.ok), again);
   t("...and the queue is still exactly four", q.requiresRuling.length === 4);
+}
+
+console.log("\n── A PARTIAL SUCCESS IS NOT A SUCCESS ──");
+{
+  // ⚠ THE FAILURE THIS PINS. toFixture returned {ok:true, questions} and threw
+  // its refusals away whenever anything emitted. 23(a)(iii) — an image-answer
+  // cell whose two points had empty criteria — was refused three times and the
+  // emitter reported "47 questions" without a word. Two marks left a paper the
+  // screen called 48/48 approved.
+  const emit = toFixture(set as never, (set as unknown as { rulings: RulingBook }).rulings ?? {});
+  t("something emitted", emit.ok === true);
+  t("...and refusals are STILL REPORTED alongside the success",
+    emit.ok && Array.isArray(emit.refusals), emit.ok ? typeof emit.refusals : "");
+  t("...naming 23(a)(iii)",
+    emit.ok && emit.refusals.some((r) => r.startsWith("23(a)(iii)")),
+    emit.ok ? emit.refusals : "");
+  t("...and saying why — an empty criterion",
+    emit.ok && emit.refusals.some((r) => /empty criterion/.test(r)));
+
+  // ⚠ AND THE EMITTED FILE SAYS SO IN ITS OWN HEADER, because the reviewer may
+  // read the file rather than the screen.
+  const src = emitFixtureSource(emit, "unit-1-may-june-2025", "2026-08-18T00:00:00.000Z");
+  t("the generated header carries the refusals", /REFUSAL\(S\)/.test(src));
+  t("...names the question", /23\(a\)\(iii\)/.test(src));
+  t("...and states the emitted mark total to check against the paper",
+    /mark\(s\)/.test(src), src.split("\n").find((l) => /mark\(s\)/.test(l)));
+}
+
+console.log("\n── THE EMITTED FILE IS A REAL MODULE ──");
+{
+  const emit = toFixture(set as never, (set as unknown as { rulings: RulingBook }).rulings ?? {});
+  const src = emitFixtureSource(emit, "unit-1-may-june-2025", "2026-08-18T00:00:00.000Z");
+
+  // ⚠ IT USED TO BE PASTE-IN FRAGMENTS — bare `markScheme: [...]` properties
+  // with no wrapper and no export. It did not parse, could not be imported,
+  // and turned `npm run typecheck` red the moment a paper was emitted, while
+  // the emitter's docstring claimed the seeder consumed it.
+  t("it exports a named const", /^export const [A-Z0-9_]+: FixtureQuestion\[\] = \[$/m.test(src),
+    src.split("\n").find((l) => l.startsWith("export const")));
+  t("the identifier is derived from the slug",
+    src.includes(`export const ${identifierFor("unit-1-may-june-2025")}`));
+  t("it type-imports the shape it claims", /^import type \{ FixtureQuestion \}/m.test(src));
+  t("every entry carries its question number as DATA, not a comment",
+    (src.match(/^\s+questionNumber: "/gm) ?? []).length === (emit.ok ? emit.questions.length : -1),
+    (src.match(/^\s+questionNumber: "/gm) ?? []).length);
+  t("...and its tariff", (src.match(/^\s+marks: \d+,$/gm) ?? []).length === (emit.ok ? emit.questions.length : -1));
+  t("it closes the array", /^\];$/m.test(src));
+  t("it warns against hand-editing", /GENERATED\. Do not edit/.test(src));
+
+  // ⚠ BALANCED BRACKETS ARE NOT ENOUGH, AND SABOTAGE PROVED IT. Replacing the
+  // quoter with a raw `"${s}"` left every bracket balanced while emitting an
+  // unterminated string literal three lines long — the exact bug that shipped.
+  const body = src.split("\n").filter((l) => !l.trim().startsWith("//"));
+  const open = (body.join("\n").match(/[[{]/g) ?? []).length;
+  const close = (body.join("\n").match(/[\]}]/g) ?? []).length;
+  t("brackets balance", open === close, { open, close });
+
+  // ⚠ NO STRING MAY SPAN A LINE. A raw newline inside a double-quoted literal
+  // leaves that line with an ODD number of unescaped quotes, which is exactly
+  // what a multi-line `guidance` produced before the quoter used
+  // JSON.stringify.
+  const oddQuoteLines = body.filter(
+    (l) => ((l.match(/(?<!\\)"/g) ?? []).length % 2) === 1);
+  t("every emitted string closes on its own line",
+    oddQuoteLines.length === 0, oddQuoteLines.slice(0, 2));
+
+  // And the live case that broke it: a multi-line guidance value.
+  t("a multi-line guidance is escaped, not split",
+    !/guidance: "[^"]*$/m.test(body.join("\n")),
+    body.filter((l) => /guidance: "/.test(l)).slice(0, 1));
+  t("...and its newlines survive as \\n",
+    src.includes("\\n") || !src.includes("guidance:"),
+    body.find((l) => /guidance: /.test(l)));
+
+  t("identifierFor handles a leading digit", identifierFor("2025-paper").startsWith("PAPER_"));
+  t("identifierFor uppercases and underscores", identifierFor("unit-1-may-june-2025") === "UNIT_1_MAY_JUNE_2025");
+
+  // A refusal-only emit still returns something a human can read.
+  const none = emitFixtureSource({ ok: false, refusals: ["X: not approved"] }, "s", "t");
+  t("a total refusal explains itself", /NOTHING EMITTED/.test(none) && /X: not approved/.test(none));
+}
+
+console.log("\n── ACCEPTING NOTHING IS NOT A RULING ──");
+{
+  // ⚠ HOW 23(a)(iii) WAS LOST: "Accept as-is" on a card with no text accepts
+  // the empty string, so the question read as fully ruled and was approved.
+  const blank = { questionNumber: "T", points: [{ pointCode: "M1", criterion: "" }] };
+  t("accept-as-is on an empty criterion does NOT resolve the point",
+    !pointsFullyRuled(blank as never, { points: { M1: { verdict: "accept" } }, lines: {} }));
+  t("...nor does an edit that supplies nothing",
+    !pointsFullyRuled(blank as never, { points: { M1: { verdict: "edit", criterion: "  " } }, lines: {} }));
+  t("an EDIT that supplies the words DOES resolve it",
+    pointsFullyRuled(blank as never, {
+      points: { M1: { verdict: "edit", criterion: "a hand-transcribed criterion" } }, lines: {} }));
+  t("a reject resolves it too — the point was looked at",
+    pointsFullyRuled(blank as never, { points: { M1: { verdict: "reject", why: "not a point" } }, lines: {} }));
+
+  // ⚠ AND A NORMAL CARD IS UNAFFECTED, or this rule would block the whole paper.
+  const real = { questionNumber: "T", points: [{ pointCode: "M1", criterion: "a real criterion" }] };
+  t("accept-as-is still resolves a card that HAS text",
+    pointsFullyRuled(real as never, { points: { M1: { verdict: "accept" } }, lines: {} }));
+
+  // The live case, on the real artefact.
+  const q = set.questions.find((x) => x.questionNumber === "23(a)(iii)");
+  if (q) {
+    const book = (set as unknown as { rulings: RulingBook }).rulings?.["23(a)(iii)"];
+    t("23(a)(iii) is no longer counted as fully ruled", !pointsFullyRuled(q, book));
+    t("...because both its points have no text",
+      q.points.every((pt) => !pt.criterion.trim()), q.points.map((pt) => pt.criterion));
+  }
 }
 
 console.log(`\n${fail === 0 ? "✓ ALL" : "✗"} ${pass} passed, ${fail} failed`);
