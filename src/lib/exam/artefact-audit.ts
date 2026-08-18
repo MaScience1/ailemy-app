@@ -184,3 +184,75 @@ export function auditArtefact(questions: readonly AuditQuestion[]): AuditReport 
 
   return { findings, byQuestion };
 }
+
+// ============================================================================
+// PUTTING A MISFILED LINE BACK IN FRONT OF THE EXAMINER
+// ============================================================================
+
+export type MisfiledBucket = "accept" | "reject" | "guidance";
+
+type MovableQuestion = {
+  accept?: { text: string; sourceLine?: string }[];
+  reject?: { text: string; sourceLine?: string }[];
+  guidance?: { text: string; sourceLine?: string }[];
+  requiresRuling?: { text: string; sourceLine: string; requiresRuling?: string[] }[];
+};
+
+export type MoveResult =
+  | { ok: true; movedFrom: MisfiledBucket }
+  | { ok: false; error: string };
+
+/**
+ * Move one line out of a bucket nobody reads and into the ruling queue.
+ *
+ * ============================================================================
+ * ⚠ A MOVE, NOT A COPY, AND THAT IS WHAT MAKES DEDUP STRUCTURAL
+ * ============================================================================
+ * toFixture reads ONLY `requiresRuling`. It never looks at accept[],
+ * guidance[] or reject[] — which is why 22 of 23 bucket lines in WCH11/01
+ * never reached the emitted fixture at all. So:
+ *
+ *   - COPYING would leave the sentence in two places in the artefact. Emit
+ *     would still see one (it reads one array), so there would be no double
+ *     mark — but the audit would report it forever and the next person would
+ *     not know which copy was authoritative.
+ *   - MOVING leaves exactly one copy, in the only array anything downstream
+ *     reads. Dedup is then not a rule anyone has to remember.
+ *
+ * ⚠ IT MUTATES THE QUESTION IT IS GIVEN. The caller has just read the file and
+ * is about to write it back; returning a copy would invite writing the copy
+ * and the original.
+ */
+export function moveLineToRuling(q: MovableQuestion, text: string): MoveResult {
+  const target = text.trim();
+  if (!target) return { ok: false, error: "No line text given." };
+
+  q.requiresRuling ??= [];
+  if (q.requiresRuling.some((l) => l.text.trim() === target)) {
+    // ⚠ ALREADY IN THE QUEUE. Not an error worth failing a sweep over, but it
+    // must not be added again — that WOULD double it in emit.
+    return { ok: false, error: "That line is already waiting for a ruling." };
+  }
+
+  for (const bucket of ["accept", "reject", "guidance"] as const) {
+    const lines = q[bucket];
+    if (!lines) continue;
+    const i = lines.findIndex((l) => l.text.trim() === target);
+    if (i === -1) continue;
+
+    const [line] = lines.splice(i, 1);
+    q.requiresRuling.push({
+      ...line,
+      text: line.text,
+      sourceLine: line.sourceLine ?? line.text,
+      // ⚠ IT SAYS WHERE IT CAME FROM. A reviewer meeting this line for the
+      // first time should know it was filed away rather than newly found.
+      requiresRuling: [
+        `was filed under ${bucket} by the extractor and never shown to you — classify it`,
+      ],
+    });
+    return { ok: true, movedFrom: bucket };
+  }
+
+  return { ok: false, error: "That line is not in any of this question's buckets." };
+}

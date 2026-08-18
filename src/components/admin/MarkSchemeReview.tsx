@@ -46,6 +46,8 @@ import {
   BulkApprovePanel,
   ManualBlockPanel,
   ManualLinePanel,
+  MisfiledPanel,
+  type MisfiledLine,
   type VerifyCandidate,
 } from "@/components/admin/AcceleratorPanels";
 import {
@@ -55,6 +57,7 @@ import {
   bulkApproveAction,
   addManualBlockAction,
   addManualLineAction,
+  convertMisfiledLineAction,
 } from "@/app/admin/papers/[paper]/markscheme/actions";
 
 /**
@@ -276,6 +279,7 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
     | { kind: "bulk"; candidates: { questionNumber: string; marks: number; points: number; lines: number }[] }
     | { kind: "block" }
     | { kind: "line"; questionNumber: string; isApproved: boolean }
+    | { kind: "misfiled" }
     | null
   >(null);
   const [panelBusy, setPanelBusy] = useState(false);
@@ -759,6 +763,18 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
     if (res.approved.length > 0) window.location.reload();
   };
 
+  const restoreMisfiled = async (l: MisfiledLine) => {
+    setPanelBusy(true);
+    const res = await convertMisfiledLineAction(data.paperSlug, l.questionNumber, l.text);
+    setPanelBusy(false);
+    if (!res.ok) { setNotice({ kind: "bad", text: res.error }); return; }
+    setNotice({
+      kind: "ok",
+      text: `Restored to ${res.questionNumber} from ${res.movedFrom}. ${res.approvalWithdrawn ? "Its approval was withdrawn. " : ""}${res.unruledNow} line(s) now need a ruling.`,
+    });
+    window.location.reload();
+  };
+
   const confirmLine = async (input: Parameters<typeof addManualLineAction>[1]) => {
     setPanelBusy(true);
     const res = await addManualLineAction(data.paperSlug, input);
@@ -1004,6 +1020,16 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
             >
               Bulk approve
             </button>
+            {data.misfiled.length > 0 && (
+              <button
+                type="button" onClick={() => setPanel({ kind: "misfiled" })}
+                className="flex items-center gap-1.5 rounded-md border border-amber-400 bg-amber-50 px-3 py-1.5 text-sm text-amber-900 hover:border-amber-600"
+                title="Lines the extractor classified automatically and never showed you"
+              >
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Filed away ({data.misfiled.length})
+              </button>
+            )}
             {data.shortfalls.length > 0 && (
               <button
                 type="button" onClick={() => setPanel({ kind: "block" })}
@@ -1337,6 +1363,12 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
       {panel?.kind === "bulk" && (
         <BulkApprovePanel candidates={panel.candidates} busy={panelBusy}
           onCancel={() => setPanel(null)} onConfirm={confirmBulk} />
+      )}
+      {panel?.kind === "misfiled" && (
+        <MisfiledPanel
+          lines={data.misfiled}
+          approvedQuestions={new Set(Object.entries(data.rulings).filter(([, b]) => b.approvedAt).map(([q]) => q))}
+          busy={panelBusy} onCancel={() => setPanel(null)} onRestore={restoreMisfiled} />
       )}
       {panel?.kind === "line" && (
         <ManualLinePanel questionNumber={panel.questionNumber} isApproved={panel.isApproved}

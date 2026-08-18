@@ -9,6 +9,7 @@ import {
   bulkApprove,
   addManualBlock,
   addManualLine,
+  convertMisfiledLine,
   type SaveResult,
   type EmitResultReport,
   type BatchConfirmation,
@@ -18,6 +19,7 @@ import {
   type ManualBlockResult,
   type ManualLineInput,
   type ManualLineResult,
+  type ConvertResult,
 } from "@/lib/exam/markscheme-review";
 import type { QuestionRulings } from "@/lib/exam/markscheme-proposals";
 
@@ -133,6 +135,23 @@ export async function addManualLineAction(
 ): Promise<ManualLineResult> {
   if (!paperSlug) return { ok: false, error: "Missing paper." };
   const result = await addManualLine(paperSlug, input);
+  if (result.ok) revalidatePath(`/admin/papers/${paperSlug}/markscheme`);
+  return result;
+}
+
+/**
+ * Restore one misfiled line to the ruling queue.
+ *
+ * ⚠ IT WITHDRAWS APPROVAL, like addManualLine. 17 of the questions carrying
+ * these lines are approved over content that did not include them.
+ */
+export async function convertMisfiledLineAction(
+  paperSlug: string,
+  questionNumber: string,
+  text: string,
+): Promise<ConvertResult> {
+  if (!paperSlug) return { ok: false, error: "Missing paper." };
+  const result = await convertMisfiledLine(paperSlug, questionNumber, text);
   if (result.ok) revalidatePath(`/admin/papers/${paperSlug}/markscheme`);
   return result;
 }

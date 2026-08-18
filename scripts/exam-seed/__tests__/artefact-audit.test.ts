@@ -19,7 +19,7 @@
  * ⚠ READ-ONLY, DERIVED FROM THE REAL ARTEFACT. No credentials, no writes.
  */
 import { readFileSync } from "node:fs";
-import { auditArtefact, type AuditClass } from "../../../src/lib/exam/artefact-audit.ts";
+import { auditArtefact, moveLineToRuling, type AuditClass } from "../../../src/lib/exam/artefact-audit.ts";
 import {
   withdrawApproval,
   buildReview,
@@ -233,6 +233,96 @@ console.log("\n── ADDING A LINE TO AN APPROVED QUESTION WITHDRAWS THE APPROV
     Object.keys(after).length >= 3, Object.keys(after));
   t("withdrawing from an already-unapproved book is a no-op",
     JSON.stringify(withdrawApproval(after)) === JSON.stringify(after));
+}
+
+console.log("\n── RESTORING A MISFILED LINE IS A MOVE, SO DEDUP IS STRUCTURAL ──");
+{
+  // ⚠ toFixture READS ONLY requiresRuling. It never looks at accept[],
+  // guidance[] or reject[] — which is why 22 of 23 bucket lines in this paper
+  // never reached the emitted fixture. A COPY would leave the sentence in two
+  // places and the audit would report the buried one forever; a MOVE leaves
+  // exactly one, in the only array anything downstream reads.
+  type Q = Parameters<typeof moveLineToRuling>[0] & {
+    accept: { text: string }[]; guidance: { text: string }[];
+    requiresRuling: { text: string; sourceLine: string; requiresRuling?: string[] }[];
+  };
+  const q: Q = {
+    accept: [{ text: "Allow 306 (kg)" }, { text: "Allow 307000 / 306000 g" }],
+    guidance: [{ text: "307 (kg)" }],
+    requiresRuling: [{ text: "Allow TE throughout", sourceLine: "Allow TE throughout" }],
+  };
+
+  const moved = moveLineToRuling(q, "Allow 306 (kg)");
+  t("the line moves", moved.ok === true, moved);
+  t("...and says which bucket it came from",
+    moved.ok && moved.movedFrom === "accept", moved);
+  t("it is GONE from accept — not copied",
+    !q.accept.some((l) => l.text === "Allow 306 (kg)"), q.accept.map((l) => l.text));
+  t("accept still holds its other line", q.accept.length === 1);
+  t("it is now in the ruling queue",
+    q.requiresRuling.some((l) => l.text === "Allow 306 (kg)"));
+  t("...exactly once", q.requiresRuling.filter((l) => l.text === "Allow 306 (kg)").length === 1);
+  t("...with a sourceLine, which is the key its ruling is stored under",
+    q.requiresRuling.find((l) => l.text === "Allow 306 (kg)")?.sourceLine === "Allow 306 (kg)");
+  t("...and a reason saying it was filed away",
+    (q.requiresRuling.find((l) => l.text === "Allow 306 (kg)")?.requiresRuling ?? [])
+      .some((r) => /filed under accept/.test(r)));
+
+  // ⚠ THE DOUBLING CASE, AND IT HAD TO BE BUILT DELIBERATELY. Simply moving
+  // the same line twice proves nothing: the second call fails on "not in any
+  // bucket", because the first call removed it. That assertion passed even
+  // with the duplicate guard deleted — found by sabotage.
+  //
+  // The case that actually matters is a line sitting in a bucket AND already
+  // in the queue, which is exactly what a COPY-based restore would leave
+  // behind, and what a re-run of the extractor over a half-swept artefact
+  // could produce.
+  const both: Q = {
+    accept: [{ text: "Allow 306 (kg)" }],
+    guidance: [],
+    requiresRuling: [{ text: "Allow 306 (kg)", sourceLine: "Allow 306 (kg)" }],
+  };
+  const dupe = moveLineToRuling(both, "Allow 306 (kg)");
+  t("a line already in the queue is REFUSED even though a bucket still holds it",
+    dupe.ok === false, dupe);
+  t("...saying it is already waiting",
+    dupe.ok === false && /already waiting/.test(dupe.error), dupe);
+  t("...and the queue still holds exactly one copy",
+    both.requiresRuling.filter((l) => l.text === "Allow 306 (kg)").length === 1,
+    both.requiresRuling.length);
+  t("...and the bucket copy is left alone rather than silently dropped",
+    both.accept.length === 1);
+
+  const again = moveLineToRuling(q, "Allow 306 (kg)");
+  t("moving an already-moved line is refused (bucket is empty now)", again.ok === false, again);
+  t("...and it is still there exactly once",
+    q.requiresRuling.filter((l) => l.text === "Allow 306 (kg)").length === 1);
+
+  const fromGuidance = moveLineToRuling(q, "307 (kg)");
+  t("a guidance line moves too", fromGuidance.ok && fromGuidance.movedFrom === "guidance");
+  t("...leaving guidance empty", q.guidance.length === 0);
+
+  t("a line in no bucket is refused",
+    moveLineToRuling(q, "something never printed").ok === false);
+  t("empty text is refused", moveLineToRuling(q, "   ").ok === false);
+
+  // ⚠ THE WHOLE POINT: ONE COPY REACHES EMIT.
+  const totalCopies =
+    [...q.accept, ...q.guidance].filter((l) => l.text === "Allow 306 (kg)").length +
+    q.requiresRuling.filter((l) => l.text === "Allow 306 (kg)").length;
+  t("across the WHOLE question the sentence exists exactly once",
+    totalCopies === 1, totalCopies);
+
+  // ⚠ AND THE AUDIT STOPS REPORTING WHAT HAS BEEN RESTORED.
+  const auditedAfter = auditArtefact([{
+    questionNumber: "T", points: [{ pointCode: "M1", criterion: "x" }],
+    accept: q.accept, guidance: q.guidance, requiresRuling: q.requiresRuling,
+  }]);
+  t("a restored line is no longer reported as misfiled",
+    !auditedAfter.findings.some((f) => f.text === "Allow 306 (kg)"),
+    auditedAfter.findings.map((f) => f.text));
+  t("...while a still-buried one is",
+    auditedAfter.findings.some((f) => f.text === "Allow 307000 / 306000 g"));
 }
 
 console.log(`\n${fail === 0 ? "✓ ALL" : "✗"} ${pass} passed, ${fail} failed`);

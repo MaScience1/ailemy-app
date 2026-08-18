@@ -494,3 +494,80 @@ export function ManualLinePanel({
     </Shell>
   );
 }
+
+// ============================================================================
+// (d) THE MISFILED-LINE SWEEP
+// ============================================================================
+
+export type MisfiledLine = {
+  questionNumber: string; bucket: string; text: string; cls: string; why: string;
+};
+
+/**
+ * ⚠ ONE AT A TIME, DELIBERATELY, AND NOT PRE-TICKED.
+ *
+ * Every other confirmation screen here pre-ticks, because the decision was
+ * already made by a precedent the founder wrote or by byte equality. This one
+ * has made no decision at all: each line is a sentence an examiner has never
+ * read, and restoring it withdraws the approval on its question. A "restore
+ * all 52" button would withdraw seventeen approvals on one click, and the
+ * person pressing it would not have read a single line.
+ */
+export function MisfiledPanel({
+  lines, approvedQuestions, busy, onCancel, onRestore,
+}: {
+  lines: MisfiledLine[];
+  approvedQuestions: Set<string>;
+  busy: boolean;
+  onCancel: () => void;
+  onRestore: (l: MisfiledLine) => void;
+}) {
+  const byQuestion = [...new Set(lines.map((l) => l.questionNumber))];
+  return (
+    <Shell
+      title="Lines the extractor filed away"
+      subtitle={`${lines.length} line(s) across ${byQuestion.length} question(s) were classified automatically and never shown to you. They also never reached the emitted fixture.`}
+      onCancel={onCancel}
+      footer={
+        <button type="button" onClick={onCancel} className="rounded border border-slate-300 px-3 py-1.5 text-sm">
+          Close
+        </button>
+      }
+    >
+      <p className="mb-4 rounded border border-amber-400 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+        Restoring a line puts it in that question&apos;s ruling queue. If the question is approved,
+        the approval is withdrawn — the signature was given over content that did not include this
+        line. Your existing rulings are kept.
+      </p>
+      {byQuestion.map((qn) => (
+        <section key={qn} className="mb-5">
+          <h3 className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">
+            {qn}
+            {approvedQuestions.has(qn) && (
+              <span className="ml-2 rounded bg-emerald-100 px-1.5 py-0.5 text-emerald-800">approved</span>
+            )}
+          </h3>
+          <ul className="mt-2 space-y-1.5">
+            {lines.filter((l) => l.questionNumber === qn).map((l) => (
+              <li key={`${qn}::${l.text}`} className="rounded border border-slate-200 p-2">
+                <p className="text-sm text-slate-900">“{l.text}”</p>
+                <p className="mt-0.5 font-mono text-[10px] text-slate-500">
+                  filed under {l.bucket} · {l.cls}
+                </p>
+                <p className="mt-0.5 text-[11px] text-slate-600">{l.why}</p>
+                {l.cls !== "empty-marking-point" && (
+                  <button
+                    type="button" disabled={busy} onClick={() => onRestore(l)}
+                    className="mt-1.5 rounded border border-slate-400 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-slate-700 hover:bg-slate-100 disabled:opacity-40"
+                  >
+                    restore for ruling
+                  </button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </Shell>
+  );
+}
