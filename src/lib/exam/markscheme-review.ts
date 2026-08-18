@@ -16,6 +16,7 @@ import {
   nextRevision,
   toFixture,
   emitFixtureSource,
+  type StampedMeta,
   pointsFullyRuled,
   isResolved,
   tariffShortfalls,
@@ -202,7 +203,7 @@ export async function getMarkSchemeReview(paperSlug: string): Promise<ReviewResu
   );
   const query = db
     .from("past_papers")
-    .select("id, slug, paper_name, paper_code, markscheme_pdf_path");
+    .select("id, slug, paper_name, paper_code, year, session, markscheme_pdf_path");
   const { data: papers, error } = await (looksLikeId
     ? query.eq("id", paperSlug)
     : query.eq("slug", paperSlug));
@@ -442,7 +443,26 @@ export async function emitFixture(paperSlug: string): Promise<EmitResultReport> 
     return { ok: false, error: "Refusing to write: the target is not a .generated.ts path." };
   }
 
-  const source = emitFixtureSource(result, paperSlug, new Date().toISOString());
+  // ⚠ THE EMITTER STAMPS IDENTITY BECAUSE ONLY IT KNOWS THE ROW. The adapter
+  // has no business hand-holding a constant, and the generated file must not
+  // carry a uuid — the seeder resolves that from these natural keys at run
+  // time. A lookup that fails leaves them undefined, which the adapter turns
+  // into a named refusal rather than a plausible default.
+  let stamped: StampedMeta | undefined;
+  try {
+    const db = await createClient();
+    const { data: rows } = await db
+      .from("past_papers")
+      .select("paper_code, session, year")
+      .eq("slug", paperSlug);
+    if (rows?.length === 1) {
+      stamped = { paperCode: rows[0].paper_code, session: rows[0].session, year: rows[0].year };
+    }
+  } catch {
+    // Leave it unstamped; the refusal downstream says so by name.
+  }
+
+  const source = emitFixtureSource(result, paperSlug, new Date().toISOString(), stamped);
   try {
     await writeFile(target, source, "utf8");
   } catch (e) {

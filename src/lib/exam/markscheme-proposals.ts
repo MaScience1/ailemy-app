@@ -580,7 +580,23 @@ export function toFixture(set: ProposalSet, rulings: RulingBook): EmitResult {
  * the output contract is a file the seeder already consumes, so the writing
  * path is the one that is already tested.
  */
-export function emitFixtureSource(result: EmitResult, paperSlug: string, capturedAt: string): string {
+/**
+ * Natural keys the emitter stamps into the module. NEVER a uuid — see
+ * fixture-adapter's PaperMeta. Undefined fields become a refusal downstream
+ * rather than a plausible-looking default.
+ */
+export type StampedMeta = {
+  paperCode?: string | null;
+  session?: string;
+  year?: number;
+};
+
+export function emitFixtureSource(
+  result: EmitResult,
+  paperSlug: string,
+  capturedAt: string,
+  stamped?: StampedMeta,
+): string {
   if (!result.ok) {
     return [
       `// NOTHING EMITTED — ${result.refusals.length} question(s) are not ready:`,
@@ -679,6 +695,19 @@ export function emitFixtureSource(result: EmitResult, paperSlug: string, capture
     // NODE. `import type` is erased before node resolves anything; a value
     // import would need the .ts extension and drag the whole module in.
     `import type { FixtureQuestion } from "../../src/lib/exam/markscheme-proposals.ts";`,
+    ``,
+    // ⚠ NATURAL KEYS, AND NO uuid. A generated module carrying a paperId is
+    // wrong the moment it is copied to another environment, and a uuid is
+    // unreviewable — nobody reading a diff can tell a correct one from a
+    // transposed one. totalMarks is the SUM OF WHAT WAS EMITTED, not a
+    // constant: if a question is refused, this number drops and the seeder's
+    // existing expect-check catches the disagreement with the cover page.
+    `export const ${identifierFor(paperSlug)}_PAPER = {`,
+    `  paperCode: ${stamped?.paperCode ? q(stamped.paperCode) : "undefined"},`,
+    `  session: ${stamped?.session ? q(stamped.session) : "undefined"},`,
+    `  year: ${typeof stamped?.year === "number" ? stamped.year : "undefined"},`,
+    `  totalMarks: ${emittedMarks},`,
+    `} as const;`,
     ``,
     `export const ${identifierFor(paperSlug)}: FixtureQuestion[] = [`,
     ...blocks,

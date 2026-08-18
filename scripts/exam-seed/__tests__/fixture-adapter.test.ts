@@ -17,6 +17,9 @@ import {
   deriveAnswerType,
   deriveExpectedAnswer,
   deriveParent,
+  deriveWithOverlay,
+  applyOverlay,
+  resolvePaperId,
   SCHEMA_ANSWER_TYPES,
 } from "../../../src/lib/exam/fixture-adapter.ts";
 import { UNIT_1_MAY_JUNE_2025 as PAPER } from "../unit-1-may-june-2025.generated.ts";
@@ -31,8 +34,7 @@ const Q = (questionNumber: string, marks: number, criteria: string[]): FixtureQu
   questionNumber, marks,
   markScheme: criteria.map((criterion, i) => ({ pointCode: `M${i + 1}`, criterion })),
 });
-const META = { paperId: "f7577346-3c45-4b3a-b944-d52542863358", paperCode: "WCH11/01",
-               session: "May-June", year: 2025, totalMarks: 80 };
+const META = { paperCode: "WCH11/01", session: "May-June", year: 2025, totalMarks: 80 };
 
 console.log("── ANSWER TYPE COMES FROM THE MARK SCHEME, NOT THE QUESTION NUMBER ──");
 {
@@ -106,20 +108,21 @@ console.log("\n── PAPER IDENTITY IS STAMPED, NEVER INVENTED ──");
   // else's questions. There is no safe default for a uuid.
   const none = deriveQuestionSet([Q("1", 1, ["The only correct answer is B"])], null);
   t("no meta yields no set", none.meta === null);
-  t("...and five refusals, one per identity field",
-    none.refusals.filter((x) => x.startsWith("paper identity:")).length === 5, none.refusals);
-  t("...naming paperId specifically",
-    none.refusals.some((x) => /paper identity: paperId/.test(x)));
+  t("...and four refusals, one per natural-key field",
+    none.refusals.filter((x) => x.startsWith("paper identity:")).length === 4, none.refusals);
+  t("...naming paperCode specifically",
+    none.refusals.some((x) => /paper identity: paperCode/.test(x)));
 
   const partial = deriveQuestionSet([Q("1", 1, ["The only correct answer is B"])],
-    { paperCode: "WCH11/01", session: "May-June", year: 2025, totalMarks: 80 });
-  t("a missing uuid alone still refuses", partial.meta === null, partial.refusals);
+    { paperCode: "WCH11/01", session: "May-June", year: 2025 });
+  t("a missing totalMarks alone still refuses", partial.meta === null, partial.refusals);
   t("...naming only the missing field",
     partial.refusals.filter((x) => x.startsWith("paper identity:")).length === 1, partial.refusals);
 
   const full = deriveQuestionSet([Q("1", 1, ["The only correct answer is B"])], META);
   t("complete meta derives a set", full.meta !== null && full.refusals.length === 0, full.refusals);
-  t("...carrying the uuid it was given", full.meta?.paperId === META.paperId);
+  t("...carrying no uuid at all — that is resolved at run time",
+    !("paperId" in (full.meta ?? {})), full.meta);
 }
 
 console.log("\n── ORDER AND PARENTAGE ──");
@@ -167,6 +170,112 @@ console.log("\n── THE REAL PAPER ──");
   // the two paths is untested on real data.
   t("ANTI-VACUITY — it derives many", r.questions.length > 25, r.questions.length);
   t("ANTI-VACUITY — and refuses some", r.refusals.length > 0, r.refusals.length);
+}
+
+console.log("\n── RESOLVING THE PAPER BY NATURAL KEY, AT RUN TIME ──");
+{
+  const rows = [
+    { id: "uuid-chem", paper_code: "WCH11/01", session: "May-June", year: 2025, total_marks: 80 },
+    { id: "uuid-phys", paper_code: "WPH11/01", session: "May-June", year: 2025, total_marks: 80 },
+  ];
+  const ok = resolvePaperId(rows, META);
+  t("exactly one match resolves", ok.ok && ok.paperId === "uuid-chem", ok);
+
+  // ⚠ ZERO AND MANY ARE DIFFERENT REFUSALS, and both are refusals.
+  const none = resolvePaperId([], META);
+  t("no match refuses", !none.ok);
+  t("...saying the paper is not in the catalogue",
+    !none.ok && /not in the catalogue|No paper/.test(none.error), none);
+
+  // ⚠ PICKING ONE WOULD WRITE A MARK SCHEME ONTO ANOTHER SUBJECT'S QUESTIONS.
+  const dupes = [rows[0], { ...rows[0], id: "uuid-other" }];
+  const many = resolvePaperId(dupes, META);
+  t("two matches refuse rather than picking one", !many.ok);
+  t("...and name both ids so the ambiguity is visible",
+    !many.ok && many.error.includes("uuid-chem") && many.error.includes("uuid-other"), many);
+
+  // ⚠ A TOTAL THAT DISAGREES IS A REFUSAL. One of them is about a different
+  // paper and neither can be preferred.
+  const wrong = resolvePaperId(
+    [{ ...rows[0], total_marks: 75 }], META);
+  t("a total_marks conflict refuses", !wrong.ok);
+  t("...quoting both numbers", !wrong.ok && /75/.test(wrong.error) && /80/.test(wrong.error), wrong);
+  t("a null total_marks on the row does not block",
+    resolvePaperId([{ ...rows[0], total_marks: null }], META).ok);
+  t("no generated file needs to carry a uuid for any of this",
+    !JSON.stringify(META).includes("paperId"));
+}
+
+console.log("\n── THE OVERLAY IS REFUSAL-ONLY ──");
+{
+  const mcq = Q("1", 1, ["The only correct answer is B"]);
+  const prose = Q("22(a)", 1, ["free-radical substitution reaction"]);
+  const paper = [mcq, prose];
+
+  const none = deriveWithOverlay(paper, META, null);
+  t("without an overlay the prose question stays refused",
+    none.refusals.some((r) => r.startsWith("22(a): answerType")), none.refusals);
+  t("...and the derivable one is derived", none.sources["1"] === "derived");
+
+  const filled = deriveWithOverlay(paper, META, { answerTypes: { "22(a)": "short_text" } });
+  t("the overlay rescues the refused question",
+    filled.questions.some((q) => q.questionNumber === "22(a)" && q.answerType === "short_text"),
+    filled.questions.map((q) => [q.questionNumber, q.answerType]));
+  t("...its source is recorded as founder-supplied",
+    filled.sources["22(a)"] === "founder-supplied");
+  t("...the derived one keeps its own source", filled.sources["1"] === "derived");
+  t("...and the refusal is gone", !filled.refusals.some((r) => r.startsWith("22(a): answerType")));
+  t("...leaving no refusals at all", filled.refusals.length === 0, filled.refusals);
+
+  // ⚠ SABOTAGE 1 — A VALUE THE SCHEMA DOES NOT ALLOW. Refused here rather than
+  // at the CHECK constraint three layers away.
+  const bad = deriveWithOverlay(paper, META, { answerTypes: { "22(a)": "essay" } });
+  t("an invalid enum value is refused",
+    bad.refusals.some((r) => /overlay: 22\(a\).*schema does not allow/.test(r)), bad.refusals);
+  t("...and the question stays out of the set",
+    !bad.questions.some((q) => q.questionNumber === "22(a)"));
+  t("...and the refusal lists what IS allowed",
+    bad.refusals.some((r) => r.includes("short_text")));
+
+  // ⚠ SABOTAGE 2 — A QUESTION THAT DOES NOT EXIST. Otherwise the typo does
+  // nothing, forever, invisibly.
+  const ghost = deriveWithOverlay(paper, META, { answerTypes: { "99(z)": "short_text" } });
+  t("an unknown questionNumber is refused",
+    ghost.refusals.some((r) => /overlay: 99\(z\) is not a question/.test(r)), ghost.refusals);
+
+  // ⚠ SABOTAGE 3 — AN OVERLAY ON A QUESTION THAT DERIVED. A silent override is
+  // how a hand-maintained file drifts from the artefact it completes.
+  const clash = deriveWithOverlay(paper, META, { answerTypes: { "1": "long_text" } });
+  t("an overlay on a derivable question is a CONFLICT",
+    clash.refusals.some((r) => /overlay: 1 already derives/.test(r)), clash.refusals);
+  t("...and the derivation wins — it is still mcq",
+    clash.questions.find((q) => q.questionNumber === "1")?.answerType === "mcq");
+  t("...and its source is still derived", clash.sources["1"] === "derived");
+
+  // ⚠ AN OVERLAY MAY NOT CREATE AN UNMARKABLE MCQ. A criterion with no letter
+  // never registers as MCQ, so it is refused on answerType — and declaring it
+  // `mcq` by hand would seed a question the deterministic marker has nothing
+  // to compare against. Typing the TYPE does not supply the ANSWER.
+  const headless = Q("9", 1, ["only correct answer is"]);
+  const cantRescue = deriveWithOverlay([headless], META, { answerTypes: { "9": "mcq" } });
+  t("an overlay cannot declare an MCQ with no answer letter",
+    cantRescue.refusals.some((r) => /declared mcq but its mark scheme states no answer letter/.test(r)),
+    cantRescue.refusals);
+  t("...and the question is not in the set", cantRescue.questions.length === 0);
+  t("...while a non-MCQ type for the same question IS allowed",
+    deriveWithOverlay([headless], META, { answerTypes: { "9": "short_text" } }).questions.length === 1);
+
+  // displayOrder must stay unique and ordered across the merged set.
+  const merged = deriveWithOverlay(
+    [Q("10", 1, ["The only correct answer is A"]), prose, Q("2", 1, ["The only correct answer is B"])],
+    META, { answerTypes: { "22(a)": "short_text" } });
+  t("the merged set is in canonical order",
+    merged.questions.map((q) => q.questionNumber).join(",") === "2,10,22(a)",
+    merged.questions.map((q) => q.questionNumber));
+  t("...displayOrder is unique across derived AND supplied",
+    new Set(merged.questions.map((q) => q.displayOrder)).size === merged.questions.length);
+  t("...and ascends with the order",
+    merged.questions.every((q, i, a) => i === 0 || a[i - 1].displayOrder < q.displayOrder));
 }
 
 console.log(`\n${fail === 0 ? "✓ ALL" : "✗"} ${pass} passed, ${fail} failed`);
