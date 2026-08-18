@@ -57,7 +57,20 @@ console.log("── THE ARTEFACT IS THE REAL EXTRACTION ──");
   t("every block carries a mark total", SET.questions.every((q) => q.marks !== null));
   t("it says outright that nothing is published", /PROPOSALS/.test(SET.status), SET.status);
   const ruling = SET.questions.reduce((n, q) => n + q.requiresRuling.length, 0);
-  t("68 lines need a ruling", ruling === 68, ruling);
+  const buckets = SET.questions.reduce(
+    (n, q) => n + (q.accept?.length ?? 0) + (q.reject?.length ?? 0) + (q.guidance?.length ?? 0), 0);
+  // ⚠ NOT "68". The extractor produced 68 flagged lines and 133 filed into
+  // accept/reject/guidance — 201 in total. The founder is now RESTORING the
+  // misfiled ones, which MOVES a line out of a bucket and into the queue, so
+  // the two counts trade against each other while their sum does not change.
+  // Pinning 68 fails the moment the sweep starts, for the best possible reason.
+  //
+  // The conserved total is the real invariant, and it is exactly what
+  // "restore is a move, not a copy" guarantees on live data: if a restore ever
+  // COPIED, this number would climb.
+  t("the extractor's lines are conserved across the buckets and the queue",
+    ruling + buckets === 201, { ruling, buckets, total: ruling + buckets });
+  t("at least the original 68 are flagged, never fewer", ruling >= 68, ruling);
   t("every one of them says WHY",
     SET.questions.every((q) => q.requiresRuling.every((l) => (l.requiresRuling ?? []).length > 0)));
   t("every proposal carries page, y and the source line",
@@ -69,7 +82,9 @@ console.log("\n── DOUBT FIRST, OR THE SORT IS DECORATION ──");
 {
   const items = sortForReview(buildReview(SET, {}));
   t("nothing is approved before anyone has approved anything", countApproved(items) === 0);
-  t("the unruled count matches the artefact", countUnruled(items) === 68, countUnruled(items));
+  // ⚠ DERIVED FROM THE ARTEFACT, not from the 68 it held when this was written.
+  const flagged = SET.questions.reduce((n, q) => n + q.requiresRuling.length, 0);
+  t("the unruled count matches the artefact", countUnruled(items) === flagged, countUnruled(items));
   const withWork = items.filter((i) => i.unruled.length > 0);
   t("questions needing a decision sort above those that do not",
     items.indexOf(withWork[0]) === 0 && items.slice(0, withWork.length).every((i) => i.unruled.length > 0));

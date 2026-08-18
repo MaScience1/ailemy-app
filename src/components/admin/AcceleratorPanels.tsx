@@ -514,60 +514,138 @@ export type MisfiledLine = {
  * person pressing it would not have read a single line.
  */
 export function MisfiledPanel({
-  lines, approvedQuestions, busy, onCancel, onRestore,
+  lines, approvedQuestions, busy, restoredKeys, onCancel, onRestoreMany,
 }: {
   lines: MisfiledLine[];
   approvedQuestions: Set<string>;
   busy: boolean;
+  /** Lines already restored this session — kept visible, struck through. */
+  restoredKeys: Set<string>;
   onCancel: () => void;
-  onRestore: (l: MisfiledLine) => void;
+  onRestoreMany: (chosen: MisfiledLine[]) => void;
 }) {
+  const keyOf = (l: MisfiledLine) => `${l.questionNumber}::${l.text}`;
+  // ⚠ NOTHING IS PRE-TICKED HERE, UNLIKE EVERY OTHER PANEL. The others act on
+  // a decision already made — a precedent the founder wrote, byte equality.
+  // This one asks them to restore sentences no examiner has read, and each
+  // restore withdraws an approval. A pre-ticked "restore all 58" would
+  // withdraw seventeen approvals on one click by someone who read nothing.
+  const [on, setOn] = useState<Record<string, true>>({});
+
+  const restorable = lines.filter(
+    (l) => l.cls !== "empty-marking-point" && !restoredKeys.has(keyOf(l)));
+  const chosen = restorable.filter((l) => on[keyOf(l)]);
   const byQuestion = [...new Set(lines.map((l) => l.questionNumber))];
+
+  const toggle = (k: string) =>
+    setOn((s) => {
+      if (s[k]) {
+        const { [k]: _gone, ...rest } = s;
+        return rest as Record<string, true>;
+      }
+      return { ...s, [k]: true };
+    });
+
+  const setQuestion = (qn: string, want: boolean) =>
+    setOn((s) => {
+      const next = { ...s };
+      for (const l of restorable.filter((x) => x.questionNumber === qn)) {
+        if (want) next[keyOf(l)] = true;
+        else delete next[keyOf(l)];
+      }
+      return next;
+    });
+
   return (
     <Shell
       title="Lines the extractor filed away"
       subtitle={`${lines.length} line(s) across ${byQuestion.length} question(s) were classified automatically and never shown to you. They also never reached the emitted fixture.`}
       onCancel={onCancel}
       footer={
-        <button type="button" onClick={onCancel} className="rounded border border-slate-300 px-3 py-1.5 text-sm">
-          Close
-        </button>
+        <>
+          <button
+            type="button" disabled={busy || chosen.length === 0}
+            onClick={() => { onRestoreMany(chosen); setOn({}); }}
+            className="rounded bg-slate-900 px-3 py-1.5 text-sm text-white disabled:opacity-40"
+          >
+            {busy ? "Restoring…" : `Restore ${chosen.length} selected`}
+          </button>
+          {/* ⚠ CLOSE, NOT CANCEL. By the time this is pressed the restores are
+              already saved; calling it Cancel would suggest they were not. */}
+          <button type="button" onClick={onCancel} className="rounded border border-slate-300 px-3 py-1.5 text-sm">
+            Close
+          </button>
+          <span className="font-mono text-[11px] text-slate-500">
+            {restorable.length} left · {restoredKeys.size} restored so far
+          </span>
+        </>
       }
     >
       <p className="mb-4 rounded border border-amber-400 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-        Restoring a line puts it in that question&apos;s ruling queue. If the question is approved,
-        the approval is withdrawn — the signature was given over content that did not include this
-        line. Your existing rulings are kept.
+        Restoring puts a line in its question&apos;s ruling queue. If that question is approved, the
+        approval is withdrawn — the signature was given over content that did not include the line.
+        Your existing rulings are kept. The panel stays open, so restore as many as you like and
+        press Close when you are done.
       </p>
-      {byQuestion.map((qn) => (
-        <section key={qn} className="mb-5">
-          <h3 className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">
-            {qn}
-            {approvedQuestions.has(qn) && (
-              <span className="ml-2 rounded bg-emerald-100 px-1.5 py-0.5 text-emerald-800">approved</span>
-            )}
-          </h3>
-          <ul className="mt-2 space-y-1.5">
-            {lines.filter((l) => l.questionNumber === qn).map((l) => (
-              <li key={`${qn}::${l.text}`} className="rounded border border-slate-200 p-2">
-                <p className="text-sm text-slate-900">“{l.text}”</p>
-                <p className="mt-0.5 font-mono text-[10px] text-slate-500">
-                  filed under {l.bucket} · {l.cls}
-                </p>
-                <p className="mt-0.5 text-[11px] text-slate-600">{l.why}</p>
-                {l.cls !== "empty-marking-point" && (
-                  <button
-                    type="button" disabled={busy} onClick={() => onRestore(l)}
-                    className="mt-1.5 rounded border border-slate-400 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-slate-700 hover:bg-slate-100 disabled:opacity-40"
-                  >
-                    restore for ruling
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      ))}
+
+      {restorable.length === 0 && (
+        <p className="mb-4 text-sm text-slate-600">
+          Nothing left to restore here. Close to reload the paper and rule the restored lines.
+        </p>
+      )}
+
+      {byQuestion.map((qn) => {
+        const mine = lines.filter((l) => l.questionNumber === qn);
+        const mineRestorable = restorable.filter((l) => l.questionNumber === qn);
+        const allOn = mineRestorable.length > 0 && mineRestorable.every((l) => on[keyOf(l)]);
+        return (
+          <section key={qn} className="mb-5">
+            <h3 className="flex flex-wrap items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">
+              {qn}
+              {approvedQuestions.has(qn) && (
+                <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-emerald-800">approved</span>
+              )}
+              {mineRestorable.length > 0 && (
+                <button
+                  type="button" onClick={() => setQuestion(qn, !allOn)}
+                  className="rounded border border-slate-300 px-1.5 py-0.5 normal-case tracking-normal text-slate-600 hover:bg-slate-100"
+                >
+                  {allOn ? "none" : `all ${mineRestorable.length}`}
+                </button>
+              )}
+            </h3>
+            <ul className="mt-2 space-y-1.5">
+              {mine.map((l) => {
+                const k = keyOf(l);
+                const done = restoredKeys.has(k);
+                const fixed = l.cls === "empty-marking-point";
+                return (
+                  <li key={k} className={`flex gap-2 rounded border p-2 ${done ? "border-emerald-300 bg-emerald-50" : "border-slate-200"}`}>
+                    {!done && !fixed && <Tick on={Boolean(on[k])} onClick={() => toggle(k)} />}
+                    {done && <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />}
+                    <div className="min-w-0">
+                      <p className={`text-sm ${done ? "text-emerald-900 line-through" : "text-slate-900"}`}>
+                        “{l.text}”
+                      </p>
+                      <p className="mt-0.5 font-mono text-[10px] text-slate-500">
+                        filed under {l.bucket} · {l.cls}
+                        {done ? " · restored" : ""}
+                      </p>
+                      {!done && <p className="mt-0.5 text-[11px] text-slate-600">{l.why}</p>}
+                      {fixed && !done && (
+                        <p className="mt-0.5 text-[11px] text-amber-800">
+                          Nothing to restore — this needs its criterion hand-transcribed from the
+                          drawing, via &ldquo;add missing line&rdquo; on the question.
+                        </p>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        );
+      })}
     </Shell>
   );
 }

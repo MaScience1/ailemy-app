@@ -325,5 +325,59 @@ console.log("\n── RESTORING A MISFILED LINE IS A MOVE, SO DEDUP IS STRUCTURA
     auditedAfter.findings.some((f) => f.text === "Allow 307000 / 306000 g"));
 }
 
+console.log("\n── A WHOLE SWEEP IN ONE PASS ──");
+{
+  // ⚠ THE BATCH IS THE SAME MOVE, APPLIED TO ONE IN-MEMORY COPY, THEN WRITTEN
+  // ONCE. Restoring 58 lines with a page reload each is a sweep nobody
+  // finishes — and an unfinished sweep leaves the sentences buried, which is
+  // the failure the audit exists to end.
+  const sweep = () => ({
+    accept: [{ text: "Allow 306 (kg)" }, { text: "Ignore any names even if incorrect" }],
+    guidance: [{ text: "307 (kg)" }],
+    reject: [{ text: "Do not award ions move" }],
+    requiresRuling: [] as { text: string; sourceLine: string; requiresRuling?: string[] }[],
+  });
+
+  const q = sweep();
+  const wanted = ["Allow 306 (kg)", "307 (kg)", "Do not award ions move",
+                  "Ignore any names even if incorrect"];
+  const results = wanted.map((text) => moveLineToRuling(q, text));
+
+  t("every selected line moves", results.every((r) => r.ok), results);
+  t("all four are in the queue", q.requiresRuling.length === 4, q.requiresRuling.length);
+  t("...each exactly once",
+    new Set(q.requiresRuling.map((l) => l.text)).size === 4);
+  t("every bucket is emptied of what was taken",
+    q.accept.length === 0 && q.guidance.length === 0 && q.reject.length === 0,
+    { accept: q.accept.length, guidance: q.guidance.length, reject: q.reject.length });
+  t("each records which bucket it came from",
+    q.requiresRuling.every((l) => (l.requiresRuling ?? []).some((r) => /filed under/.test(r))));
+
+  // ⚠ A PARTIAL SELECTION LEAVES THE REST ALONE — the panel lets the founder
+  // sweep one question at a time, and the untouched lines must stay put.
+  const partial = sweep();
+  moveLineToRuling(partial, "307 (kg)");
+  t("an unselected line stays in its bucket",
+    partial.accept.length === 2 && partial.reject.length === 1,
+    { accept: partial.accept.length, reject: partial.reject.length });
+  t("...and only the selected one is queued", partial.requiresRuling.length === 1);
+
+  // ⚠ ONE BAD ENTRY DOES NOT SINK THE BATCH. The caller reports it and keeps
+  // the rest; a sweep that aborted on the first oddity would be unusable too.
+  const mixed = sweep();
+  const outcomes = ["Allow 306 (kg)", "never printed anywhere", "307 (kg)"]
+    .map((text) => moveLineToRuling(mixed, text));
+  t("the good ones still move", outcomes[0].ok && outcomes[2].ok);
+  t("the bad one is refused, with a reason",
+    !outcomes[1].ok && (outcomes[1] as { error: string }).error.length > 10, outcomes[1]);
+  t("...and the batch still restored two", mixed.requiresRuling.length === 2);
+
+  // ⚠ RE-SWEEPING A DONE QUESTION MUST NOT DOUBLE ANYTHING.
+  const again = wanted.map((text) => moveLineToRuling(q, text));
+  t("a second sweep over the same question moves nothing",
+    again.every((r) => !r.ok), again);
+  t("...and the queue is still exactly four", q.requiresRuling.length === 4);
+}
+
 console.log(`\n${fail === 0 ? "✓ ALL" : "✗"} ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

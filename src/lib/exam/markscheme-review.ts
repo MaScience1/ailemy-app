@@ -943,33 +943,55 @@ export async function addManualLine(
   return { ok: true, questionNumber: input.questionNumber, approvalWithdrawn, unruledNow };
 }
 
-export type ConvertResult =
-  | { ok: true; questionNumber: string; movedFrom: string; approvalWithdrawn: boolean; unruledNow: number }
-  | { ok: false; error: string };
+export type ConvertManyResult = {
+  ok: boolean;
+  restored: { questionNumber: string; text: string; movedFrom: string }[];
+  /** Lines that could not be moved, each with the reason. Never silent. */
+  skipped: { questionNumber: string; text: string; reason: string }[];
+  /** Questions whose approval was withdrawn as a consequence. */
+  approvalsWithdrawn: string[];
+  errors: string[];
+};
 
 /**
- * Put a misfiled line back in front of the examiner.
+ * Restore many misfiled lines in ONE pass.
  *
- * ⚠ THE SAME WITHDRAWAL AS addManualLine, FOR THE SAME REASON. 17 of the
- * questions carrying these lines are APPROVED. The signature on them was given
- * over content that did not include the line being restored, so it cannot
- * stand once the line is visible.
+ * ============================================================================
+ * ⚠ ONE READ, ALL THE MOVES, ONE WRITE
+ * ============================================================================
+ * The single-line version reloaded the page after every restore. There are 61
+ * of these across 20 questions, and a reload per line makes the sweep
+ * unusable — which in practice means it does not get done, and 52 sentences
+ * the examiner has never read stay buried. A tool nobody can face using
+ * protects nothing.
  *
- * ⚠ DEDUP IS STRUCTURAL, NOT CHECKED. moveLineToRuling removes the line from
- * its bucket as it adds it to the queue, so there is never a second copy to
- * deduplicate. See its header for why copying would be worse.
+ * So the file is read once, every confirmed move is applied to the in-memory
+ * copy, and it is written once. A partial failure cannot leave half a move:
+ * moveLineToRuling either takes a line out of its bucket and puts it in the
+ * queue or does neither, and the write happens after all of them.
+ *
+ * ⚠ APPROVALS ARE WITHDRAWN PER QUESTION, AFTER THE WRITE, THROUGH saveRulings.
+ * Seventeen of these questions are approved over content that did not include
+ * the restored lines. Each withdrawal is a separate save because the revision
+ * check is per question — that is the same mechanism a manual withdrawal uses,
+ * and batching around it would be a second set of guarantees to keep correct.
+ *
+ * ⚠ EVERY REFUSAL IS RETURNED. A sweep that silently restored 40 of 58 and
+ * said "done" is indistinguishable from one that worked.
  */
-export async function convertMisfiledLine(
+export async function convertMisfiledLines(
   paperSlug: string,
-  questionNumber: string,
-  text: string,
-): Promise<ConvertResult> {
+  lines: readonly { questionNumber: string; text: string }[],
+): Promise<ConvertManyResult> {
   const staff = await getStaffStatus();
   if (!staff.ok || !canWriteFrom(staff.roles)) {
-    return { ok: false, error: "This needs a marker or admin role." };
+    return { ok: false, restored: [], skipped: [], approvalsWithdrawn: [], errors: ["This needs a marker or admin role."] };
   }
   if (process.env.NODE_ENV === "production") {
-    return { ok: false, error: "This writes to the repository working tree. Run the tool locally." };
+    return { ok: false, restored: [], skipped: [], approvalsWithdrawn: [], errors: ["This writes to the repository working tree. Run the tool locally."] };
+  }
+  if (lines.length === 0) {
+    return { ok: true, restored: [], skipped: [], approvalsWithdrawn: [], errors: [] };
   }
 
   const path = proposalsPath(paperSlug);
@@ -977,40 +999,51 @@ export async function convertMisfiledLine(
   try {
     file = JSON.parse(await readFile(path, "utf8")) as StoredFile;
   } catch (e) {
-    return { ok: false, error: `Could not read the proposals file: ${e instanceof Error ? e.message : String(e)}` };
+    return { ok: false, restored: [], skipped: [], approvalsWithdrawn: [], errors: [`Could not read the proposals file: ${e instanceof Error ? e.message : String(e)}`] };
   }
 
-  const q = file.questions.find((x) => x.questionNumber === questionNumber);
-  if (!q) return { ok: false, error: `${questionNumber} is not in this proposal set.` };
+  const restored: ConvertManyResult["restored"] = [];
+  const skipped: ConvertManyResult["skipped"] = [];
 
-  const moved = moveLineToRuling(q, text);
-  if (!moved.ok) return { ok: false, error: moved.error };
+  for (const { questionNumber, text } of lines) {
+    const q = file.questions.find((x) => x.questionNumber === questionNumber);
+    if (!q) {
+      skipped.push({ questionNumber, text, reason: "not in this proposal set" });
+      continue;
+    }
+    const moved = moveLineToRuling(q, text);
+    if (moved.ok) restored.push({ questionNumber, text, movedFrom: moved.movedFrom });
+    else skipped.push({ questionNumber, text, reason: moved.error });
+  }
 
-  const book = (file.rulings ?? {})[questionNumber];
-  const approvalWithdrawn = Boolean(book?.approvedAt);
+  if (restored.length === 0) {
+    // ⚠ NOTHING MOVED, SO NOTHING IS WRITTEN. Rewriting the file unchanged
+    // would churn a working document for no reason.
+    return { ok: skipped.length === 0, restored, skipped, approvalsWithdrawn: [], errors: [] };
+  }
 
   try {
     await writeFile(path, JSON.stringify(file, null, 2) + "\n", "utf8");
   } catch (e) {
-    return { ok: false, error: `Could not write the proposals file: ${e instanceof Error ? e.message : String(e)}` };
+    return { ok: false, restored: [], skipped, approvalsWithdrawn: [], errors: [`Could not write the proposals file: ${e instanceof Error ? e.message : String(e)}`] };
   }
 
-  if (approvalWithdrawn && book) {
+  const errors: string[] = [];
+  const approvalsWithdrawn: string[] = [];
+  const touched = [...new Set(restored.map((r) => r.questionNumber))];
+
+  for (const questionNumber of touched) {
+    const book = (file.rulings ?? {})[questionNumber];
+    if (!book?.approvedAt) continue;
     const without = withdrawApproval(book);
     const saved = await saveRulings(
       paperSlug, questionNumber,
       { points: without.points ?? {}, lines: without.lines ?? {} },
       book.revision ?? 0,
     );
-    if (!saved.ok) {
-      return { ok: false, error: `The line was restored but the approval could not be withdrawn: ${saved.error}` };
-    }
+    if (saved.ok) approvalsWithdrawn.push(questionNumber);
+    else errors.push(`${questionNumber}: the line was restored but the approval could not be withdrawn — ${saved.error}`);
   }
 
-  const after = JSON.parse(await readFile(path, "utf8")) as StoredFile;
-  const q2 = after.questions.find((x) => x.questionNumber === questionNumber)!;
-  const b2 = (after.rulings ?? {})[questionNumber];
-  const unruledNow = q2.requiresRuling.filter((l) => !isResolved(b2?.lines?.[l.sourceLine])).length;
-
-  return { ok: true, questionNumber, movedFrom: moved.movedFrom, approvalWithdrawn, unruledNow };
+  return { ok: errors.length === 0, restored, skipped, approvalsWithdrawn, errors };
 }

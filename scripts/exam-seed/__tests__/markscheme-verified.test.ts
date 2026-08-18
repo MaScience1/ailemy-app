@@ -139,7 +139,13 @@ console.log("\n── HOW MANY FLAGS WERE REALLY NECESSARY ──");
     warranted > unmatched, { warranted, unmatched });
 
   t("the five questions do carry flagged lines to measure", flaggedOnHand > 0, flaggedOnHand);
-  t("the paper-wide flag count is the 68 the tool reports", totalFlagged === 68, totalFlagged);
+  // ⚠ NOT A LITERAL 68. Restoring a misfiled line moves it into the queue, so
+  // this number GROWS as the sweep proceeds — it was 68 when the extractor
+  // finished and is larger now. What must stay true is that it never shrinks:
+  // a flagged line disappearing would mean the tool stopped asking about
+  // something it had already decided was a human's call.
+  t("the paper-wide flag count is at least the 68 the extractor produced",
+    totalFlagged >= 68, totalFlagged);
 }
 
 console.log("\n── THE FLAGS THAT MUST NEVER BE AUTOMATED AWAY ──");

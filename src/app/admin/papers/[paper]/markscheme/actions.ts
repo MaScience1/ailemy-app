@@ -9,7 +9,7 @@ import {
   bulkApprove,
   addManualBlock,
   addManualLine,
-  convertMisfiledLine,
+  convertMisfiledLines,
   type SaveResult,
   type EmitResultReport,
   type BatchConfirmation,
@@ -19,7 +19,7 @@ import {
   type ManualBlockResult,
   type ManualLineInput,
   type ManualLineResult,
-  type ConvertResult,
+  type ConvertManyResult,
 } from "@/lib/exam/markscheme-review";
 import type { QuestionRulings } from "@/lib/exam/markscheme-proposals";
 
@@ -140,18 +140,20 @@ export async function addManualLineAction(
 }
 
 /**
- * Restore one misfiled line to the ruling queue.
+ * Restore a whole selection of misfiled lines in one save.
  *
- * ⚠ IT WITHDRAWS APPROVAL, like addManualLine. 17 of the questions carrying
- * these lines are approved over content that did not include them.
+ * ⚠ THE SINGLE-LINE VERSION RELOADED AFTER EVERY RESTORE, and there are 61 of
+ * these. A sweep that costs a page load per line is a sweep nobody finishes,
+ * which leaves the sentences buried — the tool protecting nothing.
  */
-export async function convertMisfiledLineAction(
+export async function convertMisfiledLinesAction(
   paperSlug: string,
-  questionNumber: string,
-  text: string,
-): Promise<ConvertResult> {
-  if (!paperSlug) return { ok: false, error: "Missing paper." };
-  const result = await convertMisfiledLine(paperSlug, questionNumber, text);
-  if (result.ok) revalidatePath(`/admin/papers/${paperSlug}/markscheme`);
+  lines: { questionNumber: string; text: string }[],
+): Promise<ConvertManyResult> {
+  if (!paperSlug) {
+    return { ok: false, restored: [], skipped: [], approvalsWithdrawn: [], errors: ["Missing paper."] };
+  }
+  const result = await convertMisfiledLines(paperSlug, lines);
+  if (result.restored.length > 0) revalidatePath(`/admin/papers/${paperSlug}/markscheme`);
   return result;
 }

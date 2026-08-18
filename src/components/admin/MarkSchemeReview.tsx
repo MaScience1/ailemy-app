@@ -57,7 +57,7 @@ import {
   bulkApproveAction,
   addManualBlockAction,
   addManualLineAction,
-  convertMisfiledLineAction,
+  convertMisfiledLinesAction,
 } from "@/app/admin/papers/[paper]/markscheme/actions";
 
 /**
@@ -763,16 +763,54 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
     if (res.approved.length > 0) window.location.reload();
   };
 
-  const restoreMisfiled = async (l: MisfiledLine) => {
+  /**
+   * Lines restored during this sitting of the sweep panel.
+   *
+   * ⚠ THE PANEL STAYS OPEN AND THE PAGE DOES NOT RELOAD PER RESTORE. There are
+   * 61 of these; a reload per line is a sweep nobody finishes. The restored
+   * keys are held here so the panel can strike them through immediately, and
+   * the single reload happens when it is CLOSED — at which point the yellow
+   * cards for everything restored appear at once.
+   */
+  const [restoredKeys, setRestoredKeys] = useState<Set<string>>(new Set());
+
+  const restoreMisfiled = async (chosen: MisfiledLine[]) => {
+    if (chosen.length === 0) return;
     setPanelBusy(true);
-    const res = await convertMisfiledLineAction(data.paperSlug, l.questionNumber, l.text);
+    const res = await convertMisfiledLinesAction(
+      data.paperSlug,
+      chosen.map((l) => ({ questionNumber: l.questionNumber, text: l.text })),
+    );
     setPanelBusy(false);
-    if (!res.ok) { setNotice({ kind: "bad", text: res.error }); return; }
-    setNotice({
-      kind: "ok",
-      text: `Restored to ${res.questionNumber} from ${res.movedFrom}. ${res.approvalWithdrawn ? "Its approval was withdrawn. " : ""}${res.unruledNow} line(s) now need a ruling.`,
+
+    setRestoredKeys((prev) => {
+      const next = new Set(prev);
+      for (const r of res.restored) next.add(`${r.questionNumber}::${r.text}`);
+      return next;
     });
-    window.location.reload();
+
+    // ⚠ SKIPS AND ERRORS ARE REPORTED, NOT SWALLOWED. A sweep that restored 40
+    // of 58 and said "done" is indistinguishable from one that worked.
+    const parts = [`Restored ${res.restored.length} line(s).`];
+    if (res.approvalsWithdrawn.length) {
+      parts.push(`Approval withdrawn on ${res.approvalsWithdrawn.join(", ")}.`);
+    }
+    if (res.skipped.length) {
+      parts.push(`Skipped ${res.skipped.length}: ${res.skipped.slice(0, 3).map((s2) => `${s2.questionNumber} (${s2.reason})`).join("; ")}${res.skipped.length > 3 ? " …" : ""}`);
+    }
+    if (res.errors.length) parts.push(res.errors.join(" · "));
+    setNotice({ kind: res.ok ? "ok" : "bad", text: parts.join(" ") });
+  };
+
+  /**
+   * ⚠ THE RELOAD IS DEFERRED TO CLOSING, and only when something changed. The
+   * page's own copy of the artefact is stale the moment the first line moves,
+   * so it has to be refreshed — but doing it per restore is the bug being
+   * fixed here.
+   */
+  const closeMisfiled = () => {
+    setPanel(null);
+    if (restoredKeys.size > 0) window.location.reload();
   };
 
   const confirmLine = async (input: Parameters<typeof addManualLineAction>[1]) => {
@@ -1368,7 +1406,10 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
         <MisfiledPanel
           lines={data.misfiled}
           approvedQuestions={new Set(Object.entries(data.rulings).filter(([, b]) => b.approvedAt).map(([q]) => q))}
-          busy={panelBusy} onCancel={() => setPanel(null)} onRestore={restoreMisfiled} />
+          busy={panelBusy}
+          restoredKeys={restoredKeys}
+          onCancel={closeMisfiled}
+          onRestoreMany={restoreMisfiled} />
       )}
       {panel?.kind === "line" && (
         <ManualLinePanel questionNumber={panel.questionNumber} isApproved={panel.isApproved}
