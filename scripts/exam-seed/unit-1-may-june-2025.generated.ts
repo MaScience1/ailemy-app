@@ -1,4 +1,4 @@
-// mark_scheme_items for unit-1-may-june-2025, reviewed and approved 2026-08-18T15:03:51.011Z
+// mark_scheme_items for unit-1-may-june-2025, reviewed and approved 2026-08-18T16:46:29.939Z
 //
 // Emitted by the mark-scheme review surface from extractor proposals. Every
 // question below carries approved_at AND approved_by; anything unruled or
@@ -6,15 +6,7 @@
 //
 // ⚠ GENERATED. Do not edit — re-emit from the review surface instead.
 //
-// ⚠ 3 REFUSAL(S) — THESE QUESTIONS ARE NOT IN THIS FILE:
-//   23(a)(iii) M1: empty criterion
-//   23(a)(iii) M2: empty criterion
-//   23(a)(iii): every point was rejected, leaving no mark scheme
-//
-// A count of 47 question(s) is not the same as a
-// complete paper. Check these against the printed totals before seeding.
-//
-//   47 question(s), 78 mark(s)
+//   48 question(s), 80 mark(s)
 
 import type { FixtureQuestion } from "../../src/lib/exam/markscheme-proposals.ts";
 
@@ -632,6 +624,23 @@ export const UNIT_1_MAY_JUNE_2025: FixtureQuestion[] = [
         criterion: "magnesium ions have a smaller radius.",
         accept: ["Allow ORA about sodium ions", "Allow Mg2+ and Na+", "Allow magnesium has a smaller ionic radius /"],
         guidance: "Penalise any mention of covalent bonding or",
+      },
+    ],
+  },
+  {
+    questionNumber: "23(a)(iii)",
+    marks: 2,
+    markScheme: [
+      {
+        pointCode: "M1",
+        criterion: "two sodium ions shown as [Na]+ with no electrons on the outer shell (1)",
+      },
+      {
+        pointCode: "M2",
+        criterion: "oxide ion shown as [O]2− with eight electrons (dots and crosses) in the outer shell (1)",
+        accept: ["Allow eight electrons on outer shell instead of no", "Allow single sodium ion", "Allow transferred electrons in any pattern"],
+        reject: ["Do not award Na+2", "Do not award all dots or all crosses for the oxide"],
+        guidance: "Ignore omission of square brackets",
       },
     ],
   },
