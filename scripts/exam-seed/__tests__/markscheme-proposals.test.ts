@@ -353,8 +353,16 @@ console.log("\n── THE VERIFIED BADGE IS EARNED, NOT ENUMERATED ──");
     pointsFullyRuled(x, ((SET as ProposalSet & { rulings?: RulingBook }).rulings ?? {})[x.questionNumber]));
   t("Section A earns the badge from the founder's own rulings",
     ruled.length >= 10, ruled.map((x) => x.questionNumber));
-  t("...and unruled questions do not",
-    ruled.length < SET.questions.length, { ruled: ruled.length, total: SET.questions.length });
+  // ⚠ WAS "...and unruled questions do not [earn the badge]". Every question
+  // is ruled now, so there are none left to be the negative case — the
+  // assertion fell to zero coverage rather than failing honestly. The durable
+  // property is that the badge is EARNED, so a book with no point rulings must
+  // not earn it, whatever the rest of the paper looks like.
+  const bare = SET.questions.find((q) => q.points.length > 0)!;
+  t("...and a question with no point rulings does not earn it",
+    !pointsFullyRuled(bare, { points: {}, lines: {} }));
+  t("...nor one ruled on a different point code",
+    !pointsFullyRuled(bare, { points: { ZZ9: { verdict: "accept" } }, lines: {} }));
 
   // ⚠ EMIT GATING IS UNTOUCHED. Verification is a badge, not a gate.
   const book: RulingBook = {

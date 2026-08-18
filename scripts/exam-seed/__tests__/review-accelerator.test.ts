@@ -421,16 +421,24 @@ console.log("\n── RETRODICTION AGAINST THE FOUNDER'S OWN RULINGS ──");
   // have never been checked against a human. When the first one is ruled, this
   // fails again and the claim gets rewritten again.
   const kinds = [...new Set(rows.map((r) => r.actual))].sort();
-  t("COVERAGE CAVEAT: the ruled corpus covers exactly these verdict kinds",
-    JSON.stringify(kinds) === JSON.stringify(["distractor_feedback", "guidance"]), kinds);
-  t("...distractor feedback is validated on a substantial corpus",
-    rows.filter((r) => r.actual === "distractor_feedback").length >= 60);
-  t("...guidance is validated, but on very few lines — treat P2/P3/P4 as young",
-    rows.filter((r) => r.actual === "guidance").length >= 3 &&
-    rows.filter((r) => r.actual === "guidance").length < 10,
-    rows.filter((r) => r.actual === "guidance").length);
-  t("...and accept/reject/criterion remain UNVALIDATED by any human ruling",
-    !kinds.some((k) => ["accept", "reject", "criterion"].includes(k)), kinds);
+  // ⚠ THIS ASSERTION HAS NOW FIRED TWICE, WHICH IS THE ENTIRE POINT OF IT.
+  //
+  // It first read "the corpus is a single verdict kind" — every ruled line was
+  // distractor feedback. 20(a) made it two. Finishing the paper has made it
+  // four. Each time it went red and forced the coverage claim to be rewritten
+  // rather than inheriting a number that no longer meant what it said.
+  //
+  // Validated against real examiner decisions today: all four kinds the
+  // suggester can propose. `criterion` is the one it can still emit that no
+  // human has ever ruled, so that stays named as unvalidated.
+  t("COVERAGE: the ruled corpus now covers four verdict kinds",
+    JSON.stringify(kinds) === JSON.stringify(["accept", "distractor_feedback", "guidance", "reject"]),
+    kinds);
+  t("...each on a corpus worth something",
+    kinds.every((k) => rows.filter((r) => r.actual === k).length >= 8),
+    Object.fromEntries(kinds.map((k) => [k, rows.filter((r) => r.actual === k).length])));
+  t("...and `criterion` remains UNVALIDATED by any human ruling",
+    !kinds.includes("criterion"), kinds);
 }
 
 console.log("\n── THE MARKS EDEXCEL'S TYPESETTING LOST ──");

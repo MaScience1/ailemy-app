@@ -48,50 +48,42 @@ const forQ = (qn: string) => report.findings.filter((f) => f.questionNumber === 
 const has = (qn: string, text: string, cls?: AuditClass) =>
   forQ(qn).some((f) => f.text === text && (!cls || f.cls === cls));
 
-console.log("── THE THREE THE FOUNDER NAMED ──");
+console.log("── THE SWEEP HAS BEEN RUN, SO THE AUDIT MUST HAVE SHRUNK ──");
 {
-  // ⚠ 20(b)(iii) — reported as "never captured". They WERE captured, into
-  // buckets the review surface never asks about. That is the finding.
-  t("20(b)(iii) has four findings", forQ("20(b)(iii)").length === 4, forQ("20(b)(iii)").length);
-  t('  "307 (kg)" — the ANSWER, filed as guidance',
-    has("20(b)(iii)", "307 (kg)", "answer-value-in-guidance"));
-  t('  "Allow 306 (kg)" never reached the reviewer',
-    has("20(b)(iii)", "Allow 306 (kg)", "concession-never-flagged"));
-  t('  "Allow 307000 / 306000 g" never reached the reviewer',
-    has("20(b)(iii)", "Allow 307000 / 306000 g", "concession-never-flagged"));
-  t('  "(check mole ratio from 20bii)" never reached the reviewer',
-    has("20(b)(iii)", "(check mole ratio from 20bii)"));
+  // ⚠ THIS SECTION USED TO PIN "20(b)(iii) HAS FOUR FINDINGS". It did, before
+  // the founder restored them. Pinning the pre-sweep state made the suite go
+  // red for the best possible reason — the work got done — so it now asserts
+  // the DIRECTION instead: concessions are gone, and what remains is the
+  // classes a sweep cannot fix.
+  t("no concession is left buried",
+    report.findings.filter((f) => f.cls === "concession-never-flagged").length === 0,
+    report.findings.filter((f) => f.cls === "concession-never-flagged").slice(0, 3));
+  t("20(b)(iii) is clear", forQ("20(b)(iii)").length === 0, forQ("20(b)(iii)"));
 
-  // ⚠ 20(b)(iv) — two concessions AND the drawing-cell class.
-  t('20(b)(iv): "Ignore any names even if incorrect"',
-    has("20(b)(iv)", "Ignore any names even if incorrect", "concession-never-flagged"));
-  t('20(b)(iv): "Allow 1 mark for two correct non skeletal formulae"',
-    has("20(b)(iv)", "Allow 1 mark for two correct non skeletal formulae", "concession-never-flagged"));
-  t("20(b)(iv) also has empty marking points — the answer cell is a drawing",
-    forQ("20(b)(iv)").filter((f) => f.cls === "empty-marking-point").length === 2,
-    forQ("20(b)(iv)").filter((f) => f.cls === "empty-marking-point").length);
-
-  // ⚠ 22(c) — the truncation the founder hand-completed, found independently,
-  // together with the orphaned tail it was split from.
-  t("22(c) has a mid-line truncation",
-    forQ("22(c)").some((f) => f.cls === "mid-line-truncation"), forQ("22(c)"));
-  t('  ...and it is the "must be less than" line',
-    forQ("22(c)").some((f) => f.cls === "mid-line-truncation" && /less than$/.test(f.text)),
-    forQ("22(c)").map((f) => f.text));
-  t('  ...and the orphaned tail "100%" is found too',
-    has("22(c)", "100%", "answer-value-in-guidance"));
+  // ⚠ AND WHAT A SWEEP CANNOT FIX IS STILL REPORTED. Restoring moves a line
+  // into the ruling queue; it cannot invent a criterion for a drawing, and it
+  // cannot rejoin a sentence the extractor split.
+  t("empty marking points are still reported",
+    report.findings.some((f) => f.cls === "empty-marking-point"));
+  t("...on the two image-answer blocks",
+    ["20(b)(iv)", "23(a)(iii)"].every((qn) =>
+      forQ(qn).some((f) => f.cls === "empty-marking-point")),
+    report.byQuestion.map((q) => q.questionNumber));
+  t("truncations are still reported",
+    report.findings.some((f) => f.cls === "mid-line-truncation"));
+  t("ANTI-VACUITY — the audit still finds something", report.findings.length > 0,
+    report.findings.length);
 }
 
 console.log("\n── IT IS A SYSTEMIC PROBLEM, NOT THREE CASES ──");
 {
-  t("findings span many questions, not three",
-    report.byQuestion.length > 10, report.byQuestion.length);
-  t("all four classes occur",
-    new Set(report.findings.map((f) => f.cls)).size === 4,
+  // ⚠ WAS "concessions are the bulk of it", WHICH WAS TRUE OF AN UNSWEPT
+  // PAPER. What is durable is that the audit reports classes, not a count.
+  t("every finding carries one of the four classes",
+    report.findings.every((f) =>
+      ["concession-never-flagged", "answer-value-in-guidance",
+       "mid-line-truncation", "empty-marking-point"].includes(f.cls)),
     [...new Set(report.findings.map((f) => f.cls))]);
-  t("concessions are the bulk of it",
-    report.findings.filter((f) => f.cls === "concession-never-flagged").length > 40,
-    report.findings.filter((f) => f.cls === "concession-never-flagged").length);
   t("every finding names its bucket", report.findings.every((f) => f.bucket.length > 0));
   t("every finding says why", report.findings.every((f) => f.why.length > 20));
   t("byQuestion totals match the findings",
@@ -134,7 +126,9 @@ console.log("\n── ANTI-VACUITY AND READ-ONLINESS ──");
     guidance: [{ text: "Example of calculation" }], requiresRuling: [{ text: "Allow 2.5" }],
   }]);
   t("a clean block yields no findings", clean.findings.length === 0, clean.findings);
-  t("ANTI-VACUITY — the real artefact DOES yield findings", report.findings.length > 50,
+  // ⚠ WAS "> 50". The sweep has been run, so the count is now small — but it
+  // must not be zero while image answers and truncations remain unfixed.
+  t("ANTI-VACUITY — the real artefact still yields findings", report.findings.length > 0,
     report.findings.length);
   t("the audit wrote nothing", readFileSync(ARTEFACT, "utf8") === before);
 }
@@ -200,20 +194,25 @@ console.log("\n── ADDING A LINE TO AN APPROVED QUESTION WITHDRAWS THE APPROV
 
   // ⚠ AND A NEWLY ADDED LINE IS UNRULED, so the question cannot simply be
   // re-approved without looking at it.
+  // ⚠ A SYNTHETIC LINE, NOT A REAL ONE. This used to add "Ignore any names
+  // even if incorrect" — which the founder has since restored AND ruled, so
+  // the fixture's own book resolved it and the test measured nothing. The
+  // property under test is "a newly added line is unruled", so the line has to
+  // be one nothing could already have a ruling for.
+  const ADDED = "a line added by this test that no ruling can exist for";
   const withNewLine = {
     ...q,
     requiresRuling: [...q.requiresRuling, {
-      page: q.page, y: 0, sourceLine: "Ignore any names even if incorrect",
+      page: q.page, y: 0, sourceLine: ADDED,
       derivedFrom: "hand-transcribed", confidence: 1,
-      text: "Ignore any names even if incorrect",
+      text: ADDED,
       requiresRuling: ["hand-transcribed from the mark scheme — classify it"],
     }],
   };
   const review = buildReview({ ...set, questions: [withNewLine] } as never, { "20(b)(iv)": after });
   t("the added line counts as unruled", review[0].unruled.length === 1, review[0].unruled.length);
-  t("...and it is the added one",
-    review[0].unruled[0]?.text === "Ignore any names even if incorrect");
-  t("isResolved says so directly", !isResolved(after.lines["Ignore any names even if incorrect"]));
+  t("...and it is the added one", review[0].unruled[0]?.text === ADDED);
+  t("isResolved says so directly", !isResolved(after.lines[ADDED]));
 
   // ⚠ A POINT ADDED THE SAME WAY MAKES pointsFullyRuled FALSE.
   const withNewPoint = {
