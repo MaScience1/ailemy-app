@@ -1619,24 +1619,7 @@
           "y": 363.3
         }
       ],
-      "accept": [
-        {
-          "text": "Allow a reaction in which all of the atoms in the",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Allow a reaction in which all of the atoms in the",
-          "page": 13,
-          "y": 362
-        },
-        {
-          "text": "Ignore any reference to carbon dioxide and water",
-          "confidence": 0.8,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Ignore any reference to carbon dioxide and water",
-          "page": 13,
-          "y": 389.6
-        }
-      ],
+      "accept": [],
       "reject": [],
       "guidance": [
         {
@@ -1648,7 +1631,30 @@
           "y": 375.8
         }
       ],
-      "requiresRuling": [],
+      "requiresRuling": [
+        {
+          "text": "Allow a reaction in which all of the atoms in the",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow a reaction in which all of the atoms in the",
+          "page": 13,
+          "y": 362,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Ignore any reference to carbon dioxide and water",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore any reference to carbon dioxide and water",
+          "page": 13,
+          "y": 389.6,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        }
+      ],
       "alternativeMethods": [],
       "hasAlternativeMethods": false,
       "routes": 1,
@@ -1695,14 +1701,6 @@
       ],
       "accept": [
         {
-          "text": "Accept 13H2O(g)",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Accept 13H2O(g)",
-          "page": 13,
-          "y": 501.5
-        },
-        {
           "text": "Allow multiples",
           "confidence": 0.95,
           "derivedFrom": "Additional Guidance column",
@@ -1722,7 +1720,19 @@
           "y": 473.9
         }
       ],
-      "requiresRuling": [],
+      "requiresRuling": [
+        {
+          "text": "Accept 13H2O(g)",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Accept 13H2O(g)",
+          "page": 13,
+          "y": 501.5,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        }
+      ],
       "alternativeMethods": [],
       "hasAlternativeMethods": false,
       "routes": 1,
