@@ -16,7 +16,7 @@ import type {
   QuestionRulings,
   ReviewItem,
 } from "@/lib/exam/markscheme-proposals";
-import type { ReviewData } from "@/lib/exam/markscheme-review";
+import type { ReviewData, EmitResultReport } from "@/lib/exam/markscheme-review";
 import {
   locateBlock,
   toViewerPage,
@@ -345,9 +345,12 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
   const [onlyUnruled, setOnlyUnruled] = useState(false);
 
   /** Result of the last emit. Refusals are the useful part, so they are kept. */
-  const [emit, setEmit] = useState<
-    { ok: true; path: string; questions: number } | { ok: false; error: string; refusals?: string[] } | null
-  >(null);
+  // ⚠ THE SERVER'S TYPE, NOT A HAND-COPIED ONE. This was written out inline as
+  // `{ ok: true; path; questions }`, so when the emitter gained `refusals` and
+  // `marks` the component simply did not see them — a duplicated shape that
+  // silently lagged the thing it described. Importing the type means the next
+  // field arrives here as a compile error rather than as nothing at all.
+  const [emit, setEmit] = useState<EmitResultReport | null>(null);
   const [emitting, setEmitting] = useState(false);
 
   // ── measure, synchronously on mount ──────────────────────────────────────
@@ -1113,14 +1116,35 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
       {emit && (
         <div
           className={`rounded-lg border px-4 py-3 text-sm ${
-            emit.ok ? "border-emerald-300 bg-emerald-50 text-emerald-900" : "border-amber-300 bg-amber-50 text-amber-900"
+            emit.ok && emit.refusals.length === 0
+              ? "border-emerald-300 bg-emerald-50 text-emerald-900"
+              : "border-amber-300 bg-amber-50 text-amber-900"
           }`}
         >
           {emit.ok ? (
-            <p>
-              Wrote <span className="font-mono">{emit.path}</span> — {emit.questions} question(s).
-              Dry-run the seeder against it before committing.
-            </p>
+            <>
+              <p>
+                Wrote <span className="font-mono">{emit.path}</span> — {emit.questions} question(s),{" "}
+                {emit.marks} mark(s). Dry-run the seeder against it before committing.
+              </p>
+              {/* ⚠ A PARTIAL SUCCESS IS NOT A SUCCESS. These refusals used to be
+                  discarded whenever anything emitted, which is how 23(a)(iii)
+                  and its two marks left the paper without a word on screen. */}
+              {emit.refusals.length > 0 && (
+                <>
+                  <p className="mt-2 flex items-start gap-1.5 font-medium">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                    {emit.refusals.length} refusal(s) — those questions are NOT in the file.
+                    Check {emit.marks} against the paper&apos;s printed total.
+                  </p>
+                  <ul className="mt-2 max-h-48 overflow-y-auto font-mono text-xs">
+                    {emit.refusals.map((r) => (
+                      <li key={r}>{r}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </>
           ) : (
             <>
               <p className="font-medium">{emit.error}</p>
@@ -1600,9 +1624,22 @@ function QuestionPanel({
                 {p.sourceLine}
               </p>
               <div className="mt-2 flex flex-wrap gap-1">
-                <Choice on={r?.verdict === "accept"} onClick={() => onRulePoint(p.pointCode, { verdict: "accept" })}>
-                  Accept as-is
-                </Choice>
+                {/* ⚠ "AS-IS" ON A BLANK CARD ACCEPTS THE EMPTY STRING. The
+                    answer cell for 23(a)(iii) is a drawing, so both its points
+                    arrived with no text; both were accepted as-is; the question
+                    read as fully ruled, was approved, and then vanished from
+                    the fixture for "empty criterion". Accepting nothing is not
+                    a ruling — the only way to resolve a point the extractor
+                    could not read is to Edit it and supply the words. */}
+                {p.criterion.trim() ? (
+                  <Choice on={r?.verdict === "accept"} onClick={() => onRulePoint(p.pointCode, { verdict: "accept" })}>
+                    Accept as-is
+                  </Choice>
+                ) : (
+                  <span className="rounded border border-amber-400 bg-amber-50 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wider text-amber-900">
+                    no text — Edit to transcribe it
+                  </span>
+                )}
                 {/* ⚠ VISUALLY DISTINCT, AND REVOCABLE IN ONE CLICK. An
                     auto-verified point was accepted because its text matched
                     the page byte for byte — a narrower claim than "a person

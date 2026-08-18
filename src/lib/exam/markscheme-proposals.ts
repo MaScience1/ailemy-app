@@ -317,7 +317,20 @@ export function pointsFullyRuled(
   // `every` over an empty array is true, which would stamp the badge on
   // exactly the questions where there was nothing to check.
   if (question.points.length === 0) return false;
-  return question.points.every((p) => Boolean(ruled[p.pointCode]));
+  return question.points.every((p) => {
+    const r = ruled[p.pointCode];
+    if (!r) return false;
+    // ⚠ "ACCEPT AS-IS" ON A BLANK CARD ACCEPTS THE EMPTY STRING, AND THAT IS
+    // HOW 23(a)(iii) WAS LOST. Its answer cell is a drawing, so both marking
+    // points came through with no text; both were accepted as-is; the question
+    // showed as fully ruled, was approved, and toFixture then refused it for
+    // "empty criterion" — silently, because 47 others emitted. Accepting
+    // nothing is not a ruling. Only an EDIT, which supplies the words, can
+    // resolve a point the extractor could not read.
+    if (r.verdict === "accept" && !p.criterion.trim()) return false;
+    if (r.verdict === "edit" && !r.criterion.trim()) return false;
+    return true;
+  });
 }
 
 export function isResolved(ruling: LineRuling | undefined): boolean {
@@ -406,8 +419,28 @@ export type FixtureQuestion = {
   distractors?: DistractorFeedback[];
 };
 
+/**
+ * ⚠ REFUSALS ARE PRESENT ON SUCCESS TOO, AND THAT IS THE FIX.
+ *
+ * This used to be `{ok: true, questions}` with no refusals field: they were
+ * computed and then thrown away whenever at least one question emitted. On
+ * WCH11/01 that hid a whole question. 23(a)(iii) — an image-answer cell whose
+ * two marking points had empty criteria — was refused three times over:
+ *
+ *   23(a)(iii) M1: empty criterion
+ *   23(a)(iii) M2: empty criterion
+ *   23(a)(iii): every point was rejected, leaving no mark scheme
+ *
+ * and because 47 other questions succeeded, the emitter reported "47
+ * questions" and said nothing at all. Two marks vanished from a paper the
+ * screen said was 48/48 approved, and the only clue was a count the reviewer
+ * had to notice themselves.
+ *
+ * A partial success is not a success. `ok` now means "something was emitted",
+ * never "nothing was lost" — callers must show `refusals` either way.
+ */
 export type EmitResult =
-  | { ok: true; questions: FixtureQuestion[] }
+  | { ok: true; questions: FixtureQuestion[]; refusals: string[] }
   | { ok: false; refusals: string[] };
 
 /**
@@ -537,7 +570,7 @@ export function toFixture(set: ProposalSet, rulings: RulingBook): EmitResult {
   if (questions.length === 0) {
     return { ok: false, refusals: refusals.length ? refusals : ["nothing has been approved yet"] };
   }
-  return { ok: true, questions };
+  return { ok: true, questions, refusals };
 }
 
 /**
@@ -559,40 +592,68 @@ export function emitFixtureSource(result: EmitResult, paperSlug: string, capture
       "",
     ].join("\n");
   }
-  const q = (s: string) => `"${s.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+  /**
+   * ⚠ JSON.stringify, NOT A HAND-ROLLED ESCAPER.
+   *
+   * This used to escape backslashes and double quotes and nothing else, so a
+   * multi-line `guidance` — which toFixture builds by joining lines with "\n" —
+   * emitted a literal newline inside a double-quoted string. 20(a)'s M4 came
+   * out as an unterminated string literal three lines long.
+   *
+   * That bug was in the emitter from the start. It never surfaced because the
+   * output was paste-in fragments that nothing ever parsed: the file could not
+   * be imported, so its being unparseable cost nothing and said nothing. The
+   * moment it became a real module and entered `npm run typecheck`, tsc found
+   * it on the first run. A file nobody compiles is a file nobody checks.
+   *
+   * JSON string syntax is a subset of TypeScript's, so this is exact for
+   * newlines, tabs, control characters and unicode alike.
+   */
+  const q = (s: string) => JSON.stringify(s);
+
   const blocks = result.questions.map((question) => {
     const points = question.markScheme.map((p) => {
-      const lines = [`        {`, `          pointCode: ${q(p.pointCode)},`, `          criterion: ${q(p.criterion)},`];
-      if (p.accept?.length) lines.push(`          accept: [${p.accept.map(q).join(", ")}],`);
-      if (p.reject?.length) lines.push(`          reject: [${p.reject.map(q).join(", ")}],`);
-      if (p.guidance) lines.push(`          guidance: ${q(p.guidance)},`);
-      lines.push(`        },`);
+      const lines = [
+        `      {`,
+        `        pointCode: ${q(p.pointCode)},`,
+        `        criterion: ${q(p.criterion)},`,
+      ];
+      if (p.accept?.length) lines.push(`        accept: [${p.accept.map(q).join(", ")}],`);
+      if (p.reject?.length) lines.push(`        reject: [${p.reject.map(q).join(", ")}],`);
+      if (p.guidance) lines.push(`        guidance: ${q(p.guidance)},`);
+      lines.push(`      },`);
       return lines.join("\n");
     });
-    // ⚠ OUTSIDE markScheme, AND ANNOTATED AS INERT. The seeder does not read
-    // this key yet — DB persistence is deferred — so it is written where a
-    // reader can see it exists and see that nothing consumes it. The
-    // alternative, leaving it out until there is somewhere to put it, throws
-    // away the reviewer's work between now and then.
     const distractors = question.distractors?.length
       ? [
-          `      // FEEDBACK ONLY — never read by the marking layer, not yet seeded.`,
-          `      distractors: [`,
+          `    // FEEDBACK ONLY — never read by the marking layer, not yet seeded.`,
+          `    distractors: [`,
+          // ⚠ sourceLine IS EMITTED, because DistractorFeedback REQUIRES it and
+          // because it is the traceability the whole feature rests on: an
+          // explanation must stay findable on the page it came from. The old
+          // emitter left it out and the file still "passed", since nothing ever
+          // typechecked it.
           ...question.distractors.map(
-            (d) => `        { option: ${q(d.option)}, text: ${q(d.text)} },`,
+            (d) =>
+              `      { option: ${q(d.option)}, text: ${q(d.text)}, sourceLine: ${q(d.sourceLine)} },`,
           ),
-          `      ],`,
+          `    ],`,
         ]
       : [];
-
     return [
-      `    // ${question.questionNumber} — ${question.marks} mark(s)`,
-      `      markScheme: [`,
+      `  {`,
+      `    questionNumber: ${q(question.questionNumber)},`,
+      `    marks: ${question.marks},`,
+      `    markScheme: [`,
       ...points,
-      `      ],`,
+      `    ],`,
       ...distractors,
+      `  },`,
     ].join("\n");
   });
+
+  const emittedMarks = result.questions.reduce((n, x) => n + x.marks, 0);
+
   return [
     `// mark_scheme_items for ${paperSlug}, reviewed and approved ${capturedAt}`,
     `//`,
@@ -600,13 +661,47 @@ export function emitFixtureSource(result: EmitResult, paperSlug: string, capture
     `// question below carries approved_at AND approved_by; anything unruled or`,
     `// unapproved was refused rather than guessed.`,
     `//`,
-    `// Paste each block into the matching question, then:`,
-    `//   node scripts/seed-exam-questions.ts --set=${paperSlug}`,
-    `//   node scripts/seed-exam-questions.ts --set=${paperSlug} --commit`,
+    `// ⚠ GENERATED. Do not edit — re-emit from the review surface instead.`,
+    ...(result.refusals.length
+      ? [
+          `//`,
+          `// ⚠ ${result.refusals.length} REFUSAL(S) — THESE QUESTIONS ARE NOT IN THIS FILE:`,
+          ...result.refusals.map((r) => `//   ${r}`),
+          `//`,
+          `// A count of ${result.questions.length} question(s) is not the same as a`,
+          `// complete paper. Check these against the printed totals before seeding.`,
+        ]
+      : []),
+    `//`,
+    `//   ${result.questions.length} question(s), ${emittedMarks} mark(s)`,
     ``,
+    // ⚠ A TYPE-ONLY IMPORT, SO THE FILE IS CHECKED AND STILL LOADS UNDER PLAIN
+    // NODE. `import type` is erased before node resolves anything; a value
+    // import would need the .ts extension and drag the whole module in.
+    `import type { FixtureQuestion } from "../../src/lib/exam/markscheme-proposals.ts";`,
+    ``,
+    `export const ${identifierFor(paperSlug)}: FixtureQuestion[] = [`,
     ...blocks,
+    `];`,
     ``,
   ].join("\n");
+}
+
+/**
+ * A legal TypeScript identifier for a paper slug.
+ *
+ * ⚠ THE EMITTED FILE USED TO BE PASTE-IN FRAGMENTS — bare `markScheme: [...]`
+ * object properties under a comment naming the question, with no wrapper, no
+ * export and no valid top level. It did not parse, so it could not be
+ * imported, could not be typechecked, and turned `npm run typecheck` red the
+ * moment a paper was emitted. The header told the reader to paste each block
+ * in by hand while the emitter's own docstring claimed the seeder consumed it;
+ * both could not be true, and neither was checked.
+ */
+export function identifierFor(paperSlug: string): string {
+  const body = paperSlug.replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "").toUpperCase();
+  // An identifier may not begin with a digit.
+  return /^[0-9]/.test(body) ? `PAPER_${body}` : body;
 }
 
 // ============================================================================

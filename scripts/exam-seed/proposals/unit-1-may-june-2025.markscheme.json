@@ -5242,10 +5242,12 @@
     "23(a)(iii)": {
       "points": {
         "M1": {
-          "verdict": "accept"
+          "verdict": "edit",
+          "criterion": "two sodium ions shown as [Na]+ with no electrons on the outer shell (1)"
         },
         "M2": {
-          "verdict": "accept"
+          "verdict": "edit",
+          "criterion": "oxide ion shown as [O]2− with eight electrons (dots and crosses) in the outer shell (1)"
         }
       },
       "lines": {
@@ -5268,9 +5270,9 @@
           "kind": "reject"
         }
       },
-      "approvedAt": "2026-08-18T15:03:32.026Z",
+      "approvedAt": "2026-08-18T16:46:26.301Z",
       "approvedBy": "self",
-      "revision": 3
+      "revision": 7
     },
     "22(b)(i)": {
       "points": {

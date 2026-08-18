@@ -379,7 +379,13 @@ export async function saveRulings(
 }
 
 export type EmitResultReport =
-  | { ok: true; path: string; questions: number; bytes: number }
+  /**
+   * ⚠ `refusals` IS PRESENT ON SUCCESS TOO. A count of 47 questions is not the
+   * same as a complete paper — see EmitResult. `marks` is here for the same
+   * reason: a number the reviewer can compare against the printed total
+   * without opening the file.
+   */
+  | { ok: true; path: string; questions: number; marks: number; bytes: number; refusals: string[] }
   | { ok: false; error: string; refusals?: string[] };
 
 /**
@@ -446,6 +452,8 @@ export async function emitFixture(paperSlug: string): Promise<EmitResultReport> 
     ok: true,
     path: `scripts/exam-seed/${paperSlug}.generated.ts`,
     questions: result.questions.length,
+    marks: result.questions.reduce((n, q) => n + q.marks, 0),
+    refusals: result.refusals,
     bytes: source.length,
   };
 }

@@ -25,6 +25,7 @@ import {
   countApproved,
   toFixture,
   emitFixtureSource,
+  identifierFor,
   pointsFullyRuled,
   type ProposalSet,
   type RulingBook,
@@ -264,7 +265,15 @@ console.log("\n── THE EMITTED SOURCE SAYS WHAT IT IS ──");
     },
   });
   const src = emitFixtureSource(ok, "wch11-01-2025-may-june", NOW);
-  t("an emission carries the seeder commands", src.includes("--commit") && src.includes("--set="));
+  // ⚠ WAS "carries the seeder commands". The emitted file used to be paste-in
+  // fragments, so its header told the reader to paste each block by hand and
+  // then run the seeder. It is a real module now, so what has to be true is
+  // that it EXPORTS the fixture under a name derived from the slug — the
+  // seeder imports it rather than being told about it in a comment.
+  t("an emission exports a named fixture",
+    src.includes(`export const ${identifierFor("wch11-01-2025-may-june")}: FixtureQuestion[] = [`),
+    src.split("\n").find((l) => l.startsWith("export const")));
+  t("...and warns it is generated", /GENERATED\. Do not edit/.test(src));
 
   // ⚠ TESTED WITH A STRING THAT ACTUALLY CONTAINS A QUOTE. The first version of
   // this assertion pattern-matched the whole emitted file and flagged ordinary
