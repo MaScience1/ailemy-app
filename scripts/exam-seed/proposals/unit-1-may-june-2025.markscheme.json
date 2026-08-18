@@ -1619,24 +1619,7 @@
           "y": 363.3
         }
       ],
-      "accept": [
-        {
-          "text": "Allow a reaction in which all of the atoms in the",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Allow a reaction in which all of the atoms in the",
-          "page": 13,
-          "y": 362
-        },
-        {
-          "text": "Ignore any reference to carbon dioxide and water",
-          "confidence": 0.8,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Ignore any reference to carbon dioxide and water",
-          "page": 13,
-          "y": 389.6
-        }
-      ],
+      "accept": [],
       "reject": [],
       "guidance": [
         {
@@ -1648,7 +1631,30 @@
           "y": 375.8
         }
       ],
-      "requiresRuling": [],
+      "requiresRuling": [
+        {
+          "text": "Allow a reaction in which all of the atoms in the",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow a reaction in which all of the atoms in the",
+          "page": 13,
+          "y": 362,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Ignore any reference to carbon dioxide and water",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore any reference to carbon dioxide and water",
+          "page": 13,
+          "y": 389.6,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        }
+      ],
       "alternativeMethods": [],
       "hasAlternativeMethods": false,
       "routes": 1,
@@ -1693,24 +1699,7 @@
           "y": 503.6
         }
       ],
-      "accept": [
-        {
-          "text": "Accept 13H2O(g)",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Accept 13H2O(g)",
-          "page": 13,
-          "y": 501.5
-        },
-        {
-          "text": "Allow multiples",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Allow multiples",
-          "page": 13,
-          "y": 515.3
-        }
-      ],
+      "accept": [],
       "reject": [],
       "guidance": [
         {
@@ -1722,7 +1711,30 @@
           "y": 473.9
         }
       ],
-      "requiresRuling": [],
+      "requiresRuling": [
+        {
+          "text": "Accept 13H2O(g)",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Accept 13H2O(g)",
+          "page": 13,
+          "y": 501.5,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Allow multiples",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow multiples",
+          "page": 13,
+          "y": 515.3,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        }
+      ],
       "alternativeMethods": [],
       "hasAlternativeMethods": false,
       "routes": 1,
@@ -1815,24 +1827,7 @@
           "y": 296.6
         }
       ],
-      "accept": [
-        {
-          "text": "Allow 306 (kg)",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Allow 306 (kg)",
-          "page": 14,
-          "y": 346.7
-        },
-        {
-          "text": "Allow 307000 / 306000 g",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Allow 307000 / 306000 g",
-          "page": 14,
-          "y": 360.5
-        }
-      ],
+      "accept": [],
       "reject": [],
       "guidance": [
         {
@@ -1886,16 +1881,6 @@
           "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
         },
         {
-          "text": "(check mole ratio from 20bii)",
-          "confidence": 0.2,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "(check mole ratio from 20bii)",
-          "page": 14,
-          "y": 222.2,
-          "unparsed": true,
-          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
-        },
-        {
           "text": "(5 575 200) × 44 = 245 310 000 (2.4531 × 108) (g)",
           "confidence": 0.2,
           "derivedFrom": "Additional Guidance column",
@@ -1924,16 +1909,6 @@
           "y": 291.5,
           "unparsed": true,
           "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
-        },
-        {
-          "text": "307 (kg)",
-          "confidence": 0.2,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "307 (kg)",
-          "page": 14,
-          "y": 332.9,
-          "unparsed": true,
-          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text."
         }
       ],
       "requiresRuling": [
@@ -1957,6 +1932,54 @@
           "y": 415.7,
           "requiresRuling": [
             "transferred-error rule — scope must be decided"
+          ]
+        },
+        {
+          "text": "(check mole ratio from 20bii)",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "(check mole ratio from 20bii)",
+          "page": 14,
+          "y": 222.2,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text.",
+          "requiresRuling": [
+            "was filed under guidance by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "307 (kg)",
+          "confidence": 0.2,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "307 (kg)",
+          "page": 14,
+          "y": 332.9,
+          "unparsed": true,
+          "unparsedReason": "worked example — superscripts interleave in the PDF text layer, so the characters are unreliable. Nothing marks against this text.",
+          "requiresRuling": [
+            "was filed under guidance by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Allow 306 (kg)",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow 306 (kg)",
+          "page": 14,
+          "y": 346.7,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Allow 307000 / 306000 g",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow 307000 / 306000 g",
+          "page": 14,
+          "y": 360.5,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
           ]
         }
       ],
@@ -2013,24 +2036,7 @@
           "y": 182.7
         }
       ],
-      "accept": [
-        {
-          "text": "Ignore any names even if incorrect",
-          "confidence": 0.8,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Ignore any names even if incorrect",
-          "page": 15,
-          "y": 84
-        },
-        {
-          "text": "Allow 1 mark for two correct non skeletal formulae",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Allow 1 mark for two correct non skeletal formulae",
-          "page": 15,
-          "y": 180.6
-        }
-      ],
+      "accept": [],
       "reject": [],
       "guidance": [
         {
@@ -2042,7 +2048,30 @@
           "y": 224
         }
       ],
-      "requiresRuling": [],
+      "requiresRuling": [
+        {
+          "text": "Ignore any names even if incorrect",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore any names even if incorrect",
+          "page": 15,
+          "y": 84,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Allow 1 mark for two correct non skeletal formulae",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow 1 mark for two correct non skeletal formulae",
+          "page": 15,
+          "y": 180.6,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        }
+      ],
       "alternativeMethods": [],
       "hasAlternativeMethods": false,
       "routes": 1,
@@ -2099,24 +2128,7 @@
           "y": 197.3
         }
       ],
-      "accept": [
-        {
-          "text": "Allow Ca2+(g) - e- → Ca3+(g)",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Allow Ca2+(g) - e- → Ca3+(g)",
-          "page": 16,
-          "y": 139.2
-        },
-        {
-          "text": "Ignore state symbol on electron",
-          "confidence": 0.8,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Ignore state symbol on electron",
-          "page": 16,
-          "y": 208.2
-        }
-      ],
+      "accept": [],
       "reject": [],
       "guidance": [
         {
@@ -2128,7 +2140,30 @@
           "y": 111.2
         }
       ],
-      "requiresRuling": [],
+      "requiresRuling": [
+        {
+          "text": "Allow Ca2+(g) - e- → Ca3+(g)",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow Ca2+(g) - e- → Ca3+(g)",
+          "page": 16,
+          "y": 139.2,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Ignore state symbol on electron",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore state symbol on electron",
+          "page": 16,
+          "y": 208.2,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        }
+      ],
       "alternativeMethods": [],
       "hasAlternativeMethods": false,
       "routes": 1,
@@ -2221,40 +2256,7 @@
           "y": 445.7
         }
       ],
-      "accept": [
-        {
-          "text": "Allow x axis as atomic numbers",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Allow x axis as atomic numbers",
-          "page": 17,
-          "y": 360
-        },
-        {
-          "text": "Allow log axis on y axis",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Allow log axis on y axis",
-          "page": 17,
-          "y": 373.8
-        },
-        {
-          "text": "Allow ±1 small square",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Allow ±1 small square",
-          "page": 17,
-          "y": 443.6
-        },
-        {
-          "text": "Ignore lines between points / line of best fit",
-          "confidence": 0.8,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Ignore lines between points / line of best fit",
-          "page": 17,
-          "y": 457.4
-        }
-      ],
+      "accept": [],
       "reject": [],
       "guidance": [
         {
@@ -2274,7 +2276,52 @@
           "y": 415.2
         }
       ],
-      "requiresRuling": [],
+      "requiresRuling": [
+        {
+          "text": "Allow x axis as atomic numbers",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow x axis as atomic numbers",
+          "page": 17,
+          "y": 360,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Allow log axis on y axis",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow log axis on y axis",
+          "page": 17,
+          "y": 373.8,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Allow ±1 small square",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow ±1 small square",
+          "page": 17,
+          "y": 443.6,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Ignore lines between points / line of best fit",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore lines between points / line of best fit",
+          "page": 17,
+          "y": 457.4,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        }
+      ],
       "alternativeMethods": [],
       "hasAlternativeMethods": false,
       "routes": 1,
@@ -2319,14 +2366,31 @@
           "y": 196.5
         }
       ],
-      "accept": [
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [
+        {
+          "text": "Penalise any other shell once only",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Penalise any other shell once only",
+          "page": 18,
+          "y": 111.6,
+          "requiresRuling": [
+            "was filed under guidance by the extractor and never shown to you — classify it"
+          ]
+        },
         {
           "text": "Ignore correct electronic configurations",
           "confidence": 0.8,
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "Ignore correct electronic configurations",
           "page": 18,
-          "y": 153
+          "y": 153,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
         },
         {
           "text": "Accept the (2)p orbital is more shielded",
@@ -2334,7 +2398,10 @@
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "Accept the (2)p orbital is more shielded",
           "page": 18,
-          "y": 194.4
+          "y": 194.4,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
         },
         {
           "text": "Ignore further away from the nucleus",
@@ -2342,21 +2409,12 @@
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "Ignore further away from the nucleus",
           "page": 18,
-          "y": 208.2
+          "y": 208.2,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
         }
       ],
-      "reject": [],
-      "guidance": [
-        {
-          "text": "Penalise any other shell once only",
-          "confidence": 0.6,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Penalise any other shell once only",
-          "page": 18,
-          "y": 111.6
-        }
-      ],
-      "requiresRuling": [],
       "alternativeMethods": [],
       "hasAlternativeMethods": false,
       "routes": 1,
@@ -2401,50 +2459,8 @@
           "y": 196.5
         }
       ],
-      "accept": [
-        {
-          "text": "Allow same orbital / subshell",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Allow same orbital / subshell",
-          "page": 19,
-          "y": 153
-        },
-        {
-          "text": "Ignore comments about similar/same shielding",
-          "confidence": 0.8,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Ignore comments about similar/same shielding",
-          "page": 19,
-          "y": 166.8
-        },
-        {
-          "text": "Allow greater nuclear charge / more protons",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Allow greater nuclear charge / more protons",
-          "page": 19,
-          "y": 194.4
-        },
-        {
-          "text": "Ignore greater atomic number",
-          "confidence": 0.8,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Ignore greater atomic number",
-          "page": 19,
-          "y": 208.2
-        }
-      ],
-      "reject": [
-        {
-          "text": "Do not award comments about repulsion between",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Do not award comments about repulsion between",
-          "page": 19,
-          "y": 235.8
-        }
-      ],
+      "accept": [],
+      "reject": [],
       "guidance": [
         {
           "text": "paired electrons",
@@ -2463,7 +2479,63 @@
           "y": 291.3
         }
       ],
-      "requiresRuling": [],
+      "requiresRuling": [
+        {
+          "text": "Allow same orbital / subshell",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow same orbital / subshell",
+          "page": 19,
+          "y": 153,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Ignore comments about similar/same shielding",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore comments about similar/same shielding",
+          "page": 19,
+          "y": 166.8,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Allow greater nuclear charge / more protons",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow greater nuclear charge / more protons",
+          "page": 19,
+          "y": 194.4,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Ignore greater atomic number",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore greater atomic number",
+          "page": 19,
+          "y": 208.2,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Do not award comments about repulsion between",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Do not award comments about repulsion between",
+          "page": 19,
+          "y": 235.8,
+          "requiresRuling": [
+            "was filed under reject by the extractor and never shown to you — classify it"
+          ]
+        }
+      ],
       "alternativeMethods": [],
       "hasAlternativeMethods": false,
       "routes": 1,
@@ -2544,28 +2616,33 @@
           "y": 267.9
         }
       ],
-      "accept": [
+      "accept": [],
+      "reject": [],
+      "guidance": [],
+      "requiresRuling": [
         {
           "text": "Allow",
           "confidence": 0.95,
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "Allow",
           "page": 20,
-          "y": 307.1
-        }
-      ],
-      "reject": [
+          "y": 307.1,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
         {
           "text": "Do not award charges",
           "confidence": 0.95,
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "Do not award charges",
           "page": 20,
-          "y": 224.3
+          "y": 224.3,
+          "requiresRuling": [
+            "was filed under reject by the extractor and never shown to you — classify it"
+          ]
         }
       ],
-      "guidance": [],
-      "requiresRuling": [],
       "alternativeMethods": [],
       "hasAlternativeMethods": false,
       "routes": 1,
@@ -2617,14 +2694,6 @@
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "Allow",
           "page": 21,
-          "y": 126.4
-        },
-        {
-          "text": "Allow",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Allow",
-          "page": 21,
           "y": 197.2
         }
       ],
@@ -2669,17 +2738,32 @@
           "sourceLine": "C4H9• + Cl2 → C4H9Cl + Cl•",
           "page": 21,
           "y": 211.9
-        },
+        }
+      ],
+      "requiresRuling": [
         {
           "text": "Penalise use of incorrect alkane once only",
           "confidence": 0.6,
           "derivedFrom": "Additional Guidance column",
           "sourceLine": "Penalise use of incorrect alkane once only",
           "page": 21,
-          "y": 239.5
+          "y": 239.5,
+          "requiresRuling": [
+            "was filed under guidance by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Allow",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow",
+          "page": 21,
+          "y": 126.4,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
         }
       ],
-      "requiresRuling": [],
       "alternativeMethods": [],
       "hasAlternativeMethods": false,
       "routes": 1,
@@ -2712,26 +2796,8 @@
           "y": 325
         }
       ],
-      "accept": [
-        {
-          "text": "Allow",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Allow",
-          "page": 21,
-          "y": 366.1
-        }
-      ],
-      "reject": [
-        {
-          "text": "Do not award if charges are shown",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Do not award if charges are shown",
-          "page": 21,
-          "y": 408.4
-        }
-      ],
+      "accept": [],
+      "reject": [],
       "guidance": [
         {
           "text": "CH3CH2CH2CH2• + CH3CH2CH2CH2• →",
@@ -2758,7 +2824,30 @@
           "y": 380.8
         }
       ],
-      "requiresRuling": [],
+      "requiresRuling": [
+        {
+          "text": "Allow",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow",
+          "page": 21,
+          "y": 366.1,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Do not award if charges are shown",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Do not award if charges are shown",
+          "page": 21,
+          "y": 408.4,
+          "requiresRuling": [
+            "was filed under reject by the extractor and never shown to you — classify it"
+          ]
+        }
+      ],
       "alternativeMethods": [],
       "hasAlternativeMethods": false,
       "routes": 1,
@@ -3054,26 +3143,9 @@
           "y": 320.7
         }
       ],
-      "accept": [
-        {
-          "text": "Accept 56.25% (5.6 squares) : 37.5% (3.8 squares):",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Accept 56.25% (5.6 squares) : 37.5% (3.8 squares):",
-          "page": 23,
-          "y": 318.6
-        }
-      ],
+      "accept": [],
       "reject": [],
       "guidance": [
-        {
-          "text": "6.25% (0.6 squares) assuming 1 square is 10%",
-          "confidence": 0.6,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "6.25% (0.6 squares) assuming 1 square is 10%",
-          "page": 23,
-          "y": 332.4
-        },
         {
           "text": "(Total for Question 22 = 11",
           "confidence": 0.6,
@@ -3083,7 +3155,30 @@
           "y": 375.8
         }
       ],
-      "requiresRuling": [],
+      "requiresRuling": [
+        {
+          "text": "6.25% (0.6 squares) assuming 1 square is 10%",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "6.25% (0.6 squares) assuming 1 square is 10%",
+          "page": 23,
+          "y": 332.4,
+          "requiresRuling": [
+            "was filed under guidance by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Accept 56.25% (5.6 squares) : 37.5% (3.8 squares):",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Accept 56.25% (5.6 squares) : 37.5% (3.8 squares):",
+          "page": 23,
+          "y": 318.6,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        }
+      ],
       "alternativeMethods": [],
       "hasAlternativeMethods": false,
       "routes": 1,
@@ -3116,16 +3211,7 @@
           "y": 112.9
         }
       ],
-      "accept": [
-        {
-          "text": "Allow attraction between cations / positively",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Allow attraction between cations / positively",
-          "page": 24,
-          "y": 111.6
-        }
-      ],
+      "accept": [],
       "reject": [],
       "guidance": [
         {
@@ -3137,7 +3223,19 @@
           "y": 125.4
         }
       ],
-      "requiresRuling": [],
+      "requiresRuling": [
+        {
+          "text": "Allow attraction between cations / positively",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow attraction between cations / positively",
+          "page": 24,
+          "y": 111.6,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        }
+      ],
       "alternativeMethods": [],
       "hasAlternativeMethods": false,
       "routes": 1,
@@ -3182,32 +3280,7 @@
           "y": 254.1
         }
       ],
-      "accept": [
-        {
-          "text": "Allow ORA about sodium ions",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Allow ORA about sodium ions",
-          "page": 24,
-          "y": 196.7
-        },
-        {
-          "text": "Allow Mg2+ and Na+",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Allow Mg2+ and Na+",
-          "page": 24,
-          "y": 224.3
-        },
-        {
-          "text": "Allow magnesium has a smaller ionic radius /",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Allow magnesium has a smaller ionic radius /",
-          "page": 24,
-          "y": 251.9
-        }
-      ],
+      "accept": [],
       "reject": [],
       "guidance": [
         {
@@ -3235,14 +3308,6 @@
           "y": 307.1
         },
         {
-          "text": "Penalise any mention of covalent bonding or",
-          "confidence": 0.6,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Penalise any mention of covalent bonding or",
-          "page": 24,
-          "y": 334.7
-        },
-        {
           "text": "intermolecular forces once only.",
           "confidence": 0.6,
           "derivedFrom": "Additional Guidance column",
@@ -3251,7 +3316,52 @@
           "y": 348.5
         }
       ],
-      "requiresRuling": [],
+      "requiresRuling": [
+        {
+          "text": "Penalise any mention of covalent bonding or",
+          "confidence": 0.6,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Penalise any mention of covalent bonding or",
+          "page": 24,
+          "y": 334.7,
+          "requiresRuling": [
+            "was filed under guidance by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Allow ORA about sodium ions",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow ORA about sodium ions",
+          "page": 24,
+          "y": 196.7,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Allow Mg2+ and Na+",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow Mg2+ and Na+",
+          "page": 24,
+          "y": 224.3,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Allow magnesium has a smaller ionic radius /",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow magnesium has a smaller ionic radius /",
+          "page": 24,
+          "y": 251.9,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        }
+      ],
       "alternativeMethods": [],
       "hasAlternativeMethods": false,
       "routes": 1,
@@ -3296,58 +3406,8 @@
           "y": 196.5
         }
       ],
-      "accept": [
-        {
-          "text": "Allow eight electrons on outer shell instead of no",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Allow eight electrons on outer shell instead of no",
-          "page": 25,
-          "y": 111.6
-        },
-        {
-          "text": "Allow single sodium ion",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Allow single sodium ion",
-          "page": 25,
-          "y": 139.2
-        },
-        {
-          "text": "Allow transferred electrons in any pattern",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Allow transferred electrons in any pattern",
-          "page": 25,
-          "y": 180.6
-        },
-        {
-          "text": "Ignore omission of square brackets",
-          "confidence": 0.8,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Ignore omission of square brackets",
-          "page": 25,
-          "y": 249.6
-        }
-      ],
-      "reject": [
-        {
-          "text": "Do not award Na+2",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Do not award Na+2",
-          "page": 25,
-          "y": 153
-        },
-        {
-          "text": "Do not award all dots or all crosses for the oxide",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Do not award all dots or all crosses for the oxide",
-          "page": 25,
-          "y": 208.2
-        }
-      ],
+      "accept": [],
+      "reject": [],
       "guidance": [
         {
           "text": "Mark independently",
@@ -3374,7 +3434,74 @@
           "y": 222
         }
       ],
-      "requiresRuling": [],
+      "requiresRuling": [
+        {
+          "text": "Allow eight electrons on outer shell instead of no",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow eight electrons on outer shell instead of no",
+          "page": 25,
+          "y": 111.6,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Allow single sodium ion",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow single sodium ion",
+          "page": 25,
+          "y": 139.2,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Allow transferred electrons in any pattern",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow transferred electrons in any pattern",
+          "page": 25,
+          "y": 180.6,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Ignore omission of square brackets",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore omission of square brackets",
+          "page": 25,
+          "y": 249.6,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Do not award Na+2",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Do not award Na+2",
+          "page": 25,
+          "y": 153,
+          "requiresRuling": [
+            "was filed under reject by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Do not award all dots or all crosses for the oxide",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Do not award all dots or all crosses for the oxide",
+          "page": 25,
+          "y": 208.2,
+          "requiresRuling": [
+            "was filed under reject by the extractor and never shown to you — classify it"
+          ]
+        }
+      ],
       "alternativeMethods": [],
       "hasAlternativeMethods": false,
       "routes": 1,
@@ -3419,26 +3546,8 @@
           "y": 141.3
         }
       ],
-      "accept": [
-        {
-          "text": "Ignore size of ions",
-          "confidence": 0.8,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Ignore size of ions",
-          "page": 26,
-          "y": 332.4
-        }
-      ],
-      "reject": [
-        {
-          "text": "Do not award M1 if suggestion that sodium",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Do not award M1 if suggestion that sodium",
-          "page": 26,
-          "y": 360
-        }
-      ],
+      "accept": [],
+      "reject": [],
       "guidance": [
         {
           "text": "Cl-",
@@ -3513,7 +3622,30 @@
           "y": 373.8
         }
       ],
-      "requiresRuling": [],
+      "requiresRuling": [
+        {
+          "text": "Ignore size of ions",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore size of ions",
+          "page": 26,
+          "y": 332.4,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Do not award M1 if suggestion that sodium",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Do not award M1 if suggestion that sodium",
+          "page": 26,
+          "y": 360,
+          "requiresRuling": [
+            "was filed under reject by the extractor and never shown to you — classify it"
+          ]
+        }
+      ],
       "alternativeMethods": [],
       "hasAlternativeMethods": false,
       "routes": 1,
@@ -3779,16 +3911,7 @@
           "y": 380
         }
       ],
-      "accept": [
-        {
-          "text": "Ignore bond angles even if incorrect.",
-          "confidence": 0.8,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Ignore bond angles even if incorrect.",
-          "page": 28,
-          "y": 391.7
-        }
-      ],
+      "accept": [],
       "reject": [],
       "guidance": [
         {
@@ -3808,7 +3931,19 @@
           "y": 377.7
         }
       ],
-      "requiresRuling": [],
+      "requiresRuling": [
+        {
+          "text": "Ignore bond angles even if incorrect.",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore bond angles even if incorrect.",
+          "page": 28,
+          "y": 391.7,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        }
+      ],
       "alternativeMethods": [],
       "hasAlternativeMethods": false,
       "routes": 1,
@@ -3877,41 +4012,8 @@
           "y": 239.6
         }
       ],
-      "accept": [
-        {
-          "text": "Allow London / van der Waals / dispersion forces",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Allow London / van der Waals / dispersion forces",
-          "page": 29,
-          "y": 97.8
-        },
-        {
-          "text": "Ignore monomer",
-          "confidence": 0.8,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Ignore monomer",
-          "page": 29,
-          "y": 139.2
-        },
-        {
-          "text": "Allow poly(ethene) is a macromolecule / giant",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Allow poly(ethene) is a macromolecule / giant",
-          "page": 29,
-          "y": 194.4
-        }
-      ],
+      "accept": [],
       "reject": [
-        {
-          "text": "Do not award reference to breaking covalent bonds",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Do not award reference to breaking covalent bonds",
-          "page": 29,
-          "y": 166.8
-        },
         {
           "text": "Do not award reference to breaking covalent bonds",
           "confidence": 0.95,
@@ -3939,7 +4041,52 @@
           "y": 208.2
         }
       ],
-      "requiresRuling": [],
+      "requiresRuling": [
+        {
+          "text": "Allow London / van der Waals / dispersion forces",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow London / van der Waals / dispersion forces",
+          "page": 29,
+          "y": 97.8,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Ignore monomer",
+          "confidence": 0.8,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Ignore monomer",
+          "page": 29,
+          "y": 139.2,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Allow poly(ethene) is a macromolecule / giant",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Allow poly(ethene) is a macromolecule / giant",
+          "page": 29,
+          "y": 194.4,
+          "requiresRuling": [
+            "was filed under accept by the extractor and never shown to you — classify it"
+          ]
+        },
+        {
+          "text": "Do not award reference to breaking covalent bonds",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Do not award reference to breaking covalent bonds",
+          "page": 29,
+          "y": 166.8,
+          "requiresRuling": [
+            "was filed under reject by the extractor and never shown to you — classify it"
+          ]
+        }
+      ],
       "alternativeMethods": [],
       "hasAlternativeMethods": false,
       "routes": 1,
@@ -4021,16 +4168,7 @@
         }
       ],
       "accept": [],
-      "reject": [
-        {
-          "text": "Do not award ions move",
-          "confidence": 0.95,
-          "derivedFrom": "Additional Guidance column",
-          "sourceLine": "Do not award ions move",
-          "page": 30,
-          "y": 291
-        }
-      ],
+      "reject": [],
       "guidance": [
         {
           "text": "Delocalised electrons may be labelled in the",
@@ -4073,7 +4211,19 @@
           "y": 374.1
         }
       ],
-      "requiresRuling": [],
+      "requiresRuling": [
+        {
+          "text": "Do not award ions move",
+          "confidence": 0.95,
+          "derivedFrom": "Additional Guidance column",
+          "sourceLine": "Do not award ions move",
+          "page": 30,
+          "y": 291,
+          "requiresRuling": [
+            "was filed under reject by the extractor and never shown to you — classify it"
+          ]
+        }
+      ],
       "alternativeMethods": [],
       "hasAlternativeMethods": false,
       "routes": 1,
@@ -4748,32 +4898,547 @@
       "revision": 1
     },
     "20(b)(iii)": {
-      "points": {},
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        },
+        "M2": {
+          "verdict": "accept"
+        },
+        "M3": {
+          "verdict": "accept"
+        },
+        "M4": {
+          "verdict": "accept"
+        },
+        "M5": {
+          "verdict": "accept"
+        },
+        "M6": {
+          "verdict": "accept"
+        }
+      },
       "lines": {
         "If all six operations have not been carried out ignore SF": {
           "kind": "guidance"
         },
         "Allow TE throughout": {
           "kind": "guidance"
+        },
+        "Allow 306 (kg)": {
+          "kind": "accept"
+        },
+        "Allow 307000 / 306000 g": {
+          "kind": "accept"
+        },
+        "(check mole ratio from 20bii)": {
+          "kind": "guidance"
+        },
+        "307 (kg)": {
+          "kind": "accept",
+          "editedText": "307 (Kg) "
         }
       },
-      "revision": 2
+      "approvedAt": "2026-08-18T15:03:28.860Z",
+      "approvedBy": "self",
+      "revision": 9
     },
     "20(b)(iv)": {
       "points": {
         "M1": {
           "verdict": "edit",
-          "criterion": "any correct skeletal formula of a branched C₈ isomer (1)"
+          "criterion": "any correct skeletal formula of a branched C8 isomer (1)"
         },
         "M2": {
           "verdict": "edit",
           "criterion": "a second different correct isomer (1)."
         }
       },
-      "lines": {},
-      "approvedAt": "2026-08-18T00:08:50.483Z",
+      "lines": {
+        "Ignore any names even if incorrect": {
+          "kind": "guidance"
+        },
+        "Allow 1 mark for two correct non skeletal formulae": {
+          "kind": "accept"
+        }
+      },
+      "approvedAt": "2026-08-18T14:59:51.509Z",
+      "approvedBy": "self",
+      "revision": 4
+    },
+    "23(a)(iv)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        },
+        "M2": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "Ignore size of ions": {
+          "kind": "guidance"
+        },
+        "Do not award M1 if suggestion that sodium": {
+          "kind": "reject"
+        }
+      },
+      "approvedAt": "2026-08-18T15:03:32.297Z",
+      "approvedBy": "self",
+      "revision": 6
+    },
+    "23(b)(iv)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        },
+        "M2": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "Ignore bond angles even if incorrect.": {
+          "kind": "guidance"
+        }
+      },
+      "approvedAt": "2026-08-18T15:03:33.448Z",
+      "approvedBy": "self",
+      "revision": 4
+    },
+    "21(c)(ii)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        },
+        "M2": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "Ignore correct electronic configurations": {
+          "kind": "guidance"
+        },
+        "Accept the (2)p orbital is more shielded": {
+          "kind": "accept"
+        },
+        "Ignore further away from the nucleus": {
+          "kind": "guidance"
+        },
+        "Penalise any other shell once only": {
+          "kind": "guidance"
+        }
+      },
+      "approvedAt": "2026-08-18T15:03:30.009Z",
+      "approvedBy": "self",
+      "revision": 4
+    },
+    "22(b)(ii)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        },
+        "M2": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "Allow": {
+          "kind": "accept"
+        },
+        "Penalise use of incorrect alkane once only": {
+          "kind": "guidance"
+        }
+      },
+      "approvedAt": "2026-08-18T15:03:30.864Z",
+      "approvedBy": "self",
+      "revision": 3
+    },
+    "22(d)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        },
+        "M2": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "Accept 56.25% (5.6 squares) : 37.5% (3.8 squares):": {
+          "kind": "accept"
+        },
+        "6.25% (0.6 squares) assuming 1 square is 10%": {
+          "kind": "accept"
+        }
+      },
+      "approvedAt": "2026-08-18T15:03:31.166Z",
+      "approvedBy": "self",
+      "revision": 3
+    },
+    "23(a)(ii)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        },
+        "M2": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "Allow ORA about sodium ions": {
+          "kind": "accept"
+        },
+        "Allow Mg2+ and Na+": {
+          "kind": "accept"
+        },
+        "Allow magnesium has a smaller ionic radius /": {
+          "kind": "accept"
+        },
+        "Penalise any mention of covalent bonding or": {
+          "kind": "guidance"
+        }
+      },
+      "approvedAt": "2026-08-18T15:03:31.735Z",
+      "approvedBy": "self",
+      "revision": 3
+    },
+    "20(b)(i)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "Allow a reaction in which all of the atoms in the": {
+          "kind": "accept"
+        },
+        "Ignore any reference to carbon dioxide and water": {
+          "kind": "guidance"
+        }
+      },
+      "approvedAt": "2026-08-18T15:03:28.285Z",
+      "approvedBy": "self",
+      "revision": 4
+    },
+    "20(b)(ii)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        },
+        "M2": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "Accept 13H2O(g)": {
+          "kind": "accept"
+        },
+        "Allow multiples": {
+          "kind": "accept"
+        }
+      },
+      "approvedAt": "2026-08-18T15:03:28.588Z",
+      "approvedBy": "self",
+      "revision": 5
+    },
+    "21(a)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        },
+        "M2": {
+          "verdict": "accept"
+        },
+        "M3": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "Allow Ca2+(g) - e- → Ca3+(g)": {
+          "kind": "accept"
+        },
+        "Ignore state symbol on electron": {
+          "kind": "guidance"
+        }
+      },
+      "approvedAt": "2026-08-18T15:03:29.154Z",
       "approvedBy": "self",
       "revision": 2
+    },
+    "21(c)(iii)": {
+      "points": {
+        "M2": {
+          "verdict": "accept"
+        },
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "Allow same orbital / subshell": {
+          "kind": "accept"
+        },
+        "Ignore comments about similar/same shielding": {
+          "kind": "guidance"
+        },
+        "Allow greater nuclear charge / more protons": {
+          "kind": "accept"
+        },
+        "Ignore greater atomic number": {
+          "kind": "guidance"
+        },
+        "Do not award comments about repulsion between": {
+          "kind": "reject"
+        }
+      },
+      "approvedAt": "2026-08-18T15:03:30.301Z",
+      "approvedBy": "self",
+      "revision": 2
+    },
+    "21(c)(i)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        },
+        "M2": {
+          "verdict": "accept"
+        },
+        "M3": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "Allow x axis as atomic numbers": {
+          "kind": "accept"
+        },
+        "Allow log axis on y axis": {
+          "kind": "accept"
+        },
+        "Allow ±1 small square": {
+          "kind": "accept"
+        },
+        "Ignore lines between points / line of best fit": {
+          "kind": "guidance"
+        }
+      },
+      "approvedAt": "2026-08-18T15:03:29.718Z",
+      "approvedBy": "self",
+      "revision": 3
+    },
+    "23(a)(i)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "Allow attraction between cations / positively": {
+          "kind": "accept"
+        }
+      },
+      "approvedAt": "2026-08-18T15:03:31.437Z",
+      "approvedBy": "self",
+      "revision": 3
+    },
+    "23(a)(iii)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        },
+        "M2": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "Allow eight electrons on outer shell instead of no": {
+          "kind": "accept"
+        },
+        "Allow single sodium ion": {
+          "kind": "accept"
+        },
+        "Allow transferred electrons in any pattern": {
+          "kind": "accept"
+        },
+        "Ignore omission of square brackets": {
+          "kind": "guidance"
+        },
+        "Do not award Na+2": {
+          "kind": "reject"
+        },
+        "Do not award all dots or all crosses for the oxide": {
+          "kind": "reject"
+        }
+      },
+      "approvedAt": "2026-08-18T15:03:32.026Z",
+      "approvedBy": "self",
+      "revision": 3
+    },
+    "22(b)(i)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        },
+        "M2": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "Allow": {
+          "kind": "accept"
+        },
+        "Do not award charges": {
+          "kind": "reject"
+        }
+      },
+      "approvedAt": "2026-08-18T14:56:08.959Z",
+      "approvedBy": "self",
+      "revision": 1
+    },
+    "22(b)(iii)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "Allow": {
+          "kind": "accept"
+        },
+        "Do not award if charges are shown": {
+          "kind": "reject"
+        }
+      },
+      "approvedAt": "2026-08-18T15:00:01.167Z",
+      "approvedBy": "self",
+      "revision": 2
+    },
+    "23(b)(v)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        },
+        "M2": {
+          "verdict": "accept"
+        },
+        "M3": {
+          "verdict": "accept"
+        },
+        "M4": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "Allow London / van der Waals / dispersion forces": {
+          "kind": "accept"
+        },
+        "Ignore monomer": {
+          "kind": "guidance"
+        },
+        "Allow poly(ethene) is a macromolecule / giant": {
+          "kind": "accept"
+        },
+        "Do not award reference to breaking covalent bonds": {
+          "kind": "reject"
+        }
+      },
+      "approvedAt": "2026-08-18T15:03:33.745Z",
+      "approvedBy": "self",
+      "revision": 3
+    },
+    "23(c)(ii)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        },
+        "M2": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "Do not award ions move": {
+          "kind": "reject"
+        }
+      },
+      "approvedAt": "2026-08-18T15:03:34.305Z",
+      "approvedBy": "self",
+      "revision": 3
+    },
+    "23(b)(iii)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        },
+        "M2": {
+          "verdict": "accept"
+        },
+        "M3": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {},
+      "approvedAt": "2026-08-18T15:03:33.159Z",
+      "approvedBy": "self",
+      "revision": 3
+    },
+    "23(b)(i)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {},
+      "approvedAt": "2026-08-18T15:03:32.595Z",
+      "approvedBy": "self",
+      "revision": 3
+    },
+    "23(b)(ii)": {
+      "points": {
+        "M2": {
+          "verdict": "accept"
+        },
+        "M3": {
+          "verdict": "accept"
+        },
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {},
+      "approvedAt": "2026-08-18T15:03:32.890Z",
+      "approvedBy": "self",
+      "revision": 3
+    },
+    "23(c)(i)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {},
+      "approvedAt": "2026-08-18T15:03:34.015Z",
+      "approvedBy": "self",
+      "revision": 3
+    },
+    "22(a)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {},
+      "approvedAt": "2026-08-18T15:03:30.574Z",
+      "approvedBy": "self",
+      "revision": 3
+    },
+    "21(b)(ii)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {},
+      "approvedAt": "2026-08-18T15:03:29.441Z",
+      "approvedBy": "self",
+      "revision": 3
     }
   }
 }

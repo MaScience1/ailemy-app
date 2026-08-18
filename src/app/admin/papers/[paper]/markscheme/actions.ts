@@ -8,6 +8,8 @@ import {
   applyBatch,
   bulkApprove,
   addManualBlock,
+  addManualLine,
+  convertMisfiledLines,
   type SaveResult,
   type EmitResultReport,
   type BatchConfirmation,
@@ -15,6 +17,9 @@ import {
   type BulkApproveResult,
   type ManualBlockInput,
   type ManualBlockResult,
+  type ManualLineInput,
+  type ManualLineResult,
+  type ConvertManyResult,
 } from "@/lib/exam/markscheme-review";
 import type { QuestionRulings } from "@/lib/exam/markscheme-proposals";
 
@@ -114,5 +119,41 @@ export async function addManualBlockAction(
   if (!paperSlug) return { ok: false, error: "Missing paper." };
   const result = await addManualBlock(paperSlug, input);
   if (result.ok) revalidatePath(`/admin/papers/${paperSlug}/markscheme`);
+  return result;
+}
+
+/**
+ * Append a hand-transcribed line to an existing block.
+ *
+ * ⚠ IF THE QUESTION WAS APPROVED, THE APPROVAL IS WITHDRAWN — see addManualLine.
+ * An approval must always refer to the content that was on screen when it was
+ * given, and Emit gates on exactly that field.
+ */
+export async function addManualLineAction(
+  paperSlug: string,
+  input: ManualLineInput,
+): Promise<ManualLineResult> {
+  if (!paperSlug) return { ok: false, error: "Missing paper." };
+  const result = await addManualLine(paperSlug, input);
+  if (result.ok) revalidatePath(`/admin/papers/${paperSlug}/markscheme`);
+  return result;
+}
+
+/**
+ * Restore a whole selection of misfiled lines in one save.
+ *
+ * ⚠ THE SINGLE-LINE VERSION RELOADED AFTER EVERY RESTORE, and there are 61 of
+ * these. A sweep that costs a page load per line is a sweep nobody finishes,
+ * which leaves the sentences buried — the tool protecting nothing.
+ */
+export async function convertMisfiledLinesAction(
+  paperSlug: string,
+  lines: { questionNumber: string; text: string }[],
+): Promise<ConvertManyResult> {
+  if (!paperSlug) {
+    return { ok: false, restored: [], skipped: [], approvalsWithdrawn: [], errors: ["Missing paper."] };
+  }
+  const result = await convertMisfiledLines(paperSlug, lines);
+  if (result.restored.length > 0) revalidatePath(`/admin/papers/${paperSlug}/markscheme`);
   return result;
 }

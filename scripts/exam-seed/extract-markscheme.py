@@ -243,6 +243,108 @@ def classify(text):
     return ("guidance", 0.6, [])
 
 
+
+# ============================================================================
+# THREE FIXES FOR WHAT THE GUIDANCE COLUMN LOST
+# ============================================================================
+#
+# ⚠ ALL THREE ARE THE SAME MISTAKE: THE EXTRACTOR DECIDED, AND NOBODY SAW IT.
+#
+# An audit of WCH11/01 found 61 lines the extractor read, classified, and filed
+# into accept[]/guidance[]/reject[] — buckets the review surface never shows.
+# Only requiresRuling reaches a reviewer, so those questions displayed
+# "0 to rule", were approved, and emitted. Worse, toFixture reads ONLY
+# requiresRuling: 22 of 23 bucket lines never reached the emitted fixture at
+# all. The examiner never saw them AND the seeder never got them.
+#
+# "307 (kg)" — the answer to a six-mark calculation — was in guidance[].
+
+# A bare value a student could WRITE, as opposed to a remark about one.
+# "307 (kg)" is an answer; "(11400) × 9.25 = 105 450" is worked arithmetic.
+ANSWER_VALUE = re.compile(r"^[\s(]*[\d][\d\s.,/()-]*\s*\(?\s*(kg|g|mol|dm3|cm3|%|s|K|J|kJ)?\s*\)?[\s.]*$", re.I)
+WORKED_OP = re.compile(r"[=×x÷+]|\bcalculation\b")
+
+# A sentence cut in half by row handling. 22(c) carried "TE throughout, but
+# final answer must be less than" as a flagged line and "100%" as a separate
+# guidance row; the half that reached the reviewer was the half saying nothing.
+TRAILING_CONNECTIVE = re.compile(
+    r"\b(than|at\s+least|up\s+to|and|or|of|to|for|from|with|between|if|unless|except)\s*$", re.I)
+
+
+def guidance_cell_escalations(text, kind):
+    """
+    (i) A concession or an answer value in the Additional Guidance column is
+    ESCALATED rather than auto-filed.
+
+    ⚠ THE OLD BEHAVIOUR WAS NOT A BUG IN classify(). classify() was right —
+    "Allow 306 (kg)" IS an accept. The bug was trusting that classification
+    enough to file the line where no human would ever be asked about it. The
+    extractor may propose; it may not conclude.
+    """
+    reasons = []
+    if ACCEPT_LEAD.match(text) or IGNORE_LEAD.match(text) or REJECT_LEAD.match(text):
+        reasons.append("concession in the guidance column — the examiner should rule on it")
+    if kind == "guidance" and ANSWER_VALUE.match(text) and not WORKED_OP.search(text):
+        reasons.append("looks like the ANSWER, not a remark about it")
+    if re.match(r"^\s*\(?\s*check\b", text, re.I):
+        reasons.append("a check-this-elsewhere note")
+    return reasons
+
+
+def join_truncations(entries):
+    """
+    (ii) Rejoin a sentence the row handling cut in two.
+
+    ⚠ IT JOINS AND THEN FLAGS, rather than joining silently. A join is a guess
+    about the examiner's layout, and a wrong join changes what a sentence says.
+    Every joined line carries the reason, so the reviewer checks the seam.
+    """
+    out = []
+    i = 0
+    while i < len(entries):
+        cur = entries[i]
+        nxt = entries[i + 1] if i + 1 < len(entries) else None
+        if (
+            nxt is not None
+            and TRAILING_CONNECTIVE.search(cur["text"])
+            and len(nxt["text"]) <= 40
+            and not TRAILING_CONNECTIVE.search(nxt["text"])
+        ):
+            joined = dict(cur)
+            joined["text"] = f'{cur["text"].rstrip()} {nxt["text"].lstrip()}'
+            joined["requiresRuling"] = list(cur.get("requiresRuling") or []) + [
+                "rejoined from two rows — check the join is what the examiner wrote"
+            ]
+            joined["confidence"] = min(cur.get("confidence", 0.5), 0.4)
+            out.append(joined)
+            i += 2
+            continue
+        out.append(cur)
+        i += 1
+    return out
+
+
+def image_answer_problems(points):
+    """
+    (iii) A drawing-only answer cell must SAY SO, not emit empty marking points.
+
+    ⚠ 20(b)(iv) EMITTED TWO POINTS WITH NO CRITERION. The answer is a displayed
+    formula the text layer holds nothing for, so the extractor produced marking
+    points that award marks for the empty string. toFixture refuses them —
+    "empty criterion", then "every point was rejected" — so the question was
+    approved on screen and could never reach the seeder, with nothing saying
+    why. Returns (kept_points, problems).
+    """
+    kept = [p for p in points if (p.get("criterion") or "").strip()]
+    dropped = len(points) - len(kept)
+    problems = []
+    if dropped:
+        problems.append(
+            f"image answer — {dropped} marking point(s) have no text in the PDF. "
+            "Hand-transcribe the criteria before this question can be marked."
+        )
+    return kept, problems
+
 # ============================================================================
 # EXTRACTION
 # ============================================================================
@@ -544,8 +646,11 @@ def extract_page(page, page_no):
                 entry["confidence"] = 0.2
                 notes.append(entry)
                 continue
+            # (i) A concession or an answer value never gets auto-filed.
+            escalate = escalate + guidance_cell_escalations(text, kind)
             if escalate:
                 entry["requiresRuling"] = escalate
+                entry["confidence"] = min(entry["confidence"], 0.4)
                 rulings.append(entry)
             elif kind == "accept":
                 accept.append(entry)
@@ -568,9 +673,14 @@ def extract_page(page, page_no):
                         f"route {r} claims {claimed} mark(s) against a tariff of {total['value']}"
                     )
 
+        # (ii) rejoin sentences the row handling cut in two
+        rulings = join_truncations(rulings)
+        # (iii) a drawing-only answer cell says so instead of emitting blanks
+        points, image_problems = image_answer_problems(points)
+
         out.append({
             "questionNumber": block["label"],
-            "problems": overrun,
+            "problems": overrun + image_problems,
             "page": page_no,
             "marks": total,
             "points": points,

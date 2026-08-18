@@ -45,11 +45,32 @@ const NOW = "2026-08-10T12:00:00.000Z";
 
 console.log("── THE ARTEFACT IS THE REAL EXTRACTION ──");
 {
-  t("47 question blocks", SET.questions.length === 47, SET.questions.length);
+  // ⚠ NOT "47 BLOCKS". The extractor produced 47; the founder has since added
+  // 21(b)(i) by hand through the review surface, and a count pinned to 47
+  // fails for the best possible reason. Derive both halves instead.
+  const handAdded = SET.questions.filter((q) => q.marks?.derivedFrom === "hand-transcribed");
+  t("47 blocks came from the extractor",
+    SET.questions.length - handAdded.length === 47, SET.questions.length - handAdded.length);
+  t("...plus whatever was hand-transcribed since",
+    SET.questions.length === 47 + handAdded.length,
+    { total: SET.questions.length, hand: handAdded.map((q) => q.questionNumber) });
   t("every block carries a mark total", SET.questions.every((q) => q.marks !== null));
   t("it says outright that nothing is published", /PROPOSALS/.test(SET.status), SET.status);
   const ruling = SET.questions.reduce((n, q) => n + q.requiresRuling.length, 0);
-  t("68 lines need a ruling", ruling === 68, ruling);
+  const buckets = SET.questions.reduce(
+    (n, q) => n + (q.accept?.length ?? 0) + (q.reject?.length ?? 0) + (q.guidance?.length ?? 0), 0);
+  // ⚠ NOT "68". The extractor produced 68 flagged lines and 133 filed into
+  // accept/reject/guidance — 201 in total. The founder is now RESTORING the
+  // misfiled ones, which MOVES a line out of a bucket and into the queue, so
+  // the two counts trade against each other while their sum does not change.
+  // Pinning 68 fails the moment the sweep starts, for the best possible reason.
+  //
+  // The conserved total is the real invariant, and it is exactly what
+  // "restore is a move, not a copy" guarantees on live data: if a restore ever
+  // COPIED, this number would climb.
+  t("the extractor's lines are conserved across the buckets and the queue",
+    ruling + buckets === 201, { ruling, buckets, total: ruling + buckets });
+  t("at least the original 68 are flagged, never fewer", ruling >= 68, ruling);
   t("every one of them says WHY",
     SET.questions.every((q) => q.requiresRuling.every((l) => (l.requiresRuling ?? []).length > 0)));
   t("every proposal carries page, y and the source line",
@@ -61,7 +82,9 @@ console.log("\n── DOUBT FIRST, OR THE SORT IS DECORATION ──");
 {
   const items = sortForReview(buildReview(SET, {}));
   t("nothing is approved before anyone has approved anything", countApproved(items) === 0);
-  t("the unruled count matches the artefact", countUnruled(items) === 68, countUnruled(items));
+  // ⚠ DERIVED FROM THE ARTEFACT, not from the 68 it held when this was written.
+  const flagged = SET.questions.reduce((n, q) => n + q.requiresRuling.length, 0);
+  t("the unruled count matches the artefact", countUnruled(items) === flagged, countUnruled(items));
   const withWork = items.filter((i) => i.unruled.length > 0);
   t("questions needing a decision sort above those that do not",
     items.indexOf(withWork[0]) === 0 && items.slice(0, withWork.length).every((i) => i.unruled.length > 0));
@@ -330,8 +353,16 @@ console.log("\n── THE VERIFIED BADGE IS EARNED, NOT ENUMERATED ──");
     pointsFullyRuled(x, ((SET as ProposalSet & { rulings?: RulingBook }).rulings ?? {})[x.questionNumber]));
   t("Section A earns the badge from the founder's own rulings",
     ruled.length >= 10, ruled.map((x) => x.questionNumber));
-  t("...and unruled questions do not",
-    ruled.length < SET.questions.length, { ruled: ruled.length, total: SET.questions.length });
+  // ⚠ WAS "...and unruled questions do not [earn the badge]". Every question
+  // is ruled now, so there are none left to be the negative case — the
+  // assertion fell to zero coverage rather than failing honestly. The durable
+  // property is that the badge is EARNED, so a book with no point rulings must
+  // not earn it, whatever the rest of the paper looks like.
+  const bare = SET.questions.find((q) => q.points.length > 0)!;
+  t("...and a question with no point rulings does not earn it",
+    !pointsFullyRuled(bare, { points: {}, lines: {} }));
+  t("...nor one ruled on a different point code",
+    !pointsFullyRuled(bare, { points: { ZZ9: { verdict: "accept" } }, lines: {} }));
 
   // ⚠ EMIT GATING IS UNTOUCHED. Verification is a badge, not a gate.
   const book: RulingBook = {

@@ -7,6 +7,7 @@ import { getStaffStatus } from "@/lib/admin/staff";
 import { createClient } from "@/lib/supabase/server";
 import { getPaperPublicUrl } from "@/lib/storage/papers";
 import { mergeBatchIntoBook, type Precedent } from "@/lib/exam/precedent";
+import { moveLineToRuling, auditArtefact } from "@/lib/exam/artefact-audit";
 import {
   buildReview,
   sortForReview,
@@ -19,6 +20,7 @@ import {
   isResolved,
   tariffShortfalls,
   reconcileTariffs,
+  withdrawApproval,
   type LineKind,
   type LineRuling,
   type ProposalSet,
@@ -80,6 +82,14 @@ export type ReviewData = {
   precedents: Precedent[];
   /** Per-question printed total vs extracted total. Empty means it all adds up. */
   shortfalls: TariffRow[];
+  /**
+   * Lines the extractor filed where the review surface never shows them.
+   *
+   * ⚠ THESE ARE NOT MERELY UNREVIEWED. toFixture reads only requiresRuling, so
+   * a line sitting in accept[]/guidance[] never reaches the emitted fixture
+   * either. The examiner never saw it AND the seeder never got it.
+   */
+  misfiled: { questionNumber: string; bucket: string; text: string; cls: string; why: string }[];
   roles: string[];
   canWrite: boolean;
   /** False on a deployed instance: rulings cannot be persisted there. */
@@ -265,6 +275,9 @@ export async function getMarkSchemeReview(paperSlug: string): Promise<ReviewResu
       verifiedQuestions: verifiedFor(file, file.rulings ?? {}),
       precedents: await loadPrecedents(),
       shortfalls: tariffShortfalls(file),
+      misfiled: auditArtefact(file.questions).findings.map((f) => ({
+        questionNumber: f.questionNumber, bucket: f.bucket, text: f.text, cls: f.cls, why: f.why,
+      })),
       roles: staff.roles,
       canWrite: canWriteFrom(staff.roles),
       canPersist: process.env.NODE_ENV !== "production",
@@ -705,8 +718,15 @@ export async function addManualBlock(
   }
 
   const HAND = "hand-transcribed";
+  // ⚠ THE FORM ASKS FOR THE PAGE "AS THE PAGER SHOWS IT" — 1-based — and the
+  // artefact stores extraction pages, which are 0-based. Storing the typed
+  // number raw made a block entered as page 17 render as "page 18": the card
+  // runs it through toViewerPage, which adds one to a number that had already
+  // been counted from one. Converted HERE, once, at the boundary where a human
+  // number becomes an artefact number.
+  const extractionPage = Math.max(0, input.page - 1);
   const stamp = (sourceLine: string) => ({
-    page: input.page,
+    page: extractionPage,
     y: 0,
     sourceLine,
     derivedFrom: HAND,
@@ -717,7 +737,7 @@ export async function addManualBlock(
 
   file.questions.push({
     questionNumber: qn,
-    page: input.page,
+    page: extractionPage,
     marks: { value: input.marks, ...stamp(`${qn} — transcribed by hand (${input.marks} marks)`) },
     points: points.map((p, i) => ({
       ...stamp(p.criterion),
@@ -745,4 +765,285 @@ export async function addManualBlock(
 
   const row = tariffShortfalls(file).find((r) => r.question === qn.replace(/\D.*$/, ""));
   return { ok: true, questionNumber: qn, shortfallAfter: row?.shortfall ?? 0 };
+}
+
+// ============================================================================
+// ADD A MISSING LINE TO AN EXISTING BLOCK
+// ============================================================================
+
+export type ManualLineInput = {
+  questionNumber: string;
+  /** "point" adds a white card; "line" adds a yellow one needing a ruling. */
+  as: "point" | "line";
+  text: string;
+};
+
+export type ManualLineResult =
+  | { ok: true; questionNumber: string; approvalWithdrawn: boolean; unruledNow: number }
+  | { ok: false; error: string };
+
+/**
+ * Append a hand-transcribed line to a block that already exists.
+ *
+ * ============================================================================
+ * ⚠ ADDING A LINE TO AN APPROVED QUESTION WITHDRAWS THE APPROVAL
+ * ============================================================================
+ * This is the whole safety property. 20(b)(iv) is approved and is missing two
+ * of its guidance lines; when they are added, the examiner's signature on that
+ * question predates the content it now covers. Leaving `approvedAt` in place
+ * would mean the paper claims a human approved a mark scheme they have never
+ * seen in full — and Emit, which gates on exactly that field, would ship it.
+ *
+ * So approval is REMOVED and the question returns to needs-ruling. That is a
+ * deliberate step backwards: it costs the founder one re-approval and buys the
+ * guarantee that an approval always refers to the content that was on screen
+ * when it was given.
+ *
+ * ⚠ IT NEVER TOUCHES EXISTING RULINGS. The rulings already made on other lines
+ * stay exactly as they are; only the two approval fields are dropped. A line
+ * added as a "point" also makes pointsFullyRuled false, which is correct — a
+ * new marking point has not been ruled on.
+ *
+ * ⚠ AND IT GOES THROUGH saveRulings, so the revision increments and a second
+ * tab cannot overwrite the withdrawal without noticing.
+ */
+export async function addManualLine(
+  paperSlug: string,
+  input: ManualLineInput,
+): Promise<ManualLineResult> {
+  const staff = await getStaffStatus();
+  if (!staff.ok || !canWriteFrom(staff.roles)) {
+    return { ok: false, error: "Adding a line needs a marker or admin role." };
+  }
+  if (process.env.NODE_ENV === "production") {
+    return { ok: false, error: "This writes to the repository working tree. Run the tool locally." };
+  }
+
+  const text = input.text.trim();
+  if (!text) return { ok: false, error: "The line text is required." };
+
+  const path = proposalsPath(paperSlug);
+  let file: StoredFile;
+  try {
+    file = JSON.parse(await readFile(path, "utf8")) as StoredFile;
+  } catch (e) {
+    return { ok: false, error: `Could not read the proposals file: ${e instanceof Error ? e.message : String(e)}` };
+  }
+
+  const q = file.questions.find((x) => x.questionNumber === input.questionNumber);
+  if (!q) return { ok: false, error: `${input.questionNumber} is not in this proposal set.` };
+
+  // ⚠ THE SOURCE LINE IS THE KEY RULINGS ARE STORED UNDER, so a duplicate
+  // would collide with an existing ruling and silently reassign it.
+  const existingKeys = new Set([
+    ...q.requiresRuling.map((l) => l.sourceLine),
+    ...q.points.map((p) => p.sourceLine),
+  ]);
+  if (existingKeys.has(text)) {
+    return { ok: false, error: `${input.questionNumber} already has a line with exactly that text.` };
+  }
+
+  // ⚠ IF THE LINE IS ALREADY IN THE ARTEFACT, MISFILED, MOVE IT — DO NOT ADD A
+  // SECOND COPY. 20(b)(iii)'s four "missing" lines are not missing: two sit in
+  // accept[] and two in guidance[], where the review surface never shows them.
+  // Typing them in by hand would leave the same sentence in two places, and
+  // the audit would keep reporting the buried copy forever. Answering the
+  // question directly: addManualLine DEDUPS BY CONVERTING, it does not replace
+  // and it does not duplicate.
+  const alreadyMisfiled =
+    [...(q.accept ?? []), ...(q.reject ?? []), ...(q.guidance ?? [])]
+      .some((l) => l.text.trim() === text);
+  if (alreadyMisfiled && input.as === "line") {
+    const moved = moveLineToRuling(q, text);
+    if (!moved.ok) return { ok: false, error: moved.error };
+    const bookNow = (file.rulings ?? {})[input.questionNumber];
+    const withdrew = Boolean(bookNow?.approvedAt);
+    try {
+      await writeFile(path, JSON.stringify(file, null, 2) + "\n", "utf8");
+    } catch (e) {
+      return { ok: false, error: `Could not write the proposals file: ${e instanceof Error ? e.message : String(e)}` };
+    }
+    if (withdrew && bookNow) {
+      const without = withdrawApproval(bookNow);
+      const saved = await saveRulings(
+        paperSlug, input.questionNumber,
+        { points: without.points ?? {}, lines: without.lines ?? {} },
+        bookNow.revision ?? 0,
+      );
+      if (!saved.ok) {
+        return { ok: false, error: `The line was restored but the approval could not be withdrawn: ${saved.error}` };
+      }
+    }
+    const re = JSON.parse(await readFile(path, "utf8")) as StoredFile;
+    const rq = re.questions.find((x) => x.questionNumber === input.questionNumber)!;
+    const rb = (re.rulings ?? {})[input.questionNumber];
+    return {
+      ok: true,
+      questionNumber: input.questionNumber,
+      approvalWithdrawn: withdrew,
+      unruledNow: rq.requiresRuling.filter((l) => !isResolved(rb?.lines?.[l.sourceLine])).length,
+    };
+  }
+
+  const stamp = {
+    page: q.page,
+    y: 0,
+    sourceLine: text,
+    derivedFrom: "hand-transcribed",
+    confidence: 1,
+  };
+
+  if (input.as === "point") {
+    q.points.push({
+      ...stamp,
+      pointCode: `H${q.points.filter((p) => p.pointCode.startsWith("H")).length + 1}`,
+      criterion: text,
+      marks: null,
+      route: 1,
+      methodBlock: null,
+    });
+  } else {
+    q.requiresRuling.push({
+      ...stamp,
+      text,
+      // ⚠ IT SAYS WHY IT NEEDS A RULING, like every other flagged line. A
+      // reviewer should not have to work out why this one is here.
+      requiresRuling: ["hand-transcribed from the mark scheme — classify it"],
+    });
+  }
+
+  const book = (file.rulings ?? {})[input.questionNumber];
+  const approvalWithdrawn = Boolean(book?.approvedAt);
+
+  try {
+    await writeFile(path, JSON.stringify(file, null, 2) + "\n", "utf8");
+  } catch (e) {
+    return { ok: false, error: `Could not write the proposals file: ${e instanceof Error ? e.message : String(e)}` };
+  }
+
+  if (approvalWithdrawn && book) {
+    // ⚠ THE RULINGS SURVIVE; ONLY THE SIGNATURE GOES. Written through
+    // saveRulings so the revision increments like any other change.
+    const withoutApproval = withdrawApproval(book);
+    const saved = await saveRulings(
+      paperSlug, input.questionNumber,
+      { points: withoutApproval.points ?? {}, lines: withoutApproval.lines ?? {} },
+      book.revision ?? 0,
+    );
+    if (!saved.ok) {
+      return { ok: false, error: `The line was added but the approval could not be withdrawn: ${saved.error}` };
+    }
+  }
+
+  const after = JSON.parse(await readFile(path, "utf8")) as StoredFile;
+  const q2 = after.questions.find((x) => x.questionNumber === input.questionNumber)!;
+  const b2 = (after.rulings ?? {})[input.questionNumber];
+  const unruledNow = q2.requiresRuling.filter((l) => !isResolved(b2?.lines?.[l.sourceLine])).length;
+
+  return { ok: true, questionNumber: input.questionNumber, approvalWithdrawn, unruledNow };
+}
+
+export type ConvertManyResult = {
+  ok: boolean;
+  restored: { questionNumber: string; text: string; movedFrom: string }[];
+  /** Lines that could not be moved, each with the reason. Never silent. */
+  skipped: { questionNumber: string; text: string; reason: string }[];
+  /** Questions whose approval was withdrawn as a consequence. */
+  approvalsWithdrawn: string[];
+  errors: string[];
+};
+
+/**
+ * Restore many misfiled lines in ONE pass.
+ *
+ * ============================================================================
+ * ⚠ ONE READ, ALL THE MOVES, ONE WRITE
+ * ============================================================================
+ * The single-line version reloaded the page after every restore. There are 61
+ * of these across 20 questions, and a reload per line makes the sweep
+ * unusable — which in practice means it does not get done, and 52 sentences
+ * the examiner has never read stay buried. A tool nobody can face using
+ * protects nothing.
+ *
+ * So the file is read once, every confirmed move is applied to the in-memory
+ * copy, and it is written once. A partial failure cannot leave half a move:
+ * moveLineToRuling either takes a line out of its bucket and puts it in the
+ * queue or does neither, and the write happens after all of them.
+ *
+ * ⚠ APPROVALS ARE WITHDRAWN PER QUESTION, AFTER THE WRITE, THROUGH saveRulings.
+ * Seventeen of these questions are approved over content that did not include
+ * the restored lines. Each withdrawal is a separate save because the revision
+ * check is per question — that is the same mechanism a manual withdrawal uses,
+ * and batching around it would be a second set of guarantees to keep correct.
+ *
+ * ⚠ EVERY REFUSAL IS RETURNED. A sweep that silently restored 40 of 58 and
+ * said "done" is indistinguishable from one that worked.
+ */
+export async function convertMisfiledLines(
+  paperSlug: string,
+  lines: readonly { questionNumber: string; text: string }[],
+): Promise<ConvertManyResult> {
+  const staff = await getStaffStatus();
+  if (!staff.ok || !canWriteFrom(staff.roles)) {
+    return { ok: false, restored: [], skipped: [], approvalsWithdrawn: [], errors: ["This needs a marker or admin role."] };
+  }
+  if (process.env.NODE_ENV === "production") {
+    return { ok: false, restored: [], skipped: [], approvalsWithdrawn: [], errors: ["This writes to the repository working tree. Run the tool locally."] };
+  }
+  if (lines.length === 0) {
+    return { ok: true, restored: [], skipped: [], approvalsWithdrawn: [], errors: [] };
+  }
+
+  const path = proposalsPath(paperSlug);
+  let file: StoredFile;
+  try {
+    file = JSON.parse(await readFile(path, "utf8")) as StoredFile;
+  } catch (e) {
+    return { ok: false, restored: [], skipped: [], approvalsWithdrawn: [], errors: [`Could not read the proposals file: ${e instanceof Error ? e.message : String(e)}`] };
+  }
+
+  const restored: ConvertManyResult["restored"] = [];
+  const skipped: ConvertManyResult["skipped"] = [];
+
+  for (const { questionNumber, text } of lines) {
+    const q = file.questions.find((x) => x.questionNumber === questionNumber);
+    if (!q) {
+      skipped.push({ questionNumber, text, reason: "not in this proposal set" });
+      continue;
+    }
+    const moved = moveLineToRuling(q, text);
+    if (moved.ok) restored.push({ questionNumber, text, movedFrom: moved.movedFrom });
+    else skipped.push({ questionNumber, text, reason: moved.error });
+  }
+
+  if (restored.length === 0) {
+    // ⚠ NOTHING MOVED, SO NOTHING IS WRITTEN. Rewriting the file unchanged
+    // would churn a working document for no reason.
+    return { ok: skipped.length === 0, restored, skipped, approvalsWithdrawn: [], errors: [] };
+  }
+
+  try {
+    await writeFile(path, JSON.stringify(file, null, 2) + "\n", "utf8");
+  } catch (e) {
+    return { ok: false, restored: [], skipped, approvalsWithdrawn: [], errors: [`Could not write the proposals file: ${e instanceof Error ? e.message : String(e)}`] };
+  }
+
+  const errors: string[] = [];
+  const approvalsWithdrawn: string[] = [];
+  const touched = [...new Set(restored.map((r) => r.questionNumber))];
+
+  for (const questionNumber of touched) {
+    const book = (file.rulings ?? {})[questionNumber];
+    if (!book?.approvedAt) continue;
+    const without = withdrawApproval(book);
+    const saved = await saveRulings(
+      paperSlug, questionNumber,
+      { points: without.points ?? {}, lines: without.lines ?? {} },
+      book.revision ?? 0,
+    );
+    if (saved.ok) approvalsWithdrawn.push(questionNumber);
+    else errors.push(`${questionNumber}: the line was restored but the approval could not be withdrawn — ${saved.error}`);
+  }
+
+  return { ok: errors.length === 0, restored, skipped, approvalsWithdrawn, errors };
 }

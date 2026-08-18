@@ -410,3 +410,242 @@ export function ManualBlockPanel({
     </Shell>
   );
 }
+
+// ============================================================================
+// ADD A MISSING LINE TO AN EXISTING BLOCK
+// ============================================================================
+
+export function ManualLinePanel({
+  questionNumber, isApproved, busy, onCancel, onSubmit,
+}: {
+  questionNumber: string;
+  isApproved: boolean;
+  busy: boolean;
+  onCancel: () => void;
+  onSubmit: (input: { questionNumber: string; as: "point" | "line"; text: string }) => void;
+}) {
+  const [text, setText] = useState("");
+  const [as, setAs] = useState<"point" | "line">("line");
+
+  return (
+    <Shell
+      title={`Add a missing line to ${questionNumber}`}
+      subtitle="For a line that is in the published mark scheme but never reached this block. Recorded as hand-transcribed."
+      onCancel={onCancel}
+      footer={
+        <>
+          <button
+            type="button" disabled={busy || !text.trim()}
+            onClick={() => onSubmit({ questionNumber, as, text: text.trim() })}
+            className="rounded bg-slate-900 px-3 py-1.5 text-sm text-white disabled:opacity-40"
+          >
+            {busy ? "Adding…" : "Add line"}
+          </button>
+          <button type="button" onClick={onCancel} className="rounded border border-slate-300 px-3 py-1.5 text-sm">
+            Cancel
+          </button>
+        </>
+      }
+    >
+      {isApproved && (
+        // ⚠ SAID BEFORE THEY PRESS IT, NOT AFTER. Withdrawing an approval is
+        // the right behaviour and a surprising one; a founder who discovers it
+        // afterwards learns to distrust the button.
+        <div className="mb-4 flex gap-2 rounded border border-amber-400 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>
+            <strong>{questionNumber} is approved.</strong> Adding a line withdraws that approval and
+            returns the question to needs-ruling. Your existing rulings are kept — only the signature
+            is removed, because an approval has to refer to the content that was on screen when you
+            gave it.
+          </p>
+        </div>
+      )}
+
+      <fieldset className="mb-3">
+        <legend className="font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">
+          what kind of line is it?
+        </legend>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button type="button" onClick={() => setAs("line")}
+            className={`rounded border px-2 py-1 text-sm ${as === "line" ? "border-slate-900 bg-slate-900 text-white" : "border-slate-300"}`}>
+            Needs a ruling
+          </button>
+          <button type="button" onClick={() => setAs("point")}
+            className={`rounded border px-2 py-1 text-sm ${as === "point" ? "border-slate-900 bg-slate-900 text-white" : "border-slate-300"}`}>
+            A marking point
+          </button>
+        </div>
+        <p className="mt-1.5 text-xs text-slate-600">
+          {as === "line"
+            ? "It joins the yellow cards and you classify it like any other — Accept, Reject, Guidance, and so on."
+            : "It joins the white cards as a marking point, which you then rule on."}
+        </p>
+      </fieldset>
+
+      <label className="block text-xs font-medium text-slate-700">
+        The line, exactly as the mark scheme prints it
+        <textarea value={text} onChange={(e) => setText(e.target.value)} rows={3}
+          className="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+      </label>
+      <p className="mt-2 font-mono text-[11px] text-slate-500">
+        Type it verbatim — the text is the key its ruling is stored under.
+      </p>
+    </Shell>
+  );
+}
+
+// ============================================================================
+// (d) THE MISFILED-LINE SWEEP
+// ============================================================================
+
+export type MisfiledLine = {
+  questionNumber: string; bucket: string; text: string; cls: string; why: string;
+};
+
+/**
+ * ⚠ ONE AT A TIME, DELIBERATELY, AND NOT PRE-TICKED.
+ *
+ * Every other confirmation screen here pre-ticks, because the decision was
+ * already made by a precedent the founder wrote or by byte equality. This one
+ * has made no decision at all: each line is a sentence an examiner has never
+ * read, and restoring it withdraws the approval on its question. A "restore
+ * all 52" button would withdraw seventeen approvals on one click, and the
+ * person pressing it would not have read a single line.
+ */
+export function MisfiledPanel({
+  lines, approvedQuestions, busy, restoredKeys, onCancel, onRestoreMany,
+}: {
+  lines: MisfiledLine[];
+  approvedQuestions: Set<string>;
+  busy: boolean;
+  /** Lines already restored this session — kept visible, struck through. */
+  restoredKeys: Set<string>;
+  onCancel: () => void;
+  onRestoreMany: (chosen: MisfiledLine[]) => void;
+}) {
+  const keyOf = (l: MisfiledLine) => `${l.questionNumber}::${l.text}`;
+  // ⚠ NOTHING IS PRE-TICKED HERE, UNLIKE EVERY OTHER PANEL. The others act on
+  // a decision already made — a precedent the founder wrote, byte equality.
+  // This one asks them to restore sentences no examiner has read, and each
+  // restore withdraws an approval. A pre-ticked "restore all 58" would
+  // withdraw seventeen approvals on one click by someone who read nothing.
+  const [on, setOn] = useState<Record<string, true>>({});
+
+  const restorable = lines.filter(
+    (l) => l.cls !== "empty-marking-point" && !restoredKeys.has(keyOf(l)));
+  const chosen = restorable.filter((l) => on[keyOf(l)]);
+  const byQuestion = [...new Set(lines.map((l) => l.questionNumber))];
+
+  const toggle = (k: string) =>
+    setOn((s) => {
+      if (s[k]) {
+        const { [k]: _gone, ...rest } = s;
+        return rest as Record<string, true>;
+      }
+      return { ...s, [k]: true };
+    });
+
+  const setQuestion = (qn: string, want: boolean) =>
+    setOn((s) => {
+      const next = { ...s };
+      for (const l of restorable.filter((x) => x.questionNumber === qn)) {
+        if (want) next[keyOf(l)] = true;
+        else delete next[keyOf(l)];
+      }
+      return next;
+    });
+
+  return (
+    <Shell
+      title="Lines the extractor filed away"
+      subtitle={`${lines.length} line(s) across ${byQuestion.length} question(s) were classified automatically and never shown to you. They also never reached the emitted fixture.`}
+      onCancel={onCancel}
+      footer={
+        <>
+          <button
+            type="button" disabled={busy || chosen.length === 0}
+            onClick={() => { onRestoreMany(chosen); setOn({}); }}
+            className="rounded bg-slate-900 px-3 py-1.5 text-sm text-white disabled:opacity-40"
+          >
+            {busy ? "Restoring…" : `Restore ${chosen.length} selected`}
+          </button>
+          {/* ⚠ CLOSE, NOT CANCEL. By the time this is pressed the restores are
+              already saved; calling it Cancel would suggest they were not. */}
+          <button type="button" onClick={onCancel} className="rounded border border-slate-300 px-3 py-1.5 text-sm">
+            Close
+          </button>
+          <span className="font-mono text-[11px] text-slate-500">
+            {restorable.length} left · {restoredKeys.size} restored so far
+          </span>
+        </>
+      }
+    >
+      <p className="mb-4 rounded border border-amber-400 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+        Restoring puts a line in its question&apos;s ruling queue. If that question is approved, the
+        approval is withdrawn — the signature was given over content that did not include the line.
+        Your existing rulings are kept. The panel stays open, so restore as many as you like and
+        press Close when you are done.
+      </p>
+
+      {restorable.length === 0 && (
+        <p className="mb-4 text-sm text-slate-600">
+          Nothing left to restore here. Close to reload the paper and rule the restored lines.
+        </p>
+      )}
+
+      {byQuestion.map((qn) => {
+        const mine = lines.filter((l) => l.questionNumber === qn);
+        const mineRestorable = restorable.filter((l) => l.questionNumber === qn);
+        const allOn = mineRestorable.length > 0 && mineRestorable.every((l) => on[keyOf(l)]);
+        return (
+          <section key={qn} className="mb-5">
+            <h3 className="flex flex-wrap items-center gap-2 font-mono text-[10px] uppercase tracking-[0.2em] text-slate-500">
+              {qn}
+              {approvedQuestions.has(qn) && (
+                <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-emerald-800">approved</span>
+              )}
+              {mineRestorable.length > 0 && (
+                <button
+                  type="button" onClick={() => setQuestion(qn, !allOn)}
+                  className="rounded border border-slate-300 px-1.5 py-0.5 normal-case tracking-normal text-slate-600 hover:bg-slate-100"
+                >
+                  {allOn ? "none" : `all ${mineRestorable.length}`}
+                </button>
+              )}
+            </h3>
+            <ul className="mt-2 space-y-1.5">
+              {mine.map((l) => {
+                const k = keyOf(l);
+                const done = restoredKeys.has(k);
+                const fixed = l.cls === "empty-marking-point";
+                return (
+                  <li key={k} className={`flex gap-2 rounded border p-2 ${done ? "border-emerald-300 bg-emerald-50" : "border-slate-200"}`}>
+                    {!done && !fixed && <Tick on={Boolean(on[k])} onClick={() => toggle(k)} />}
+                    {done && <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />}
+                    <div className="min-w-0">
+                      <p className={`text-sm ${done ? "text-emerald-900 line-through" : "text-slate-900"}`}>
+                        “{l.text}”
+                      </p>
+                      <p className="mt-0.5 font-mono text-[10px] text-slate-500">
+                        filed under {l.bucket} · {l.cls}
+                        {done ? " · restored" : ""}
+                      </p>
+                      {!done && <p className="mt-0.5 text-[11px] text-slate-600">{l.why}</p>}
+                      {fixed && !done && (
+                        <p className="mt-0.5 text-[11px] text-amber-800">
+                          Nothing to restore — this needs its criterion hand-transcribed from the
+                          drawing, via &ldquo;add missing line&rdquo; on the question.
+                        </p>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        );
+      })}
+    </Shell>
+  );
+}

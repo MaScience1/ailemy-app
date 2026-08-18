@@ -45,6 +45,9 @@ import {
   VerifyPanel,
   BulkApprovePanel,
   ManualBlockPanel,
+  ManualLinePanel,
+  MisfiledPanel,
+  type MisfiledLine,
   type VerifyCandidate,
 } from "@/components/admin/AcceleratorPanels";
 import {
@@ -53,6 +56,8 @@ import {
   applyBatchAction,
   bulkApproveAction,
   addManualBlockAction,
+  addManualLineAction,
+  convertMisfiledLinesAction,
 } from "@/app/admin/papers/[paper]/markscheme/actions";
 
 /**
@@ -273,6 +278,8 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
     | { kind: "verify"; eligible: VerifyCandidate[]; excluded: { questionNumber: string; pointCode: string; criterion: string; reason: string }[] }
     | { kind: "bulk"; candidates: { questionNumber: string; marks: number; points: number; lines: number }[] }
     | { kind: "block" }
+    | { kind: "line"; questionNumber: string; isApproved: boolean }
+    | { kind: "misfiled" }
     | null
   >(null);
   const [panelBusy, setPanelBusy] = useState(false);
@@ -756,6 +763,69 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
     if (res.approved.length > 0) window.location.reload();
   };
 
+  /**
+   * Lines restored during this sitting of the sweep panel.
+   *
+   * ⚠ THE PANEL STAYS OPEN AND THE PAGE DOES NOT RELOAD PER RESTORE. There are
+   * 61 of these; a reload per line is a sweep nobody finishes. The restored
+   * keys are held here so the panel can strike them through immediately, and
+   * the single reload happens when it is CLOSED — at which point the yellow
+   * cards for everything restored appear at once.
+   */
+  const [restoredKeys, setRestoredKeys] = useState<Set<string>>(new Set());
+
+  const restoreMisfiled = async (chosen: MisfiledLine[]) => {
+    if (chosen.length === 0) return;
+    setPanelBusy(true);
+    const res = await convertMisfiledLinesAction(
+      data.paperSlug,
+      chosen.map((l) => ({ questionNumber: l.questionNumber, text: l.text })),
+    );
+    setPanelBusy(false);
+
+    setRestoredKeys((prev) => {
+      const next = new Set(prev);
+      for (const r of res.restored) next.add(`${r.questionNumber}::${r.text}`);
+      return next;
+    });
+
+    // ⚠ SKIPS AND ERRORS ARE REPORTED, NOT SWALLOWED. A sweep that restored 40
+    // of 58 and said "done" is indistinguishable from one that worked.
+    const parts = [`Restored ${res.restored.length} line(s).`];
+    if (res.approvalsWithdrawn.length) {
+      parts.push(`Approval withdrawn on ${res.approvalsWithdrawn.join(", ")}.`);
+    }
+    if (res.skipped.length) {
+      parts.push(`Skipped ${res.skipped.length}: ${res.skipped.slice(0, 3).map((s2) => `${s2.questionNumber} (${s2.reason})`).join("; ")}${res.skipped.length > 3 ? " …" : ""}`);
+    }
+    if (res.errors.length) parts.push(res.errors.join(" · "));
+    setNotice({ kind: res.ok ? "ok" : "bad", text: parts.join(" ") });
+  };
+
+  /**
+   * ⚠ THE RELOAD IS DEFERRED TO CLOSING, and only when something changed. The
+   * page's own copy of the artefact is stale the moment the first line moves,
+   * so it has to be refreshed — but doing it per restore is the bug being
+   * fixed here.
+   */
+  const closeMisfiled = () => {
+    setPanel(null);
+    if (restoredKeys.size > 0) window.location.reload();
+  };
+
+  const confirmLine = async (input: Parameters<typeof addManualLineAction>[1]) => {
+    setPanelBusy(true);
+    const res = await addManualLineAction(data.paperSlug, input);
+    setPanelBusy(false);
+    if (!res.ok) { setNotice({ kind: "bad", text: res.error }); return; }
+    setPanel(null);
+    setNotice({
+      kind: "ok",
+      text: `Added to ${res.questionNumber}. ${res.approvalWithdrawn ? "Its approval was withdrawn — re-approve once you have ruled the new line. " : ""}${res.unruledNow} line(s) now need a ruling.`,
+    });
+    window.location.reload();
+  };
+
   const confirmBlock = async (input: Parameters<typeof addManualBlockAction>[1]) => {
     setPanelBusy(true);
     const res = await addManualBlockAction(data.paperSlug, input);
@@ -769,10 +839,20 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
     window.location.reload();
   };
 
-  /** Lines this tab has a decision for, saved or not. Drives the editor. */
+  /**
+   * Lines this tab has a decision for, saved or not. Drives the editor.
+   *
+   * ⚠ isResolved, NOT "is there an entry" — THE LIST AND THE CARD MUST NOT BE
+   * ABLE TO DISAGREE. This counted mere presence while the question card
+   * counted resolution, so the two derived "how much is left" by different
+   * rules from the same draft. A distractor ruling with no option letter is
+   * present-but-unresolved, and after a reload the badge and the card told the
+   * founder different numbers about the same question. They now read the one
+   * predicate the Approve gate and Emit also read.
+   */
   const localUnruled = (item: ReviewItem) => {
     const d = draftFor(item.question.questionNumber);
-    return item.question.requiresRuling.filter((l) => !d.lines[l.sourceLine]).length;
+    return item.question.requiresRuling.filter((l) => !isResolved(d.lines[l.sourceLine])).length;
   };
 
   /**
@@ -978,6 +1058,16 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
             >
               Bulk approve
             </button>
+            {data.misfiled.length > 0 && (
+              <button
+                type="button" onClick={() => setPanel({ kind: "misfiled" })}
+                className="flex items-center gap-1.5 rounded-md border border-amber-400 bg-amber-50 px-3 py-1.5 text-sm text-amber-900 hover:border-amber-600"
+                title="Lines the extractor classified automatically and never showed you"
+              >
+                <AlertTriangle className="h-3.5 w-3.5" />
+                Filed away ({data.misfiled.length})
+              </button>
+            )}
             {data.shortfalls.length > 0 && (
               <button
                 type="button" onClick={() => setPanel({ kind: "block" })}
@@ -1283,6 +1373,11 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
               suggestions={suggestions}
               onAcceptSuggestion={(l, sg) => acceptSuggestion(current.question.questionNumber, l, sg)}
               onRevokePoint={(code) => revokePoint(current.question.questionNumber, code)}
+              onAddLine={() => setPanel({
+                kind: "line",
+                questionNumber: current.question.questionNumber,
+                isApproved: Boolean(data.rulings[current.question.questionNumber]?.approvedAt),
+              })}
               onEditLine={(l, txt) => editLine(current.question.questionNumber, l, txt)}
               onRulePoint={(code, r) => rulePoint(current.question.questionNumber, code, r)}
               onSave={(approve) => save(current, approve)}
@@ -1306,6 +1401,19 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
       {panel?.kind === "bulk" && (
         <BulkApprovePanel candidates={panel.candidates} busy={panelBusy}
           onCancel={() => setPanel(null)} onConfirm={confirmBulk} />
+      )}
+      {panel?.kind === "misfiled" && (
+        <MisfiledPanel
+          lines={data.misfiled}
+          approvedQuestions={new Set(Object.entries(data.rulings).filter(([, b]) => b.approvedAt).map(([q]) => q))}
+          busy={panelBusy}
+          restoredKeys={restoredKeys}
+          onCancel={closeMisfiled}
+          onRestoreMany={restoreMisfiled} />
+      )}
+      {panel?.kind === "line" && (
+        <ManualLinePanel questionNumber={panel.questionNumber} isApproved={panel.isApproved}
+          busy={panelBusy} onCancel={() => setPanel(null)} onSubmit={confirmLine} />
       )}
       {panel?.kind === "block" && (
         <ManualBlockPanel shortfalls={data.shortfalls} busy={panelBusy}
@@ -1386,7 +1494,7 @@ function SpotCheckStrip({
 function QuestionPanel({
   item, draft, painted, panelRef, onSamePage, canWrite, saving,
   onGoTo, onRuleLine, onSetOption, onEditLine, onRulePoint, onSave,
-  suggestions, onAcceptSuggestion, onRevokePoint,
+  suggestions, onAcceptSuggestion, onRevokePoint, onAddLine,
 }: {
   item: ReviewItem;
   draft: Draft;
@@ -1401,6 +1509,7 @@ function QuestionPanel({
   suggestions: Map<string, Suggestion>;
   onAcceptSuggestion: (line: ProposedLine, s: Suggestion) => void;
   onRevokePoint: (pointCode: string) => void;
+  onAddLine: () => void;
   onEditLine: (line: ProposedLine, text: string) => void;
   onRulePoint: (code: string, ruling: PointRuling) => void;
   onSave: (approve: boolean) => void;
@@ -1439,6 +1548,18 @@ function QuestionPanel({
         >
           show on page
         </button>
+        {/* ⚠ PER QUESTION, BESIDE THE QUESTION. A paper-level control would
+            make the founder retype which block they meant, on a screen that
+            already knows. */}
+        {canWrite && (
+          <button
+            type="button"
+            onClick={onAddLine}
+            className="font-mono text-[10px] uppercase tracking-wider text-slate-500 underline"
+          >
+            add missing line
+          </button>
+        )}
       </div>
 
       {q.markingRule && (
