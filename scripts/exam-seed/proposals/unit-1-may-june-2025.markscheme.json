@@ -4079,6 +4079,74 @@
       "routes": 1,
       "marksAvailable": 2,
       "markingRule": null
+    },
+    {
+      "questionNumber": "21(b)(i)",
+      "page": 17,
+      "marks": {
+        "value": 2,
+        "page": 17,
+        "y": 0,
+        "sourceLine": "21(b)(i) — transcribed by hand (2 marks)",
+        "derivedFrom": "hand-transcribed",
+        "confidence": 1
+      },
+      "points": [
+        {
+          "page": 17,
+          "y": 0,
+          "sourceLine": "the big(gest) / large / most jump / difference / gap is between ionisation 6 and 7",
+          "derivedFrom": "hand-transcribed",
+          "confidence": 1,
+          "pointCode": "M1",
+          "criterion": "the big(gest) / large / most jump / difference / gap is between ionisation 6 and 7",
+          "marks": null,
+          "route": 1,
+          "methodBlock": null
+        },
+        {
+          "page": 17,
+          "y": 0,
+          "sourceLine": "so the element must be sulphur / S",
+          "derivedFrom": "hand-transcribed",
+          "confidence": 1,
+          "pointCode": "M2",
+          "criterion": "so the element must be sulphur / S",
+          "marks": null,
+          "route": 1,
+          "methodBlock": null
+        }
+      ],
+      "accept": [],
+      "reject": [],
+      "guidance": [
+        {
+          "page": 17,
+          "y": 0,
+          "sourceLine": "Mark independently",
+          "derivedFrom": "hand-transcribed",
+          "confidence": 1,
+          "text": "Mark independently"
+        },
+        {
+          "page": 17,
+          "y": 0,
+          "sourceLine": "Allow between 8496 and 27107 (kJ mol⁻¹)",
+          "derivedFrom": "hand-transcribed",
+          "confidence": 1,
+          "text": "Allow between 8496 and 27107 (kJ mol⁻¹)"
+        },
+        {
+          "page": 17,
+          "y": 0,
+          "sourceLine": "Ignore mention of jump between 4 and 5",
+          "derivedFrom": "hand-transcribed",
+          "confidence": 1,
+          "text": "Ignore mention of jump between 4 and 5"
+        }
+      ],
+      "requiresRuling": [],
+      "marksAvailable": 2
     }
   ],
   "questionTotals": [
@@ -4627,6 +4695,85 @@
       "approvedAt": "2026-08-17T15:58:34.882Z",
       "approvedBy": "self",
       "revision": 1
+    },
+    "22(c)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        },
+        "M2": {
+          "verdict": "accept"
+        },
+        "M3": {
+          "verdict": "accept"
+        },
+        "ALT1.M1": {
+          "verdict": "accept"
+        },
+        "ALT1.M2": {
+          "verdict": "accept"
+        },
+        "ALT1.M3": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {
+        "TE throughout, but final answer must be less than": {
+          "kind": "guidance",
+          "editedText": "TE throughout, but final answer must be less than 100%"
+        },
+        "Correct answer with some working scores 3": {
+          "kind": "guidance"
+        },
+        "Ignore SF except for 1 SF": {
+          "kind": "guidance"
+        }
+      },
+      "approvedAt": "2026-08-17T16:19:23.231Z",
+      "approvedBy": "self",
+      "revision": 2
+    },
+    "21(b)(i)": {
+      "points": {
+        "M1": {
+          "verdict": "accept"
+        },
+        "M2": {
+          "verdict": "accept"
+        }
+      },
+      "lines": {},
+      "approvedAt": "2026-08-17T23:57:14.435Z",
+      "approvedBy": "self",
+      "revision": 1
+    },
+    "20(b)(iii)": {
+      "points": {},
+      "lines": {
+        "If all six operations have not been carried out ignore SF": {
+          "kind": "guidance"
+        },
+        "Allow TE throughout": {
+          "kind": "guidance"
+        }
+      },
+      "revision": 2
+    },
+    "20(b)(iv)": {
+      "points": {
+        "M1": {
+          "verdict": "edit",
+          "criterion": "any correct skeletal formula of a branched C₈ isomer (1)"
+        },
+        "M2": {
+          "verdict": "edit",
+          "criterion": "a second different correct isomer (1)."
+        }
+      },
+      "lines": {},
+      "approvedAt": "2026-08-18T00:08:50.483Z",
+      "approvedBy": "self",
+      "revision": 2
     }
   }
 }
