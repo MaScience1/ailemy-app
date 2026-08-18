@@ -278,5 +278,61 @@ console.log("\n── THE OVERLAY IS REFUSAL-ONLY ──");
     merged.questions.every((q, i, a) => i === 0 || a[i - 1].displayOrder < q.displayOrder));
 }
 
+console.log("\n── THE REAL PAPER, WITH THE FOUNDER'S OVERLAY ──");
+{
+  const overlay = JSON.parse(readFileSync(
+    "scripts/exam-seed/answer-types.unit-1-may-june-2025.json", "utf8")) as {
+      answerTypes: Record<string, string> };
+  const r = deriveWithOverlay(PAPER, META, overlay);
+
+  // ⚠ THE WHOLE PAPER, OR THE ADAPTER HAS NOT FINISHED ITS JOB.
+  t("every question derives or is supplied", r.questions.length === PAPER.length,
+    { got: r.questions.length, want: PAPER.length });
+  t("nothing is refused", r.refusals.length === 0, r.refusals);
+
+  // ⚠ THE TOTAL IS RECOMPUTED, NOT ASSERTED AT 80. If a question were dropped
+  // this number falls and the seeder's expect-check catches the disagreement
+  // with the cover page — but the suite should catch it first.
+  const total = r.questions.reduce((n, q) => n + q.marks, 0);
+  t("the marks sum to the paper's printed total", total === META.totalMarks, total);
+  t("...which equals the sum of the emitted questions",
+    total === PAPER.reduce((n, q) => n + q.marks, 0));
+
+  const top = (x: string) => /^\s*(\d+)/.exec(x)?.[1] ?? x;
+  const by: Record<string, number> = {};
+  for (const q of r.questions) by[top(q.questionNumber)] = (by[top(q.questionNumber)] ?? 0) + q.marks;
+  for (const [qn, want] of [["20", 15], ["21", 13], ["22", 11], ["23", 21]] as const) {
+    t(`Q${qn} totals ${want}`, by[qn] === want, by[qn]);
+  }
+
+  // ⚠ EVERY OVERLAY ENTRY MUST HAVE LANDED. An overlay whose entries were all
+  // quietly ignored would leave this suite green while seeding nothing.
+  const supplied = Object.entries(r.sources).filter(([, v]) => v === "founder-supplied");
+  t("every overlay entry was applied",
+    supplied.length === Object.keys(overlay.answerTypes).length,
+    { applied: supplied.length, inFile: Object.keys(overlay.answerTypes).length });
+  t("...and each carries the value the founder wrote",
+    supplied.every(([qn]) =>
+      r.questions.find((q) => q.questionNumber === qn)!.answerType === overlay.answerTypes[qn]));
+  t("the rest are derived", Object.values(r.sources).filter((v) => v === "derived").length
+    === PAPER.length - Object.keys(overlay.answerTypes).length);
+
+  // ⚠ THE OVERLAY MUST NOT HAVE TOUCHED A DERIVED QUESTION.
+  t("no MCQ was overlaid",
+    !Object.keys(overlay.answerTypes).some((qn) =>
+      r.questions.find((q) => q.questionNumber === qn)?.answerType === "mcq" &&
+      r.sources[qn] === "derived"));
+  t("all 20 MCQs are still derived, with their letters",
+    r.questions.filter((q) => q.answerType === "mcq")
+      .every((q) => r.sources[q.questionNumber] === "derived" && /^[A-D]$/.test(q.expectedAnswer!.value)));
+
+  t("displayOrder is unique across all 48",
+    new Set(r.questions.map((q) => q.displayOrder)).size === PAPER.length);
+  t("...and ascends with canonical order",
+    r.questions.every((q, i, a) => i === 0 || a[i - 1].displayOrder < q.displayOrder));
+  t("every answerType is one the schema allows",
+    r.questions.every((q) => SCHEMA_ANSWER_TYPES.includes(q.answerType)));
+}
+
 console.log(`\n${fail === 0 ? "✓ ALL" : "✗"} ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
