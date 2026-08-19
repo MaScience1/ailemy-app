@@ -51,6 +51,45 @@ export default async function MarkSchemePage({
 
   if (!result.ok) {
     if (result.reason === "not_found") notFound();
+
+    // ⚠ AMBIGUITY IS ANSWERED WITH THE CANDIDATES, NOT A CHOICE.
+    //
+    // The loader used to pick one when a slug matched several papers. It
+    // offered a Chemistry reviewer Emit on WPH11/01 under the paper name they
+    // expected, and emitting there would have written a Chemistry mark scheme
+    // into a Physics paper's fixture. There is no safe way to choose between
+    // two real papers, so the refusal hands over the ids as links — the id in
+    // the URL is the thing that cannot be ambiguous.
+    if (result.reason === "ambiguous") {
+      return (
+        <Shell slug={paperSlug}>
+          <div className="rounded-lg border border-amber-400 bg-amber-50 p-6">
+            <p className="font-medium text-amber-950">
+              {result.candidates.length} papers share the slug{" "}
+              <span className="font-mono">{result.slug}</span>
+            </p>
+            <p className="mt-2 text-sm text-amber-900">
+              A slug is unique only within a course, so this one does not identify a paper.
+              Nothing is being shown rather than picking one — reviewing the wrong subject&apos;s
+              mark scheme is worse than an extra click. Open the one you meant:
+            </p>
+            <ul className="mt-3 space-y-1.5">
+              {result.candidates.map((c) => (
+                <li key={c.id}>
+                  <Link
+                    href={`/admin/papers/${c.id}/markscheme`}
+                    className="font-mono text-sm text-amber-950 underline"
+                  >
+                    {c.paperCode ?? "(no paper code)"} · {c.paperName}
+                  </Link>
+                  <span className="ml-2 font-mono text-[11px] text-amber-800">{c.id}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </Shell>
+      );
+    }
     const copy = {
       not_staff: {
         title: "Not authorised",

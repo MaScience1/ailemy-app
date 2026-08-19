@@ -5109,15 +5109,16 @@
       },
       "lines": {
         "Allow a reaction in which all of the atoms in the": {
-          "kind": "accept"
+          "kind": "accept",
+          "editedText": "Allow a reaction in which all of the atoms in the fuel are fully oxidised"
         },
         "Ignore any reference to carbon dioxide and water": {
           "kind": "guidance"
         }
       },
-      "approvedAt": "2026-08-18T15:03:28.285Z",
+      "approvedAt": "2026-08-19T03:58:09.789Z",
       "approvedBy": "self",
-      "revision": 4
+      "revision": 7
     },
     "20(b)(ii)": {
       "points": {
@@ -5187,12 +5188,13 @@
           "kind": "guidance"
         },
         "Do not award comments about repulsion between": {
-          "kind": "reject"
+          "kind": "reject",
+          "editedText": "Do not award comments about repulsion between paired electrons"
         }
       },
-      "approvedAt": "2026-08-18T15:03:30.301Z",
+      "approvedAt": "2026-08-19T03:58:23.531Z",
       "approvedBy": "self",
-      "revision": 2
+      "revision": 5
     },
     "21(c)(i)": {
       "points": {

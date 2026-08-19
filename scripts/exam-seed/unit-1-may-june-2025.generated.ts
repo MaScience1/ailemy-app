@@ -1,4 +1,4 @@
-// mark_scheme_items for unit-1-may-june-2025, reviewed and approved 2026-08-19T03:33:40.762Z
+// mark_scheme_items for unit-1-may-june-2025, reviewed and approved 2026-08-19T04:01:56.815Z
 //
 // Emitted by the mark-scheme review surface from extractor proposals. Every
 // question below carries approved_at AND approved_by; anything unruled or
@@ -11,7 +11,7 @@
 import type { FixtureQuestion } from "../../src/lib/exam/markscheme-proposals.ts";
 
 export const UNIT_1_MAY_JUNE_2025_PAPER = {
-  paperCode: "WCH11/01",
+  paperCode: "WPH11/01",
   session: "May-June",
   year: 2025,
   totalMarks: 80,
@@ -368,7 +368,7 @@ export const UNIT_1_MAY_JUNE_2025: FixtureQuestion[] = [
       {
         pointCode: "M1",
         criterion: "(burned / reacted) in sufficient / excess oxygen",
-        accept: ["Allow a reaction in which all of the atoms in the"],
+        accept: ["Allow a reaction in which all of the atoms in the fuel are fully oxidised"],
         guidance: "Ignore any reference to carbon dioxide and water",
       },
     ],
@@ -514,7 +514,7 @@ export const UNIT_1_MAY_JUNE_2025: FixtureQuestion[] = [
         pointCode: "M2",
         criterion: "but the nucleus of the nitrogen atom contains one more proton than carbon",
         accept: ["Allow same orbital / subshell", "Allow greater nuclear charge / more protons"],
-        reject: ["Do not award comments about repulsion between"],
+        reject: ["Do not award comments about repulsion between paired electrons"],
         guidance: "Ignore comments about similar/same shielding\nIgnore greater atomic number",
       },
     ],
