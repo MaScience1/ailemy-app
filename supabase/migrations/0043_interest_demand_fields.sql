@@ -1,8 +1,37 @@
 -- ============================================================================
 -- 0043_PROPOSED_interest_demand_fields.sql
 -- ----------------------------------------------------------------------------
--- ⚠ PROPOSED — NOT APPLIED. Rename to 0043_interest_demand_fields.sql only once
--- applied, and record the verification result in this header at the same time.
+-- ⚠ APPLIED TO PRODUCTION 2026-08-19 by the founder in the SQL Editor.
+-- Renamed from 0043_PROPOSED_ once verified, per the standing rule that a file
+-- must not claim to be unapplied once it is live.
+--
+-- VERIFICATION RESULT — 7 of the 7 runnable checks PASSED against production:
+--
+--   (a) year_group, exam_year and student_notes are all selectable ✓
+--   (b) anon INSERT carrying all three succeeds with NO new grant ✓
+--       …and all three round-trip: {"year_group":"AS","exam_year":2027,
+--       "student_notes":"probe note"} ✓
+--   (c) anon SELECT still refused, 42501 permission denied ✓
+--       ⚠ CHECKED AS AN ERROR, NOT AS A ZERO. A 0-row answer here would mean a
+--       SELECT grant had appeared and RLS merely filtered — a weaker posture
+--       wearing a passing badge. The error is the proof.
+--   (d) exam_year 202 refused BY interest_registrations_exam_year_plausible,
+--       23514 naming the constraint ✓
+--   (e) …and 2027 accepted, so (d) is not a column that refuses everything ✓
+--   (f) both probe rows deleted by their captured ids, count=1 each; table
+--       returned to 0 rows ✓
+--
+--   ⚠ (g) THE THREE PRIVILEGES WAS NOT RUN AND IS NOT CLAIMED.
+--   information_schema.role_table_grants is not exposed through PostgREST and
+--   TRUNCATE/TRIGGER/REFERENCES cannot be exercised over REST, so there is no
+--   behavioural substitute. Block (g) still needs the SQL Editor.
+--
+--   ⚠ (a) IS BEHAVIOURAL, NOT THE CATALOG. data_type and is_nullable could not
+--   be READ for the same reason; the columns were written and read back
+--   instead. Weaker than the query block (a) specifies.
+--
+-- The public form now renders all three: /tuition/interest carries 18 named
+-- inputs, up from 15, gated on the live capability probe rather than on a flag.
 --
 -- ⚠ ADDITIVE ONLY, THREE NULLABLE COLUMNS. interest_registrations already
 -- exists (0040) and already carries subject, qualification, exam_board,
