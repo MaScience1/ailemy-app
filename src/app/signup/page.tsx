@@ -63,7 +63,8 @@ export default function SignupPage() {
         Join Ailemy.
       </h1>
       <p className="mt-3 text-sm text-ink/60">
-        Built for IB, IGCSE and A-Level students.
+        {/* ⚠ §57 — was "IB, IGCSE and A-Level". */}
+        Built for Pearson Edexcel GCSE, International GCSE and IAL students.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-10 space-y-5" noValidate>

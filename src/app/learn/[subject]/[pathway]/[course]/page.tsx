@@ -166,7 +166,10 @@ function LessonsCard({
       description={
         <Editable
           id="course.card.lessons.description"
-          default="Spec-by-spec teaching with examiner-led video walkthroughs."
+          // ⚠ §54 — was "examiner-led". Nobody delivering these is an
+          // official examiner, and "led" claims exactly that. "examiner-style"
+          // describes the walkthrough without claiming a professional status.
+          default="Spec-by-spec teaching with examiner-style video walkthroughs."
         />
       }
       meta={meta}

@@ -24,6 +24,10 @@ export function LoginForm() {
   // navigate a freshly-authenticated user off-site. The callback route already
   // guarded against that; this path did not.
   const next = postSignInTarget(searchParams.get("next"));
+  // Set by /reset-password after a successful change. The reset flow signs the
+  // user out deliberately, so they arrive here and need to know the change
+  // worked — otherwise the sign-out reads as the reset having failed.
+  const justReset = searchParams.get("reset") === "1";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -64,6 +68,15 @@ export function LoginForm() {
       <p className="mt-3 text-sm text-ink/60">
         Continue your science learning pathway.
       </p>
+
+      {justReset && (
+        <p
+          role="status"
+          className="mt-6 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-900"
+        >
+          Your password has been changed. Sign in with it now.
+        </p>
+      )}
 
       <form onSubmit={handleSubmit} className="mt-10 space-y-5" noValidate>
         {error && (
@@ -116,12 +129,16 @@ export function LoginForm() {
               Create an account
             </span>
           </Link>
-          <a
-            href="#"
+          {/* ⚠ §56 — THIS WAS href="#". The link was here the whole time and
+              went nowhere: the worst version of a missing feature, because it
+              tells a locked-out user that recovery exists and then does
+              nothing. It now points at the real flow. */}
+          <Link
+            href="/forgot-password"
             className="text-xs text-ink/50 transition-colors hover:text-ink/70"
           >
             Forgot password?
-          </a>
+          </Link>
         </div>
       </form>
     </div>

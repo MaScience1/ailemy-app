@@ -253,7 +253,11 @@ export const SUBJECTS: Subject[] = [
     name: "Biology",
     status: "interest",
     qualifications: ["GCSE", "International GCSE", "IAL AS", "IAL A2"],
-    blurb: "Cohorts open on demand. Register for priority access as resources and teaching expand.",
+    // ⚠ §50 — this said only "Cohorts open on demand", which understated what
+    // Ailemy already has. Biology carries 90 live past papers today (more than
+    // Chemistry's 71). Telling a Biology student there is nothing here yet is
+    // as inaccurate as promising lessons that do not exist.
+    blurb: "Past papers available now. Structured lessons and tuition expanding — register interest for priority access.",
     exploreHref: null,
   },
   {
@@ -261,7 +265,8 @@ export const SUBJECTS: Subject[] = [
     name: "Physics",
     status: "interest",
     qualifications: ["GCSE", "International GCSE", "IAL AS", "IAL A2"],
-    blurb: "Cohorts open on demand. Register for priority access as resources and teaching expand.",
+    // ⚠ §50 — 72 live Physics past papers exist today. Same correction.
+    blurb: "Past papers available now. Structured lessons and tuition expanding — register interest for priority access.",
     exploreHref: null,
   },
 ];

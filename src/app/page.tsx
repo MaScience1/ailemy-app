@@ -250,13 +250,22 @@ export default async function Home() {
       {/* ── 12. teacher credibility ───────────────────────────────────── */}
       {/* ⚠ NO TESTIMONIALS, RATINGS OR STUDENT COUNTS. None exist in the data,
           and an empty section is better than invented credibility (§17). The
-          claim below is about mark-scheme expertise, NOT examiner employment. */}
+          claim below is about mark-scheme expertise, NOT examiner employment.
+
+          ⚠ §53 — THIS USED TO CLAIM "every marking point on EVERY PAPER read,
+          ruled on and recorded". That was false. One paper has been ruled end
+          to end (WCH11/01 May–June 2025, 48/48); every other paper in the
+          archive has no mark-scheme items at all. The sentence described an
+          ambition as a finished state, on the page that asks people to trust
+          the marking. It now describes the METHOD, which is true of every
+          paper the moment it is ruled and stays true as the archive grows. */}
       <Section id="teachers" title="Built by teachers who understand the exam.">
         <div className="rounded-lg border border-ink/10 bg-snow p-6 sm:p-8">
           <p className="max-w-3xl text-sm leading-relaxed text-ink/75">
-            Ailemy's Chemistry teaching and mark schemes are prepared by a specialist chemistry
-            teacher working directly from the published Edexcel mark schemes — every marking
-            point on every paper read, ruled on and recorded before a single question is marked.
+            Ailemy's marking logic is built directly from published mark schemes, with marking
+            rules human-reviewed before they are used for automated marking. Chemistry teaching
+            and mark-scheme rulings are prepared by a specialist chemistry teacher working from
+            the published Edexcel mark schemes.
           </p>
         </div>
       </Section>

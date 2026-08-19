@@ -50,7 +50,7 @@ export async function generateMetadata({
   }
   return {
     title: `Exam Papers · ${course.name} · Ailemy`,
-    description: `Past papers, mark schemes and examiner walkthroughs for ${course.name}.`,
+    description: `Past papers, mark schemes and examiner-style walkthroughs for ${course.name}.`,
   };
 }
 

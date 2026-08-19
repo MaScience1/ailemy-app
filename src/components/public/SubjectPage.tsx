@@ -55,6 +55,43 @@ export async function SubjectPage({ slug }: { slug: string }) {
           {subject.name}
         </h1>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink/70">{subject.blurb}</p>
+
+        {/* ⚠ §49 — THE CANONICAL HANDOFF, MADE EXPLICIT.
+            /chemistry is the public subject hub; /learn/chemistry is the
+            structured course catalogue. That split already existed and was
+            only reachable through a "Lessons" card further down the page, so
+            the primary journey — arrive at the subject, start learning — had
+            no primary CTA. Past papers sit beside it because every subject has
+            them today, including the two with no lessons yet.
+
+            ⚠ THE LEARN CTA IS GATED ON exploreHref. Biology and Physics have
+            no course catalogue, so they get Past papers and Register interest
+            and NO "Start learning" — a button into an empty catalogue is the
+            dead CTA §32 forbids. */}
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          {subject.exploreHref && (
+            <Link
+              href={subject.exploreHref}
+              className="rounded-full bg-ink px-6 py-3 text-sm font-medium text-parchment transition-colors hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            >
+              Start learning →
+            </Link>
+          )}
+          <Link
+            href="/past-papers"
+            className="rounded-full border border-ink/20 px-6 py-3 text-sm font-medium transition-colors hover:border-ink/40"
+          >
+            Past papers
+          </Link>
+          {!subject.exploreHref && (
+            <Link
+              href={`/tuition/interest?subject=${subject.slug}`}
+              className="rounded-full border border-ink/20 px-6 py-3 text-sm font-medium transition-colors hover:border-ink/40"
+            >
+              Register interest
+            </Link>
+          )}
+        </div>
       </header>
 
       {/* ── qualifications ─────────────────────────────────────────────── */}

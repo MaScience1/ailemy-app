@@ -19,7 +19,8 @@ import { Editable } from "@/components/admin-inline/Editable";
 export const metadata: Metadata = {
   title: "Choose your subject · Ailemy",
   description:
-    "Spec-led science learning for IB, IGCSE and A-Level students. Start with Chemistry.",
+    // ⚠ §57 — was "IB, IGCSE and A-Level", the old positioning.
+    "Spec-led science learning for Pearson Edexcel GCSE, International GCSE and IAL students. Start with Chemistry.",
 };
 
 export default async function LearnPage() {
@@ -40,7 +41,7 @@ export default async function LearnPage() {
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink/70">
             <Editable
               id="learn.hero.subtitle"
-              default="Spec-led courses for IB, IGCSE and A-Level students. We’re starting with Chemistry — Physics and Biology will follow."
+              default="Spec-led courses for Pearson Edexcel GCSE, International GCSE and IAL students. We’re starting with Chemistry — Physics and Biology will follow."
             />
           </p>
         </header>

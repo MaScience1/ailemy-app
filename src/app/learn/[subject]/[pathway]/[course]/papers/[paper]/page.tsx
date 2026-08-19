@@ -20,6 +20,7 @@ import {
   getSubjectBySlug,
 } from "@/lib/catalogue/queries";
 import { getSubjectThemeStyle } from "@/lib/catalogue/subject-theme";
+import { getPaperExamMeta } from "@/lib/exam/paper-exam-meta";
 import { getPaperPublicUrl } from "@/lib/storage/papers";
 
 type Params = Promise<{
@@ -55,7 +56,11 @@ export async function generateMetadata({
 
   return {
     title: `${paper.paper_name} · ${course.name} · Ailemy`,
-    description: `${paper.paper_code ?? "Past paper"} — ${paper.session} ${paper.year}. Download the paper, mark scheme, and try the question interactively.`,
+    // ⚠ §58 — this promised "try the question interactively" on every paper.
+    // generateMetadata has no ingestion state to hand and fetching it here
+    // would be a second round trip per request for a search-result snippet, so
+    // the description now names only what every paper genuinely offers.
+    description: `${paper.paper_code ?? "Past paper"} — ${paper.session} ${paper.year}. Download the question paper, mark scheme and examiner report.`,
   };
 }
 
@@ -94,12 +99,31 @@ export default async function PaperDetailPage({
   const courseHref = `/learn/${subjectSlug}/${pathwaySlug}/${courseSlug}`;
   const examQuestionsHref = `${courseHref}/exam-questions`;
   /**
-   * "Try interactively" now opens the mode-selection screen rather than
-   * dropping straight into the whiteboard. The whiteboard itself is unchanged
-   * and still lives at .../practice — the mode screen's "Teach this paper"
-   * routes there, so the old flow is one extra click away, never gone.
+   * "Try interactively" opens the mode-selection screen rather than dropping
+   * straight into the whiteboard. The whiteboard itself is unchanged and still
+   * lives at .../practice — the mode screen's "Teach this paper" routes there,
+   * so the old flow is one extra click away, never gone.
    */
   const interactiveHref = `${courseHref}/papers/${paperSlug}/interactive`;
+
+  /**
+   * ⚠ §58 — THE INTERACTIVE CARD IS EARNED, NOT ASSUMED.
+   *
+   * This card used to render on EVERY paper. It does not depend on the PDFs;
+   * it depends on question ingestion, and exactly one paper has been ingested
+   * (WCH11/01 May–June 2025). On every other paper in the archive it was a
+   * promise with nothing behind it — the reader clicks "Try interactively" and
+   * arrives at a mode screen for a paper that has no questions.
+   *
+   * hasQuestions is real ingestion state: at least one paper_questions row for
+   * THIS paper id. When it is false the three download cards stand on their own,
+   * which is the honest offer — question paper, mark scheme, examiner report.
+   *
+   * ⚠ IT FAILS CLOSED. getPaperExamMeta never throws; a failed count returns
+   * hasQuestions:false, so an outage hides a working card rather than
+   * advertising a broken one.
+   */
+  const examMeta = await getPaperExamMeta(paper.id, paper.total_marks ?? null);
 
   return (
     <div style={getSubjectThemeStyle(subject)}>
@@ -172,6 +196,7 @@ export default async function PaperDetailPage({
                 icon={<ClipboardCheck className="h-5 w-5" aria-hidden="true" />}
               />
 
+              {examMeta.hasQuestions && (
               <Link
                 href={interactiveHref}
                 className="group/practice flex items-center justify-between gap-4 rounded-lg border border-ink/10 bg-signal p-5 text-ink transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-md"
@@ -193,6 +218,7 @@ export default async function PaperDetailPage({
                   aria-hidden="true"
                 />
               </Link>
+              )}
 
               <Link
                 href={examQuestionsHref}
