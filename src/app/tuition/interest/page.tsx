@@ -11,14 +11,15 @@ import { InterestForm } from "./InterestForm";
 /**
  * Register interest (§11).
  *
- * ⚠ THE FORM NOW WRITES A ROW. It used to open the visitor's email client,
- * because 0040 was unapplied and a submit button that silently lost a parent's
- * details would have been the worst possible dead CTA. The table exists in the
- * migration folder now and the action inserts into it under anon RLS.
+ * ⚠ THE FORM WRITES A ROW. It used to open the visitor's email client, because
+ * 0040 had not been applied and a submit button that silently lost a parent's
+ * details would have been the worst possible dead CTA. 0040 is live now and the
+ * action inserts under anon RLS — verified end to end against production.
  *
  * ⚠ THE EMAIL ROUTE IS STILL HERE, DELIBERATELY. It is the recovery path when
- * the insert fails — including the case where 0040 has not been run yet, which
- * the action detects and says so. A form is not allowed to be the only way in.
+ * the insert fails — an outage, a revoked grant, anything the visitor cannot
+ * fix by pressing the button again. A form is not allowed to be the only way
+ * in when what it loses is a parent's contact details.
  */
 export const metadata: Metadata = {
   title: "Register interest — Ailemy",

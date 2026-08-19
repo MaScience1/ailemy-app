@@ -1,10 +1,51 @@
 -- ============================================================================
--- 0039_PROPOSED_announcement_scheduling.sql
+-- 0039_announcement_scheduling.sql
 -- ----------------------------------------------------------------------------
--- ⚠ PROPOSED — NOT APPLIED. Named _PROPOSED_ so a rebuild replaying this folder
--- does not manufacture drift between production and a fresh database. Rename to
--- 0039_announcement_scheduling.sql only once it has been applied, and record the
--- verification result in this header at the same time.
+-- ⚠ APPLIED TO PRODUCTION 2026-08-19 by the founder in the SQL Editor, no
+-- errors. Renamed from 0039_PROPOSED_ once verified, per the standing rule that
+-- a file must not claim to be unapplied once it is live.
+--
+-- ⚠ WHAT THE EVIDENCE IS. scripts/db-checks/public-surface-sabotage.ts, run
+-- against production immediately after applying: ALL PASS, 26 of 26. Every
+-- negative there is paired with its positive half — a row is proved to EXIST by
+-- service_role before anon is asked to not see it, and every gate is then
+-- flipped and anon proved to see exactly 1. "anon saw nothing" and "the table
+-- is empty" are otherwise the same observation. Rows it created were deleted by
+-- the id captured at creation, count=1 each.
+--
+-- VERIFICATION RESULT, block by block:
+--
+--   (b) anon sees NOTHING while a row is disabled          ✓ 0 rows
+--   (c) anon DOES see it once enabled and in-window        ✓ 1 row
+--   (d) anon sees NOTHING once the window has closed       ✓ 0 rows
+--       …and NOTHING before the window opens               ✓ 0 rows  (extra)
+--   (e) anon cannot write: UPDATE / INSERT / DELETE        ✓ 42501 each,
+--       and the title was proved unchanged afterwards, so the refusal is a
+--       refusal and not a silent no-op
+--   (f) cleanup by captured id                             ✓ count=1
+--   (g) TRUNCATE / TRIGGER / REFERENCES on announcements   ✓ zero rows
+--       — run by the founder in the SQL Editor 2026-08-19
+--
+--   announcements_window_ordered was additionally sabotaged: ends_at before
+--   starts_at is refused with 23514 naming the constraint.
+--
+--   Live surface check: the site-wide bar was ABSENT while production's real
+--   announcement sat disabled, APPEARED with title, body and CTA once an
+--   enabled in-window probe existed, and vanished when the probe was deleted.
+--
+-- ⚠ WHAT WAS **NOT** RUN, AND IS NOT CLAIMED
+-- ----------------------------------------------------------------------------
+--   (a) THE FIVE COLUMNS WERE NOT ENUMERATED. information_schema is not exposed
+--   through PostgREST, so column_name/data_type could not be READ. All five —
+--   cta_label, starts_at, ends_at, priority, enabled — were WRITTEN and READ
+--   BACK instead. That is behavioural evidence, and it is weaker than the
+--   catalog query block (a) actually specifies.
+--
+--   ⚠ A RULE THIS MIGRATION DOES NOT ENFORCE. announcements_read_public_bar
+--   gates on `enabled` and the window and NEVER looks at `status`, so an
+--   ENABLED DRAFT is publicly visible. Nothing in SQL prevents that today; the
+--   admin form and the on/off toggle both refuse it in the application. A
+--   CHECK (NOT enabled OR status = 'live') belongs in a future migration.
 --
 -- ⚠ ADDITIVE ONLY. announcements already exists (0022) and already carries
 -- title, body, category, link_url, status, published_at. This does NOT create a

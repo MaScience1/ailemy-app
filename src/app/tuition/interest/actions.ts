@@ -105,8 +105,10 @@ export async function registerInterest(
     // away — the single worst outcome this page can produce.
     console.error("[interest] insert failed", { code: error.code, message: error.message });
 
-    // PGRST205 / 42P01: 0040 is not applied. Nothing the visitor can fix by
-    // retrying, so the message sends them somewhere that works today.
+    // PGRST205 / 42P01 would mean the table is unreachable — 0040 is applied,
+    // so in practice this is an outage or a revoked grant. Either way it is
+    // nothing the visitor can fix by retrying, so the message sends them
+    // somewhere that works instead of inviting a pointless second attempt.
     const missing = error.code === "PGRST205" || error.code === "42P01";
     return fail(
       missing

@@ -1,7 +1,46 @@
 -- ============================================================================
--- 0041_PROPOSED_cohort_public_catalogue.sql
+-- 0041_cohort_public_catalogue.sql
 -- ----------------------------------------------------------------------------
--- ⚠ PROPOSED — NOT APPLIED. See 0039's header.
+-- ⚠ APPLIED TO PRODUCTION 2026-08-19 by the founder in the SQL Editor, no
+-- errors — INCLUDING THE AMENDMENT BELOW, which was not in the version first
+-- approved. Renamed from 0041_PROPOSED_ once verified.
+--
+-- ⚠ WHAT THE EVIDENCE IS. scripts/db-checks/public-surface-sabotage.ts, run
+-- against production immediately after applying: ALL PASS, 26 of 26. Every
+-- negative there is paired with its positive half — a row is proved to EXIST by
+-- service_role before anon is asked to not see it, and every gate is then
+-- flipped and anon proved to see exactly 1. "anon saw nothing" and "the table
+-- is empty" are otherwise the same observation. Rows it created were deleted by
+-- the id captured at creation, count=1 each.
+--
+-- VERIFICATION RESULT, block by block:
+--
+--   (b) status='enrolling' with no enrolment_url REFUSED   ✓ 23514, and the
+--       message names cohorts_enrolling_needs_url. The check asserts the
+--       CONSTRAINT, not merely that an error occurred: on the pre-migration
+--       run it went green on a PGRST204 and proved nothing at all.
+--   (c) the same row as 'interest' is accepted             ✓
+--   (d) anon sees NOTHING while is_public is false         ✓ 0 rows
+--   (d2) anon sees NO row that is not is_public            ✓ zero leaked
+--   (e) anon DOES see it once is_public is true            ✓ 1 row
+--   (f) anon cannot write: UPDATE / INSERT / DELETE        ✓ 42501 each, and
+--       price_pence was proved unchanged afterwards
+--   (g) cleanup by captured id                             ✓ count=1
+--   (h) TRUNCATE / TRIGGER / REFERENCES on cohorts         ✓ zero rows
+--       — run by the founder in the SQL Editor 2026-08-19
+--
+--   ⚠ THE AMENDMENT IS PROVEN ON REAL DATA, NOT ONLY ON A PROBE. Production
+--   holds the 0009 intensive with is_active = true and is_public = false, and
+--   anon reads [] — empty. Before the amendment that row would have been
+--   publicly readable the moment this file's GRANT ran, because 0009's
+--   unscoped "cohorts readable" policy admits any is_active row to every role.
+--
+-- ⚠ WHAT WAS **NOT** RUN, AND IS NOT CLAIMED
+-- ----------------------------------------------------------------------------
+--   (a) THE COLUMNS WERE NOT ENUMERATED. information_schema is not exposed
+--   through PostgREST. subject, qualification, status, enrolment_url and
+--   is_public were all written and read back instead — behavioural evidence,
+--   weaker than the catalog query block (a) specifies.
 --
 -- ⚠ ADDITIVE ONLY, AND NO NEW TABLE. `cohorts` already exists (0009) with slug,
 -- title, price_pence, currency, starts_on, ends_on, seat_cap, is_active — which
@@ -72,12 +111,17 @@ BEGIN
 END $$;
 
 -- ============================================================================
--- ⚠ AMENDMENT 2026-08-19 — READ THIS BEFORE RE-APPROVING
+-- ⚠ AMENDMENT 2026-08-19 — APPROVED AND APPLIED
 -- ----------------------------------------------------------------------------
--- The block below was NOT in the version that was approved. It is added here,
--- in the same file, because this migration has never been applied and so there
--- is no drift to create — and because without it the rest of this file does not
--- do what it says.
+-- The block below was NOT in the version first approved. It was added to this
+-- same file before anything had been applied — so there was no drift to create
+-- — re-approved by the founder, and applied with the rest of the file on
+-- 2026-08-19. Without it the rest of this file does not do what it says.
+--
+-- ⚠ IT IS PROVEN ON PRODUCTION DATA. Production holds the 0009 intensive with
+-- is_active = true and is_public = false, and anon reads []. Before the
+-- amendment that row would have been publicly readable the moment the GRANT
+-- below ran.
 --
 -- WHAT WAS WRONG. 0009 created:
 --

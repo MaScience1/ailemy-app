@@ -1,7 +1,53 @@
 -- ============================================================================
--- 0040_PROPOSED_interest_registrations.sql
+-- 0040_interest_registrations.sql
 -- ----------------------------------------------------------------------------
--- ⚠ PROPOSED — NOT APPLIED. See 0039's header on the _PROPOSED_ naming.
+-- ⚠ APPLIED TO PRODUCTION 2026-08-19 by the founder in the SQL Editor, no
+-- errors. Renamed from 0040_PROPOSED_ once verified.
+--
+-- ⚠ WHAT THE EVIDENCE IS. scripts/db-checks/public-surface-sabotage.ts, run
+-- against production immediately after applying: ALL PASS, 26 of 26. Every
+-- negative there is paired with its positive half — a row is proved to EXIST by
+-- service_role before anon is asked to not see it, and every gate is then
+-- flipped and anon proved to see exactly 1. "anon saw nothing" and "the table
+-- is empty" are otherwise the same observation. Rows it created were deleted by
+-- the id captured at creation, count=1 each.
+--
+-- VERIFICATION RESULT, block by block:
+--
+--   (a) anon CAN insert with consent                       ✓
+--   (b) anon CANNOT insert without consent                 ✓ 42501, RLS
+--       …nor with consent_to_contact true and consent_at NULL  ✓ 42501
+--       (the CHECK requires both — a tick with no timestamp cannot answer
+--       "when did they agree", which is the column's entire purpose)
+--   (c) anon CANNOT read                                   ✓ 42501
+--       ⚠ THE ERROR IS THE PROOF, and the check is written to FAIL on a
+--       zero-row result: 0 rows would mean a SELECT grant exists and RLS
+--       merely filtered, which is a weaker posture wearing a passing badge.
+--   (f) cleanup by captured id                             ✓ count=1
+--   (g) TRUNCATE / TRIGGER / REFERENCES                    ✓ zero rows
+--       — run by the founder in the SQL Editor 2026-08-19
+--
+--   End-to-end, through the real form: an anonymous submission wrote one row;
+--   consent_at was stamped by the SERVER clock (29s before it was read back,
+--   never submitted); every optional field stored; anon was then refused
+--   42501 on that row while service_role could see it; deleted by captured id,
+--   count=1, table back to 0.
+--
+-- ⚠ WHAT WAS **NOT** RUN, AND IS NOT CLAIMED
+-- ----------------------------------------------------------------------------
+--   (d) A SIGNED-IN NON-STAFF USER WAS NEVER TESTED. It needs a real
+--   authenticated session, which this tooling cannot create. The claim that
+--   interest_registrations_staff_all's USING is false for them is UNVERIFIED.
+--
+--   (e) STAFF READ WAS NEVER TESTED EITHER, and service_role is NOT a
+--   substitute — it bypasses RLS entirely, so it proves the row exists and
+--   proves nothing whatsoever about the policy. Both (d) and (e) need a
+--   browser session holding, and not holding, a staff role.
+--
+--   (h) THE GRANT LIST WAS NOT ENUMERATED. information_schema is unavailable
+--   here. That anon holds INSERT and lacks SELECT is established
+--   BEHAVIOURALLY — an insert succeeded, a select returned 42501 — not by
+--   reading role_table_grants as block (h) specifies.
 --
 -- ⚠ A GENUINELY NEW TABLE. Nothing in the schema models demand capture:
 -- cohort_enrolments (0009) records a PAID enrolment and requires a cohort that

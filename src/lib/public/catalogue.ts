@@ -2,12 +2,14 @@
  * What the public site knows about tuition, announcements and demand capture.
  *
  * ============================================================================
- * ⚠ EVERY SURFACE WORKS BEFORE ANY SQL EXISTS
+ * ⚠ EVERY SURFACE WORKS WITHOUT THE DATABASE
  * ============================================================================
- * The three migrations these read from (0039, 0040, 0041) are PROPOSED and
- * unapplied. The founder reviews SQL before it ever runs, so the site cannot
- * depend on it having run: each reader tries the database, and falls back to a
- * static value that is TRUE TODAY rather than to an empty list.
+ * 0039, 0040, 0041 and 0042 are all APPLIED (2026-08-19) and the readers use
+ * them. The fallback stays, and stays exercised, because "the migration has not
+ * run yet" was only ever one of the ways this data can be missing — an outage,
+ * a revoked grant, a policy change or an empty table all look the same to a
+ * page. Each reader tries the database and falls back to a static value that is
+ * TRUE TODAY rather than to an empty list.
  *
  * The fallback is not a placeholder. Every figure below is the founder's own
  * catalogue, and a visitor who sees it is seeing the real offer — the database
