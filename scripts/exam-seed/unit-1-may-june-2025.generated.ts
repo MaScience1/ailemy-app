@@ -1,4 +1,4 @@
-// mark_scheme_items for unit-1-may-june-2025, reviewed and approved 2026-08-19T02:40:52.747Z
+// mark_scheme_items for unit-1-may-june-2025, reviewed and approved 2026-08-19T03:33:40.762Z
 //
 // Emitted by the mark-scheme review surface from extractor proposals. Every
 // question below carries approved_at AND approved_by; anything unruled or
@@ -734,19 +734,11 @@ export const UNIT_1_MAY_JUNE_2025: FixtureQuestion[] = [
     markScheme: [
       {
         pointCode: "M1",
-        criterion: "ethene is a simple molecule",
+        criterion: "any two of: ethene is a simple molecule / ethene has weak intermolecular forces / poly(ethene) is a polymer / poly(ethene) has strong intermolecular forces (1)",
       },
       {
         pointCode: "M2",
-        criterion: "ethene has weak intermolecular forces",
-      },
-      {
-        pointCode: "M3",
-        criterion: "poly(ethene) is a polymer",
-      },
-      {
-        pointCode: "M4",
-        criterion: "poly(ethene) strong intermolecular forces All four bullet points scores 2 Two or three bullet points scores 1",
+        criterion: "all four correct points given (1)",
         accept: ["Allow London / van der Waals / dispersion forces", "Allow poly(ethene) is a macromolecule / giant"],
         reject: ["Do not award reference to breaking covalent bonds"],
         guidance: "Ignore monomer",

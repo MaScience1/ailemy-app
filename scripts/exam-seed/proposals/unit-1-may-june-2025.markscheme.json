@@ -5316,16 +5316,20 @@
     "23(b)(v)": {
       "points": {
         "M1": {
-          "verdict": "accept"
+          "verdict": "edit",
+          "criterion": "any two of: ethene is a simple molecule / ethene has weak intermolecular forces / poly(ethene) is a polymer / poly(ethene) has strong intermolecular forces (1)"
         },
         "M2": {
-          "verdict": "accept"
+          "verdict": "edit",
+          "criterion": "all four correct points given (1)"
         },
         "M3": {
-          "verdict": "accept"
+          "verdict": "reject",
+          "why": "rejected in review"
         },
         "M4": {
-          "verdict": "accept"
+          "verdict": "reject",
+          "why": "rejected in review"
         }
       },
       "lines": {
@@ -5342,9 +5346,9 @@
           "kind": "reject"
         }
       },
-      "approvedAt": "2026-08-18T15:03:33.745Z",
+      "approvedAt": "2026-08-19T03:33:35.994Z",
       "approvedBy": "self",
-      "revision": 3
+      "revision": 6
     },
     "23(c)(ii)": {
       "points": {

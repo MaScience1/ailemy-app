@@ -1729,7 +1729,13 @@ async function main() {
 
   // ---- 1. the fixture, checked with no network at all --------------------
   heading("1. Fixture validation");
-  const issues = validateQuestionSet(set);
+  // ⚠ THE WAIVER IS KEYED ON RESOLVE_BY, NOT ON THE SET LOOKING EMPTY. A set
+  // with no uuid and no runtime resolution still fails here, at step 1, before
+  // anything touches a database — which is the whole reason validation runs
+  // with no network.
+  const issues = validateQuestionSet(set, {
+    paperIdResolvedAtRuntime: Boolean(RESOLVE_BY[options.setName]),
+  });
   if (issues.length > 0) {
     for (const issue of issues) {
       console.error(`  ${RED}✗${RESET} ${issue.where || "(set)"}: ${issue.message}`);
