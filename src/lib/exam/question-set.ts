@@ -299,12 +299,44 @@ const UUID_RE =
  * once — an importer that dies on the first problem makes you run it fifteen
  * times to find fifteen typos.
  */
-export function validateQuestionSet(set: QuestionSet): ValidationIssue[] {
+export type ValidateOptions = {
+  /**
+   * True when the caller will resolve `paperId` from natural keys before it is
+   * used — see the seeder's RESOLVE_BY.
+   *
+   * ⚠ IT WAIVES THE uuid CHECK AND NOTHING ELSE, AND ONLY ON DEMAND. A
+   * generated fixture carries `paperId: ""` because no generated artefact may
+   * hold an environment-specific uuid; validation runs BEFORE the resolution
+   * (step 1 has no network, deliberately), so without this the empty string
+   * failed the check that exists to catch a slug being passed as an id.
+   *
+   * The waiver is opt-in per set. A set that is NOT resolved at run time and
+   * still has no uuid is exactly the mistake this check was written for, and
+   * must still fail here — at step 1, before anything touches a database.
+   */
+  paperIdResolvedAtRuntime?: boolean;
+};
+
+export function validateQuestionSet(
+  set: QuestionSet,
+  options: ValidateOptions = {},
+): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const push = (where: string, message: string) =>
     issues.push({ where, message });
 
-  if (!UUID_RE.test(set.paperId)) {
+  if (options.paperIdResolvedAtRuntime) {
+    // ⚠ AN UNRESOLVED SET MUST BE EMPTY, NOT WRONG. Waiving the uuid check is
+    // not the same as accepting anything: a set that claims runtime resolution
+    // while carrying some other string is asserting two different identities.
+    if (set.paperId !== "") {
+      push(
+        "",
+        `paperId ${JSON.stringify(set.paperId)} is set on a fixture whose id is resolved at run ` +
+          `time from natural keys. Leave it empty, or remove it from RESOLVE_BY.`,
+      );
+    }
+  } else if (!UUID_RE.test(set.paperId)) {
     push(
       "",
       `paperId ${JSON.stringify(set.paperId)} is not a uuid. It must be past_papers.id, not a slug — a slug is unique only within a course.`,

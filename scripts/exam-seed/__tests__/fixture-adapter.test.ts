@@ -24,6 +24,7 @@ import {
 } from "../../../src/lib/exam/fixture-adapter.ts";
 import { UNIT_1_MAY_JUNE_2025 as PAPER } from "../unit-1-may-june-2025.generated.ts";
 import type { FixtureQuestion } from "../../../src/lib/exam/markscheme-proposals.ts";
+import { validateQuestionSet, type QuestionSet } from "../../../src/lib/exam/question-set.ts";
 
 let pass = 0, fail = 0;
 const t = (n: string, c: boolean, got?: unknown) => {
@@ -332,6 +333,61 @@ console.log("\n── THE REAL PAPER, WITH THE FOUNDER'S OVERLAY ──");
     r.questions.every((q, i, a) => i === 0 || a[i - 1].displayOrder < q.displayOrder));
   t("every answerType is one the schema allows",
     r.questions.every((q) => SCHEMA_ANSWER_TYPES.includes(q.answerType)));
+}
+
+console.log("\n── THE uuid WAIVER IS OPT-IN, AND WAIVES ONLY THE uuid ──");
+{
+  // ⚠ VALIDATION RUNS BEFORE THE PAPER IS RESOLVED, DELIBERATELY. Step 1 of
+  // the seeder touches no network, so a generated fixture — which carries no
+  // uuid, because no generated artefact may hold an environment-specific id —
+  // failed the check that exists to catch a SLUG being passed as an id.
+  const base: QuestionSet = {
+    paperId: "",
+    expect: { paperCode: "WCH11/01", session: "May-June", year: 2025, totalMarks: 1 },
+    complete: false,
+    questions: [{
+      questionNumber: "1", parentQuestionNumber: null, displayOrder: 10,
+      marks: 1, answerType: "mcq",
+      markScheme: [{ pointCode: "M1", criterion: "The only correct answer is B" }],
+    }],
+  };
+
+  const uuidIssue = (set: QuestionSet, opts?: { paperIdResolvedAtRuntime?: boolean }) =>
+    validateQuestionSet(set, opts).filter((i) => /paperId/.test(i.message));
+
+  // ⚠ THE SABOTAGE CASE, AS AN ASSERTION: a set with no uuid and NO runtime
+  // resolution must still refuse at step 1, before anything touches a
+  // database. Waiving the check unconditionally is the failure mode.
+  t("an unresolved set with no waiver STILL refuses",
+    uuidIssue(base).length === 1, uuidIssue(base));
+  t("...saying it is not a uuid",
+    /is not a uuid/.test(uuidIssue(base)[0]?.message ?? ""), uuidIssue(base));
+
+  t("with the waiver, an empty paperId is accepted",
+    uuidIssue(base, { paperIdResolvedAtRuntime: true }).length === 0,
+    uuidIssue(base, { paperIdResolvedAtRuntime: true }));
+
+  // ⚠ AND THE WAIVER IS NOT A BLANK CHEQUE. A set claiming runtime resolution
+  // while carrying some other string is asserting two identities at once.
+  const withSlug = { ...base, paperId: "unit-1-may-june-2025" };
+  t("a slug is refused even WITH the waiver",
+    uuidIssue(withSlug, { paperIdResolvedAtRuntime: true }).length === 1,
+    uuidIssue(withSlug, { paperIdResolvedAtRuntime: true }));
+  t("...telling the reader to leave it empty",
+    /Leave it empty/.test(uuidIssue(withSlug, { paperIdResolvedAtRuntime: true })[0]?.message ?? ""));
+  const withUuid = { ...base, paperId: "f7577346-3c45-4b3a-b944-d52542863358" };
+  t("a real uuid is refused with the waiver too — two identities",
+    uuidIssue(withUuid, { paperIdResolvedAtRuntime: true }).length === 1);
+  t("...and accepted WITHOUT it", uuidIssue(withUuid).length === 0);
+
+  // ⚠ THE WAIVER TOUCHES NOTHING ELSE. Every other check must still run.
+  const broken: QuestionSet = { ...base, questions: [] };
+  t("an empty question list still fails under the waiver",
+    validateQuestionSet(broken, { paperIdResolvedAtRuntime: true }).length > 0,
+    validateQuestionSet(broken, { paperIdResolvedAtRuntime: true }));
+  t("ANTI-VACUITY — the valid set passes cleanly under the waiver",
+    validateQuestionSet(base, { paperIdResolvedAtRuntime: true }).length === 0,
+    validateQuestionSet(base, { paperIdResolvedAtRuntime: true }));
 }
 
 console.log(`\n${fail === 0 ? "✓ ALL" : "✗"} ${pass} passed, ${fail} failed`);
