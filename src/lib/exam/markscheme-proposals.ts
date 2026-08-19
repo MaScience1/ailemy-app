@@ -582,20 +582,84 @@ export function toFixture(set: ProposalSet, rulings: RulingBook): EmitResult {
  */
 /**
  * Natural keys the emitter stamps into the module. NEVER a uuid — see
- * fixture-adapter's PaperMeta. Undefined fields become a refusal downstream
- * rather than a plausible-looking default.
+ * fixture-adapter's PaperMeta.
+ *
+ * ⚠ EVERY FIELD IS REQUIRED, AND THAT IS THE FIX. They used to be optional,
+ * so a lookup that found nothing left them undefined, the header was written
+ * as `paperCode: undefined`, and emit reported a green 48/80. A partial stamp
+ * is now a TYPE ERROR at the call site rather than a silent hole in a file
+ * that claims to be complete.
  */
 export type StampedMeta = {
-  paperCode?: string | null;
-  session?: string;
-  year?: number;
+  paperCode: string;
+  session: string;
+  year: number;
 };
+
+export type StampResult =
+  | { ok: true; stamped: StampedMeta }
+  | { ok: false; error: string };
+
+/**
+ * Read the paper's natural keys off the row the review page already resolved.
+ *
+ * ============================================================================
+ * ⚠ BY id, NEVER BY slug — AND THE SILENT VERSION OF THIS SHIPPED
+ * ============================================================================
+ * The first version re-queried `past_papers` by SLUG and stamped only when
+ * exactly one row came back. A slug is unique within a COURSE, not globally:
+ * "unit-1-may-june-2025" is Chemistry, Physics AND Biology, and 72 of 90 slugs
+ * sit on more than one row — the same fact getMarkSchemeReview carries a long
+ * comment about. So the query matched three papers, the guard correctly
+ * declined to guess, and the stamp was left undefined INSIDE A try/catch that
+ * reported success. The header read `paperCode: undefined` under a green
+ * 48 question(s), 80 mark(s).
+ *
+ * The review page has already disambiguated the paper and holds its id. This
+ * takes that id and refuses — by name — on anything else.
+ */
+export function stampFrom(
+  rows: readonly { id: string; paper_code: string | null; session: string | null; year: number | null }[],
+  paperId: string,
+): StampResult {
+  const matches = rows.filter((r) => r.id === paperId);
+  if (matches.length === 0) {
+    return { ok: false, error: `No past_papers row has id ${paperId}. Nothing was emitted.` };
+  }
+  if (matches.length > 1) {
+    // ⚠ IMPOSSIBLE ON A SANE DATABASE — id is the primary key — which is
+    // exactly why it must refuse rather than take the first. If this ever
+    // fires, the read is not what it claims to be.
+    return {
+      ok: false,
+      error: `${matches.length} rows share id ${paperId}. Refusing to stamp an identity that is not unique.`,
+    };
+  }
+  const row = matches[0];
+  const missing = [
+    row.paper_code ? null : "paper_code",
+    row.session ? null : "session",
+    typeof row.year === "number" ? null : "year",
+  ].filter(Boolean) as string[];
+  if (missing.length > 0) {
+    return {
+      ok: false,
+      error:
+        `The paper row is missing ${missing.join(", ")}, so the fixture cannot carry a natural key. ` +
+        `Fill it in on the paper before emitting.`,
+    };
+  }
+  return {
+    ok: true,
+    stamped: { paperCode: row.paper_code!, session: row.session!, year: row.year! },
+  };
+}
 
 export function emitFixtureSource(
   result: EmitResult,
   paperSlug: string,
   capturedAt: string,
-  stamped?: StampedMeta,
+  stamped: StampedMeta,
 ): string {
   if (!result.ok) {
     return [
@@ -703,9 +767,9 @@ export function emitFixtureSource(
     // constant: if a question is refused, this number drops and the seeder's
     // existing expect-check catches the disagreement with the cover page.
     `export const ${identifierFor(paperSlug)}_PAPER = {`,
-    `  paperCode: ${stamped?.paperCode ? q(stamped.paperCode) : "undefined"},`,
-    `  session: ${stamped?.session ? q(stamped.session) : "undefined"},`,
-    `  year: ${typeof stamped?.year === "number" ? stamped.year : "undefined"},`,
+    `  paperCode: ${q(stamped.paperCode)},`,
+    `  session: ${q(stamped.session)},`,
+    `  year: ${stamped.year},`,
     `  totalMarks: ${emittedMarks},`,
     `} as const;`,
     ``,

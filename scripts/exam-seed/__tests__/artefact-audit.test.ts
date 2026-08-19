@@ -23,6 +23,7 @@ import { auditArtefact, moveLineToRuling, type AuditClass } from "../../../src/l
 import {
   emitFixtureSource,
   identifierFor,
+  stampFrom,
   withdrawApproval,
   buildReview,
   toFixture,
@@ -32,6 +33,11 @@ import {
   type RulingBook,
   type ProposalSet,
 } from "../../../src/lib/exam/markscheme-proposals.ts";
+
+// ⚠ REQUIRED, NOT OPTIONAL. emitFixtureSource used to accept a partial stamp,
+// so a failed lookup wrote `paperCode: undefined` into a header that reported
+// a green 48/80. Passing it is now a type error to omit.
+const STAMP = { paperCode: "WCH11/01", session: "May-June", year: 2025 };
 
 let pass = 0, fail = 0;
 const t = (n: string, c: boolean, got?: unknown) => {
@@ -420,7 +426,7 @@ console.log("\n── A PARTIAL SUCCESS IS NOT A SUCCESS ──");
 
   // ⚠ AND THE EMITTED FILE SAYS SO IN ITS OWN HEADER, because the reviewer may
   // read the file rather than the screen.
-  const src = emitFixtureSource(emit, "unit-1-may-june-2025", "2026-08-18T00:00:00.000Z");
+  const src = emitFixtureSource(emit, "unit-1-may-june-2025", "2026-08-18T00:00:00.000Z", STAMP);
   // ⚠ THE HEADER'S NUMBERS ARE RECOMPUTED FROM THE EMITTED DATA, not compared
   // against a constant. A header that agreed with a hardcoded 48/80 would stop
   // meaning anything the day a different paper was emitted.
@@ -440,7 +446,7 @@ console.log("\n── A PARTIAL SUCCESS IS NOT A SUCCESS ──");
 console.log("\n── THE EMITTED FILE IS A REAL MODULE ──");
 {
   const emit = toFixture(set as never, (set as unknown as { rulings: RulingBook }).rulings ?? {});
-  const src = emitFixtureSource(emit, "unit-1-may-june-2025", "2026-08-18T00:00:00.000Z");
+  const src = emitFixtureSource(emit, "unit-1-may-june-2025", "2026-08-18T00:00:00.000Z", STAMP);
 
   // ⚠ IT USED TO BE PASTE-IN FRAGMENTS — bare `markScheme: [...]` properties
   // with no wrapper and no export. It did not parse, could not be imported,
@@ -487,7 +493,7 @@ console.log("\n── THE EMITTED FILE IS A REAL MODULE ──");
   t("identifierFor uppercases and underscores", identifierFor("unit-1-may-june-2025") === "UNIT_1_MAY_JUNE_2025");
 
   // A refusal-only emit still returns something a human can read.
-  const none = emitFixtureSource({ ok: false, refusals: ["X: not approved"] }, "s", "t");
+  const none = emitFixtureSource({ ok: false, refusals: ["X: not approved"] }, "s", "t", STAMP);
   t("a total refusal explains itself", /NOTHING EMITTED/.test(none) && /X: not approved/.test(none));
 }
 
@@ -529,6 +535,57 @@ console.log("\n── ACCEPTING NOTHING IS NOT A RULING ──");
     t("...it carries its 2-mark tariff and is present by lookup",
       q.marks?.value === 2, q.marks?.value);
   }
+}
+
+console.log("\n── THE IDENTITY STAMP FAILS LOUDLY, OR NOT AT ALL ──");
+{
+  const ID = "f7577346-3c45-4b3a-b944-d52542863358";
+  const row = { id: ID, paper_code: "WCH11/01", session: "May-June", year: 2025 };
+
+  const ok = stampFrom([row], ID);
+  t("one row stamps", ok.ok && ok.stamped.paperCode === "WCH11/01", ok);
+  t("...carrying session and year", ok.ok && ok.stamped.session === "May-June" && ok.stamped.year === 2025);
+
+  // ⚠ THE BUG THAT SHIPPED. The first version re-queried by SLUG and stamped
+  // only on exactly one row. A slug is unique within a COURSE, not globally —
+  // "unit-1-may-june-2025" is Chemistry, Physics AND Biology — so the query
+  // matched three, the guard declined to guess, and the stamp was left
+  // undefined INSIDE a try/catch that reported success. The header read
+  // `paperCode: undefined` under a green "48 question(s), 80 mark(s)".
+  const zero = stampFrom([], ID);
+  t("ZERO rows is a refusal, not an empty stamp", !zero.ok, zero);
+  t("...naming the id it could not find", !zero.ok && zero.error.includes(ID), zero);
+  t("...and saying nothing was emitted", !zero.ok && /Nothing was emitted|No past_papers/.test(zero.error));
+
+  const many = stampFrom([row, { ...row }], ID);
+  t("MULTIPLE rows is a refusal, not the first one", !many.ok, many);
+  t("...saying the identity is not unique",
+    !many.ok && /not unique/.test(many.error), many);
+
+  // ⚠ A ROW THAT EXISTS BUT IS INCOMPLETE IS ALSO A REFUSAL. Stamping
+  // `paperCode: null` would put a hole in a file that claims to be complete.
+  for (const [field, bad] of [
+    ["paper_code", { ...row, paper_code: null }],
+    ["session", { ...row, session: null }],
+    ["year", { ...row, year: null }],
+  ] as const) {
+    const r = stampFrom([bad], ID);
+    t(`a row missing ${field} refuses`, !r.ok, r);
+    t(`   ...and names ${field}`, !r.ok && r.error.includes(field), r);
+  }
+
+  // ⚠ AND THE HEADER CAN NO LONGER CARRY undefined AT ALL. The stamp is a
+  // REQUIRED argument, so a partial one is a compile error rather than a hole
+  // — but assert the rendered output too, since that is what a person reads.
+  const emit = toFixture(set as never, (set as unknown as { rulings: RulingBook }).rulings ?? {});
+  const src = emitFixtureSource(emit, "unit-1-may-june-2025", "2026-08-19T00:00:00.000Z", STAMP);
+  t("the emitted header carries a real paperCode", /paperCode: "WCH11\/01"/.test(src),
+    src.split("\n").find((l) => /paperCode:/.test(l)));
+  t("...a real session", /session: "May-June"/.test(src));
+  t("...a real year", /year: 2025,/.test(src));
+  t("...and the word `undefined` appears nowhere in it",
+    !src.includes("undefined"),
+    src.split("\n").filter((l) => l.includes("undefined")).slice(0, 2));
 }
 
 console.log(`\n${fail === 0 ? "✓ ALL" : "✗"} ${pass} passed, ${fail} failed`);

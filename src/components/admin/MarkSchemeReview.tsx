@@ -1089,7 +1089,7 @@ export function MarkSchemeReview({ data }: { data: ReviewData }) {
           disabled={!data.canWrite || !data.canPersist || emitting}
           onClick={async () => {
             setEmitting(true);
-            setEmit(await emitFixtureAction(data.paperSlug));
+            setEmit(await emitFixtureAction(data.paperSlug, data.paperId));
             setEmitting(false);
           }}
           className="rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:border-slate-500 disabled:opacity-40"
