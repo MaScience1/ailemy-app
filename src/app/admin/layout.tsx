@@ -33,6 +33,7 @@ export default async function AdminLayout({
             <NavLink href="/admin">Dashboard</NavLink>
             <NavLink href="/admin/lessons">Lessons</NavLink>
             <NavLink href="/admin/past-papers">Past papers</NavLink>
+            <NavLink href="/admin/announcements">Announcements</NavLink>
             <div className="mt-6 mb-2 px-3 text-[10px] font-mono uppercase tracking-widest text-slate-400">
               Read-only
             </div>
