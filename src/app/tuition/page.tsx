@@ -11,6 +11,10 @@ import { offersCurrencyChoice } from "@/lib/public/currency";
 import { currentCurrency } from "@/lib/public/currency-server";
 import { CohortPrice } from "@/components/public/CohortPrice";
 import { CurrencyToggle } from "@/components/public/CurrencyToggle";
+import { SessionList } from "@/components/public/SessionList";
+import { TimezoneSync } from "@/components/public/TimezoneSync";
+import { loadCalendar } from "@/lib/schedule/readers";
+import { viewerTimeZone } from "@/lib/schedule/viewer-tz";
 
 /**
  * The tuition destination (§23).
@@ -33,10 +37,17 @@ export default async function TuitionPage() {
   const session = await getNavSession();
   const { data: cohorts } = await loadCohorts();
   const { currency } = await currentCurrency();
+  const viewerTz = await viewerTimeZone();
+  const { sessions: upcoming } = await loadCalendar({
+    from: new Date().toISOString().slice(0, 10),
+    to: new Date(Date.now() + 56 * 86_400_000).toISOString().slice(0, 10),
+    includeCancelled: true,
+  });
   return (
     <div className="bg-parchment text-ink">
       <AnnouncementBar />
       <SiteNav session={session} />
+      <TimezoneSync known={viewerTz !== null} />
       <main className="mx-auto max-w-6xl px-6 py-14 sm:py-20">
         <h1 className="font-display text-3xl font-medium tracking-tight sm:text-4xl">
           Learn live with Ailemy
@@ -78,6 +89,25 @@ export default async function TuitionPage() {
             );
           })}
         </div>
+
+        {/* ── the schedule (§19) ──────────────────────────────────────── */}
+        <section className="mt-14 border-t border-ink/10 pt-10">
+          <h2 className="font-display text-xl font-medium">Upcoming lessons</h2>
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink/70">
+            Every scheduled session across the live cohorts, for the next eight weeks. Times in
+            Doha, and in your own timezone where we know it.
+          </p>
+          <div className="mt-6">
+            <SessionList
+              sessions={upcoming}
+              viewerTz={viewerTz}
+              emptyMessage="No timetable has been published yet. The cards above show what is opening; register interest and we will tell you the dates as soon as they are set."
+            />
+          </div>
+          <Link href="/calendar" className="mt-6 inline-block text-sm underline underline-offset-2 hover:text-ink">
+            Full calendar →
+          </Link>
+        </section>
 
         {/* ⚠ INTENSIVE LIVES HERE NOW (§4). It was a top-level nav entry — a
             single campaign holding a slot next to three whole sciences. The

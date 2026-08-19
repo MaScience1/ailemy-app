@@ -10,6 +10,10 @@ import { offersCurrencyChoice } from "@/lib/public/currency";
 import { currentCurrency } from "@/lib/public/currency-server";
 import { CohortPrice } from "@/components/public/CohortPrice";
 import { CurrencyToggle } from "@/components/public/CurrencyToggle";
+import { SessionList } from "@/components/public/SessionList";
+import { TimezoneSync } from "@/components/public/TimezoneSync";
+import { loadCalendar } from "@/lib/schedule/readers";
+import { viewerTimeZone } from "@/lib/schedule/viewer-tz";
 
 /**
  * One subject page, rendered for all three sciences.
@@ -40,12 +44,27 @@ export async function SubjectPage({ slug }: { slug: string }) {
   const { data: allCohorts } = await loadCohorts();
   const cohorts = allCohorts.filter((c) => c.subject === slug);
   const { currency } = await currentCurrency();
+
+  /**
+   * ⚠ §15 — ONE IMPLEMENTATION, THREE SUBJECTS. This component renders
+   * /chemistry, /biology and /physics, so the subject calendar is written once
+   * and filtered by slug. Building it three times is how Biology ends up a
+   * year behind Chemistry.
+   */
+  const viewerTz = await viewerTimeZone();
+  const { sessions: subjectSessions } = await loadCalendar({
+    from: new Date().toISOString().slice(0, 10),
+    to: new Date(Date.now() + 56 * 86_400_000).toISOString().slice(0, 10),
+    subject: slug,
+    includeCancelled: true,
+  });
   const hasResources = subject.status === "available" && subject.exploreHref !== null;
 
   return (
     <div className="bg-parchment text-ink">
       <AnnouncementBar />
       <SiteNav session={session} />
+      <TimezoneSync known={viewerTz !== null} />
 
       <header className="mx-auto max-w-6xl px-6 pt-14 pb-10 sm:pt-20">
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink/50">
@@ -154,6 +173,41 @@ export async function SubjectPage({ slug }: { slug: string }) {
               will tell you when it lands.
             </p>
           )}
+        </div>
+      </section>
+
+      {/* ── subject calendar (§13–§15) ─────────────────────────────────── */}
+      <section className="border-t border-ink/10 py-12">
+        <div className="mx-auto max-w-6xl px-6">
+          <h2 className="font-display text-2xl font-medium tracking-tight">
+            Upcoming {subject.name} lessons
+          </h2>
+          <div className="mt-6">
+            {/* ⚠ THE EMPTY STATE IS THE HONEST ONE (§14). No invented sessions,
+                and no "coming soon" implying a date exists. It says the
+                timetable is not published and offers the only real next step. */}
+            <SessionList
+              sessions={subjectSessions}
+              viewerTz={viewerTz}
+              emptyMessage={`No ${subject.name} timetable has been published yet. Register interest and we will tell you the moment a cohort opens.`}
+            />
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              href={`/calendar?subject=${subject.slug}`}
+              className="text-sm underline underline-offset-2 hover:text-ink"
+            >
+              Full {subject.name} calendar →
+            </Link>
+            {subjectSessions.length === 0 && (
+              <Link
+                href={`/tuition/interest?subject=${subject.slug}`}
+                className="text-sm underline underline-offset-2 hover:text-ink"
+              >
+                Register interest →
+              </Link>
+            )}
+          </div>
         </div>
       </section>
 
