@@ -1,8 +1,99 @@
 -- ============================================================================
 -- 0044_PROPOSED_schedule_core.sql
 -- ----------------------------------------------------------------------------
--- ⚠ PROPOSED — NOT APPLIED. Rename to 0044_schedule_core.sql only once applied,
--- and record the verification result in this header at the same time.
+-- ⚠⚠ PARTIALLY APPLIED 2026-08-19 — STILL _PROPOSED_, DELIBERATELY.
+-- ----------------------------------------------------------------------------
+-- The founder ran this in the SQL Editor and reported no errors. Verification
+-- against production says otherwise, in a specific and recoverable way:
+--
+--   APPLIED    all three tables, every CHECK constraint, the partial unique
+--              index, RLS enabled, and every policy.
+--   NOT APPLIED  the three GRANT SELECT … TO anon, authenticated statements.
+--
+-- Evidence, not inference. anon reads `cohorts` and `announcements` fine (the
+-- key and the role are healthy), service_role reads all three new tables (they
+-- exist), and anon gets 42501 permission denied on each of them. PGRST205 would
+-- mean a missing table; 42501 means the table is there and the ROLE HAS NO
+-- GRANT. Grants are checked before RLS, so no policy can rescue this — which is
+-- why it presents as a flat denial rather than an empty result.
+--
+-- ⚠ THE FILE KEEPS ITS _PROPOSED_ NAME UNTIL THE GRANTS LAND. Renaming it now
+-- would put "applied and verified" on a file whose entire public-read surface
+-- is inert, and a rebuild from this folder would be the only thing that ever
+-- produced the intended database.
+--
+-- ⚠ WHAT IT LOOKS LIKE ON THE SITE, WHICH IS WHY NOTHING IS BROKEN. The reader
+-- treats 42501 like any other failure and falls back to the published AS
+-- timetable in code, recording the exact reason. Verified: /, /calendar,
+-- /chemistry and /tuition all still render 7:00 PM – 9:30 PM Doha, /biology is
+-- still honestly empty, and /calendar's dev note reads
+-- "schedule source: fallback (42501: permission denied for table
+-- cohort_schedules)". The public site is correct today and switches to the
+-- database the moment the grants run.
+--
+-- TO FINISH APPLYING — run exactly this, then re-run the verification below:
+--
+--   GRANT SELECT ON public.cohort_schedules TO anon, authenticated;
+--   GRANT SELECT ON public.schedule_periods TO anon, authenticated;
+--   GRANT SELECT ON public.tuition_sessions TO anon, authenticated;
+--
+--   REVOKE TRUNCATE, TRIGGER, REFERENCES ON public.cohort_schedules FROM anon, authenticated;
+--   REVOKE TRUNCATE, TRIGGER, REFERENCES ON public.schedule_periods FROM anon, authenticated;
+--   REVOKE TRUNCATE, TRIGGER, REFERENCES ON public.tuition_sessions FROM anon, authenticated;
+--
+--   NOTIFY pgrst, 'reload schema';
+--
+-- ⚠ RUN THE REVOKES EVEN THOUGH THE GRANTS DID NOT LAND. They are a different
+-- statement and their state here is UNKNOWN — block (m) cannot be run through
+-- PostgREST. Supabase's default privileges hand anon and authenticated the full
+-- set on newly created tables; anon evidently has no SELECT, which suggests the
+-- defaults did not fire either, but "suggests" is not "checked". The REVOKEs
+-- are idempotent, so running them costs nothing and closes the question.
+--
+-- ----------------------------------------------------------------------------
+-- VERIFICATION RESULT — 26 of 31 runnable assertions PASSED, 5 failed, and all
+-- five failures are the missing grant:
+--
+--   (a) weekday 0 refused BY cohort_schedules_weekday_iso, 23514        ✓
+--       …and weekday 8 refused                                          ✓
+--       ⚠ THIS IS THE getUTCDay() TRAP CLOSED. Sunday is 7 under ISO and
+--       0 under JS; a 0 stored here is a rule the reader never matches,
+--       so nobody turns up and nothing errors.
+--   (b) weekday 2 accepted, reads back timezone 'Asia/Qatar',
+--       is_active true — so (a) is not a column refusing everything     ✓
+--   (c) inverted times refused BY cohort_schedules_time_ordered         ✓
+--       backwards validity window refused BY …_window_ordered           ✓
+--   (d) first override accepted; a SECOND for the same lesson refused
+--       BY tuition_sessions_one_override_per_occurrence, 23505          ✓
+--   (e) a morning clinic AND an evening mock on one date both insert    ✓
+--   (f) untimed one-off refused BY …_oneoff_needs_times                 ✓
+--       backwards session refused BY …_instants_ordered                 ✓
+--       kind 'party' refused BY …_kind_check                            ✓
+--   (g) a CANCELLED one-off without times IS allowed                    ✓
+--   (h) anon sees nothing for a private cohort                          ✗ 42501
+--       …while service_role proves the rule EXISTS (1 row)              ✓
+--   (i) anon sees it once published                                     ✗ 42501
+--       …sessions visible too                                           ✗ 42501
+--       …unpublishing hides them again                                  ✓ (0 rows)
+--   (j) school-wide holiday created with cohort_id NULL                 ✓
+--       anon can read it                                                ✗ 42501
+--       backwards break refused BY schedule_periods_ordered             ✓
+--       a break scoped to a PRIVATE cohort hidden from anon             ✓ (0 rows)
+--   (k) anon INSERT refused on all three, 42501                         ✓
+--       anon UPDATE refused, start_time provably unchanged at 19:00:00  ✓
+--       anon DELETE refused, all 4 session rows survive                 ✓
+--   (l) every probe row deleted by its captured id, count=1 each;
+--       all three tables back to 0 rows                                 ✓
+--
+--   ⚠ (h), (i) AND (j)-read ARE NOT REALLY "PASSES IN DISGUISE". anon seeing
+--   0 rows is what (h) wants — but it is seeing 0 rows because it cannot read
+--   the table AT ALL, not because is_public gates it. The positive half (i)
+--   is what distinguishes those, and (i) could not run. The is_public gate
+--   remains UNVERIFIED against production and must be re-checked once the
+--   grants land.
+--
+--   ⚠ (m) THE THREE PRIVILEGES WAS NOT RUN AND IS NOT CLAIMED. See above.
+-- ----------------------------------------------------------------------------
 --
 -- ⚠ THREE NEW TABLES. Nothing in the schema models a timetable today, and this
 -- was checked rather than assumed: cohorts (0009/0041/0042) carries
