@@ -1,0 +1,1181 @@
+{
+  "note": "Pre-deletion snapshot of the retired hand fixture's seed rows for WCH11/01 May-June 2025. Superseded by unit-1-may-june-2025-generated. Every row is captured with its ORIGINAL id so a restore reinstates references exactly.",
+  "paperId": "f7577346-3c45-4b3a-b944-d52542863358",
+  "questionIds": [
+    "325146c7-26b2-4b8b-a2a4-7d9941ebaf59",
+    "4bde5080-ab5b-449a-91dc-c0dcf91ee1b2",
+    "1b7d7d93-1f7e-47a2-8d5c-40d279c44597",
+    "06efb748-5f85-4044-ae1d-7f7a2739f943",
+    "fdd2fbd1-60da-4e26-91a9-34c656edd995",
+    "9870b1ed-da93-4297-879d-bd5fd69e7b18",
+    "0df767c9-654d-45e6-85cd-bb173137eb3e",
+    "1da2f391-ef3b-461a-bddb-bd5ef6b560bc",
+    "17b225da-4663-4032-8c36-624d389fc56b",
+    "4e726198-ad79-447e-b76c-eeb394a458e9",
+    "31bc7623-60f8-46ee-adb5-94b5ffc4f05d",
+    "23d539d7-d92e-4b20-ad79-2c7c34c932d8",
+    "0e20f402-9eb2-49c5-a426-fa7c268c2e36",
+    "4059af5c-f53c-4ea9-8d23-0e00759b6423",
+    "eb51bacd-baa9-4303-a6eb-4698847116a5",
+    "5accccfd-af20-40a3-bbc1-9314b5edeae6",
+    "e7ab5ae5-528d-4470-8f97-d7f568a3ea4a"
+  ],
+  "capturedAt": "2026-08-19T04-05-00Z",
+  "tables": {
+    "paper_questions": [
+      {
+        "id": "325146c7-26b2-4b8b-a2a4-7d9941ebaf59",
+        "paper_id": "f7577346-3c45-4b3a-b944-d52542863358",
+        "parent_question_id": null,
+        "question_number": "1",
+        "display_order": 10,
+        "marks": 1,
+        "answer_type": "mcq",
+        "command_word": "Which row shows",
+        "topic": "Atomic structure",
+        "spec_point": null,
+        "created_at": "2026-08-08T06:34:50.687024+00:00",
+        "updated_at": "2026-08-10T02:08:20.159733+00:00",
+        "question_text": "Which row shows the numbers of neutrons and electrons in a bromide ion 79Br- ?\n\n       Number of neutrons   Number of electrons\n  A          44                    35\n  B          44                    36\n  C          46                    35\n  D          46                    36"
+      },
+      {
+        "id": "eb51bacd-baa9-4303-a6eb-4698847116a5",
+        "paper_id": "f7577346-3c45-4b3a-b944-d52542863358",
+        "parent_question_id": null,
+        "question_number": "23",
+        "display_order": 500,
+        "marks": 0,
+        "answer_type": "other",
+        "command_word": null,
+        "topic": "Structure and bonding",
+        "spec_point": null,
+        "created_at": "2026-08-08T06:34:55.739476+00:00",
+        "updated_at": "2026-08-10T02:08:29.096102+00:00",
+        "question_text": "This question is about structure and bonding."
+      },
+      {
+        "id": "4bde5080-ab5b-449a-91dc-c0dcf91ee1b2",
+        "paper_id": "f7577346-3c45-4b3a-b944-d52542863358",
+        "parent_question_id": null,
+        "question_number": "2",
+        "display_order": 20,
+        "marks": 1,
+        "answer_type": "mcq",
+        "command_word": "What volume",
+        "topic": "Moles and gas volumes",
+        "spec_point": null,
+        "created_at": "2026-08-08T06:34:51.198831+00:00",
+        "updated_at": "2026-08-10T02:08:21.19896+00:00",
+        "question_text": "What volume of sulfur dioxide gas reacts completely with 50 cm3 of 0.12 mol dm-3 sodium hydroxide solution?\n\n[molar volume of a gas = 24 dm3 at room temperature and pressure]\n\nSO2   +   2NaOH   →   Na2SO3   +   H2O\n\n  A  0.072 dm3\n  B  0.144 dm3\n  C  0.288 dm3\n  D  72 dm3"
+      },
+      {
+        "id": "1b7d7d93-1f7e-47a2-8d5c-40d279c44597",
+        "paper_id": "f7577346-3c45-4b3a-b944-d52542863358",
+        "parent_question_id": null,
+        "question_number": "20",
+        "display_order": 200,
+        "marks": 0,
+        "answer_type": "other",
+        "command_word": null,
+        "topic": "Moles, combustion and organic formulae",
+        "spec_point": null,
+        "created_at": "2026-08-08T06:34:51.490114+00:00",
+        "updated_at": "2026-08-10T02:08:21.991706+00:00",
+        "question_text": "This question is about carbon dioxide."
+      },
+      {
+        "id": "1da2f391-ef3b-461a-bddb-bd5ef6b560bc",
+        "paper_id": "f7577346-3c45-4b3a-b944-d52542863358",
+        "parent_question_id": "fdd2fbd1-60da-4e26-91a9-34c656edd995",
+        "question_number": "20(b)(iii)",
+        "display_order": 250,
+        "marks": 6,
+        "answer_type": "numeric",
+        "command_word": "Calculate",
+        "topic": "Multi-step mass calculation",
+        "spec_point": null,
+        "created_at": "2026-08-08T06:34:53.287023+00:00",
+        "updated_at": "2026-08-10T02:08:25.076089+00:00",
+        "question_text": "Kerosene is used as aeroplane fuel. A jet plane can carry a maximum of 800 passengers and uses 11 400 dm3 of fuel per hour.\n\nCalculate the mass, in kg, of carbon dioxide emitted from the engine per passenger on a full flight from Sydney to Hong Kong, flight time 9 hours 15 minutes.\n\nGive your answer to three significant figures.\n\n[Assume kerosene consists solely of C12H26\nDensity of dodecane = 0.749 g cm-3]"
+      },
+      {
+        "id": "17b225da-4663-4032-8c36-624d389fc56b",
+        "paper_id": "f7577346-3c45-4b3a-b944-d52542863358",
+        "parent_question_id": "fdd2fbd1-60da-4e26-91a9-34c656edd995",
+        "question_number": "20(b)(iv)",
+        "display_order": 260,
+        "marks": 2,
+        "answer_type": "structure",
+        "command_word": "Draw",
+        "topic": "Skeletal formulae and isomers",
+        "spec_point": null,
+        "created_at": "2026-08-08T06:34:53.811892+00:00",
+        "updated_at": "2026-08-10T02:08:26.034016+00:00",
+        "question_text": "The formula C12H26 represents many isomers, including six diethyloctanes. The names of four of these diethyloctanes are\n\n3,3-diethyloctane, 3,4-diethyloctane, 3,5-diethyloctane, 3,6-diethyloctane.\n\nDraw the skeletal formulae of the remaining two diethyloctanes."
+      },
+      {
+        "id": "06efb748-5f85-4044-ae1d-7f7a2739f943",
+        "paper_id": "f7577346-3c45-4b3a-b944-d52542863358",
+        "parent_question_id": "1b7d7d93-1f7e-47a2-8d5c-40d279c44597",
+        "question_number": "20(a)",
+        "display_order": 210,
+        "marks": 4,
+        "answer_type": "numeric",
+        "command_word": "Calculate",
+        "topic": "The ideal gas equation",
+        "spec_point": null,
+        "created_at": "2026-08-08T06:34:51.721942+00:00",
+        "updated_at": "2026-08-10T02:08:22.269265+00:00",
+        "question_text": "According to data from 2021, there are 415 ppm of carbon dioxide in the atmosphere by volume.\n\nCalculate the moles of carbon dioxide present in 1.00 m3 of air at 20.0 °C and 101 kPa.\n\n[Ideal gas equation pV = nRT\nR = 8.31 J mol-1 K-1]"
+      },
+      {
+        "id": "5accccfd-af20-40a3-bbc1-9314b5edeae6",
+        "paper_id": "f7577346-3c45-4b3a-b944-d52542863358",
+        "parent_question_id": "eb51bacd-baa9-4303-a6eb-4698847116a5",
+        "question_number": "23(c)",
+        "display_order": 510,
+        "marks": 0,
+        "answer_type": "other",
+        "command_word": null,
+        "topic": "Metallic bonding in copper",
+        "spec_point": null,
+        "created_at": "2026-08-08T06:34:55.915973+00:00",
+        "updated_at": "2026-08-10T02:08:29.367503+00:00",
+        "question_text": "Metals are held together by metallic bonding."
+      },
+      {
+        "id": "e7ab5ae5-528d-4470-8f97-d7f568a3ea4a",
+        "paper_id": "f7577346-3c45-4b3a-b944-d52542863358",
+        "parent_question_id": "5accccfd-af20-40a3-bbc1-9314b5edeae6",
+        "question_number": "23(c)(ii)",
+        "display_order": 520,
+        "marks": 2,
+        "answer_type": "long_text",
+        "command_word": "Explain",
+        "topic": "Delocalised electrons and electrical conductivity",
+        "spec_point": null,
+        "created_at": "2026-08-08T06:34:56.06315+00:00",
+        "updated_at": "2026-08-10T02:08:29.660144+00:00",
+        "question_text": "Metals conduct electricity when solid.\n\nExplain, with the aid of a diagram, why copper conducts electricity."
+      },
+      {
+        "id": "4e726198-ad79-447e-b76c-eeb394a458e9",
+        "paper_id": "f7577346-3c45-4b3a-b944-d52542863358",
+        "parent_question_id": null,
+        "question_number": "21",
+        "display_order": 300,
+        "marks": 0,
+        "answer_type": "other",
+        "command_word": null,
+        "topic": "Ionisation energies",
+        "spec_point": null,
+        "created_at": "2026-08-08T06:34:54.338925+00:00",
+        "updated_at": "2026-08-10T02:08:26.725041+00:00",
+        "question_text": "This question is about ionisation energy."
+      },
+      {
+        "id": "31bc7623-60f8-46ee-adb5-94b5ffc4f05d",
+        "paper_id": "f7577346-3c45-4b3a-b944-d52542863358",
+        "parent_question_id": "4e726198-ad79-447e-b76c-eeb394a458e9",
+        "question_number": "21(c)",
+        "display_order": 310,
+        "marks": 0,
+        "answer_type": "other",
+        "command_word": null,
+        "topic": "Period 2 first ionisation energies",
+        "spec_point": null,
+        "created_at": "2026-08-08T06:34:54.486782+00:00",
+        "updated_at": "2026-08-10T02:08:26.999839+00:00",
+        "question_text": null
+      },
+      {
+        "id": "23d539d7-d92e-4b20-ad79-2c7c34c932d8",
+        "paper_id": "f7577346-3c45-4b3a-b944-d52542863358",
+        "parent_question_id": "31bc7623-60f8-46ee-adb5-94b5ffc4f05d",
+        "question_number": "21(c)(i)",
+        "display_order": 320,
+        "marks": 3,
+        "answer_type": "graph",
+        "command_word": "Plot",
+        "topic": "Plotting ionisation energy against element",
+        "spec_point": null,
+        "created_at": "2026-08-08T06:34:54.632581+00:00",
+        "updated_at": "2026-08-10T02:08:27.146836+00:00",
+        "question_text": "Plot the following first ionisation energies of the elements in Period 2 on the grid below.\n\n  Element                            Li   Be    B     C     N     O     F    Ne\n  1st ionisation energy / kJ mol-1  520  900  801  1086  1402  1314  1681  2081"
+      },
+      {
+        "id": "0e20f402-9eb2-49c5-a426-fa7c268c2e36",
+        "paper_id": "f7577346-3c45-4b3a-b944-d52542863358",
+        "parent_question_id": null,
+        "question_number": "22",
+        "display_order": 400,
+        "marks": 0,
+        "answer_type": "other",
+        "command_word": null,
+        "topic": "Alkanes and halogens",
+        "spec_point": null,
+        "created_at": "2026-08-08T06:34:55.154506+00:00",
+        "updated_at": "2026-08-10T02:08:27.87947+00:00",
+        "question_text": "This question is about alkanes and halogens.\nAlkanes can react with halogens to form halogenoalkanes."
+      },
+      {
+        "id": "fdd2fbd1-60da-4e26-91a9-34c656edd995",
+        "paper_id": "f7577346-3c45-4b3a-b944-d52542863358",
+        "parent_question_id": "1b7d7d93-1f7e-47a2-8d5c-40d279c44597",
+        "question_number": "20(b)",
+        "display_order": 220,
+        "marks": 0,
+        "answer_type": "other",
+        "command_word": null,
+        "topic": "Combustion of dodecane",
+        "spec_point": null,
+        "created_at": "2026-08-08T06:34:52.248505+00:00",
+        "updated_at": "2026-08-10T02:08:23.280385+00:00",
+        "question_text": "Dodecane C12H26, is found in kerosene and forms carbon dioxide during its complete combustion."
+      },
+      {
+        "id": "9870b1ed-da93-4297-879d-bd5fd69e7b18",
+        "paper_id": "f7577346-3c45-4b3a-b944-d52542863358",
+        "parent_question_id": "fdd2fbd1-60da-4e26-91a9-34c656edd995",
+        "question_number": "20(b)(i)",
+        "display_order": 230,
+        "marks": 1,
+        "answer_type": "short_text",
+        "command_word": "State",
+        "topic": "Complete combustion",
+        "spec_point": null,
+        "created_at": "2026-08-08T06:34:52.396519+00:00",
+        "updated_at": "2026-08-10T02:08:23.55743+00:00",
+        "question_text": "State what is meant by complete combustion."
+      },
+      {
+        "id": "0df767c9-654d-45e6-85cd-bb173137eb3e",
+        "paper_id": "f7577346-3c45-4b3a-b944-d52542863358",
+        "parent_question_id": "fdd2fbd1-60da-4e26-91a9-34c656edd995",
+        "question_number": "20(b)(ii)",
+        "display_order": 240,
+        "marks": 2,
+        "answer_type": "chemical_equation",
+        "command_word": "Write",
+        "topic": "Balanced equations with state symbols",
+        "spec_point": null,
+        "created_at": "2026-08-08T06:34:52.767202+00:00",
+        "updated_at": "2026-08-10T02:08:24.076685+00:00",
+        "question_text": "Write a balanced equation for the complete combustion of dodecane, C12H26.\nInclude state symbols."
+      },
+      {
+        "id": "4059af5c-f53c-4ea9-8d23-0e00759b6423",
+        "paper_id": "f7577346-3c45-4b3a-b944-d52542863358",
+        "parent_question_id": "0e20f402-9eb2-49c5-a426-fa7c268c2e36",
+        "question_number": "22(c)",
+        "display_order": 410,
+        "marks": 3,
+        "answer_type": "numeric",
+        "command_word": "Calculate",
+        "topic": "Percentage yield",
+        "spec_point": null,
+        "created_at": "2026-08-08T06:34:55.299879+00:00",
+        "updated_at": "2026-08-10T02:08:28.132575+00:00",
+        "question_text": "Calculate the percentage yield if 1.00 g of trichlorobutane is produced from 10.0 g butane using the overall equation shown.\n\nC4H10   +   3Cl2   →   C4H7Cl3   +   3HCl"
+      }
+    ],
+    "question_regions": [
+      {
+        "id": "41a469ad-067b-4eff-950d-50507b0daeab",
+        "question_id": "1da2f391-ef3b-461a-bddb-bd5ef6b560bc",
+        "page_number": 11,
+        "bbox_x": 38.52,
+        "bbox_y": 289.5,
+        "bbox_width": 515.79,
+        "bbox_height": 492.39,
+        "rotation_applied": 0,
+        "confidence": 0.72,
+        "approved_by": "03716e86-284d-4648-9e32-e591c73d601a",
+        "approved_at": "2026-08-09T14:39:11.553+00:00",
+        "created_at": "2026-08-09T14:35:20.184495+00:00"
+      },
+      {
+        "id": "3bf50cdc-9bdf-4565-9e3a-bd304859f392",
+        "question_id": "0df767c9-654d-45e6-85cd-bb173137eb3e",
+        "page_number": 11,
+        "bbox_x": 38.52,
+        "bbox_y": 186.24,
+        "bbox_width": 515.79,
+        "bbox_height": 105.26,
+        "rotation_applied": 0,
+        "confidence": 0.9,
+        "approved_by": "03716e86-284d-4648-9e32-e591c73d601a",
+        "approved_at": "2026-08-09T14:39:11.553+00:00",
+        "created_at": "2026-08-09T14:35:19.001845+00:00"
+      },
+      {
+        "id": "4ac87ac5-0224-4766-9a81-97fa0ac9976b",
+        "question_id": "9870b1ed-da93-4297-879d-bd5fd69e7b18",
+        "page_number": 11,
+        "bbox_x": 38.52,
+        "bbox_y": 91.92,
+        "bbox_width": 515.79,
+        "bbox_height": 93.27,
+        "rotation_applied": 0,
+        "confidence": 0.8,
+        "approved_by": "03716e86-284d-4648-9e32-e591c73d601a",
+        "approved_at": "2026-08-09T14:39:11.553+00:00",
+        "created_at": "2026-08-09T14:35:18.33563+00:00"
+      },
+      {
+        "id": "8ef5133e-05a8-4558-a1d9-a608bdff334a",
+        "question_id": "fdd2fbd1-60da-4e26-91a9-34c656edd995",
+        "page_number": 11,
+        "bbox_x": 38.52,
+        "bbox_y": 53.94,
+        "bbox_width": 515.79,
+        "bbox_height": 38.42,
+        "rotation_applied": 0,
+        "confidence": 0.85,
+        "approved_by": "03716e86-284d-4648-9e32-e591c73d601a",
+        "approved_at": "2026-08-09T14:39:11.553+00:00",
+        "created_at": "2026-08-09T14:35:17.675089+00:00"
+      },
+      {
+        "id": "cd00a688-9fa8-457e-8a54-de4e1352364b",
+        "question_id": "06efb748-5f85-4044-ae1d-7f7a2739f943",
+        "page_number": 10,
+        "bbox_x": 38.52,
+        "bbox_y": 125.87,
+        "bbox_width": 475.72,
+        "bbox_height": 656.02,
+        "rotation_applied": 0,
+        "confidence": 0.72,
+        "approved_by": "03716e86-284d-4648-9e32-e591c73d601a",
+        "approved_at": "2026-08-09T14:39:11.553+00:00",
+        "created_at": "2026-08-09T14:35:16.730118+00:00"
+      },
+      {
+        "id": "baadc3ea-f801-4813-923f-32848de32e05",
+        "question_id": "1b7d7d93-1f7e-47a2-8d5c-40d279c44597",
+        "page_number": 10,
+        "bbox_x": 38.52,
+        "bbox_y": 101.45,
+        "bbox_width": 475.72,
+        "bbox_height": 24.87,
+        "rotation_applied": 0,
+        "confidence": 0.85,
+        "approved_by": "03716e86-284d-4648-9e32-e591c73d601a",
+        "approved_at": "2026-08-09T14:39:11.553+00:00",
+        "created_at": "2026-08-09T14:35:15.863904+00:00"
+      },
+      {
+        "id": "6ae03d41-2e19-444b-a761-480ef9f84b6c",
+        "question_id": "4bde5080-ab5b-449a-91dc-c0dcf91ee1b2",
+        "page_number": 2,
+        "bbox_x": 38.52,
+        "bbox_y": 381.44,
+        "bbox_width": 507.9,
+        "bbox_height": 202.26,
+        "rotation_applied": 0,
+        "confidence": 0.8,
+        "approved_by": "03716e86-284d-4648-9e32-e591c73d601a",
+        "approved_at": "2026-08-09T14:39:11.553+00:00",
+        "created_at": "2026-08-09T14:35:15.341333+00:00"
+      },
+      {
+        "id": "46240dc5-bc7b-4bdb-9ec2-cdc1cac58f99",
+        "question_id": "325146c7-26b2-4b8b-a2a4-7d9941ebaf59",
+        "page_number": 2,
+        "bbox_x": 38.52,
+        "bbox_y": 163.21,
+        "bbox_width": 507.9,
+        "bbox_height": 186.46,
+        "rotation_applied": 0,
+        "confidence": 0.8,
+        "approved_by": "03716e86-284d-4648-9e32-e591c73d601a",
+        "approved_at": "2026-08-09T14:39:11.553+00:00",
+        "created_at": "2026-08-09T14:35:14.132852+00:00"
+      },
+      {
+        "id": "5ffc369c-5102-4846-b32d-97a587439d9b",
+        "question_id": "17b225da-4663-4032-8c36-624d389fc56b",
+        "page_number": 12,
+        "bbox_x": 49.77,
+        "bbox_y": 53.94,
+        "bbox_width": 495.73,
+        "bbox_height": 375.07,
+        "rotation_applied": 0,
+        "confidence": 0.8,
+        "approved_by": "03716e86-284d-4648-9e32-e591c73d601a",
+        "approved_at": "2026-08-09T14:39:11.553+00:00",
+        "created_at": "2026-08-09T14:35:21.232862+00:00"
+      },
+      {
+        "id": "37b82fb8-1f71-4152-889b-d39f4f481297",
+        "question_id": "4e726198-ad79-447e-b76c-eeb394a458e9",
+        "page_number": 13,
+        "bbox_x": 38.52,
+        "bbox_y": 53.49,
+        "bbox_width": 515.79,
+        "bbox_height": 24.87,
+        "rotation_applied": 0,
+        "confidence": 0.85,
+        "approved_by": "03716e86-284d-4648-9e32-e591c73d601a",
+        "approved_at": "2026-08-09T14:39:11.553+00:00",
+        "created_at": "2026-08-09T14:35:22.140391+00:00"
+      },
+      {
+        "id": "264db78a-9e37-4acf-a52d-b78dd827696c",
+        "question_id": "23d539d7-d92e-4b20-ad79-2c7c34c932d8",
+        "page_number": 14,
+        "bbox_x": 54.14,
+        "bbox_y": 53.94,
+        "bbox_width": 487,
+        "bbox_height": 603.34,
+        "rotation_applied": 0,
+        "confidence": 0.8,
+        "approved_by": "03716e86-284d-4648-9e32-e591c73d601a",
+        "approved_at": "2026-08-09T14:39:11.553+00:00",
+        "created_at": "2026-08-09T14:35:22.91756+00:00"
+      },
+      {
+        "id": "8f7d2980-d722-4213-b13f-e96acada16f9",
+        "question_id": "0e20f402-9eb2-49c5-a426-fa7c268c2e36",
+        "page_number": 16,
+        "bbox_x": 38.52,
+        "bbox_y": 53.49,
+        "bbox_width": 515.79,
+        "bbox_height": 48.85,
+        "rotation_applied": 0,
+        "confidence": 0.85,
+        "approved_by": "03716e86-284d-4648-9e32-e591c73d601a",
+        "approved_at": "2026-08-09T14:39:11.553+00:00",
+        "created_at": "2026-08-09T14:35:23.83724+00:00"
+      },
+      {
+        "id": "2d91cb98-4d0e-4c37-827f-9063a7f49899",
+        "question_id": "4059af5c-f53c-4ea9-8d23-0e00759b6423",
+        "page_number": 17,
+        "bbox_x": 55.93,
+        "bbox_y": 53.94,
+        "bbox_width": 458.3,
+        "bbox_height": 279.56,
+        "rotation_applied": 0,
+        "confidence": 0.9,
+        "approved_by": "03716e86-284d-4648-9e32-e591c73d601a",
+        "approved_at": "2026-08-09T14:39:11.553+00:00",
+        "created_at": "2026-08-09T14:35:24.614912+00:00"
+      },
+      {
+        "id": "0614e4bc-9631-45d9-8688-73d31ea3b114",
+        "question_id": "eb51bacd-baa9-4303-a6eb-4698847116a5",
+        "page_number": 18,
+        "bbox_x": 38.52,
+        "bbox_y": 53.49,
+        "bbox_width": 515.79,
+        "bbox_height": 24.87,
+        "rotation_applied": 0,
+        "confidence": 0.85,
+        "approved_by": "03716e86-284d-4648-9e32-e591c73d601a",
+        "approved_at": "2026-08-09T14:39:11.553+00:00",
+        "created_at": "2026-08-09T14:35:25.558693+00:00"
+      },
+      {
+        "id": "4c531baa-09e2-4580-bfae-b1481410b4fd",
+        "question_id": "5accccfd-af20-40a3-bbc1-9314b5edeae6",
+        "page_number": 22,
+        "bbox_x": 38.52,
+        "bbox_y": 340.14,
+        "bbox_width": 515.79,
+        "bbox_height": 24.42,
+        "rotation_applied": 0,
+        "confidence": 0.85,
+        "approved_by": "03716e86-284d-4648-9e32-e591c73d601a",
+        "approved_at": "2026-08-09T14:39:11.553+00:00",
+        "created_at": "2026-08-09T14:35:26.079438+00:00"
+      },
+      {
+        "id": "55bf20da-fd2c-4356-b345-7f492ab00cd4",
+        "question_id": "e7ab5ae5-528d-4470-8f97-d7f568a3ea4a",
+        "page_number": 22,
+        "bbox_x": 38.52,
+        "bbox_y": 486.61,
+        "bbox_width": 515.79,
+        "bbox_height": 230.46,
+        "rotation_applied": 0,
+        "confidence": 0.8,
+        "approved_by": "03716e86-284d-4648-9e32-e591c73d601a",
+        "approved_at": "2026-08-09T14:39:11.553+00:00",
+        "created_at": "2026-08-09T14:35:26.744117+00:00"
+      }
+    ],
+    "mark_scheme_items": [
+      {
+        "id": "be9bcaf5-8b28-4e3b-a16d-45e9a35f84f4",
+        "question_id": "9870b1ed-da93-4297-879d-bd5fd69e7b18",
+        "point_code": "M1",
+        "criterion": "(burned / reacted) in sufficient / excess oxygen",
+        "display_order": 0,
+        "created_at": "2026-08-08T06:34:52.54498+00:00",
+        "guidance": null,
+        "accept": [
+          "Allow a reaction in which all of the atoms in the fuel are fully oxidised",
+          "Ignore any reference to carbon dioxide and water"
+        ],
+        "reject": null,
+        "point_kind": null
+      },
+      {
+        "id": "d4deed83-d332-45db-adfa-25fd0c11bfff",
+        "question_id": "325146c7-26b2-4b8b-a2a4-7d9941ebaf59",
+        "point_code": "M1",
+        "criterion": "The only correct answer is B (neutron number 44, electron number 36)",
+        "display_order": 0,
+        "created_at": "2026-08-08T06:34:50.851129+00:00",
+        "guidance": null,
+        "accept": null,
+        "reject": [
+          "A is incorrect because the number of electrons is for a 79Br atom",
+          "C is incorrect because the number of neutrons is for a 81Br atom",
+          "D is incorrect because the number of neutrons is for a 81Br- ion"
+        ],
+        "point_kind": null
+      },
+      {
+        "id": "247e6468-f554-40c8-b87b-7a23fd65af4a",
+        "question_id": "0df767c9-654d-45e6-85cd-bb173137eb3e",
+        "point_code": "M1",
+        "criterion": "correctly balanced equation",
+        "display_order": 0,
+        "created_at": "2026-08-08T06:34:52.918011+00:00",
+        "guidance": "C12H26(l) + 18.5O2(g) → 12CO2(g) + 13H2O(l)",
+        "accept": [
+          "Allow multiples"
+        ],
+        "reject": null,
+        "point_kind": null
+      },
+      {
+        "id": "cdfc4044-ef97-4401-b5e7-935a93aa9eac",
+        "question_id": "4bde5080-ab5b-449a-91dc-c0dcf91ee1b2",
+        "point_code": "M1",
+        "criterion": "The only correct answer is A (0.072 dm3)",
+        "display_order": 0,
+        "created_at": "2026-08-08T06:34:51.344718+00:00",
+        "guidance": null,
+        "accept": null,
+        "reject": [
+          "B is incorrect because it has not allowed for the correct stoichiometry (not divided by 2)",
+          "C is incorrect because it has not allowed for the correct stoichiometry (multiplied by 2)",
+          "D is incorrect because the concentration has not been divided by 1000"
+        ],
+        "point_kind": null
+      },
+      {
+        "id": "e2ac9768-ec86-42c3-8d76-3ab60c84dbe5",
+        "question_id": "06efb748-5f85-4044-ae1d-7f7a2739f943",
+        "point_code": "M1",
+        "criterion": "convert °C to K",
+        "display_order": 0,
+        "created_at": "2026-08-08T06:34:51.874768+00:00",
+        "guidance": "Example of calculation\n20 + 273 = 293",
+        "accept": null,
+        "reject": null,
+        "point_kind": null
+      },
+      {
+        "id": "e46a80c0-47e3-47c1-9ae3-1840ad71ea0f",
+        "question_id": "06efb748-5f85-4044-ae1d-7f7a2739f943",
+        "point_code": "M2",
+        "criterion": "kPa to Pa and 415 cm3 to m3",
+        "display_order": 1,
+        "created_at": "2026-08-08T06:34:51.874768+00:00",
+        "guidance": "101 x 1000 = 101000 and 415 ÷ 1000000 = 415 x 10-6 / 4.15 x 10-4",
+        "accept": null,
+        "reject": null,
+        "point_kind": null
+      },
+      {
+        "id": "d2bb08c9-234c-4607-8d88-b003b05b66ce",
+        "question_id": "17b225da-4663-4032-8c36-624d389fc56b",
+        "point_code": "M1",
+        "criterion": "[DIAGRAM, NOT TEXT — see mark scheme p16] skeletal formula of 4,4-diethyloctane (both ethyl groups on the same carbon)",
+        "display_order": 0,
+        "created_at": "2026-08-08T06:34:53.960308+00:00",
+        "guidance": null,
+        "accept": [
+          "Ignore any names even if incorrect"
+        ],
+        "reject": null,
+        "point_kind": null
+      },
+      {
+        "id": "31d0197c-6009-41e3-954a-2e0098efe71b",
+        "question_id": "06efb748-5f85-4044-ae1d-7f7a2739f943",
+        "point_code": "M3",
+        "criterion": "substitution into pV = nRT and rearrangement",
+        "display_order": 2,
+        "created_at": "2026-08-08T06:34:51.874768+00:00",
+        "guidance": "n = 101000 × 415 x 10-6 ÷ 8.31 × 293",
+        "accept": null,
+        "reject": null,
+        "point_kind": null
+      },
+      {
+        "id": "94c94697-2247-4d59-89a4-c4c625c9db42",
+        "question_id": "17b225da-4663-4032-8c36-624d389fc56b",
+        "point_code": "M2",
+        "criterion": "[DIAGRAM, NOT TEXT — see mark scheme p16] skeletal formula of 4,5-diethyloctane (ethyl groups on adjacent carbons)",
+        "display_order": 1,
+        "created_at": "2026-08-08T06:34:53.960308+00:00",
+        "guidance": null,
+        "accept": [
+          "Allow 1 mark for two correct non skeletal formulae"
+        ],
+        "reject": null,
+        "point_kind": null
+      },
+      {
+        "id": "a118a672-8beb-4f94-9584-c5c3a9129be3",
+        "question_id": "23d539d7-d92e-4b20-ad79-2c7c34c932d8",
+        "point_code": "M1",
+        "criterion": "axes labelled correctly with units on y axis",
+        "display_order": 0,
+        "created_at": "2026-08-08T06:34:54.861077+00:00",
+        "guidance": null,
+        "accept": [
+          "Allow x axis as atomic numbers",
+          "Allow log axis on y axis"
+        ],
+        "reject": null,
+        "point_kind": null
+      },
+      {
+        "id": "c60ab1b1-2f8e-4786-b6b3-e257a2e1d6c6",
+        "question_id": "0df767c9-654d-45e6-85cd-bb173137eb3e",
+        "point_code": "M2",
+        "criterion": "state symbols correct",
+        "display_order": 1,
+        "created_at": "2026-08-08T06:34:52.918011+00:00",
+        "guidance": null,
+        "accept": [
+          "Accept 13H2O(g)"
+        ],
+        "reject": null,
+        "point_kind": null
+      },
+      {
+        "id": "8d4f1285-03d3-4fc0-bcba-c3ab5a91e000",
+        "question_id": "06efb748-5f85-4044-ae1d-7f7a2739f943",
+        "point_code": "M4",
+        "criterion": "evaluation",
+        "display_order": 3,
+        "created_at": "2026-08-08T06:34:51.874768+00:00",
+        "guidance": "n = 0.0172 mol\nTE on M1 and M2 but no TE from M3 to M4\nCorrect answer with no working scores (4)",
+        "accept": [
+          "Ignore SF except 1 SF"
+        ],
+        "reject": null,
+        "point_kind": null
+      },
+      {
+        "id": "fa7818df-2dcd-46c8-93cb-65610dd0a101",
+        "question_id": "1da2f391-ef3b-461a-bddb-bd5ef6b560bc",
+        "point_code": "M1",
+        "criterion": "calculation of litres of fuel used",
+        "display_order": 0,
+        "created_at": "2026-08-08T06:34:53.436099+00:00",
+        "guidance": "Example of calculation\n(11400) × 9.25 = 105 450 (1.0545 × 105)",
+        "accept": null,
+        "reject": null,
+        "point_kind": null
+      },
+      {
+        "id": "f1c01f8e-c0a9-4670-aa6e-37b5ec608016",
+        "question_id": "1da2f391-ef3b-461a-bddb-bd5ef6b560bc",
+        "point_code": "M2",
+        "criterion": "calculation of mass of fuel used",
+        "display_order": 1,
+        "created_at": "2026-08-08T06:34:53.436099+00:00",
+        "guidance": "(105 450) × 0.749 (× 1000) = 78 982 000 (7.8982 × 107)(g)",
+        "accept": null,
+        "reject": null,
+        "point_kind": null
+      },
+      {
+        "id": "0e299cdc-2551-4b98-9ae5-7f9720ca0865",
+        "question_id": "e7ab5ae5-528d-4470-8f97-d7f568a3ea4a",
+        "point_code": "M1",
+        "criterion": "delocalised electrons are able to move / flow (through the lattice and carry a charge)",
+        "display_order": 0,
+        "created_at": "2026-08-08T06:34:56.209883+00:00",
+        "guidance": null,
+        "accept": null,
+        "reject": [
+          "Do not award ions move"
+        ],
+        "point_kind": null
+      },
+      {
+        "id": "0096d5be-2da2-456d-9ac0-bd5723e29f16",
+        "question_id": "e7ab5ae5-528d-4470-8f97-d7f568a3ea4a",
+        "point_code": "M2",
+        "criterion": "diagram showing lattice of Cu2+ ions and (sea of) electrons interspersed within the structure – approximately twice as many electrons as ions",
+        "display_order": 1,
+        "created_at": "2026-08-08T06:34:56.209883+00:00",
+        "guidance": null,
+        "accept": [
+          "Delocalised electrons may be labelled in the diagram"
+        ],
+        "reject": null,
+        "point_kind": null
+      },
+      {
+        "id": "c430660e-3c13-475c-84f5-14d9b96a8a0f",
+        "question_id": "1da2f391-ef3b-461a-bddb-bd5ef6b560bc",
+        "point_code": "M3",
+        "criterion": "calculation of mol of fuel used",
+        "display_order": 2,
+        "created_at": "2026-08-08T06:34:53.436099+00:00",
+        "guidance": "(78 982 000) ÷ 170 = 464 600 (4.6460 × 105) (mol)",
+        "accept": null,
+        "reject": null,
+        "point_kind": null
+      },
+      {
+        "id": "5a668447-f962-41bb-82ce-27dd053fdcbb",
+        "question_id": "1da2f391-ef3b-461a-bddb-bd5ef6b560bc",
+        "point_code": "M4",
+        "criterion": "calculation of mol of carbon dioxide",
+        "display_order": 3,
+        "created_at": "2026-08-08T06:34:53.436099+00:00",
+        "guidance": "(464 600) × 12 = 5 575 200 (5.5752 × 106) (mol)\n(check mole ratio from 20bii)",
+        "accept": null,
+        "reject": null,
+        "point_kind": null
+      },
+      {
+        "id": "ae099fd0-3624-42a2-902f-fa9888b4295c",
+        "question_id": "1da2f391-ef3b-461a-bddb-bd5ef6b560bc",
+        "point_code": "M5",
+        "criterion": "calculation of mass of carbon dioxide",
+        "display_order": 4,
+        "created_at": "2026-08-08T06:34:53.436099+00:00",
+        "guidance": "(5 575 200) × 44 = 245 310 000 (2.4531 × 108) (g)",
+        "accept": null,
+        "reject": null,
+        "point_kind": null
+      },
+      {
+        "id": "8b1ccfcc-6602-4a95-94d6-af50f2d68dc5",
+        "question_id": "23d539d7-d92e-4b20-ad79-2c7c34c932d8",
+        "point_code": "M2",
+        "criterion": "suitable scale",
+        "display_order": 1,
+        "created_at": "2026-08-08T06:34:54.861077+00:00",
+        "guidance": "Points plotted must cover at least 50% of the graph in both directions",
+        "accept": null,
+        "reject": null,
+        "point_kind": null
+      },
+      {
+        "id": "24c9c476-185d-48ef-9d2d-867c0e0e07fa",
+        "question_id": "23d539d7-d92e-4b20-ad79-2c7c34c932d8",
+        "point_code": "M3",
+        "criterion": "all points correctly plotted",
+        "display_order": 2,
+        "created_at": "2026-08-08T06:34:54.861077+00:00",
+        "guidance": null,
+        "accept": [
+          "Allow ±1 small square",
+          "Ignore lines between points / line of best fit"
+        ],
+        "reject": null,
+        "point_kind": null
+      },
+      {
+        "id": "eab2d4ff-480e-4860-82a2-214364aec5bc",
+        "question_id": "4059af5c-f53c-4ea9-8d23-0e00759b6423",
+        "point_code": "M1",
+        "criterion": "calculation of moles of butane",
+        "display_order": 0,
+        "created_at": "2026-08-08T06:34:55.447498+00:00",
+        "guidance": "Example of calculation\n10/58 = 0.17241 mol butane\nAlternative method M1 — calculation of moles of butane: 10/58 = 0.17241 mol butane",
+        "accept": null,
+        "reject": null,
+        "point_kind": null
+      },
+      {
+        "id": "0cd0c68e-3db1-4bb7-a2af-c4b7fc2a0339",
+        "question_id": "4059af5c-f53c-4ea9-8d23-0e00759b6423",
+        "point_code": "M2",
+        "criterion": "calculation of theoretical mass of trichlorobutane",
+        "display_order": 1,
+        "created_at": "2026-08-08T06:34:55.447498+00:00",
+        "guidance": "mol trichlorobutane 0.17241\n0.17241 x 161.5 = 27.844(g)\nAlternative method M2 — calculation of actual moles of trichlorobutane: 1/161.5 = 6.19195 x 10-3",
+        "accept": null,
+        "reject": null,
+        "point_kind": null
+      },
+      {
+        "id": "7b4ca602-6eac-498d-8ecb-9ffcc21d6573",
+        "question_id": "4059af5c-f53c-4ea9-8d23-0e00759b6423",
+        "point_code": "M3",
+        "criterion": "% yield",
+        "display_order": 2,
+        "created_at": "2026-08-08T06:34:55.447498+00:00",
+        "guidance": "1/ 27.844 x 100 = 3.591%\nAlternative method M3 — % yield ((M2/M1) x 100)): [6.19195 x 10-3 / 0.17241] x 100 = 3.591%\nTE throughout, but final answer must be less than 100%\nCorrect answer with some working scores 3",
+        "accept": [
+          "Ignore SF except for 1 SF"
+        ],
+        "reject": null,
+        "point_kind": null
+      },
+      {
+        "id": "47b51f14-6dc2-4ff6-ada0-14229aceed8b",
+        "question_id": "1da2f391-ef3b-461a-bddb-bd5ef6b560bc",
+        "point_code": "M6",
+        "criterion": "calculation of mass (kg) of carbon dioxide/passenger and to 3SF",
+        "display_order": 5,
+        "created_at": "2026-08-08T06:34:53.436099+00:00",
+        "guidance": "(245 310 000) ÷ 800 (÷ 1000)= (306 640 (3.0664 × 105) (g)\n307 (kg)",
+        "accept": [
+          "Allow 306 (kg)",
+          "Allow 307000 / 306000 g",
+          "If all six operations have not been carried out ignore SF",
+          "Allow TE throughout"
+        ],
+        "reject": null,
+        "point_kind": null
+      }
+    ],
+    "question_expected_answers": [
+      {
+        "id": "53a4e9c3-3508-4667-9c6a-93a251778428",
+        "question_id": "325146c7-26b2-4b8b-a2a4-7d9941ebaf59",
+        "expected_value": "B",
+        "expected_unit": null,
+        "answer_tolerance": null,
+        "accepted_values": null,
+        "marks_on_correct_answer": 1,
+        "created_at": "2026-08-08T18:26:17.550691+00:00",
+        "updated_at": "2026-08-10T02:08:20.258+00:00"
+      },
+      {
+        "id": "db65586f-e915-4c2a-a9af-d8a02efc78ca",
+        "question_id": "4bde5080-ab5b-449a-91dc-c0dcf91ee1b2",
+        "expected_value": "A",
+        "expected_unit": null,
+        "answer_tolerance": null,
+        "accepted_values": null,
+        "marks_on_correct_answer": 1,
+        "created_at": "2026-08-08T18:26:18.229339+00:00",
+        "updated_at": "2026-08-10T02:08:21.22+00:00"
+      },
+      {
+        "id": "82765ea3-26d8-4c5e-b437-8d82281f5340",
+        "question_id": "06efb748-5f85-4044-ae1d-7f7a2739f943",
+        "expected_value": "0.0172",
+        "expected_unit": null,
+        "answer_tolerance": 0.005,
+        "accepted_values": null,
+        "marks_on_correct_answer": 4,
+        "created_at": "2026-08-08T18:26:18.964389+00:00",
+        "updated_at": "2026-08-10T02:08:22.343+00:00"
+      },
+      {
+        "id": "281ee64d-4a18-41a2-994f-84a036440b08",
+        "question_id": "0df767c9-654d-45e6-85cd-bb173137eb3e",
+        "expected_value": "C12H26(l) + 18.5O2(g) -> 12CO2(g) + 13H2O(l)",
+        "expected_unit": null,
+        "answer_tolerance": null,
+        "accepted_values": null,
+        "marks_on_correct_answer": null,
+        "created_at": "2026-08-10T02:08:24.65422+00:00",
+        "updated_at": "2026-08-10T02:08:24.156+00:00"
+      },
+      {
+        "id": "78d5ef7c-9521-4d6e-b7f7-1be005a5a230",
+        "question_id": "1da2f391-ef3b-461a-bddb-bd5ef6b560bc",
+        "expected_value": "307",
+        "expected_unit": null,
+        "answer_tolerance": 0.005,
+        "accepted_values": [
+          "306"
+        ],
+        "marks_on_correct_answer": 1,
+        "created_at": "2026-08-08T18:26:20.692559+00:00",
+        "updated_at": "2026-08-10T02:08:25.159+00:00"
+      },
+      {
+        "id": "75b8837d-d0e5-4c10-9dde-5fef2b8e533d",
+        "question_id": "4059af5c-f53c-4ea9-8d23-0e00759b6423",
+        "expected_value": "3.591",
+        "expected_unit": null,
+        "answer_tolerance": 0.01,
+        "accepted_values": null,
+        "marks_on_correct_answer": null,
+        "created_at": "2026-08-08T18:26:22.939399+00:00",
+        "updated_at": "2026-08-10T02:08:28.177+00:00"
+      }
+    ],
+    "examiner_report_insights": [
+      {
+        "id": "6044b9bd-fa31-4bdb-82e3-ce17e0d97dc0",
+        "question_id": "1da2f391-ef3b-461a-bddb-bd5ef6b560bc",
+        "insight_text": "Some of the questions were more challenging, particularly the multi-step calculation Q20(b)(iii).",
+        "insight_type": "warning",
+        "created_at": "2026-08-09T14:35:20.576977+00:00"
+      },
+      {
+        "id": "dd6032df-a80f-4cf8-a7ce-555cca3faa8e",
+        "question_id": "1da2f391-ef3b-461a-bddb-bd5ef6b560bc",
+        "insight_text": "All the operations involved either multiplication or division and consequently the order of the operations did not affect the final value.",
+        "insight_type": null,
+        "created_at": "2026-08-09T14:35:20.576977+00:00"
+      },
+      {
+        "id": "138d6008-afb4-4927-b5c3-15f888141a44",
+        "question_id": "17b225da-4663-4032-8c36-624d389fc56b",
+        "insight_text": "Question 20(b)(iv), drawing the two missing diethyl isomers of dodecane, was among the more challenging questions on the paper.",
+        "insight_type": "warning",
+        "created_at": "2026-08-09T14:35:21.621495+00:00"
+      },
+      {
+        "id": "777c128a-a21f-472e-91eb-4db0d2d6f2b2",
+        "question_id": "17b225da-4663-4032-8c36-624d389fc56b",
+        "insight_text": "This question was aimed at the most able candidates. In order to answer the question, it was necessary to realise that the ethyl branches had to be placed on at least the third carbon in from either end, otherwise they were just increasing the carbon chain length.",
+        "insight_type": "common_error",
+        "created_at": "2026-08-09T14:35:21.621495+00:00"
+      },
+      {
+        "id": "a598477d-1b15-4753-8b05-d3c0c3463cfe",
+        "question_id": "23d539d7-d92e-4b20-ad79-2c7c34c932d8",
+        "insight_text": "The graphical Question 21(c)(i) was answered well by the majority of candidates.",
+        "insight_type": "strong_candidates",
+        "created_at": "2026-08-09T14:35:23.309672+00:00"
+      },
+      {
+        "id": "eccc6220-a2f9-4172-b11c-fb17aeec82fa",
+        "question_id": "23d539d7-d92e-4b20-ad79-2c7c34c932d8",
+        "insight_text": "There were several very poor choices of scale and this made plotting more difficult for the candidates. There were also non-linear scales and this meant it was not possible to award either the scale or plotting marks. Lines were not required on the graph.",
+        "insight_type": "common_error",
+        "created_at": "2026-08-09T14:35:23.309672+00:00"
+      },
+      {
+        "id": "6651119d-d6c3-4215-91c0-0019838b1053",
+        "question_id": "4059af5c-f53c-4ea9-8d23-0e00759b6423",
+        "insight_text": "A percentage yield question, accessible to all candidates with over half the cohort scoring all three marks.",
+        "insight_type": "strong_candidates",
+        "created_at": "2026-08-09T14:35:25.032809+00:00"
+      },
+      {
+        "id": "a17fa2fa-0024-4308-86da-d23cea33cbd9",
+        "question_id": "4059af5c-f53c-4ea9-8d23-0e00759b6423",
+        "insight_text": "The clip shows a response where the atom economy has been calculated instead of the percentage yield.",
+        "insight_type": "common_error",
+        "created_at": "2026-08-09T14:35:25.032809+00:00"
+      },
+      {
+        "id": "3e3f448c-3442-4433-bbb5-0687d458437e",
+        "question_id": "e7ab5ae5-528d-4470-8f97-d7f568a3ea4a",
+        "insight_text": "This question about metallic bonding was aimed at all candidates, just over 40% of the cohort scored one mark for this question. The clip show what appears to be an ionic lattice rather than a metallic lattice. There is no mention of the delocalised electrons being able to move. Know the difference between the different types of lattices.",
+        "insight_type": "common_error",
+        "created_at": "2026-08-09T14:35:27.137551+00:00"
+      },
+      {
+        "id": "27e10e4f-a6f4-4d95-a7a8-965d54ab08aa",
+        "question_id": "0df767c9-654d-45e6-85cd-bb173137eb3e",
+        "insight_text": "Many candidates were able to balance but several lost the state symbol mark, with dodecane labelled as (g), (s) and occasionally (aq).",
+        "insight_type": "common_error",
+        "created_at": "2026-08-09T14:35:19.396501+00:00"
+      },
+      {
+        "id": "7c5f8b33-0e2a-4014-9380-dcd599cd00f3",
+        "question_id": "06efb748-5f85-4044-ae1d-7f7a2739f943",
+        "insight_text": "The majority of candidates scored 3 of the 4 available marks, the final mark being lost for not converting cubic centimetres into cubic metres.",
+        "insight_type": "common_error",
+        "created_at": "2026-08-09T14:35:17.139359+00:00"
+      },
+      {
+        "id": "a296a5fc-e762-4480-9211-c72f18e824c4",
+        "question_id": "325146c7-26b2-4b8b-a2a4-7d9941ebaf59",
+        "insight_text": "Candidates of all abilities gained marks on Question 1 (atomic structure).",
+        "insight_type": "strong_candidates",
+        "created_at": "2026-08-09T14:35:14.53712+00:00"
+      }
+    ],
+    "model_answers": [],
+    "question_topics": [],
+    "question_spec_points": [],
+    "question_attempts": [
+      {
+        "id": "aea14319-6f09-4182-9977-e720a42fec4d",
+        "exam_attempt_id": "b7b9aa35-b0bd-451f-b416-8ff304dc0235",
+        "question_id": "06efb748-5f85-4044-ae1d-7f7a2739f943",
+        "awarded_marks": null,
+        "max_marks": 4,
+        "confidence": null,
+        "flagged": false,
+        "created_at": "2026-08-10T23:58:37.464666+00:00",
+        "updated_at": "2026-08-10T23:58:37.464666+00:00"
+      },
+      {
+        "id": "5a544bea-dd89-48c8-ab1f-2429fa7481b3",
+        "exam_attempt_id": "b7b9aa35-b0bd-451f-b416-8ff304dc0235",
+        "question_id": "17b225da-4663-4032-8c36-624d389fc56b",
+        "awarded_marks": null,
+        "max_marks": 2,
+        "confidence": null,
+        "flagged": false,
+        "created_at": "2026-08-10T23:58:37.464666+00:00",
+        "updated_at": "2026-08-10T23:58:37.464666+00:00"
+      },
+      {
+        "id": "17b124b4-845d-4a8d-89b7-f6c35e97e950",
+        "exam_attempt_id": "b7b9aa35-b0bd-451f-b416-8ff304dc0235",
+        "question_id": "1da2f391-ef3b-461a-bddb-bd5ef6b560bc",
+        "awarded_marks": null,
+        "max_marks": 6,
+        "confidence": null,
+        "flagged": false,
+        "created_at": "2026-08-10T23:58:37.464666+00:00",
+        "updated_at": "2026-08-10T23:58:37.464666+00:00"
+      },
+      {
+        "id": "d6a38eb8-09e4-4bea-9fca-b4856f76bcd8",
+        "exam_attempt_id": "b7b9aa35-b0bd-451f-b416-8ff304dc0235",
+        "question_id": "23d539d7-d92e-4b20-ad79-2c7c34c932d8",
+        "awarded_marks": null,
+        "max_marks": 3,
+        "confidence": null,
+        "flagged": false,
+        "created_at": "2026-08-10T23:58:37.464666+00:00",
+        "updated_at": "2026-08-10T23:58:37.464666+00:00"
+      },
+      {
+        "id": "23b5cea4-76a4-4591-94ad-3704cd20f18c",
+        "exam_attempt_id": "b7b9aa35-b0bd-451f-b416-8ff304dc0235",
+        "question_id": "4059af5c-f53c-4ea9-8d23-0e00759b6423",
+        "awarded_marks": null,
+        "max_marks": 3,
+        "confidence": null,
+        "flagged": false,
+        "created_at": "2026-08-10T23:58:37.464666+00:00",
+        "updated_at": "2026-08-10T23:58:37.464666+00:00"
+      },
+      {
+        "id": "f2d39e52-c964-4553-bb31-993b67052f35",
+        "exam_attempt_id": "b7b9aa35-b0bd-451f-b416-8ff304dc0235",
+        "question_id": "325146c7-26b2-4b8b-a2a4-7d9941ebaf59",
+        "awarded_marks": 0,
+        "max_marks": 1,
+        "confidence": "deterministic",
+        "flagged": false,
+        "created_at": "2026-08-10T23:58:37.464666+00:00",
+        "updated_at": "2026-08-10T23:59:01.912334+00:00"
+      },
+      {
+        "id": "2973059f-d271-4f72-8703-6f17a867b2dd",
+        "exam_attempt_id": "b7b9aa35-b0bd-451f-b416-8ff304dc0235",
+        "question_id": "4bde5080-ab5b-449a-91dc-c0dcf91ee1b2",
+        "awarded_marks": 0,
+        "max_marks": 1,
+        "confidence": "deterministic",
+        "flagged": false,
+        "created_at": "2026-08-10T23:58:37.464666+00:00",
+        "updated_at": "2026-08-10T23:59:02.318521+00:00"
+      },
+      {
+        "id": "e917b196-a92c-40f3-948e-efb0fe13c50c",
+        "exam_attempt_id": "b7b9aa35-b0bd-451f-b416-8ff304dc0235",
+        "question_id": "9870b1ed-da93-4297-879d-bd5fd69e7b18",
+        "awarded_marks": 0,
+        "max_marks": 1,
+        "confidence": "requires_review",
+        "flagged": false,
+        "created_at": "2026-08-10T23:58:37.464666+00:00",
+        "updated_at": "2026-08-10T23:59:02.427426+00:00"
+      },
+      {
+        "id": "a86e0ce5-0d9d-4131-8f3d-2355d4508d59",
+        "exam_attempt_id": "b7b9aa35-b0bd-451f-b416-8ff304dc0235",
+        "question_id": "0df767c9-654d-45e6-85cd-bb173137eb3e",
+        "awarded_marks": 0,
+        "max_marks": 2,
+        "confidence": "deterministic",
+        "flagged": false,
+        "created_at": "2026-08-10T23:58:37.464666+00:00",
+        "updated_at": "2026-08-10T23:59:02.83507+00:00"
+      },
+      {
+        "id": "2096a7c5-a8f4-41c5-88f9-f4608beb4f3f",
+        "exam_attempt_id": "b7b9aa35-b0bd-451f-b416-8ff304dc0235",
+        "question_id": "e7ab5ae5-528d-4470-8f97-d7f568a3ea4a",
+        "awarded_marks": 0,
+        "max_marks": 2,
+        "confidence": "requires_review",
+        "flagged": false,
+        "created_at": "2026-08-10T23:58:37.464666+00:00",
+        "updated_at": "2026-08-10T23:59:03.119577+00:00"
+      }
+    ],
+    "marking_results": [
+      {
+        "id": "be155488-05f4-4380-ae10-0b60aad411c2",
+        "question_attempt_id": "f2d39e52-c964-4553-bb31-993b67052f35",
+        "point_code": "M1",
+        "awarded": false,
+        "evidence": "You chose D. The correct answer is B.",
+        "explanation": null,
+        "model_version": null,
+        "prompt_version": null,
+        "created_at": "2026-08-10T23:59:01.775169+00:00"
+      },
+      {
+        "id": "22a588b3-5402-4d13-bee2-b0a5737c1980",
+        "question_attempt_id": "2973059f-d271-4f72-8703-6f17a867b2dd",
+        "point_code": "M1",
+        "awarded": false,
+        "evidence": "No option was selected.",
+        "explanation": null,
+        "model_version": null,
+        "prompt_version": null,
+        "created_at": "2026-08-10T23:59:02.030666+00:00"
+      },
+      {
+        "id": "978e7c76-4f62-4fa6-97f1-960896b2d9a9",
+        "question_attempt_id": "a86e0ce5-0d9d-4131-8f3d-2355d4508d59",
+        "point_code": "M1",
+        "awarded": false,
+        "evidence": "No equation was written.",
+        "explanation": null,
+        "model_version": null,
+        "prompt_version": null,
+        "created_at": "2026-08-10T23:59:02.720799+00:00"
+      },
+      {
+        "id": "84797776-f84b-4c2a-8dd8-dfaa087cb9e6",
+        "question_attempt_id": "a86e0ce5-0d9d-4131-8f3d-2355d4508d59",
+        "point_code": "M2",
+        "awarded": false,
+        "evidence": "No equation was written.",
+        "explanation": null,
+        "model_version": null,
+        "prompt_version": null,
+        "created_at": "2026-08-10T23:59:02.720799+00:00"
+      }
+    ],
+    "exam_attempts": [
+      {
+        "id": "b7b9aa35-b0bd-451f-b416-8ff304dc0235",
+        "student_id": "d95b16af-7cbc-462d-b6c8-768e8e149640",
+        "paper_id": "f7577346-3c45-4b3a-b944-d52542863358",
+        "mode": "exam",
+        "started_at": "2026-08-10T23:58:37.464666+00:00",
+        "submitted_at": "2026-08-10T23:58:57.366+00:00",
+        "duration_seconds": null,
+        "total_awarded": null,
+        "total_available": 25,
+        "created_at": "2026-08-10T23:58:37.464666+00:00",
+        "updated_at": "2026-08-10T23:58:57.425388+00:00"
+      }
+    ]
+  }
+}

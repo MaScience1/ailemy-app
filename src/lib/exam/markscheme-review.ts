@@ -102,6 +102,15 @@ export type ReviewResult =
   | { ok: false; reason: "not_staff" }
   | { ok: false; reason: "not_found" }
   | { ok: false; reason: "no_proposals"; detail: string }
+  /**
+   * The slug matches several papers. ⚠ REFUSED, NOT GUESSED — see the loader.
+   */
+  | {
+      ok: false;
+      reason: "ambiguous";
+      slug: string;
+      candidates: { id: string; paperCode: string | null; paperName: string }[];
+    }
   | { ok: false; reason: "unavailable"; detail: string };
 
 /**
@@ -196,8 +205,19 @@ export async function getMarkSchemeReview(paperSlug: string): Promise<ReviewResu
   // than picking a subject at random and showing a Chemistry reviewer the
   // Biology mark scheme. But it never once worked.
   //
-  // An id needs no guess. A slug is disambiguated the way regions.ts does it:
-  // prefer the candidate that actually has a proposal set and questions.
+  // ⚠ AN ID NEEDS NO GUESS. A SLUG THAT MATCHES SEVERAL IS REFUSED.
+  //
+  // This used to pick `candidates[0]`, softened by a heuristic — prefer the
+  // candidate whose questions are already seeded. That is still a guess, and
+  // it failed in the worst possible way the moment WCH11/01's rows were
+  // superseded: with nothing seeded anywhere the heuristic matched nothing,
+  // the fallback took the first row, and the page offered a Chemistry reviewer
+  // Emit on WPH11/01 — Physics — under the paper name they expected.
+  //
+  // Emitting there would have written a Chemistry mark scheme into a Physics
+  // paper's fixture. There is no safe way to choose between two real papers
+  // that share a slug, so this refuses and lists them; the id in the URL is
+  // the answer, and the refusal hands it over as a link.
   const looksLikeId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
     paperSlug,
   );
@@ -222,23 +242,29 @@ export async function getMarkSchemeReview(paperSlug: string): Promise<ReviewResu
   }[];
   if (candidates.length === 0) return { ok: false, reason: "not_found" };
 
-  // With several subjects sharing the slug, the one this tool means is the one
-  // whose questions have been seeded — an unseeded paper has nothing for a
-  // mark scheme to attach to. That is a guess, and the way not to guess is to
-  // put the id in the URL.
-  let paper = candidates[0];
   if (candidates.length > 1) {
-    const { data: counts } = await db
-      .from("paper_questions")
-      .select("paper_id")
-      .in("paper_id", candidates.map((p) => p.id));
-    const seeded = new Set((counts ?? []).map((r: { paper_id: string }) => r.paper_id));
-    paper = candidates.find((p) => seeded.has(p.id)) ?? candidates[0];
+    return {
+      ok: false,
+      reason: "ambiguous",
+      slug: paperSlug,
+      candidates: candidates.map((c) => ({
+        id: c.id,
+        paperCode: c.paper_code,
+        paperName: c.paper_name,
+      })),
+    };
   }
+
+  const paper = candidates[0];
 
   let file: StoredFile;
   try {
-    file = JSON.parse(await readFile(proposalsPath(paperSlug), "utf8")) as StoredFile;
+    // ⚠ THE RESOLVED PAPER'S SLUG, NOT THE URL PARAM. A uuid URL used to be
+    // passed straight to proposalsPath, which looked for
+    // "<uuid>.markscheme.json" and ENOENTed — so the one form of the URL that
+    // cannot be ambiguous was the one that could never load. Artefact
+    // filenames are unchanged; only what we look them up by is.
+    file = JSON.parse(await readFile(proposalsPath(paper.slug), "utf8")) as StoredFile;
   } catch (e) {
     // Not an outage and not a missing paper — nobody has run the extractor yet.
     // Saying so is more useful than either of the other two answers.
