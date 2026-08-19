@@ -1,7 +1,40 @@
 -- ============================================================================
 -- 0044_PROPOSED_schedule_core.sql
 -- ----------------------------------------------------------------------------
--- ⚠⚠ PARTIALLY APPLIED 2026-08-19 — STILL _PROPOSED_, DELIBERATELY.
+-- ⚠⚠ PARTIALLY APPLIED 2026-08-19, IN TWO ROUNDS — STILL _PROPOSED_.
+-- ----------------------------------------------------------------------------
+-- ROUND 2. The founder ran the six GRANT/REVOKE statements. The grants landed:
+-- anon now REACHES all three tables instead of 42501. Four assertions still
+-- fail, and they are a DIFFERENT fault that round 1 could not see — a missing
+-- grant denies before RLS is ever reached, so "no grant" and "no grant AND no
+-- policy" were indistinguishable until the grant existed.
+--
+--   STILL NOT APPLIED: the CREATE POLICY block in section 4.
+--
+-- Four independent probes, not one:
+--   1. schedule_periods_read_public's first arm is `cohort_id IS NULL` — no
+--      subquery at all. A row with cohort_id NULL returns 0 to anon.
+--   2. RLS IS enabled: with RLS off and a SELECT grant anon would see EVERY
+--      row; it sees zero. So the ALTER TABLE … ENABLE lines DID run.
+--   3. Control — 0041's cohorts_read_public works, 3 rows to anon. anon + RLS
+--      + policy is healthy in general; these three tables are the outlier.
+--   4. A rule on a genuinely PUBLIC cohort returns 0 to anon.
+--
+-- ⚠ THE POLICY BODIES HAVE SINCE BEEN QUALIFIED (public.<table>.cohort_id
+-- rather than a bare cohort_id) — see the note in section 4. That change has
+-- never been applied, so it introduces no drift; it removes an ambiguity that
+-- would matter the day `cohorts` gains a column of that name.
+--
+-- ⚠ THE SITE IS STILL CORRECT. The reader treats an empty result the same way
+-- it treats an error and serves the published AS timetable from code. Nothing
+-- a visitor sees is wrong; the database simply is not the source yet.
+--
+-- TO FINISH: run section 4 verbatim, then re-run the verification below —
+-- especially (i) and (j), the halves that distinguish "the gate works" from
+-- "anon cannot read anything".
+-- ----------------------------------------------------------------------------
+--
+-- ⚠⚠ ROUND 1 (superseded, kept because it is how the fault was found)
 -- ----------------------------------------------------------------------------
 -- The founder ran this in the SQL Editor and reported no errors. Verification
 -- against production says otherwise, in a specific and recoverable way:
@@ -253,6 +286,12 @@ ALTER TABLE public.tuition_sessions ENABLE ROW LEVEL SECURITY;
 -- PUBLIC, which is how 0009's "cohorts readable" quietly admitted anon the
 -- moment 0041 granted it SELECT. Named roles, every time.
 --
+-- ⚠ THE OUTER COLUMN IS FULLY QUALIFIED — public.<table>.cohort_id, not a bare
+-- cohort_id. Unqualified, Postgres resolves it against the INNERMOST scope
+-- first, so the day `cohorts` gains a column called cohort_id the policy would
+-- silently compare the subquery's own row to itself and admit everything. It is
+-- correct today either way; qualifying costs nothing and removes the trap.
+--
 -- ⚠ AND THE SUBQUERY IS SAFE FOR anon ONLY BECAUSE anon CAN READ cohorts.
 -- 0041 granted that. A role evaluating a subquery against a table it cannot
 -- SELECT raises a permission error rather than returning false — the fault that
@@ -260,7 +299,10 @@ ALTER TABLE public.tuition_sessions ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS cohort_schedules_read_public ON public.cohort_schedules;
 CREATE POLICY cohort_schedules_read_public
   ON public.cohort_schedules FOR SELECT TO anon, authenticated
-  USING (EXISTS (SELECT 1 FROM public.cohorts c WHERE c.id = cohort_id AND c.is_public IS TRUE));
+  USING (EXISTS (
+    SELECT 1 FROM public.cohorts c
+     WHERE c.id = public.cohort_schedules.cohort_id AND c.is_public IS TRUE
+  ));
 
 DROP POLICY IF EXISTS schedule_periods_read_public ON public.schedule_periods;
 CREATE POLICY schedule_periods_read_public
@@ -268,14 +310,20 @@ CREATE POLICY schedule_periods_read_public
   -- A school-wide holiday (cohort_id NULL) is public: it explains why a public
   -- timetable has a gap. It names no student and no cohort.
   USING (
-    cohort_id IS NULL
-    OR EXISTS (SELECT 1 FROM public.cohorts c WHERE c.id = cohort_id AND c.is_public IS TRUE)
+    public.schedule_periods.cohort_id IS NULL
+    OR EXISTS (
+      SELECT 1 FROM public.cohorts c
+       WHERE c.id = public.schedule_periods.cohort_id AND c.is_public IS TRUE
+    )
   );
 
 DROP POLICY IF EXISTS tuition_sessions_read_public ON public.tuition_sessions;
 CREATE POLICY tuition_sessions_read_public
   ON public.tuition_sessions FOR SELECT TO anon, authenticated
-  USING (EXISTS (SELECT 1 FROM public.cohorts c WHERE c.id = cohort_id AND c.is_public IS TRUE));
+  USING (EXISTS (
+    SELECT 1 FROM public.cohorts c
+     WHERE c.id = public.tuition_sessions.cohort_id AND c.is_public IS TRUE
+  ));
 
 -- ⚠ WRITES ARE STAFF-ONLY AND GO THROUGH is_staff(). No client of any kind gets
 -- INSERT/UPDATE/DELETE below, so these policies exist for the authenticated
