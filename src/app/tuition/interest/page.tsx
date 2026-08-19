@@ -5,6 +5,7 @@ import { SiteNav } from "@/components/site/SiteNav";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
 import { getNavSession } from "@/lib/auth/nav-session";
 import { SUBJECTS } from "@/lib/public/catalogue";
+import { interestCapabilities } from "@/lib/public/interest-schema";
 
 import { InterestForm } from "./InterestForm";
 
@@ -33,6 +34,7 @@ export default async function InterestPage({
 }) {
   const session = await getNavSession();
   const { subject, cohort, mode } = await searchParams;
+  const { hasDemandFields } = await interestCapabilities();
   const known = SUBJECTS.find((s) => s.slug === subject);
 
   const mailto =
@@ -67,6 +69,7 @@ export default async function InterestPage({
           cohort={cohort ?? null}
           mode={mode ?? null}
           mailto={mailto}
+          hasDemandFields={hasDemandFields}
         />
       </main>
       <SiteFooter />
