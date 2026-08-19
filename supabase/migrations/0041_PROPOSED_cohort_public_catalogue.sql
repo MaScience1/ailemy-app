@@ -71,6 +71,53 @@ BEGIN
   END IF;
 END $$;
 
+-- ============================================================================
+-- ⚠ AMENDMENT 2026-08-19 — READ THIS BEFORE RE-APPROVING
+-- ----------------------------------------------------------------------------
+-- The block below was NOT in the version that was approved. It is added here,
+-- in the same file, because this migration has never been applied and so there
+-- is no drift to create — and because without it the rest of this file does not
+-- do what it says.
+--
+-- WHAT WAS WRONG. 0009 created:
+--
+--     create policy "cohorts readable" on public.cohorts
+--       for select using (is_active or public.is_staff());
+--
+-- with NO `TO` clause, which in Postgres means the policy applies to PUBLIC —
+-- every role, anon included. It has been harmless until now for one reason
+-- only: anon has never held a SELECT *grant* on cohorts, and a grant is checked
+-- before RLS, so the policy was never reached.
+--
+-- `GRANT SELECT ON public.cohorts TO anon` below removes exactly that
+-- protection. RLS policies are OR'd, so from that moment anon may read any row
+-- satisfying:
+--
+--     is_public IS TRUE            <- the new policy, the intended gate
+--     OR is_active                 <- 0009's policy, applying to anon
+--
+-- and is_active DEFAULTS TO TRUE. Every cohort already in the table — including
+-- the £249 intensive from 0009 — would become publicly readable, and is_public
+-- would gate nothing at all.
+--
+-- HOW IT WOULD HAVE BEEN CAUGHT: verification (d) at the foot of this file
+-- inserts a probe with is_public=false and asserts anon sees 0 rows. The probe
+-- does not set is_active, so it defaults true, 0009's policy admits it, and (d)
+-- returns 1. The check was sound; the migration was not.
+--
+-- THE FIX. Scope 0009's policy to authenticated, so the new policy is the only
+-- one anon is evaluated against. This is NOT a change to what any signed-in
+-- user can see: the body is unchanged and authenticated was already covered by
+-- PUBLIC. anon loses nothing it can exercise today, because today it has no
+-- grant. service_role is unaffected — it bypasses RLS.
+-- ============================================================================
+DROP POLICY IF EXISTS "cohorts readable" ON public.cohorts;
+CREATE POLICY "cohorts readable"
+  ON public.cohorts
+  FOR SELECT
+  TO authenticated
+  USING (is_active OR public.is_staff());
+
 -- ⚠ anon MAY READ THE PUBLIC CATALOGUE, AND ONLY THAT. is_public gates it, so
 -- an internal or draft cohort is not on the site the moment it is created.
 DROP POLICY IF EXISTS cohorts_read_public ON public.cohorts;
@@ -108,6 +155,17 @@ COMMIT;
 -- (d) anon cannot see it while is_public is false
 -- SET ROLE anon; SELECT count(*) FROM public.cohorts WHERE slug='probe';
 -- PASS: 0.
+--   ⚠ THIS IS THE CHECK THAT CAUGHT THE AMENDMENT ABOVE. The probe row does
+--   NOT set is_active, so it defaults to true. Before the amendment 0009's
+--   unscoped "cohorts readable" admitted it to anon and this returned 1.
+--   Leave is_active alone here: a probe that sets is_active=false would pass
+--   for the wrong reason and prove nothing about is_public.
+--
+-- (d2) and no OTHER cohort is visible either — the half (d) cannot see
+-- SET ROLE anon; SELECT count(*) FROM public.cohorts;
+-- PASS: exactly the number of rows with is_public = true (0 before anything is
+--   published). A count matching the number of is_active rows means 0009's
+--   policy is still applying to anon and the amendment did not take.
 --
 -- (e) anon CAN see it once public — without this, (d) proves only emptiness
 -- RESET ROLE; UPDATE public.cohorts SET is_public=true WHERE slug='probe';
