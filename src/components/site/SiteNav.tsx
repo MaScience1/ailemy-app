@@ -31,10 +31,29 @@ import { ChevronDown, Menu, X } from "lucide-react";
 
 type NavLink = { label: string; href: string };
 
+/**
+ * ⚠ THE PERMANENT ARCHITECTURE, NOT ONE CAMPAIGN.
+ *
+ * "Intensive" was a top-level destination. It is a PROGRAMME — one campaign
+ * with a start date — and giving it a slot alongside three whole sciences said
+ * the site was about it. It now lives under Live Tuition.
+ *
+ * ⚠ THE /intensive ROUTE IS UNTOUCHED AND STILL REACHABLE. It is linked and
+ * possibly indexed; renaming or removing it would break every link anyone has
+ * already shared. Demoting a nav entry and deleting a route are different acts,
+ * and only the first was asked for.
+ *
+ * Biology and Physics appear because the site is about three sciences. Their
+ * pages are honest about having no resources yet — the alternative, hiding them
+ * until they are complete, loses every visitor who came looking for them.
+ */
 const NAV_LINKS: NavLink[] = [
-  { label: "Chemistry", href: "/learn" },
+  { label: "Chemistry", href: "/chemistry" },
+  { label: "Biology", href: "/biology" },
+  { label: "Physics", href: "/physics" },
   { label: "Past Papers", href: "/past-papers" },
-  { label: "Intensive", href: "/intensive" },
+  { label: "Live Tuition", href: "/tuition" },
+  { label: "Resources", href: "/learn" },
 ];
 
 export type NavSession = { email: string } | null;
