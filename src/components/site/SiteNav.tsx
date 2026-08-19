@@ -53,7 +53,12 @@ const NAV_LINKS: NavLink[] = [
   { label: "Physics", href: "/physics" },
   { label: "Past Papers", href: "/past-papers" },
   { label: "Live Tuition", href: "/tuition" },
-  { label: "Resources", href: "/learn" },
+  // ⚠ "Resources" IS NOT HERE ON PURPOSE. Resources are discovered THROUGH a
+  // subject — that is the canonical path, and a parallel top-level entry
+  // offered a second, flatter route to the same material, which is how two
+  // navigation models end up half-maintained. /resources still exists and is
+  // still linked from the footer; it is a chooser that sends you back into a
+  // subject.
 ];
 
 export type NavSession = { email: string } | null;

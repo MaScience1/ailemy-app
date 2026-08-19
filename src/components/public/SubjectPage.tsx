@@ -77,20 +77,28 @@ export async function SubjectPage({ slug }: { slug: string }) {
                 Lessons, topic questions, past papers, mark schemes and examiner reports,
                 organised by specification.
               </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link
-                  href={subject.exploreHref!}
-                  className="rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-parchment hover:bg-ink/90"
-                >
-                  Browse {subject.name} →
-                </Link>
-                <Link
-                  href="/past-papers"
-                  className="rounded-full border border-ink/20 px-5 py-2.5 text-sm font-medium hover:border-ink/40"
-                >
-                  Past papers →
-                </Link>
-              </div>
+              {/* ⚠ CATEGORIES, NOT ONE "BROWSE" BUTTON. This page is now the
+                  canonical way into resources, so it has to actually route —
+                  a single Browse link would just defer the choice by one
+                  click. Every href below resolves today. */}
+              <ul className="mt-6 grid gap-3 sm:grid-cols-3">
+                {[
+                  { label: "Lessons", body: "Specification-mapped teaching, unit by unit.", href: subject.exploreHref! },
+                  { label: "Past papers", body: "Question papers, mark schemes and examiner reports.", href: "/past-papers" },
+                  { label: "Practice", body: "Topic questions and full papers, sat interactively.", href: "/past-papers" },
+                ].map((r) => (
+                  <li key={r.label}>
+                    <Link
+                      href={r.href}
+                      className="flex h-full flex-col rounded-lg border border-ink/10 bg-snow p-5 transition-colors hover:border-ink/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                    >
+                      <span className="font-display text-lg font-medium">{r.label}</span>
+                      <span className="mt-1 flex-1 text-sm leading-relaxed text-ink/70">{r.body}</span>
+                      <span className="mt-4 text-sm underline underline-offset-2">Open →</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </>
           ) : (
             /* ⚠ NO EMPTY GRID, NO "Start learning" BUTTON. Saying there is

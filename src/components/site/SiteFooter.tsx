@@ -32,7 +32,7 @@ const FOOTER_GROUPS: { heading: string; links: FooterLink[] }[] = [
   {
     heading: "Study",
     links: [
-      { label: "Resources", href: "/learn" },
+      { label: "Resources", href: "/resources" },
       { label: "Past Papers", href: "/past-papers" },
       { label: "Live Tuition", href: "/tuition" },
     ],
