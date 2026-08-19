@@ -16,6 +16,7 @@ import {
   nextRevision,
   toFixture,
   emitFixtureSource,
+  stampFrom,
   pointsFullyRuled,
   isResolved,
   tariffShortfalls,
@@ -202,7 +203,7 @@ export async function getMarkSchemeReview(paperSlug: string): Promise<ReviewResu
   );
   const query = db
     .from("past_papers")
-    .select("id, slug, paper_name, paper_code, markscheme_pdf_path");
+    .select("id, slug, paper_name, paper_code, year, session, markscheme_pdf_path");
   const { data: papers, error } = await (looksLikeId
     ? query.eq("id", paperSlug)
     : query.eq("slug", paperSlug));
@@ -409,7 +410,7 @@ export type EmitResultReport =
  * ⚠ AND IT REFUSES IN PRODUCTION, like saveRulings, because this writes to the
  * repository working tree — which a deployed instance does not have.
  */
-export async function emitFixture(paperSlug: string): Promise<EmitResultReport> {
+export async function emitFixture(paperSlug: string, paperId: string): Promise<EmitResultReport> {
   const staff = await getStaffStatus();
   if (!staff.ok || !canWriteFrom(staff.roles)) {
     return { ok: false, error: "Emitting a fixture needs a marker or admin role." };
@@ -442,7 +443,43 @@ export async function emitFixture(paperSlug: string): Promise<EmitResultReport> 
     return { ok: false, error: "Refusing to write: the target is not a .generated.ts path." };
   }
 
-  const source = emitFixtureSource(result, paperSlug, new Date().toISOString());
+  // ⚠ BY id, AND A FAILURE IS A REFUSAL — BOTH HALVES MATTER.
+  //
+  // This first re-queried by SLUG and stamped only on exactly one row. A slug
+  // is unique within a COURSE, not globally: "unit-1-may-june-2025" is
+  // Chemistry, Physics AND Biology. The query matched three, the guard
+  // declined to guess, and the stamp was left undefined INSIDE a try/catch
+  // that reported success — so the header read `paperCode: undefined` under a
+  // green "48 question(s), 80 mark(s)".
+  //
+  // The review page has already disambiguated this paper and holds its id, so
+  // there is nothing to re-derive. And a lookup that fails now REFUSES rather
+  // than writing a hole into a file that claims to be complete: emitting a
+  // fixture with no identity is emitting something no seeder can ever use.
+  let rows: { id: string; paper_code: string | null; session: string | null; year: number | null }[];
+  try {
+    const db = await createClient();
+    const { data, error } = await db
+      .from("past_papers")
+      .select("id, paper_code, session, year")
+      .eq("id", paperId);
+    if (error) {
+      return { ok: false, error: `Could not read the paper row to stamp its identity: ${error.message}` };
+    }
+    rows = data ?? [];
+  } catch (e) {
+    return {
+      ok: false,
+      error: `Could not read the paper row to stamp its identity: ${e instanceof Error ? e.message : String(e)}`,
+    };
+  }
+
+  const stamp = stampFrom(rows, paperId);
+  if (!stamp.ok) {
+    return { ok: false, error: `Nothing was emitted — ${stamp.error}` };
+  }
+
+  const source = emitFixtureSource(result, paperSlug, new Date().toISOString(), stamp.stamped);
   try {
     await writeFile(target, source, "utf8");
   } catch (e) {

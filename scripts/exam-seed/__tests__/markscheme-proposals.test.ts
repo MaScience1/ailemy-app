@@ -31,6 +31,11 @@ import {
   type RulingBook,
 } from "../../../src/lib/exam/markscheme-proposals.ts";
 
+// ⚠ REQUIRED, NOT OPTIONAL. emitFixtureSource used to accept a partial stamp,
+// so a failed lookup wrote `paperCode: undefined` into a header that reported
+// a green 48/80. Passing it is now a type error to omit.
+const STAMP = { paperCode: "WCH11/01", session: "May-June", year: 2025 };
+
 let pass = 0, fail = 0;
 const t = (n: string, c: boolean, got?: unknown) => {
   c ? (pass++, console.log("  ✓ " + n))
@@ -252,7 +257,7 @@ console.log("\n── AN EDITED OR REJECTED POINT ──");
 
 console.log("\n── THE EMITTED SOURCE SAYS WHAT IT IS ──");
 {
-  const refused = emitFixtureSource({ ok: false, refusals: ["1: not approved"] }, "wch11", NOW);
+  const refused = emitFixtureSource({ ok: false, refusals: ["1: not approved"] }, "wch11", NOW, STAMP);
   t("a refusal emits NO fixture", !refused.includes("markScheme: ["), refused.slice(0, 60));
   t("...and lists what is not ready", refused.includes("1: not approved"));
 
@@ -264,7 +269,7 @@ console.log("\n── THE EMITTED SOURCE SAYS WHAT IT IS ──");
       approvedAt: NOW, approvedBy: APPROVER,
     },
   });
-  const src = emitFixtureSource(ok, "wch11-01-2025-may-june", NOW);
+  const src = emitFixtureSource(ok, "wch11-01-2025-may-june", NOW, STAMP);
   // ⚠ WAS "carries the seeder commands". The emitted file used to be paste-in
   // fragments, so its header told the reader to paste each block by hand and
   // then run the seeder. It is a real module now, so what has to be true is
@@ -288,7 +293,7 @@ console.log("\n── THE EMITTED SOURCE SAYS WHAT IT IS ──");
       approvedAt: NOW, approvedBy: APPROVER,
     },
   });
-  const nastySrc = emitFixtureSource(edited, "wch11", NOW);
+  const nastySrc = emitFixtureSource(edited, "wch11", NOW, STAMP);
   const literal = /criterion: ("(?:[^"\\]|\\.)*")/.exec(nastySrc)?.[1];
   t("a criterion containing a quote and a backslash emits as a valid literal",
     literal !== undefined && JSON.parse(literal) === nasty, literal);

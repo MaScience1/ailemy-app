@@ -66,9 +66,16 @@ export async function saveQuestionRulingsAction(
  * ⚠ RE-CHECKS THE ROLE, like the save action. A server action is a public
  * endpoint; the page having rendered says nothing about who is calling now.
  */
-export async function emitFixtureAction(paperSlug: string): Promise<EmitResultReport> {
+export async function emitFixtureAction(
+  paperSlug: string,
+  paperId: string,
+): Promise<EmitResultReport> {
   if (!paperSlug) return { ok: false, error: "Missing paper." };
-  return emitFixture(paperSlug);
+  // ⚠ THE ID COMES FROM THE PAGE, WHICH ALREADY DISAMBIGUATED THE PAPER. Emit
+  // must not re-derive it from the slug: a slug is unique within a course, and
+  // re-querying by one is how the identity stamp silently came out undefined.
+  if (!paperId) return { ok: false, error: "Missing paper id — reload the page and try again." };
+  return emitFixture(paperSlug, paperId);
 }
 
 /**

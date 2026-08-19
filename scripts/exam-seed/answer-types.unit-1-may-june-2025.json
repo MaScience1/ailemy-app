@@ -1,0 +1,24 @@
+{
+  "note": "answerType for the questions the adapter could not derive. SEPARATE FROM THE PROPOSALS ARTEFACT on purpose: that file is the examiner's ruled work and is read-only to this pipeline, while these are facts about the QUESTION PAPER — whether a question says 'State…' or 'Explain…' — which the mark scheme never records. Refusal-only: an entry for a question that derives its own answerType is a conflict, not an override, and an entry for a question that does not exist is refused rather than ignored. Values are validated against the schema enum before anything reaches the CHECK constraint.",
+  "paperSlug": "unit-1-may-june-2025",
+  "suppliedBy": "founder",
+  "answerTypes": {
+    "20(a)": "numeric_with_unit",
+    "20(b)(i)": "short_text",
+    "21(b)(i)": "short_text",
+    "21(b)(ii)": "short_text",
+    "21(c)(ii)": "short_text",
+    "21(c)(iii)": "short_text",
+    "22(a)": "short_text",
+    "22(b)(ii)": "chemical_equation",
+    "22(b)(iii)": "chemical_equation",
+    "22(d)": "graph",
+    "23(a)(i)": "short_text",
+    "23(a)(ii)": "short_text",
+    "23(b)(i)": "short_text",
+    "23(b)(iii)": "structure",
+    "23(b)(iv)": "short_text",
+    "23(b)(v)": "short_text",
+    "23(c)(i)": "short_text"
+  }
+}

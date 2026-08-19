@@ -121,7 +121,11 @@ import {
   type QuestionInput,
   type QuestionSet,
 } from "../src/lib/exam/question-set.ts";
-import { WCH11_01_2025_MAY_JUNE } from "./exam-seed/wch11-01-2025-may-june.ts";
+import {
+  UNIT_1_MAY_JUNE_2025_SET,
+  UNIT_1_MAY_JUNE_2025_NATURAL_KEY,
+} from "./exam-seed/unit-1-may-june-2025.set.ts";
+import { resolvePaperId, type PaperMeta } from "../src/lib/exam/fixture-adapter.ts";
 import {
   verifyRequiredColumns,
   type RequiredColumn,
@@ -145,8 +149,60 @@ import {
 // ============================================================================
 
 const FIXTURES: Record<string, QuestionSet> = {
-  "wch11-01-2025-may-june": WCH11_01_2025_MAY_JUNE,
+  "unit-1-may-june-2025-generated": UNIT_1_MAY_JUNE_2025_SET,
 };
+
+/**
+ * Sets whose paperId is resolved from natural keys at run time.
+ *
+ * ⚠ NO GENERATED ARTEFACT CARRIES A uuid. It would be wrong the moment the
+ * file moved environment, and it is unreviewable besides — nobody reading a
+ * diff can tell a correct uuid from a transposed one. (paper_code, session,
+ * year) is legible, and resolvePaperId refuses on zero or multiple matches
+ * rather than picking one.
+ */
+const RESOLVE_BY: Record<string, PaperMeta> = {
+  "unit-1-may-june-2025-generated": UNIT_1_MAY_JUNE_2025_NATURAL_KEY,
+};
+
+/**
+ * Set names that must no longer seed, and what replaced them.
+ *
+ * ⚠ EXACTLY ONE SEEDABLE SET MAY RESOLVE TO A GIVEN PAPER. The hand fixture
+ * wch11-01-2025-may-june covered 17 of WCH11/01's questions with
+ * `complete: false`; the generated set covers all 48. Both pointed at the same
+ * paper, so leaving both selectable meant a typo in --set was the difference
+ * between seeding a whole mark scheme and seeding a third of one, with no
+ * error either way.
+ *
+ * The FILE stays — markscheme-verified.test.ts and four other suites import it
+ * as the independent transcription the extractor is measured against, which is
+ * exactly the job it should keep. It simply may not be SEEDED any more.
+ */
+const RETIRED: Record<string, string> = {
+  "wch11-01-2025-may-june": "unit-1-may-june-2025-generated",
+};
+
+/**
+ * ⚠ TWO SETS POINTING AT ONE PAPER IS A STARTUP FAILURE, NOT A RUNTIME
+ * SURPRISE. Checked here rather than in a test, because the test would only
+ * catch it if someone remembered to look — and the cost of getting it wrong is
+ * seeding the same paper twice from two different fixtures.
+ */
+function assertOneSetPerPaper(): void {
+  const seen = new Map<string, string>();
+  for (const [name, set] of Object.entries(FIXTURES)) {
+    const key = `${set.expect.paperCode} ${set.expect.session} ${set.expect.year}`;
+    const other = seen.get(key);
+    if (other) {
+      fail(
+        `two fixtures both describe ${key}: ${JSON.stringify(other)} and ${JSON.stringify(name)}. ` +
+          `Exactly one set may seed a paper — retire the other before running.`,
+      );
+    }
+    seen.set(key, name);
+  }
+}
 
 // ============================================================================
 // OUTPUT
@@ -203,6 +259,14 @@ function parseArgs(argv: string[]): Options {
 
   const available = Object.keys(FIXTURES).join(", ");
   if (!setName) fail(`--set=<name> is required. Available: ${available}`);
+  if (RETIRED[setName]) {
+    fail(
+      `${JSON.stringify(setName)} has been retired and can no longer seed. ` +
+        `Use --set=${RETIRED[setName]} instead — it covers the whole paper, where the old ` +
+        `fixture covered part of it. The old file is kept only as the independent ` +
+        `transcription the extractor is measured against.`,
+    );
+  }
   if (!FIXTURES[setName]) {
     fail(`no fixture named ${JSON.stringify(setName)}. Available: ${available}`);
   }
@@ -1653,7 +1717,8 @@ async function applyPlan(
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
-  const set = FIXTURES[options.setName];
+  assertOneSetPerPaper();
+  let set = FIXTURES[options.setName];
 
   console.log(
     `\n${BOLD}seed-exam-questions${RESET} — ${options.setName} ` +
@@ -1696,6 +1761,37 @@ async function main() {
   );
 
   heading("3. Paper identity");
+
+  // ⚠ THE uuid IS RESOLVED HERE, FROM NATURAL KEYS, OR NOTHING RUNS.
+  //
+  // No generated artefact carries a paperId: it would be wrong the moment the
+  // file moved environment, and nobody reading a diff can tell a correct uuid
+  // from a transposed one. resolvePaperId refuses on zero matches (the paper
+  // is not in the catalogue) and on many (the key is not unique here — and
+  // picking one would write a mark scheme onto another subject's questions).
+  const naturalKey = RESOLVE_BY[options.setName];
+  if (naturalKey) {
+    const { data: candidates, error: lookupError } = await db
+      .from("past_papers")
+      .select("id, paper_code, session, year, total_marks")
+      .eq("paper_code", naturalKey.paperCode)
+      .eq("session", naturalKey.session)
+      .eq("year", naturalKey.year);
+    if (lookupError) fail(`could not resolve the paper by natural key: ${lookupError.message}`);
+
+    const resolved = resolvePaperId(candidates ?? [], naturalKey);
+    if (!resolved.ok) fail(resolved.error);
+
+    console.log(
+      `  ${GREEN}✓${RESET} resolved by natural key ` +
+        `${naturalKey.paperCode} · ${naturalKey.session} · ${naturalKey.year} · ` +
+        `${naturalKey.totalMarks} marks
+     -> paper_id ${resolved.paperId}` +
+        `   (${(candidates ?? []).length} candidate row(s), exactly 1 match)`,
+    );
+    set = { ...set, paperId: resolved.paperId };
+  }
+
   const paper = await verifyPaper(db, set);
   console.log(
     `  ${GREEN}✓${RESET} ${paper.paper_code}  ${paper.session} ${paper.year}  ` +

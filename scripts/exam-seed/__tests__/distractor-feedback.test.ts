@@ -51,6 +51,11 @@ import {
   compareQuestionNumbers,
 } from "../../../src/lib/exam/question-nav.ts";
 
+// ⚠ REQUIRED, NOT OPTIONAL. emitFixtureSource used to accept a partial stamp,
+// so a failed lookup wrote `paperCode: undefined` into a header that reported
+// a green 48/80. Passing it is now a type error to omit.
+const STAMP = { paperCode: "WCH11/01", session: "May-June", year: 2025 };
+
 let pass = 0, fail = 0;
 const t = (n: string, c: boolean, got?: unknown) => {
   c ? (pass++, console.log("  ✓ " + n))
@@ -279,7 +284,7 @@ console.log("\n── (11)+(12) A RULING SURVIVES A SAVE, A REFRESH AND A RE-OPE
 
 console.log("\n── (13) EMIT + DRY RUN CARRY DISTRACTORS, NEVER DROP THEM ──");
 {
-  const source = emitFixtureSource(emitted, "unit-1-may-june-2025", "2026-08-17T00:00:00.000Z");
+  const source = emitFixtureSource(emitted, "unit-1-may-june-2025", "2026-08-17T00:00:00.000Z", STAMP);
   t("the generated module mentions every option", /option: "A"/.test(source) &&
     /option: "C"/.test(source) && /option: "D"/.test(source));
   // ⚠ COUNT ENTRIES, NOT SUBSTRINGS. Each distractor now emits `text` AND
