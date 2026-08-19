@@ -5,8 +5,12 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
 import { getNavSession } from "@/lib/auth/nav-session";
-import { ctaFor, priceLabel } from "@/lib/public/catalogue";
+import { ctaFor } from "@/lib/public/catalogue";
 import { loadCohorts } from "@/lib/public/readers";
+import { offersCurrencyChoice } from "@/lib/public/currency";
+import { currentCurrency } from "@/lib/public/currency-server";
+import { CohortPrice } from "@/components/public/CohortPrice";
+import { CurrencyToggle } from "@/components/public/CurrencyToggle";
 
 /**
  * The tuition destination (§23).
@@ -28,6 +32,7 @@ export const metadata: Metadata = {
 export default async function TuitionPage() {
   const session = await getNavSession();
   const { data: cohorts } = await loadCohorts();
+  const { currency } = await currentCurrency();
   return (
     <div className="bg-parchment text-ink">
       <AnnouncementBar />
@@ -42,13 +47,17 @@ export default async function TuitionPage() {
           included.
         </p>
 
-        <div className="mt-10 grid gap-4 lg:grid-cols-3">
+        {offersCurrencyChoice(cohorts) && (
+          <div className="mt-8"><CurrencyToggle current={currency} /></div>
+        )}
+
+        <div className="mt-6 grid gap-4 lg:grid-cols-3">
           {cohorts.map((c) => {
             const cta = ctaFor(c);
             return (
               <div key={c.slug} className="flex flex-col rounded-lg border border-ink/10 bg-snow p-7">
                 <h2 className="font-display text-xl font-medium tracking-tight">{c.title}</h2>
-                <p className="mt-2 font-display text-2xl">{priceLabel(c)}</p>
+                <CohortPrice cohort={c} currency={currency} />
                 <p className="mt-1 font-mono text-[11px] text-ink/55">
                   {c.hoursPerWeek} live hrs/week · {c.sessionsPerWeek} sessions · cap {c.seatCap}
                 </p>

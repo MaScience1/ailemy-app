@@ -4,8 +4,12 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
 import { getNavSession } from "@/lib/auth/nav-session";
-import { SUBJECTS, ctaFor, priceLabel } from "@/lib/public/catalogue";
+import { SUBJECTS, ctaFor } from "@/lib/public/catalogue";
 import { loadCohorts } from "@/lib/public/readers";
+import { offersCurrencyChoice } from "@/lib/public/currency";
+import { currentCurrency } from "@/lib/public/currency-server";
+import { CohortPrice } from "@/components/public/CohortPrice";
+import { CurrencyToggle } from "@/components/public/CurrencyToggle";
 
 /**
  * One subject page, rendered for all three sciences.
@@ -35,6 +39,7 @@ export async function SubjectPage({ slug }: { slug: string }) {
 
   const { data: allCohorts } = await loadCohorts();
   const cohorts = allCohorts.filter((c) => c.subject === slug);
+  const { currency } = await currentCurrency();
   const hasResources = subject.status === "available" && subject.exploreHref !== null;
 
   return (
@@ -119,6 +124,9 @@ export async function SubjectPage({ slug }: { slug: string }) {
       <section className="border-t border-ink/10 py-12">
         <div className="mx-auto max-w-6xl px-6">
           <h2 className="font-display text-2xl font-medium tracking-tight">Live tuition</h2>
+          {offersCurrencyChoice(cohorts) && (
+            <div className="mt-4"><CurrencyToggle current={currency} /></div>
+          )}
           {cohorts.length > 0 ? (
             <div className="mt-6 grid gap-4 lg:grid-cols-3">
               {cohorts.map((c) => {
@@ -126,7 +134,7 @@ export async function SubjectPage({ slug }: { slug: string }) {
                 return (
                   <div key={c.slug} className="flex flex-col rounded-lg border border-ink/10 bg-snow p-6">
                     <h3 className="font-display text-lg font-medium">{c.title}</h3>
-                    <p className="mt-2 font-display text-xl">{priceLabel(c)}</p>
+                    <CohortPrice cohort={c} currency={currency} size="md" />
                     <p className="mt-1 font-mono text-[11px] text-ink/55">
                       {c.hoursPerWeek} hrs/week · cap {c.seatCap}
                     </p>

@@ -35,6 +35,14 @@ export type Cohort = {
   qualification: string;
   pricePence: number;
   currency: string;
+  /**
+   * ⚠ DISPLAY ONLY, IN WHOLE QATARI RIYALS, AND NULL IS COMMON (0042).
+   * pricePence is the billed amount; this is a label a visitor in Doha can
+   * read. NULL means no QAR price has been set, and the card must render GBP
+   * regardless of where the visitor is — never a converted figure, because no
+   * FX rate exists anywhere in this system.
+   */
+  priceQar: number | null;
   hoursPerWeek: number;
   sessionsPerWeek: number;
   /**
@@ -67,6 +75,7 @@ const COHORTS: Cohort[] = [
     qualification: "ial-as",
     pricePence: 16900,
     currency: "GBP",
+    priceQar: 800,
     hoursPerWeek: 4,
     sessionsPerWeek: 2,
     scheduleSummary: "Tuesday + Saturday · 7:00–9:30 PM Doha · 2 hours teaching + short break",
@@ -98,6 +107,7 @@ const COHORTS: Cohort[] = [
     qualification: "gcse-y11",
     pricePence: 14900,
     currency: "GBP",
+    priceQar: 700,
     hoursPerWeek: 4,
     sessionsPerWeek: 2,
     scheduleSummary: null,
@@ -123,6 +133,7 @@ const COHORTS: Cohort[] = [
     qualification: "gcse-y10",
     pricePence: 13900,
     currency: "GBP",
+    priceQar: 650,
     hoursPerWeek: 3,
     sessionsPerWeek: 2,
     scheduleSummary: null,
@@ -330,6 +341,9 @@ export function cohortFromRow(row: Record<string, unknown>): Mapped<Cohort> {
       qualification,
       pricePence,
       currency: str(row.currency) ?? "GBP",
+      // ⚠ NULL STAYS NULL — it is the signal that this cohort has no QAR price
+      // and must render GBP. A default of 0 would reach a card as "0 QAR/month".
+      priceQar: num(row.price_qar),
       hoursPerWeek: num(row.hours_per_week) ?? 0,
       sessionsPerWeek: num(row.sessions_per_week) ?? 0,
       // ⚠ NULL STAYS NULL. An absent schedule_summary is "no published

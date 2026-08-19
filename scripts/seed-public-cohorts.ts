@@ -126,7 +126,7 @@ const rows = slugs.map((slug) => {
   return {
     id: randomUUID(),
     slug: c.slug, title: c.title, subject: c.subject, qualification: c.qualification,
-    price_pence: c.pricePence, currency: c.currency,
+    price_pence: c.pricePence, price_qar: c.priceQar, currency: c.currency,
     hours_per_week: c.hoursPerWeek, sessions_per_week: c.sessionsPerWeek,
     schedule_summary: c.scheduleSummary,
     onboarding_on: c.onboardingOn,

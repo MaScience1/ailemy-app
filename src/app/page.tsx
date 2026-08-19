@@ -6,10 +6,14 @@ import { SiteNav } from "@/components/site/SiteNav";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
 import { getNavSession } from "@/lib/auth/nav-session";
 import {
-  SUBJECTS, ctaFor, priceLabel,
+  SUBJECTS, ctaFor,
   type Cohort, type Subject,
 } from "@/lib/public/catalogue";
 import { loadCohorts } from "@/lib/public/readers";
+import { offersCurrencyChoice, type Currency } from "@/lib/public/currency";
+import { currentCurrency } from "@/lib/public/currency-server";
+import { CohortPrice } from "@/components/public/CohortPrice";
+import { CurrencyToggle } from "@/components/public/CurrencyToggle";
 
 /**
  * The Ailemy front door.
@@ -42,6 +46,8 @@ export default async function Home() {
   const session = await getNavSession();
   const { data: cohorts } = await loadCohorts();
   const chemistryCohorts = cohorts.filter((c) => c.subject === "chemistry");
+  const { currency } = await currentCurrency();
+  const showToggle = offersCurrencyChoice(chemistryCohorts);
 
   return (
     <div className="bg-parchment text-ink">
@@ -111,8 +117,9 @@ export default async function Home() {
         title="Learn live with Ailemy"
         lede="Small-group science tuition built around the exact specification and exam requirements."
       >
+        {showToggle && <div className="mb-6"><CurrencyToggle current={currency} /></div>}
         <div className="grid gap-4 lg:grid-cols-3">
-          {chemistryCohorts.map((c) => <CohortCard key={c.slug} cohort={c} />)}
+          {chemistryCohorts.map((c) => <CohortCard key={c.slug} cohort={c} currency={currency} />)}
         </div>
         {/* ⚠ 1-TO-1 IS OFF-MENU (§24) — mentioned, deliberately not priced
             beside the group cohorts, where it would undercut the offer. */}
@@ -313,12 +320,12 @@ function SubjectCard({ subject }: { subject: Subject }) {
   );
 }
 
-function CohortCard({ cohort }: { cohort: Cohort }) {
+function CohortCard({ cohort, currency }: { cohort: Cohort; currency: Currency }) {
   const cta = ctaFor(cohort);
   return (
     <div className="flex flex-col rounded-lg border border-ink/10 bg-snow p-7">
       <h3 className="font-display text-xl font-medium tracking-tight">{cohort.title}</h3>
-      <p className="mt-2 font-display text-2xl">{priceLabel(cohort)}</p>
+      <CohortPrice cohort={cohort} currency={currency} />
       <p className="mt-1 font-mono text-[11px] text-ink/55">
         {cohort.hoursPerWeek} live hrs/week · {cohort.sessionsPerWeek} sessions · cap {cohort.seatCap}
       </p>

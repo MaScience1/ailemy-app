@@ -89,7 +89,7 @@ export async function loadCohorts(): Promise<CohortLoad> {
   const { data, error } = await db
     .from("cohorts")
     .select(
-      "slug,title,subject,qualification,price_pence,currency,hours_per_week," +
+      "slug,title,subject,qualification,price_pence,price_qar,currency,hours_per_week," +
         "sessions_per_week,schedule_summary,onboarding_on,starts_on,seat_cap," +
         "status,enrolment_url,summary,features,display_order",
     )

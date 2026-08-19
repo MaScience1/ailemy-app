@@ -41,7 +41,7 @@ const t = (n: string, c: boolean, got?: unknown) => {
 /** The database row that would produce this cohort. Derived, never transcribed. */
 const rowFrom = (c: Cohort): Record<string, unknown> => ({
   slug: c.slug, title: c.title, subject: c.subject, qualification: c.qualification,
-  price_pence: c.pricePence, currency: c.currency, hours_per_week: c.hoursPerWeek,
+  price_pence: c.pricePence, price_qar: c.priceQar, currency: c.currency, hours_per_week: c.hoursPerWeek,
   sessions_per_week: c.sessionsPerWeek, schedule_summary: c.scheduleSummary,
   onboarding_on: c.onboardingOn, starts_on: c.firstClassOn, seat_cap: c.seatCap,
   status: c.status, enrolment_url: c.enrolmentUrl, summary: c.summary, features: c.features,
