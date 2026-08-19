@@ -114,7 +114,14 @@ export type DerivedQuestion = {
   displayOrder: number;
   marks: number;
   answerType: AnswerType;
-  expectedAnswer?: { value: string };
+  /**
+   * ⚠ marksOnCorrectAnswer IS THE TARIFF, AND ONLY FOR AN MCQ. Choosing the
+   * right option earns the whole of a multiple-choice question — there is no
+   * partial credit and no working to assess. It is NOT derived for any other
+   * type, where "the right final answer" and "the marks it earns" are
+   * genuinely different questions that the mark scheme answers per point.
+   */
+  expectedAnswer?: { value: string; marksOnCorrectAnswer: number };
   markScheme: FixtureQuestion["markScheme"];
 };
 
@@ -250,7 +257,7 @@ export function deriveQuestionSet(
       displayOrder: (i + 1) * ORDER_STEP,
       marks: q.marks,
       answerType: decision.type,
-      ...(key ? { expectedAnswer: { value: key } } : {}),
+      ...(key ? { expectedAnswer: { value: key, marksOnCorrectAnswer: q.marks } } : {}),
       markScheme: q.markScheme,
     });
   });
