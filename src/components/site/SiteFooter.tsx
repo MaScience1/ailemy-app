@@ -38,12 +38,15 @@ const FOOTER_GROUPS: { heading: string; links: FooterLink[] }[] = [
       { label: "Resources", href: "/resources" },
       { label: "Past Papers", href: "/past-papers" },
       { label: "Live Tuition", href: "/tuition" },
+      { label: "Calendar", href: "/calendar" },
+      { label: "1-to-1 Tuition", href: "/tuition/one-to-one" },
     ],
   },
   {
     heading: "Account",
     links: [
       { label: "Login", href: "/login" },
+      { label: "My tuition", href: "/my-tuition" },
       { label: "Create an account", href: "/signup" },
     ],
   },

@@ -132,7 +132,10 @@ export default async function TuitionPage() {
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink/70">
             One-to-one Chemistry is available in limited monthly blocks. Availability is
             deliberately small so group teaching stays the focus.{" "}
-            <Link href="/tuition/interest?subject=chemistry&amp;mode=one-to-one" className="underline underline-offset-2">
+            {/* ⚠ POINTS AT THE PAGE NOW, NOT STRAIGHT AT THE FORM. The page
+                itself decides whether booking is open or whether to offer the
+                interest form — one place makes that call, not every link. */}
+            <Link href="/tuition/one-to-one" className="underline underline-offset-2">
               Ask about availability →
             </Link>
           </p>
