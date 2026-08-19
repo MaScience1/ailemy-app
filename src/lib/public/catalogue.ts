@@ -255,3 +255,154 @@ export const SUBJECTS: Subject[] = [
 
 /** The static catalogue, for readers and for tests. */
 export const FALLBACK_COHORTS: readonly Cohort[] = COHORTS;
+
+// ============================================================================
+// DATABASE ROWS → CATALOGUE VALUES
+// ============================================================================
+//
+// ⚠ EVERY MAPPER REFUSES RATHER THAN INVENTS. A row missing `subject` is not a
+// Chemistry cohort with a default; a row missing `title` is not a card with an
+// empty heading. The reader drops it and says which row and why, because a
+// silently-defaulted row is a wrong price or a wrong subject on a parent's
+// screen and nothing on the page says so.
+//
+// These are pure so they can be tested without a database. readers.ts does the
+// I/O and calls them; the decisions live here.
+
+export type RowRefusal = { ok: false; reason: string };
+export type Mapped<T> = { ok: true; value: T } | RowRefusal;
+
+const str = (v: unknown): string | null =>
+  typeof v === "string" && v.trim().length > 0 ? v.trim() : null;
+const num = (v: unknown): number | null =>
+  typeof v === "number" && Number.isFinite(v) ? v : typeof v === "string" && v.trim() !== "" && Number.isFinite(Number(v)) ? Number(v) : null;
+
+const COHORT_STATUSES: readonly CohortStatus[] = ["enrolling", "interest", "full", "upcoming", "closed"];
+
+/**
+ * One `cohorts` row (post-0041) as a catalogue Cohort.
+ *
+ * ⚠ THE DEAD-CTA RULE IS ENFORCED HERE TOO, NOT ONLY IN SQL AND ctaFor().
+ * 0041's cohorts_enrolling_needs_url stops such a row being written; ctaFor()
+ * stops it being rendered. This middle layer downgrades it on the way past so
+ * the three cannot disagree — and says so in the refusal channel rather than
+ * quietly rewriting a status the admin chose.
+ */
+export function cohortFromRow(row: Record<string, unknown>): Mapped<Cohort> {
+  const slug = str(row.slug);
+  if (!slug) return { ok: false, reason: "row has no slug" };
+
+  const title = str(row.title);
+  if (!title) return { ok: false, reason: `${slug}: no title` };
+
+  const subject = str(row.subject);
+  if (!subject) return { ok: false, reason: `${slug}: no subject — it cannot be placed on a subject page` };
+
+  const qualification = str(row.qualification);
+  if (!qualification) return { ok: false, reason: `${slug}: no qualification` };
+
+  const pricePence = num(row.price_pence);
+  if (pricePence === null) return { ok: false, reason: `${slug}: no price_pence` };
+
+  const statusRaw = str(row.status);
+  if (!statusRaw || !(COHORT_STATUSES as readonly string[]).includes(statusRaw)) {
+    return { ok: false, reason: `${slug}: status ${JSON.stringify(statusRaw)} is not one of ${COHORT_STATUSES.join("/")}` };
+  }
+  let status = statusRaw as CohortStatus;
+
+  const enrolmentUrl = str(row.enrolment_url);
+  if (status === "enrolling" && !enrolmentUrl) {
+    // Not a refusal — the cohort is real and should still appear. It just
+    // cannot claim to be enrolling with nowhere to send anyone.
+    status = "interest";
+  }
+
+  const features = Array.isArray(row.features)
+    ? row.features.filter((f): f is string => typeof f === "string" && f.trim().length > 0).map((f) => f.trim())
+    : [];
+
+  return {
+    ok: true,
+    value: {
+      slug,
+      title,
+      subject,
+      qualification,
+      pricePence,
+      currency: str(row.currency) ?? "GBP",
+      hoursPerWeek: num(row.hours_per_week) ?? 0,
+      sessionsPerWeek: num(row.sessions_per_week) ?? 0,
+      // ⚠ NULL STAYS NULL. An absent schedule_summary is "no published
+      // timetable", and the card renders nothing. Defaulting to "" would be the
+      // same on screen; defaulting to anything else would be an invented promise.
+      scheduleSummary: str(row.schedule_summary),
+      onboardingOn: str(row.onboarding_on),
+      firstClassOn: str(row.starts_on),
+      seatCap: num(row.seat_cap) ?? 0,
+      status,
+      enrolmentUrl,
+      summary: str(row.summary) ?? "",
+      features,
+    },
+  };
+}
+
+/** One `announcements` row (post-0039) as a bar-ready Announcement. */
+export type AnnouncementRow = Announcement & {
+  enabled: boolean;
+  startsAt: string | null;
+  endsAt: string | null;
+};
+
+export function announcementFromRow(row: Record<string, unknown>): Mapped<AnnouncementRow> {
+  const id = str(row.id);
+  if (!id) return { ok: false, reason: "row has no id" };
+  const title = str(row.title);
+  if (!title) return { ok: false, reason: `${id}: no title — the bar would render an empty strip` };
+
+  const ctaLabel = str(row.cta_label);
+  const ctaUrl = str(row.link_url);
+
+  return {
+    ok: true,
+    value: {
+      id,
+      title,
+      body: str(row.body),
+      // ⚠ HALF A CTA IS NO CTA. A label with no url is a button that goes
+      // nowhere; a url with no label has no words. Either alone is dropped.
+      ctaLabel: ctaLabel && ctaUrl ? ctaLabel : null,
+      ctaUrl: ctaLabel && ctaUrl ? ctaUrl : null,
+      priority: num(row.priority) ?? 0,
+      enabled: row.enabled === true,
+      startsAt: str(row.starts_at),
+      endsAt: str(row.ends_at),
+    },
+  };
+}
+
+/**
+ * Which cohort list the site should show.
+ *
+ * ⚠ AN EMPTY DATABASE IS NOT AN EMPTY CATALOGUE. Zero public rows means 0041
+ * has not been applied, or nobody has ticked is_public yet — and either way the
+ * honest thing on screen is the founder's real offer, not a blank page where
+ * three cohorts used to be. This is the ONE place that decision is made, so a
+ * page cannot make a different one.
+ *
+ * Announcements are the opposite and deliberately so: there, empty IS the
+ * answer, and activeAnnouncement() returning null hides the bar.
+ */
+export function chooseCohorts(
+  rows: readonly Cohort[],
+  fallback: readonly Cohort[],
+): Loaded<readonly Cohort[]> {
+  if (rows.length === 0) {
+    return { data: fallback, source: "fallback", reason: "no public cohort rows" };
+  }
+  // ⚠ ORDER IS THE CALLER'S, NOT OURS. The reader asks the database for
+  // display_order, and the fallback list is in the founder's own order (AS,
+  // Y11, Y10). Re-sorting here would silently override an admin's ordering
+  // with alphabetical slugs.
+  return { data: rows, source: "database" };
+}

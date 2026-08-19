@@ -1,21 +1,21 @@
 import Link from "next/link";
-import { activeAnnouncement, type Announcement } from "@/lib/public/catalogue";
+
+import { loadAnnouncement } from "@/lib/public/readers";
 
 /**
  * The site-wide bar, above the navigation.
  *
- * ⚠ IT RENDERS NOTHING UNTIL A REAL ANNOUNCEMENT EXISTS. 0039 is unapplied, so
- * the reader below has no table to query and the fallback is an EMPTY list —
- * deliberately, because a hardcoded banner is exactly the thing the founder
- * asked to be able to switch off without a deploy, and it would be
- * un-switch-off-able until the migration runs.
+ * ⚠ IT RENDERS NOTHING UNLESS AN ANNOUNCEMENT IS ENABLED AND IN ITS WINDOW.
+ * The reader is database-first (0039); when the table has no announcements —
+ * or the migration has not been applied — the answer is null and the bar is
+ * absent. There is no hardcoded banner, because a hardcoded banner is exactly
+ * the thing the founder asked to be able to switch off without a deploy.
  *
  * ⚠ NO LAYOUT SHIFT. Absent means absent — no reserved strip that collapses
  * after hydration. This is a server component; there is no hydration step.
  */
 export async function AnnouncementBar() {
-  const rows: (Announcement & { enabled: boolean; startsAt: string | null; endsAt: string | null })[] = [];
-  const live = activeAnnouncement(rows, new Date());
+  const { data: live } = await loadAnnouncement();
   if (!live) return null;
 
   return (

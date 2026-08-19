@@ -6,9 +6,10 @@ import { SiteNav } from "@/components/site/SiteNav";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
 import { getNavSession } from "@/lib/auth/nav-session";
 import {
-  FALLBACK_COHORTS, SUBJECTS, ctaFor, priceLabel,
+  SUBJECTS, ctaFor, priceLabel,
   type Cohort, type Subject,
 } from "@/lib/public/catalogue";
+import { loadCohorts } from "@/lib/public/readers";
 
 /**
  * The Ailemy front door.
@@ -25,9 +26,10 @@ import {
  * dates and CTAs live in one place so the founder can move them without a
  * developer — and so a price cannot drift between two sections of one page.
  *
- * ⚠ SERVER-RENDERED THROUGHOUT. No client components, no animation library, no
- * data fetching on the critical path. The whole page is static markup over a
- * module import.
+ * ⚠ SERVER-RENDERED THROUGHOUT. No client components and no animation library.
+ * Cohorts are read from the database (0041) with the static catalogue as the
+ * fallback, so the page renders the founder's real offer whether or not the
+ * migration has been applied — and never a blank catalogue.
  */
 export const metadata: Metadata = {
   title: "Ailemy — online science school and exam practice",
@@ -36,10 +38,10 @@ export const metadata: Metadata = {
     "mark-scheme-informed marking, and progress tracking. Pearson Edexcel GCSE, International GCSE and IAL.",
 };
 
-const chemistryCohorts = FALLBACK_COHORTS.filter((c) => c.subject === "chemistry");
-
 export default async function Home() {
   const session = await getNavSession();
+  const { data: cohorts } = await loadCohorts();
+  const chemistryCohorts = cohorts.filter((c) => c.subject === "chemistry");
 
   return (
     <div className="bg-parchment text-ink">

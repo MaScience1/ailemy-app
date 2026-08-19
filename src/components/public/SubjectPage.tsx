@@ -4,7 +4,8 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
 import { getNavSession } from "@/lib/auth/nav-session";
-import { SUBJECTS, FALLBACK_COHORTS, ctaFor, priceLabel } from "@/lib/public/catalogue";
+import { SUBJECTS, ctaFor, priceLabel } from "@/lib/public/catalogue";
+import { loadCohorts } from "@/lib/public/readers";
 
 /**
  * One subject page, rendered for all three sciences.
@@ -32,7 +33,8 @@ export async function SubjectPage({ slug }: { slug: string }) {
   const subject = SUBJECTS.find((s) => s.slug === slug);
   if (!subject) return null;
 
-  const cohorts = FALLBACK_COHORTS.filter((c) => c.subject === slug);
+  const { data: allCohorts } = await loadCohorts();
+  const cohorts = allCohorts.filter((c) => c.subject === slug);
   const hasResources = subject.status === "available" && subject.exploreHref !== null;
 
   return (

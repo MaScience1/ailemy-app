@@ -5,7 +5,8 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
 import { getNavSession } from "@/lib/auth/nav-session";
-import { FALLBACK_COHORTS, ctaFor, priceLabel } from "@/lib/public/catalogue";
+import { ctaFor, priceLabel } from "@/lib/public/catalogue";
+import { loadCohorts } from "@/lib/public/readers";
 
 /**
  * The tuition destination (§23).
@@ -26,6 +27,7 @@ export const metadata: Metadata = {
 
 export default async function TuitionPage() {
   const session = await getNavSession();
+  const { data: cohorts } = await loadCohorts();
   return (
     <div className="bg-parchment text-ink">
       <AnnouncementBar />
@@ -41,7 +43,7 @@ export default async function TuitionPage() {
         </p>
 
         <div className="mt-10 grid gap-4 lg:grid-cols-3">
-          {FALLBACK_COHORTS.map((c) => {
+          {cohorts.map((c) => {
             const cta = ctaFor(c);
             return (
               <div key={c.slug} className="flex flex-col rounded-lg border border-ink/10 bg-snow p-7">
