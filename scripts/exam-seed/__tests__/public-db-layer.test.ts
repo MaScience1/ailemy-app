@@ -188,6 +188,27 @@ const form = (over: Record<string, string> = {}) => {
   for (const st of STATUSES) t(`status ${st} is accepted when disabled`, readAnnouncementForm(form({ status: st })).ok);
 }
 
+console.log("\n── body IS NEVER NULL, BECAUSE THE COLUMN IS NOT NULL ──");
+{
+  // ⚠ REGRESSION GUARD FOR A REAL PRODUCTION FAULT. announcements.body is NOT
+  // NULL in production — 0022 on disk said otherwise until the live sabotage run
+  // of 2026-08-19 proved it with a 23502. A blank box must become "", not null,
+  // or writing a title-only banner hands the admin a raw constraint error.
+  const blank = readAnnouncementForm(form());
+  t("a blank body becomes an empty string, not null",
+    blank.ok && blank.fields.body === "", blank.ok ? blank.fields.body : blank.error);
+  t("…and reaches the row as a string", blank.ok && toRow(blank.fields).body === "",
+    blank.ok ? toRow(blank.fields).body : null);
+  const written = readAnnouncementForm(form({ body: "Autumn enrolment is open." }));
+  t("a written body survives", written.ok && written.fields.body === "Autumn enrolment is open.",
+    written.ok ? written.fields.body : written.error);
+  // The read side still nulls an empty body, so the bar renders no paragraph.
+  const back = announcementFromRow({ id: "x", title: "T", body: "", priority: 0, enabled: true,
+    starts_at: null, ends_at: null, cta_label: null, link_url: null });
+  t("…and an empty body reads back as null, so the bar renders no paragraph",
+    back.ok && back.value.body === null, back.ok ? back.value.body : back.reason);
+}
+
 console.log("\n── A LOCAL TIME IS RESOLVED WITH ITS OFFSET ──");
 {
   // getTimezoneOffset() is minutes to ADD to local to reach UTC.

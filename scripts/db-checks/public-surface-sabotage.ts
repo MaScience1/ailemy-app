@@ -164,8 +164,13 @@ async function main() {
   const annId = randomUUID();
   const annTitle = `sabotage probe ${annId.slice(0, 8)}`;
   {
+    // ⚠ body IS SUPPLIED BECAUSE THE COLUMN IS NOT NULL. The first live run of
+    // this script omitted it and production answered 23502 — which is how the
+    // divergence between 0022-on-disk (nullable) and production (NOT NULL) was
+    // found at all. Left as a supplied value rather than "fixed" silently.
     const { error } = await svc.from("announcements").insert({
-      id: annId, title: annTitle, category: "update", status: "live", enabled: false,
+      id: annId, title: annTitle, body: "sabotage probe body",
+      category: "update", status: "live", enabled: false,
     });
     if (error) {
       t("service_role can create a probe announcement", false, err(error));

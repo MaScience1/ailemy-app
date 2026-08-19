@@ -21,7 +21,15 @@ export type Status = (typeof STATUSES)[number];
 
 export type AnnouncementFields = {
   title: string;
-  body: string | null;
+  /**
+   * ⚠ NEVER NULL. announcements.body is NOT NULL in production — discovered by
+   * the live sabotage run on 2026-08-19, and corrected in 0022 the same day.
+   * A blank box becomes "", which satisfies the column and reads back as "no
+   * body" (the reader nulls empty strings, and the bar renders no paragraph).
+   * Leaving it null here would hand an admin a raw 23502 for the entirely
+   * reasonable act of writing a title-only banner.
+   */
+  body: string;
   category: Category;
   status: Status;
   ctaLabel: string | null;
@@ -116,7 +124,7 @@ export function readAnnouncementForm(fd: FormData): Validated {
     ok: true,
     fields: {
       title,
-      body: clean(fd.get("body")),
+      body: clean(fd.get("body")) ?? "",
       category: categoryRaw as Category,
       status: statusRaw as Status,
       ctaLabel,

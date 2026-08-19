@@ -39,6 +39,30 @@
 --
 -- Run the verification query at the foot of this file and reconcile any
 -- difference. Until that is done, treat this file as close-but-unconfirmed.
+--
+-- ============================================================================
+-- ⚠ RECONCILED IN PART — 2026-08-19
+-- ============================================================================
+-- ONE divergence has been found and corrected in this file:
+--
+--   body  was written `text` (nullable). Production has it NOT NULL.
+--
+-- How it surfaced: scripts/db-checks/public-surface-sabotage.ts inserted a
+-- probe announcement supplying title/category/status/enabled and no body, and
+-- production answered
+--
+--     23502: null value in column "body" of relation "announcements"
+--            violates not-null constraint
+--
+-- which is a direct observation of production's constraint, not an inference.
+-- The DDL below now says NOT NULL.
+--
+-- ⚠ THIS DOES NOT MAKE THE REST OF THE FILE VERIFIED. Exactly one setting was
+-- exercised. Every other TYPE, DEFAULT and NULL/NOT NULL in this file is still
+-- transcribed rather than checked, and finding a divergence in the first one
+-- that was tested is a reason to trust the others LESS, not more. The remaining
+-- verification query at the foot of this file still needs running.
+-- ============================================================================
 -- ============================================================================
 
 BEGIN;
@@ -46,7 +70,12 @@ BEGIN;
 CREATE TABLE IF NOT EXISTS public.announcements (
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   title         text NOT NULL,
-  body          text,
+  -- ⚠ NOT NULL, VERIFIED AGAINST PRODUCTION 2026-08-19. This line read
+  -- `body text` until then — nullable — which is what the header below warns
+  -- every NULL/NOT NULL setting in this file was: transcribed, not checked.
+  -- A rebuild from this folder would have produced a nullable column and a
+  -- database that silently disagreed with production.
+  body          text NOT NULL,
   -- What kind of announcement this is, so a client can filter or badge it.
   category      text NOT NULL,
   -- Optional deep link or external URL the announcement points at.
