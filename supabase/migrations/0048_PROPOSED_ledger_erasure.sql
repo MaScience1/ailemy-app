@@ -152,20 +152,70 @@ NOTIFY pgrst, 'reload schema';
 -- ⚠ ONE-TIME CLEANUP OWED FROM 0047's VERIFICATION RUN
 -- ----------------------------------------------------------------------------
 -- That run left rows behind that could not be removed, because this defect is
--- exactly what stopped the cleanup. After applying, run:
+-- exactly what stopped the cleanup: 7 ledger rows, 1 private booking and 2
+-- probe auth users on example.test.
 --
+-- ⚠ THE ORDER BELOW IS NOT INTERCHANGEABLE, AND AN EARLIER DRAFT HAD IT WRONG.
+-- It deleted auth.users first and expected the CASCADE on
+-- lesson_credit_transactions.user_id to carry the ledger away. That cascade is
+-- real and does still fire — but the delete never gets that far, because a
+-- DIFFERENT constraint refuses first:
+--
+--     private_bookings.teacher_id → auth.users(id) ON DELETE RESTRICT   (0046)
+--
+-- Probe user A is the teacher on the surviving booking, so deleting A is
+-- refused while that booking exists. And the booking cannot be deleted while
+-- ledger rows point at it, because section 2 above just made booking_id
+-- RESTRICT. The dependency chain is therefore:
+--
+--     ledger  →  bookings  →  users
+--
+-- and it must be walked from the leaf inward. Only the first step needs the
+-- purge flag; the other two are ordinary deletes once nothing references them.
+--
+-- ── STEP 0: SEE WHAT WILL GO, BEFORE ANYTHING GOES ──────────────────────────
+-- SELECT id, email FROM auth.users WHERE email LIKE 'probe-0045-%@example.test';
+-- SELECT count(*) AS ledger_rows FROM public.lesson_credit_transactions
+--  WHERE user_id IN (SELECT id FROM auth.users WHERE email LIKE 'probe-0045-%@example.test');
+-- SELECT id, email, status FROM public.private_bookings
+--  WHERE teacher_id IN (SELECT id FROM auth.users WHERE email LIKE 'probe-0045-%@example.test');
+-- EXPECT: 2 users, 7 ledger rows, 1 booking. If any count is higher, STOP and
+--   look — these statements are scoped to the probe users and nothing else, but
+--   a number you did not expect means the assumption behind that scoping is
+--   wrong.
+--
+-- ── STEP 1: THE LEDGER (needs the purge flag) ───────────────────────────────
 -- BEGIN;
 --   SET LOCAL app.ledger_purge = 'on';
---   DELETE FROM auth.users
---    WHERE email LIKE 'probe-0045-%@example.test';
+--   DELETE FROM public.lesson_credit_transactions
+--    WHERE user_id IN (
+--      SELECT id FROM auth.users WHERE email LIKE 'probe-0045-%@example.test'
+--    );
 -- COMMIT;
 --
--- -- the one probe booking, once its ledger rows are gone with the users:
--- DELETE FROM public.private_bookings WHERE email = 'a@example.test';
+-- ── STEP 2: THE BOOKING (ordinary delete; nothing references it now) ────────
+-- DELETE FROM public.private_bookings
+--  WHERE teacher_id IN (
+--    SELECT id FROM auth.users WHERE email LIKE 'probe-0045-%@example.test'
+--  );
 --
--- Then confirm all three are empty:
+-- ── STEP 3: THE USERS (ordinary delete; nothing references them now) ────────
+-- DELETE FROM auth.users WHERE email LIKE 'probe-0045-%@example.test';
+--
+-- ── STEP 4: CONFIRM ─────────────────────────────────────────────────────────
 -- SELECT
 --   (SELECT count(*) FROM public.lesson_credit_transactions) AS ledger,
 --   (SELECT count(*) FROM public.private_bookings)           AS bookings,
+--   (SELECT count(*) FROM public.booking_holds)              AS holds,
 --   (SELECT count(*) FROM auth.users WHERE email LIKE 'probe-0045-%') AS probes;
--- PASS: 0, 0, 0.
+-- PASS: 0, 0, 0, 0.
+--
+-- ⚠ AND ONE MORE, WHICH IS THE POINT OF THE WHOLE FILE. Confirm the escape did
+-- not stay armed after step 1:
+-- INSERT INTO public.lesson_credit_transactions (user_id, delta, reason)
+--   SELECT id, 1, 'admin_adjustment' FROM auth.users LIMIT 1;
+-- UPDATE public.lesson_credit_transactions SET delta = 2 WHERE reason = 'admin_adjustment';
+-- PASS: 'lesson_credit_transactions is append-only: UPDATE refused…'
+--   Then remove that probe row the same way step 1 did, in its own purge
+--   transaction. If the UPDATE had SUCCEEDED, SET LOCAL leaked past its
+--   transaction and the ledger is no longer append-only — stop and say so.
