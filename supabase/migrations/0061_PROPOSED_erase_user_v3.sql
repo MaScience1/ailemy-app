@@ -366,18 +366,20 @@ BEGIN
     'payments_unlinked', payments_unlinked,
     'email_columns_scanned', cols_scanned,
     /**
-     * ⚠ AN OBLIGATION, NOT A RESULT. Nothing in this transaction deleted a
-     * file. The caller must purge this prefix through the Storage API; a
-     * DELETE on storage.objects would strand the binary and lose its path.
+     * ⚠ TWO OBLIGATIONS, NOT RESULTS. Neither Stripe nor Storage is reachable
+     * from a transaction, so what leaves here is a list of what the CALLER
+     * must still do. An empty array is a real answer — it means there was
+     * nothing to purge, not that the step was skipped.
      */
-    /**
-     * ⚠ THE SECOND OBLIGATION. Deleting the Customer at Stripe is an API call
-     * this transaction cannot make, and an empty array is a real answer — it
-     * means there was no Stripe customer, not that the step was skipped.
-     */
+    /** Customer objects at Stripe holding this person's name, email and card metadata. */
     'stripe_erasure_required', to_jsonb(stripe_customers),
     /** Students whose live seat is now paid for by a tombstoned profile. */
     'payer_erasure_side_effects', to_jsonb(payerless_students),
+    /**
+     * ⚠ Nothing in this transaction deleted a file. The caller must purge this
+     * prefix through the Storage API; a DELETE on storage.objects would strand
+     * the binary and lose its path.
+     */
     'storage_purge_required', jsonb_build_object(
       'bucket', 'submissions',
       'prefix', target::text || '/',
@@ -386,6 +388,7 @@ BEGIN
   );
 END;
 $$;
+
 COMMENT ON FUNCTION public.erase_user(uuid) IS
   'v3 (0061). Delete a person completely: their own rows deleted, third-party and financial records scrubbed of personal columns, a generic email sweep that refuses to report success while the address still appears anywhere in public, and two obligations returned for the systems this transaction cannot reach — Storage and Stripe. service_role only.';
 
