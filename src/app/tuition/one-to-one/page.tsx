@@ -6,7 +6,7 @@ import { TimezoneSync } from "@/components/public/TimezoneSync";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
 import { getNavSession } from "@/lib/auth/nav-session";
-import { stripeConfig } from "@/lib/booking/config";
+import { CHECKOUT_BUILT, stripeConfig } from "@/lib/booking/config";
 import { loadOpenSlots } from "@/lib/booking/readers";
 import { loadMyTuition } from "@/lib/booking/student";
 import { canRedeem } from "@/lib/booking/cancellation";
@@ -61,9 +61,11 @@ export default async function OneToOnePage() {
     loadMyTuition(),
   ]);
 
-  // ⚠ BUYING NEEDS KEYS AND SOMETHING TO SELL. Both, or no Book button.
+  // ⚠ BUYING NEEDS KEYS, SOMETHING TO SELL, AND SOMEWHERE TO GO. The third was
+  // missing: the Book link pointed at /tuition/one-to-one/book, which has never
+  // existed. Keyless Stripe was the only thing keeping it off the page.
   const sellable = packages.filter((p) => p.stripePriceId !== null);
-  const canBuy = stripe.configured && sellable.length > 0;
+  const canBuy = CHECKOUT_BUILT && stripe.configured && sellable.length > 0;
 
   // ⚠ REDEEMING NEEDS NEITHER. canRedeem never consults Stripe — see its
   // header, and the assertion in booking-lifecycle.test.ts that proves the
@@ -156,19 +158,16 @@ export default async function OneToOnePage() {
                       {/* ⚠ REDEEM IS OFFERED FIRST WHEN BOTH ARE POSSIBLE. A
                           student holding credits should spend one rather than
                           be sold another lesson they have already paid for. */}
-                      {redeem.ok ? (
-                        <BookWithCredit
-                          slotKey={s.key}
-                          label={`${formatDay(s.startsAt, CANONICAL_TZ)} at ${start.canonical}`}
-                        />
-                      ) : (
-                        <Link
-                          href={`/tuition/one-to-one/book?slot=${encodeURIComponent(s.key)}`}
-                          className="shrink-0 rounded-full border border-ink/20 px-4 py-1.5 text-sm hover:border-ink/40"
-                        >
-                          Book
-                        </Link>
-                      )}
+                      {/* ⚠ REDEEM IS THE ONLY ACTION THAT EXISTS. The Buy
+                          branch linked to /tuition/one-to-one/book, which has
+                          never been a route — see DayPanel for the full note.
+                          Times only render when redeem.ok or canBuy, and
+                          canBuy now requires CHECKOUT_BUILT, so this list is
+                          unreachable without a credit until checkout exists. */}
+                      <BookWithCredit
+                        slotKey={s.key}
+                        label={`${formatDay(s.startsAt, CANONICAL_TZ)} at ${start.canonical}`}
+                      />
                     </li>
                   );
                 })}

@@ -227,14 +227,23 @@ function PrivateRow({
           )}
           <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.15em] text-ink/55">Confirmed</p>
         </>
-      ) : event.bookable ? (
-        <Link
-          href={`/tuition/one-to-one/book?slot=${encodeURIComponent(event.key)}`}
-          className="mt-3 inline-block rounded-full bg-ink px-4 py-1.5 text-sm font-medium text-parchment transition-colors hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-        >
-          Book →
-        </Link>
       ) : (
+        /**
+         * ⚠ THERE IS NO BOOK LINK HERE, AND ITS ABSENCE IS DELIBERATE.
+         *
+         * This branch used to link to /tuition/one-to-one/book — a route that
+         * has never existed. It never 404'd for anyone only because it was
+         * gated on Stripe having keys, and Stripe has none; the first person to
+         * meet it would have been the first paying customer, on the first day
+         * money could move. Verified: that path returns 404 today.
+         *
+         * ⚠ WHEN CHECKOUT IS BUILT, ADD THE LINK BACK HERE — and only with its
+         * destination. route-integrity.test.ts resolves every literal href
+         * against the real router tree, so a link with no page fails the suite
+         * by name. `bookable` (keys + a package + an open slot) is necessary
+         * and not sufficient; CHECKOUT_BUILT in lib/booking/config.ts is the
+         * fourth condition.
+         */
         /* ⚠ KEYLESS, THERE IS NO BOOK BUTTON — not a disabled one, which reads
            as "full". §7 of the standing rules and §80. */
         <p className="mt-3 text-sm text-ink/60">
