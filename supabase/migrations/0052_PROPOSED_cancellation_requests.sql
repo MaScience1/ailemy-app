@@ -123,9 +123,14 @@ CREATE POLICY cancellation_requests_read_own
  * names a decision-maker for a decision nobody made. Each column that records
  * OUR side of the conversation is pinned to its no-decision-yet value.
  *
- * ⚠ THE ADMIN PATH IS UNAFFECTED. cancellation_requests_staff_all is a separate
- * FOR ALL policy and policies are OR'd, so staff recording a phone call as
- * already-resolved still insert normally. This narrows students only.
+ * ⚠ THE ADMIN PATH IS UNAFFECTED. Admin writes go through createAdminClient()
+ * — service_role, which holds table-wide privileges from 0014 and BYPASSRLS —
+ * so recording a phone call as already-resolved is untouched by this policy and
+ * by section 3's column grant alike. This narrows students only.
+ *
+ * cancellation_requests_staff_all below covers a staff member acting through
+ * their OWN session instead; policies are OR'd, so this WITH CHECK does not
+ * constrain them either. Section 3's column grant does, and section 3 says so.
  */
 DROP POLICY IF EXISTS cancellation_requests_insert_own ON public.cancellation_requests;
 CREATE POLICY cancellation_requests_insert_own
