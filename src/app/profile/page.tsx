@@ -14,6 +14,9 @@ import { loadPersonalCalendar, nextLive } from "@/lib/calendar/readers";
 import { loadMyTuition } from "@/lib/booking/student";
 import { planCancellation, explainCancellation } from "@/lib/booking/cancellation";
 import { BookingActions, type CancelMode } from "@/components/booking/BookingActions";
+import { ScheduleUpdates, type UpdateRow } from "@/components/booking/ScheduleUpdates";
+import { loadInbox } from "@/lib/booking/inbox";
+import { describeNotification } from "@/lib/booking/notify-copy";
 import { CANONICAL_TZ, calendarDate, dualTime, formatDay } from "@/lib/schedule/timezone";
 import { viewerTimeZone } from "@/lib/schedule/viewer-tz";
 
@@ -62,9 +65,10 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
   const openDay = params.day && parseDate(params.day) ? params.day : null;
 
   const range = rangeFor(state.view, state.date);
-  const [me, personal] = await Promise.all([
+  const [me, personal, inbox] = await Promise.all([
     loadMyTuition(),
     loadPersonalCalendar(range),
+    loadInbox(),
   ]);
 
   // The proxy gates /profile too, but a layout-free route must not rely on it.
@@ -182,6 +186,38 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
                   ? "You are not enrolled on a cohort and have no private bookings in this period."
                   : "No lessons in this period for your cohorts."
               }
+            />
+          </div>
+        </section>
+
+        {/* ── schedule updates (§47) ──────────────────────────────────────
+            ⚠ ABOVE the lesson lists on purpose. This is where "your Saturday
+            moved" appears, and a student who scrolls past it to read a
+            timetable has been told the change by the timetable instead — which
+            is the moment the panel was supposed to prevent. */}
+        <section className="mt-12">
+          <div className="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 className="font-display text-2xl font-medium tracking-tight">Schedule updates</h2>
+            <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-ink/40">
+              What we have told you
+            </p>
+          </div>
+          <div className="mt-5">
+            <ScheduleUpdates
+              note={inbox.note}
+              rows={inbox.items.map((i): UpdateRow => {
+                // ⚠ RENDERED SERVER-SIDE, from stored FACTS. The wording lives
+                // in one file, so fixing it re-renders every message already
+                // sitting in somebody's panel.
+                const copy = describeNotification(i.kind, i.payload, viewerTz);
+                return {
+                  id: i.deliveryId,
+                  title: copy.title,
+                  detail: copy.detail,
+                  when: formatDay(i.createdAt, CANONICAL_TZ),
+                  unread: i.readAt === null,
+                };
+              })}
             />
           </div>
         </section>
