@@ -17,7 +17,7 @@ import { BookingActions, type CancelMode } from "@/components/booking/BookingAct
 import { ScheduleUpdates, type UpdateRow } from "@/components/booking/ScheduleUpdates";
 import { loadInbox } from "@/lib/booking/inbox";
 import { describeNotification } from "@/lib/booking/notify-copy";
-import { CANONICAL_TZ, calendarDate, dualTime, formatDay } from "@/lib/schedule/timezone";
+import { CANONICAL_TZ, calendarDate, currentTimeIn, dualTime, formatDay } from "@/lib/schedule/timezone";
 import { viewerTimeZone } from "@/lib/schedule/viewer-tz";
 
 import { EventChip } from "@/components/calendar/EventChip";
@@ -123,12 +123,24 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
           <h1 className="font-display mt-3 text-3xl font-medium tracking-tight sm:text-4xl">
             {me.email ?? "My profile"}
           </h1>
+          {/* ⚠ THE CLOCK BESIDE THE ZONE IS THE CHECK. A zone NAME cannot be
+              verified by reading it — "Asia/Qatar" and "America/Anchorage" look
+              equally plausible — but the time in it can be, at a glance, by the
+              one person who knows what time it is where they are. Cross-client
+              finding: ICU accepts bare abbreviations and resolves them
+              elsewhere, so a wrong zone is otherwise completely silent. */}
           <p className="mt-2 text-sm text-ink/60">
             {me.email}
             {" · "}
             <span className="font-mono text-[11px]">
               {viewerTz ?? CANONICAL_TZ}
             </span>
+            {(() => {
+              const local = currentTimeIn(viewerTz ?? CANONICAL_TZ);
+              return local ? (
+                <span className="font-mono text-[11px] text-ink/45"> · {local} there now</span>
+              ) : null;
+            })()}
           </p>
           {/* ⚠ §21 — THE ZONE IS NAMED, AND CHANGEABLE. Silent conversion is how
               a student turns up an hour late. profiles.timezone exists (0017) and

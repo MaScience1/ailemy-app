@@ -1,5 +1,7 @@
 "use client";
 
+import { TimezoneField } from "@/components/admin/TimezoneField";
+
 import { useActionState, useState, useTransition } from "react";
 
 import { WEEKDAY_OPTIONS } from "@/lib/admin/schedule-form";
@@ -113,9 +115,7 @@ export function AvailabilityForm({
         <Field label="Window closes">
           <input name="end_time" type="time" required defaultValue={value?.end_time.slice(0, 5) ?? "19:00"} className={input} />
         </Field>
-        <Field label="Timezone">
-          <input name="timezone" defaultValue={value?.timezone ?? "Asia/Qatar"} className={input} />
-        </Field>
+        <TimezoneField name="timezone" defaultValue={value?.timezone ?? "Asia/Qatar"} />
 
         <Field label="Lesson length (minutes)" hint="Must fit inside the window, or nothing is published.">
           <input name="slot_minutes" type="number" min={1} max={480} defaultValue={value?.slot_minutes ?? 60} className={input} />
@@ -175,7 +175,7 @@ export function BlockForm({ teachers }: { teachers: TeacherOption[] }) {
             {teachers.map((t) => <option key={t.id} value={t.id}>{t.email}</option>)}
           </select>
         </Field>
-        <Field label="Timezone"><input name="timezone" defaultValue="Asia/Qatar" className={input} /></Field>
+        <TimezoneField name="timezone" defaultValue="Asia/Qatar" />
         <Field label="From date"><input name="starts_on" type="date" required className={input} /></Field>
         <Field label="To date" hint="Blank means the same day.">
           <input name="ends_on" type="date" className={input} />

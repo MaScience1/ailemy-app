@@ -165,12 +165,90 @@ export function dualTime(
 }
 
 /** Whether a string is a zone this runtime actually knows. */
-export function isKnownTimeZone(tz: string | null | undefined): tz is string {
-  if (!tz || typeof tz !== "string") return false;
+/**
+ * ============================================================================
+ * ⚠ ICU ACCEPTS LEGACY ABBREVIATIONS AND RESOLVES THEM TO THE WRONG PLACE
+ * ============================================================================
+ * "Does Intl throw?" was the old test, and it is not enough. Intl accepts a
+ * bare abbreviation and silently remaps it — measured on this platform:
+ *
+ *     BST -> Asia/Dhaka          a 19:00 Doha lesson renders 22:00, not 17:00
+ *     AST -> America/Anchorage   renders 08:00
+ *     EST -> America/Panama      CET -> Europe/Brussels
+ *     PST -> America/Los_Angeles IST -> Asia/Calcutta
+ *
+ * ⚠ BST IS THE ONE THAT BITES AILEMY. A British student typing the ordinary
+ * abbreviation for British Summer Time gets Bangladesh, five hours out, with
+ * no error anywhere. Reported from the mobile build; verified here.
+ *
+ * ⚠ AND IT IS NOT ONLY A DISPLAY BUG ON OUR SIDE. cohort_schedules.timezone
+ * and teacher_availability.timezone are resolved to real INSTANTS at expansion
+ * time, so an abbreviation there does not mis-render a lesson — it schedules
+ * one at the wrong moment, and the exclusion constraint then protects the
+ * wrong slot.
+ *
+ * ⚠ THE TEST IS SHAPE PLUS VALIDITY, NOT "DOES IT RESOLVE TO ITSELF". That
+ * tempting one-liner produces false rejections, twice over:
+ *   · case is canonicalised — "asia/qatar" resolves to "Asia/Qatar"
+ *   · modern names are aliased — "Asia/Kolkata" resolves to "Asia/Calcutta",
+ *     and Kolkata is the CURRENT correct IANA name for India
+ * Requiring Region/City catches every bare abbreviation instead, because not
+ * one of them contains a slash, and it never rejects a real zone. UTC is the
+ * single legitimate slashless name and is allowed by name.
+ */
+export function canonicalTimeZone(tz: string | null | undefined): string | null {
+  if (!tz || typeof tz !== "string") return null;
+  const trimmed = tz.trim();
+  if (trimmed.length === 0) return null;
+  // Region/City, or exactly UTC. Everything else is an abbreviation.
+  if (trimmed.toUpperCase() !== "UTC" && !trimmed.includes("/")) return null;
   try {
-    new Intl.DateTimeFormat("en-GB", { timeZone: tz });
-    return true;
+    // ⚠ THE CANONICAL FORM IS WHAT CALLERS SHOULD STORE, so a lowercase entry
+    // is corrected rather than refused and two rows cannot disagree about the
+    // same zone by capitalisation alone.
+    return new Intl.DateTimeFormat("en-GB", { timeZone: trimmed }).resolvedOptions().timeZone;
   } catch {
-    return false;
+    return null;
   }
+}
+
+export function isKnownTimeZone(tz: string | null | undefined): tz is string {
+  return canonicalTimeZone(tz) !== null;
+}
+
+/**
+ * The clock in that zone, right now — for showing beside a zone the user chose.
+ *
+ * ⚠ A ZONE NAME CANNOT BE CHECKED BY READING IT. "Asia/Qatar" and
+ * "America/Anchorage" look equally plausible to somebody who picked one from a
+ * list; the current time beside it is what makes a wrong choice visible in the
+ * second it is made. This is the same guard the mobile client added.
+ */
+export function currentTimeIn(tz: string, now: Date = new Date()): string | null {
+  const canonical = canonicalTimeZone(tz);
+  if (!canonical) return null;
+  return formatTime(now, canonical);
+}
+
+
+/**
+ * Why a zone was refused, in a sentence an admin can act on.
+ *
+ * ⚠ "not a timezone this system knows" IS TRUE AND USELESS FOR "BST". The
+ * platform knows BST perfectly well — it means Asia/Dhaka, which is the whole
+ * problem. Naming what it would have resolved to is what turns a refusal into
+ * an explanation.
+ */
+export function tzError(raw: string): string {
+  const looksLikeAbbreviation = !raw.includes("/") && raw.trim().toUpperCase() !== "UTC";
+  if (looksLikeAbbreviation) {
+    let wouldMean: string | null = null;
+    try {
+      wouldMean = new Intl.DateTimeFormat("en-GB", { timeZone: raw }).resolvedOptions().timeZone;
+    } catch { wouldMean = null; }
+    return wouldMean && wouldMean !== raw
+      ? `"${raw}" is an abbreviation, and it would be read as ${wouldMean} — use the Region/City name, like Europe/London or Asia/Qatar.`
+      : `"${raw}" is not a full timezone name. Use the Region/City form, like Europe/London or Asia/Qatar.`;
+  }
+  return `"${raw}" is not a timezone this system knows.`;
 }

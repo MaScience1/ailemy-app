@@ -1,7 +1,7 @@
 // ⚠ RELATIVE, WITH THE .ts EXTENSION — same reason as schedule-form.ts. Node 26
 // strips types but resolves ESM specifiers literally, so a suite running this
 // under plain `node` cannot follow the "@/" alias.
-import { isKnownTimeZone, zonedTimeToInstant, CANONICAL_TZ } from "../schedule/timezone.ts";
+import { canonicalTimeZone, tzError, zonedTimeToInstant, CANONICAL_TZ } from "../schedule/timezone.ts";
 import type { IsoWeekday } from "../schedule/recurrence.ts";
 import type { Validated } from "./schedule-form.ts";
 
@@ -133,10 +133,9 @@ export function readAvailabilityForm(fd: FormData): Validated<AvailabilityInput>
     return { ok: false, error: "That date is not a date." };
   }
 
-  const timezone = str(fd, "timezone") || CANONICAL_TZ;
-  if (!isKnownTimeZone(timezone)) {
-    return { ok: false, error: `"${timezone}" is not a timezone this system knows.` };
-  }
+  const timezoneRaw = str(fd, "timezone") || CANONICAL_TZ;
+  const timezone = canonicalTimeZone(timezoneRaw);
+  if (!timezone) return { ok: false, error: tzError(timezoneRaw) };
 
   const slot = intField(fd, "slot_minutes", "Slot length", 1, 480, 60);
   if (!slot.ok) return slot;
@@ -215,10 +214,9 @@ export function readBlockForm(fd: FormData): Validated<BlockInput> {
     return { ok: false, error: "Times must be in 24-hour HH:MM form." };
   }
 
-  const timezone = str(fd, "timezone") || CANONICAL_TZ;
-  if (!isKnownTimeZone(timezone)) {
-    return { ok: false, error: `"${timezone}" is not a timezone this system knows.` };
-  }
+  const timezoneRaw = str(fd, "timezone") || CANONICAL_TZ;
+  const timezone = canonicalTimeZone(timezoneRaw);
+  if (!timezone) return { ok: false, error: tzError(timezoneRaw) };
 
   const startsAt = zonedTimeToInstant(startsOn, startTime, timezone);
   const endsAt = zonedTimeToInstant(endsOn, endTime, timezone);
