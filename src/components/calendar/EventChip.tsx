@@ -28,7 +28,7 @@ const TYPE_LABEL: Record<CalendarEvent["type"], string> = {
  * and private — a filled bar versus a hollow ring — so the two are separable in
  * greyscale.
  */
-function TypeMarker({ type }: { type: CalendarEvent["type"] }) {
+export function TypeMarker({ type }: { type: CalendarEvent["type"] }) {
   if (type === "group") {
     return <span aria-hidden className="mt-[3px] h-2.5 w-1 shrink-0 rounded-full bg-ink/70" />;
   }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -14,9 +15,13 @@ import { offersCurrencyChoice, type Currency } from "@/lib/public/currency";
 import { currentCurrency } from "@/lib/public/currency-server";
 import { CohortPrice } from "@/components/public/CohortPrice";
 import { CurrencyToggle } from "@/components/public/CurrencyToggle";
-import { EventChip } from "@/components/calendar/EventChip";
+import { HeroCalendarCard, HeroCalendarOverlay } from "@/components/calendar/HeroCalendar";
+import { Calendar } from "@/components/calendar/Calendar";
 import { TimezoneSync } from "@/components/public/TimezoneSync";
-import { loadCalendarEvents, nextLive } from "@/lib/calendar/readers";
+import { loadCalendarEvents } from "@/lib/calendar/readers";
+import { parseDate, rangeFor, readState } from "@/lib/calendar/grid";
+import { emptyCalendarMessage } from "@/lib/calendar/types";
+import { CANONICAL_TZ, calendarDate, formatDay } from "@/lib/schedule/timezone";
 import { viewerTimeZone } from "@/lib/schedule/viewer-tz";
 
 /**
@@ -46,38 +51,92 @@ export const metadata: Metadata = {
     "mark-scheme-informed marking, and progress tracking. Pearson Edexcel GCSE, International GCSE and IAL.",
 };
 
-export default async function Home() {
+type Search = Promise<{
+  view?: string; date?: string; subject?: string; level?: string; type?: string;
+  day?: string; calendar?: string;
+}>;
+
+export default async function Home({ searchParams }: { searchParams: Search }) {
   const session = await getNavSession();
+  const params = await searchParams;
   const { data: cohorts } = await loadCohorts();
   const chemistryCohorts = cohorts.filter((c) => c.subject === "chemistry");
   const { currency } = await currentCurrency();
   const showToggle = offersCurrencyChoice(chemistryCohorts);
 
   /**
-   * ⚠ §4 AND §18 — A COMPACT PREVIEW, NOT AN EMBEDDED MONTH GRID. The spec is
-   * explicit that the homepage must not carry an enormous calendar; it shows
-   * the next few sessions and leads into /calendar.
+   * ============================================================================
+   * ⚠ THE CALENDAR IS A HOMEPAGE FEATURE NOW. THIS SUPERSEDES §4 AND §18.
+   * ============================================================================
+   * Those sections said the homepage must not carry an embedded month grid, and
+   * this file used to carry a list preview because of them. Founder direction
+   * on 2026-08-20 reversed it: the calendar is the thing a parent needs in
+   * order to decide, so it is a section rather than a link to one.
    *
-   * ⚠ BUT IT SHARES THE READER AND THE CHIP, so it cannot drift from the full
-   * calendar. This is the §2 rule at its most tempting to break: a "quick
-   * preview" with its own query and its own markup is exactly how two surfaces
-   * start disagreeing about when a lesson is.
+   * The weight concern behind §18 is answered rather than ignored — a phone
+   * gets the Upcoming list, not a 7-column grid. Same component, same data,
+   * one range query.
    *
-   * The window is 10 weeks because the cost is in RULES fetched, not
-   * occurrences — a handful of recurrence rows expand in memory and the list is
-   * sliced to 3. A 21-day window rendered nothing for most of the year, which
-   * is a dead section rather than a fast one.
+   * ⚠ AND THE OLD "Upcoming lessons" SECTION IS GONE, DELIBERATELY. It listed
+   * the next three sessions higher up the page. Keeping it would have shown the
+   * same lessons twice on one page — and on a phone, where this section
+   * degrades to that exact list, the two would have been indistinguishable.
+   *
+   * ⚠ ONE RANGE QUERY, FOR THE VISIBLE WINDOW ONLY (§60). rangeFor() returns
+   * exactly what the chosen view shows: for a month that is the grid INCLUDING
+   * its leading and trailing days, so the cells that belong to the neighbouring
+   * months are populated rather than mysteriously empty. Never a year.
    */
   const viewerTz = await viewerTimeZone();
-  const previewFrom = new Date().toISOString().slice(0, 10);
-  const previewTo = new Date(Date.now() + 70 * 86_400_000).toISOString().slice(0, 10);
-  const { events: previewEvents } = await loadCalendarEvents({
-    from: previewFrom, to: previewTo, mode: "public", type: "all",
+  const todayISO = calendarDate(new Date(), CANONICAL_TZ);
+
+  /**
+   * ⚠ §58's PATTERN, AND ITS TRADE-OFF, UNCHANGED. The server cannot measure a
+   * viewport. A client component would flash the wrong view before hydrating,
+   * and rendering both behind CSS breakpoints would double the DOM on the
+   * heaviest page on the site. A coarse user-agent test decides a DEFAULT that
+   * the URL can still override.
+   */
+  const ua = (await headers()).get("user-agent") ?? "";
+  const handheld = /Android|iPhone|iPod|Windows Phone|\bMobi\b/i.test(ua) && !/iPad|Tablet/i.test(ua);
+
+  const calendarState = readState(params, todayISO, handheld ? "upcoming" : "month");
+  const openDay = params.day && parseDate(params.day) ? params.day : null;
+
+  /**
+   * ⚠ THE EXPANDED CALENDAR IS A URL STATE, NOT A useState. It renders on the
+   * server, the card is a link and the scrim is a link, so it opens and closes
+   * with JavaScript disabled and survives a reload. Escape and the focus trap
+   * are the only parts that need a browser, and they are layered on top.
+   *
+   * ⚠ CLOSING PRESERVES EVERYTHING ELSE. A reader who paged to November and
+   * opened a day should come back to November, not to today — so the close
+   * link drops only `calendar`, and keeps view, date and filters.
+   */
+  const calendarOpen = params.calendar === "open";
+  const qs = (patch: Record<string, string | null>) => {
+    const q = new URLSearchParams();
+    const base: Record<string, string | undefined> = {
+      view: params.view, date: params.date, subject: params.subject,
+      level: params.level, type: params.type, day: params.day, calendar: params.calendar,
+    };
+    for (const [k, v] of Object.entries({ ...base, ...patch })) {
+      if (v) q.set(k, String(v));
+    }
+    const str = q.toString();
+    return str ? `/?${str}#hero-calendar` : "/#hero-calendar";
+  };
+  const openCalendarHref = qs({ calendar: "open" });
+  const closeCalendarHref = qs({ calendar: null, day: null });
+  const calendarRange = rangeFor(calendarState.view, calendarState.date);
+
+  const { events: calendarEvents } = await loadCalendarEvents({
+    from: calendarRange.from, to: calendarRange.to,
+    mode: "public",
+    subject: calendarState.subject,
+    level: calendarState.level,
+    type: calendarState.type,
   });
-  // ⚠ CANCELLED LESSONS ARE NEVER "NEXT". A preview showing a cancelled class as
-  // the next lesson is worse than showing nothing.
-  const nextSessions = nextLive(previewEvents, new Date(), 3);
-  const nextSlots = nextLive(previewEvents.filter((e) => e.type !== "group"), new Date(), 2);
 
   return (
     <div className="bg-parchment text-ink">
@@ -85,8 +144,21 @@ export default async function Home() {
       <TimezoneSync known={viewerTz !== null} />
       {/* 2 */} <SiteNav session={session} />
 
-      {/* ── 3. hero ───────────────────────────────────────────────────── */}
+      {/* ── 3. hero ─────────────────────────────────────────────────────
+          ⚠ TWO COLUMNS FROM 1024px (Tailwind `lg`), STACKED BELOW IT.
+          The container caps at max-w-6xl (1152px) less 48px of padding, so the
+          widest the row ever gets is 1104px. A 480px card plus a 40px gap
+          leaves 584px for the copy, which holds the 60px h1 on two lines. At
+          1024px it leaves 504px, which is the tightest this layout is allowed
+          to get — below that the columns stack rather than squeezing the
+          headline, because requirement 7 is that the copy must not reflow
+          awkwardly and a third line of 60px type is exactly that.
+
+          ⚠ items-center, so the card is vertically centred against the copy
+          rather than hanging off the top of a taller column. */}
       <header className="mx-auto max-w-6xl px-6 pt-16 pb-14 sm:pt-24 sm:pb-20">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_480px] lg:items-center lg:gap-10">
+        <div>
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink/50">
           Pearson Edexcel · GCSE · International GCSE · IAL
         </p>
@@ -110,6 +182,22 @@ export default async function Home() {
           >
             Start practising →
           </Link>
+        </div>
+        </div>
+
+        {/* ⚠ SECOND COLUMN ON DESKTOP, BELOW THE CTAs ON A PHONE. The order in
+            the DOM is copy → CTAs → card, which is the reading order a phone
+            gets for free and the one a screen reader gets everywhere. */}
+        <div id="hero-calendar" className="lg:justify-self-end">
+          <HeroCalendarCard
+            events={calendarEvents}
+            state={calendarState}
+            todayISO={todayISO}
+            viewerTz={viewerTz}
+            openHref={openCalendarHref}
+            eventCount={calendarEvents.length}
+          />
+        </div>
         </div>
       </header>
 
@@ -141,49 +229,6 @@ export default async function Home() {
           ))}
         </ol>
       </Section>
-
-      {/* ── 5b. upcoming lessons (§18) ─────────────────────────────────── */}
-      {/* ⚠ NO FAKE SLOTS. This section is ABSENT when nothing is scheduled —
-          not "no lessons this week", which reads as a school that has stopped.
-          Today it renders the published AS timetable; when Y11 and Y10 launch
-          from Admin they appear here with no code change (§5). */}
-      {nextSessions.length > 0 && (
-        <Section
-          id="upcoming"
-          title="Upcoming lessons"
-          lede="The next few live sessions. Times in Doha, and in your own timezone where we know it."
-        >
-          <ul className="divide-y divide-ink/10 border-y border-ink/10">
-            {nextSessions.map((ev) => (
-              <li key={ev.key} className="py-3.5">
-                <EventChip event={ev} viewerTz={viewerTz} />
-              </li>
-            ))}
-          </ul>
-
-          {/* ⚠ §4's SECOND BLOCK, AND IT IS ABSENT UNLESS REAL SLOTS EXIST.
-              "Next available: Monday 5:00 PM" with nothing behind it is the
-              fake scarcity the spec forbids by name. */}
-          {nextSlots.length > 0 && (
-            <div className="mt-8">
-              <h3 className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45">
-                1-to-1 availability
-              </h3>
-              <ul className="mt-3 divide-y divide-ink/10 border-y border-ink/10">
-                {nextSlots.map((ev) => (
-                  <li key={ev.key} className="py-3"><EventChip event={ev} viewerTz={viewerTz} /></li>
-                ))}
-              </ul>
-            </div>
-          )}
-          <Link
-            href="/calendar"
-            className="mt-6 inline-block text-sm underline underline-offset-2 hover:text-ink"
-          >
-            View the full calendar →
-          </Link>
-        </Section>
-      )}
 
       {/* ── 6. live tuition ───────────────────────────────────────────── */}
       <Section
@@ -355,6 +400,36 @@ export default async function Home() {
           </Link>
         </div>
       </Section>
+
+      {/* ── the expanded calendar ────────────────────────────────────────
+          ⚠ RENDERED LAST IN THE DOM, ON PURPOSE. It is fixed-position, so
+          where it sits in the flow does not affect the layout — but it does
+          affect tab order, and a dialog that appears before the page content
+          would put a keyboard user inside it before they had read anything.
+          The focus trap moves them in when it opens. */}
+      {calendarOpen && (
+        <HeroCalendarOverlay closeHref={closeCalendarHref}>
+          {/* ⚠ THE COMPLETE EXPERIENCE — the same component /calendar renders,
+              with filters, the view toggle and day panels all on. Same data,
+              same range, one query for the whole page. */}
+          <Calendar
+            events={calendarEvents}
+            state={calendarState}
+            todayISO={todayISO}
+            viewerTz={viewerTz}
+            mode="public"
+            /* ⚠ THE BASE CARRIES calendar=open, so paging to next month or
+               opening a day KEEPS THE OVERLAY OPEN. Without it every control
+               inside the dialog would quietly dismiss it. */
+            basePath="/?calendar=open"
+            anchor="#hero-calendar"
+            openDay={openDay}
+            emptyMessage={emptyCalendarMessage(
+              cohorts, todayISO, (iso) => formatDay(new Date(`${iso}T12:00:00Z`), CANONICAL_TZ),
+            )}
+          />
+        </HeroCalendarOverlay>
+      )}
 
       {/* 14 */} <SiteFooter />
     </div>

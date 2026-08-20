@@ -11,7 +11,7 @@ import { SUBJECTS } from "@/lib/public/catalogue";
 import { CANONICAL_LABEL } from "@/lib/schedule/timezone";
 
 import { DayPanel } from "./DayPanel";
-import { EventChip, describeEvent } from "./EventChip";
+import { EventChip, TypeMarker, describeEvent } from "./EventChip";
 
 /**
  * The one Ailemy calendar (§2, §5, §34).
@@ -59,6 +59,17 @@ export type CalendarProps = {
   /** Hide the whole filter block (homepage preview, tight embeds). */
   showFilters?: boolean;
   /**
+   * ⚠ FOR AN EMBED PART-WAY DOWN A LONG PAGE. Every link here is a real
+   * navigation, so the browser lands at the top of the destination — fine at
+   * /calendar, where the calendar IS the page, and wrong on the homepage, where
+   * closing a day panel would leave the reader at the hero having lost their
+   * place. An anchor puts them back at the section.
+   *
+   * Appended LAST, after the query string, because a fragment that precedes `?`
+   * is part of the fragment and the query is silently lost.
+   */
+  anchor?: string;
+  /**
    * ⚠ ON /chemistry THE SUBJECT IS THE PAGE, NOT A FILTER. Rendering the
    * subject row there would offer an "All" that silently turns the Chemistry
    * calendar into the school calendar — the same URL, a different promise.
@@ -67,6 +78,22 @@ export type CalendarProps = {
   lockedSubject?: string | null;
   /** Rendered when the whole range is empty — the caller knows why (§12, §57). */
   emptyMessage?: string;
+  /**
+   * ============================================================================
+   * ⚠ "compact" IS A LIVE PREVIEW, NOT A PICTURE OF ONE
+   * ============================================================================
+   * Same events, same bucketing, same month maths, same two glyphs — rendered
+   * small enough to sit in a hero card. What it drops is CHROME and
+   * INTERACTION: no toolbar, no filters, no day links, no panel. Every cell is
+   * a div, so nothing inside is focusable and the whole card can be wrapped in
+   * one link without nesting anchors.
+   *
+   * ⚠ IT IS NOT A SECOND CALENDAR. The grid comes from monthGrid(), the events
+   * from bucketByDay(), the markers from EventChip's TypeMarker — the only
+   * thing this path owns is how small a cell is. Anything it decided for itself
+   * would be a second opinion about what day a lesson falls on.
+   */
+  variant?: "full" | "compact";
 };
 
 /** How many chips fit in a month cell before "+N more" (§6). */
@@ -77,13 +104,17 @@ export function Calendar(props: CalendarProps) {
   const lockedSubject = props.lockedSubject ?? null;
   const buckets = bucketByDay(events);
 
+  if (props.variant === "compact") {
+    return <CompactMonth weeks={monthGrid(state.date)} buckets={buckets} todayISO={todayISO} state={state} />;
+  }
+
   const href = (patch: Partial<CalendarState> & { day?: string | null }) => {
     const next: CalendarState = { ...state, ...patch };
     const q = stateToQuery(next, todayISO, basePath);
-    if (patch.day) {
-      return q.includes("?") ? `${q}&day=${patch.day}` : `${q}?day=${patch.day}`;
-    }
-    return q;
+    const withDay = patch.day
+      ? (q.includes("?") ? `${q}&day=${patch.day}` : `${q}?day=${patch.day}`)
+      : q;
+    return props.anchor ? `${withDay}${props.anchor}` : withDay;
   };
 
   return (
@@ -283,6 +314,74 @@ function MonthView({ weeks, ...p }: ViewProps & { weeks: GridDay[][] }) {
         {weeks.flat().map((day) => (
           <DayCell key={day.date} day={day} {...p} />
         ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The hero card's month: dots, not chips.
+ *
+ * ⚠ A 480px CARD GIVES EACH DAY ABOUT 62px. A dense chip already truncates at
+ * 112px in the full grid; at 62px it would show two characters of a title and
+ * read as noise. A dot per lesson says the one thing this size can say
+ * honestly — something is on, and which kind — and the card's whole job is to
+ * make somebody open the real calendar.
+ *
+ * ⚠ NOTHING HERE IS FOCUSABLE. Every cell is a div and every marker is
+ * aria-hidden, so the card is one tab stop and one link, which is what lets it
+ * be wrapped without nesting interactive elements. The grid carries
+ * aria-hidden and the wrapping link carries the description, because a screen
+ * reader user gains nothing from 42 unreachable cells.
+ */
+function CompactMonth({
+  weeks, buckets, todayISO, state,
+}: {
+  weeks: GridDay[][]; buckets: Map<string, CalendarEvent[]>; todayISO: string; state: CalendarState;
+}) {
+  const MAX_DOTS = 3;
+  return (
+    <div aria-hidden>
+      <p className="mb-2 text-center font-mono text-[10px] uppercase tracking-[0.18em] text-ink/45">
+        {periodLabel("month", state.date)}
+      </p>
+      <div className="grid grid-cols-7 gap-px pb-1.5">
+        {([1, 2, 3, 4, 5, 6, 7] as const).map((w) => (
+          <div key={w} className="text-center font-mono text-[9px] uppercase tracking-[0.14em] text-ink/35">
+            {WEEKDAY_SHORT[w].slice(0, 1)}
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-px overflow-hidden rounded-md bg-ink/10">
+        {weeks.flat().map((day) => {
+          const all = buckets.get(day.date) ?? [];
+          const d = parseDate(day.date);
+          const isToday = day.date === todayISO;
+          return (
+            <div
+              key={day.date}
+              className={`flex min-h-[52px] flex-col items-center gap-1 px-1 pt-1.5 ${
+                day.inMonth ? "bg-parchment" : "bg-parchment/55"
+              }`}
+            >
+              <span
+                className={`font-mono text-[10px] tabular-nums ${
+                  day.inMonth ? "text-ink/65" : "text-ink/25"
+                } ${isToday ? "rounded-full bg-ink px-1 text-parchment" : ""}`}
+              >
+                {d ? d.getUTCDate() : ""}
+              </span>
+              <span className="flex flex-wrap justify-center gap-0.5">
+                {all.slice(0, MAX_DOTS).map((ev) => (
+                  <TypeMarker key={ev.key} type={ev.type} />
+                ))}
+                {all.length > MAX_DOTS && (
+                  <span className="font-mono text-[9px] leading-none text-ink/45">+{all.length - MAX_DOTS}</span>
+                )}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
