@@ -8,6 +8,7 @@ import { SESSION_KINDS, WEEKDAY_OPTIONS } from "@/lib/admin/schedule-form";
 import {
   createPeriod, createRule, createSession,
   deletePeriod, deleteRule, deleteSession, setRuleActive,
+  updatePeriod, updateRule, updateSession,
 } from "./actions";
 
 type Result = { ok: true } | { ok: false; error: string };
@@ -17,6 +18,39 @@ const input =
 
 export type CohortOption = { id: string; slug: string; title: string };
 export type RuleOption = { id: string; label: string };
+
+/**
+ * ============================================================================
+ * ⚠ ONE FORM PER THING, USED FOR BOTH ADD AND EDIT (§19)
+ * ============================================================================
+ * Each form below takes an optional existing row. Present, it binds the update
+ * action and pre-fills; absent, it binds create. A separate EditRuleForm would
+ * be a second statement of what fields a rule has, and the copy that drifts is
+ * always the one fewer people look at — the same argument the server actions
+ * make for sharing readRuleForm() between create and update.
+ */
+export type RuleValue = {
+  id: string; cohort_id: string; weekday: number; start_time: string; end_time: string;
+  timezone: string; valid_from: string; valid_until: string | null;
+  label: string | null; is_active: boolean;
+};
+export type PeriodValue = {
+  id: string; cohort_id: string | null; starts_on: string; ends_on: string; reason: string;
+};
+export type SessionValue = {
+  id: string; cohort_id: string; schedule_id: string | null; occurs_on: string;
+  status: string; kind: string; title: string | null; note: string | null;
+  timezone: string | null; starts_local: string | null; ends_local: string | null;
+};
+
+/** Cancels an edit without submitting it. A plain link, so it works with no JS. */
+function CancelEdit() {
+  return (
+    <a href="?" className="rounded border border-slate-300 px-4 py-2 text-sm text-slate-600">
+      Cancel
+    </a>
+  );
+}
 
 function Feedback({ state }: { state: Result | null }) {
   if (!state) return null;
@@ -39,88 +73,115 @@ function Field({ label, children, hint }: { label: string; children: React.React
 
 // ── recurring timetable ─────────────────────────────────────────────────────
 
-export function RuleForm({ cohorts }: { cohorts: CohortOption[] }) {
-  const [state, submit, pending] = useActionState<Result | null, FormData>(createRule, null);
+export function RuleForm({ cohorts, rule }: { cohorts: CohortOption[]; rule?: RuleValue }) {
+  const [state, submit, pending] = useActionState<Result | null, FormData>(
+    rule ? updateRule.bind(null, rule.id) : createRule, null,
+  );
   return (
     <form action={submit} className="space-y-4">
       <Feedback state={state} />
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Cohort">
-          <select name="cohort_id" required defaultValue="" className={input}>
+          <select name="cohort_id" required defaultValue={rule?.cohort_id ?? ""} className={input}>
             <option value="" disabled>Choose…</option>
             {cohorts.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
           </select>
         </Field>
         <Field label="Weekday">
-          <select name="weekday" required defaultValue="2" className={input}>
+          <select name="weekday" required defaultValue={String(rule?.weekday ?? 2)} className={input}>
             {WEEKDAY_OPTIONS.map((w) => <option key={w.value} value={w.value}>{w.label}</option>)}
           </select>
         </Field>
         <Field label="Starts" hint="24-hour, in the timezone below.">
-          <input name="start_time" type="time" required defaultValue="19:00" className={input} />
+          <input name="start_time" type="time" required defaultValue={rule?.start_time.slice(0, 5) ?? "19:00"} className={input} />
         </Field>
         <Field label="Ends">
-          <input name="end_time" type="time" required defaultValue="21:30" className={input} />
+          <input name="end_time" type="time" required defaultValue={rule?.end_time.slice(0, 5) ?? "21:30"} className={input} />
         </Field>
         <Field label="Timezone" hint="The school teaches in Asia/Qatar. Change only for a cohort taught elsewhere.">
-          <input name="timezone" defaultValue="Asia/Qatar" className={input} />
+          <input name="timezone" defaultValue={rule?.timezone ?? "Asia/Qatar"} className={input} />
         </Field>
         <Field label="Label" hint="Optional. Shown instead of the cohort name.">
-          <input name="label" placeholder="Teaching session" className={input} />
+          <input name="label" defaultValue={rule?.label ?? ""} placeholder="Teaching session" className={input} />
         </Field>
         <Field label="From">
-          <input name="valid_from" type="date" required className={input} />
+          <input name="valid_from" type="date" required defaultValue={rule?.valid_from ?? ""} className={input} />
         </Field>
         <Field label="Until" hint="Leave blank for open-ended.">
-          <input name="valid_until" type="date" className={input} />
+          <input name="valid_until" type="date" defaultValue={rule?.valid_until ?? ""} className={input} />
         </Field>
       </div>
       <label className="flex items-center gap-2 text-sm text-slate-700">
-        <input type="checkbox" name="is_active" defaultChecked className="h-4 w-4" />
+        <input type="checkbox" name="is_active" defaultChecked={rule ? rule.is_active : true} className="h-4 w-4" />
         Active
       </label>
-      <button type="submit" disabled={pending} className="rounded bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-40">
-        {pending ? "Saving…" : "Add recurring timetable"}
-      </button>
+      <div className="flex flex-wrap items-center gap-3">
+        <button type="submit" disabled={pending} className="rounded bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-40">
+          {pending ? "Saving…" : rule ? "Save changes" : "Add recurring timetable"}
+        </button>
+        {rule && <CancelEdit />}
+      </div>
+      {/* ⚠ WHY EDITING MATTERS, WHERE THE ADMIN IS STANDING. Delete-and-recreate
+          looks equivalent and is not: 0044's FK cascades, so it discards every
+          individual change made to this series. */}
+      {rule && (
+        <p className="text-[11px] text-slate-500">
+          Editing keeps every individual lesson change attached to this series. Deleting and
+          re-adding it would discard them.
+        </p>
+      )}
     </form>
   );
 }
 
 // ── holidays ────────────────────────────────────────────────────────────────
 
-export function PeriodForm({ cohorts }: { cohorts: CohortOption[] }) {
-  const [state, submit, pending] = useActionState<Result | null, FormData>(createPeriod, null);
+export function PeriodForm({ cohorts, period }: { cohorts: CohortOption[]; period?: PeriodValue }) {
+  const [state, submit, pending] = useActionState<Result | null, FormData>(
+    period ? updatePeriod.bind(null, period.id) : createPeriod, null,
+  );
   return (
     <form action={submit} className="space-y-4">
       <Feedback state={state} />
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Applies to" hint="All cohorts is a school closure.">
-          <select name="cohort_id" defaultValue="" className={input}>
+          <select name="cohort_id" defaultValue={period?.cohort_id ?? ""} className={input}>
             <option value="">All cohorts</option>
             {cohorts.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
           </select>
         </Field>
         <Field label="Reason" hint="Shown publicly in place of the lesson.">
-          <input name="reason" required placeholder="Winter break" className={input} />
+          <input name="reason" required defaultValue={period?.reason ?? ""} placeholder="Winter break" className={input} />
         </Field>
-        <Field label="From"><input name="starts_on" type="date" required className={input} /></Field>
+        <Field label="From">
+          <input name="starts_on" type="date" required defaultValue={period?.starts_on ?? ""} className={input} />
+        </Field>
         <Field label="Until" hint="Inclusive.">
-          <input name="ends_on" type="date" required className={input} />
+          <input name="ends_on" type="date" required defaultValue={period?.ends_on ?? ""} className={input} />
         </Field>
       </div>
-      <button type="submit" disabled={pending} className="rounded bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-40">
-        {pending ? "Saving…" : "Add break"}
-      </button>
+      <div className="flex flex-wrap items-center gap-3">
+        <button type="submit" disabled={pending} className="rounded bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-40">
+          {pending ? "Saving…" : period ? "Save changes" : "Add break"}
+        </button>
+        {period && <CancelEdit />}
+      </div>
     </form>
   );
 }
 
 // ── one lesson: move, cancel, or add ────────────────────────────────────────
 
-export function SessionForm({ cohorts, rules }: { cohorts: CohortOption[]; rules: RuleOption[] }) {
-  const [state, submit, pending] = useActionState<Result | null, FormData>(createSession, null);
-  const [scheduleId, setScheduleId] = useState("");
-  const [status, setStatus] = useState("scheduled");
+export function SessionForm({
+  cohorts, rules, session,
+}: {
+  cohorts: CohortOption[]; rules: RuleOption[]; session?: SessionValue;
+}) {
+  const [state, submit, pending] = useActionState<Result | null, FormData>(
+    session ? updateSession.bind(null, session.id) : createSession, null,
+  );
+  const [scheduleId, setScheduleId] = useState(session?.schedule_id ?? "");
+  const [status, setStatus] = useState(session?.status ?? "scheduled");
   // A one-off needs times; an override of an existing rule does not, and a
   // cancellation never does. Mirrors the server rule so the admin is told
   // before they submit rather than after.
@@ -131,7 +192,7 @@ export function SessionForm({ cohorts, rules }: { cohorts: CohortOption[]; rules
       <Feedback state={state} />
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Cohort">
-          <select name="cohort_id" required defaultValue="" className={input}>
+          <select name="cohort_id" required defaultValue={session?.cohort_id ?? ""} className={input}>
             <option value="" disabled>Choose…</option>
             {cohorts.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
           </select>
@@ -143,7 +204,7 @@ export function SessionForm({ cohorts, rules }: { cohorts: CohortOption[]; rules
           </select>
         </Field>
         <Field label="Date">
-          <input name="occurs_on" type="date" required className={input} />
+          <input name="occurs_on" type="date" required defaultValue={session?.occurs_on ?? ""} className={input} />
         </Field>
         <Field label="What is happening">
           <select name="status" value={status} onChange={(e) => setStatus(e.target.value)} className={input}>
@@ -152,25 +213,36 @@ export function SessionForm({ cohorts, rules }: { cohorts: CohortOption[]; rules
           </select>
         </Field>
         <Field label="Kind">
-          <select name="kind" defaultValue="teaching" className={input}>
+          <select name="kind" defaultValue={session?.kind ?? "teaching"} className={input}>
             {SESSION_KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
           </select>
         </Field>
-        <Field label="Timezone"><input name="timezone" defaultValue="Asia/Qatar" className={input} /></Field>
+        <Field label="Timezone">
+          <input name="timezone" defaultValue={session?.timezone ?? "Asia/Qatar"} className={input} />
+        </Field>
+        {/* ⚠ THE TIMES ARE THE STORED INSTANT RENDERED BACK IN THE ROW'S OWN
+            ZONE, not in the browser's. Pre-filling a 19:00 Doha lesson as
+            "16:00" for a London admin and then saving it would move the lesson
+            three hours every time somebody opened the form and pressed Save. */}
         <Field label="Starts" hint={needsTimes ? "Required for a one-off." : "Leave blank to keep the timetable's time."}>
-          <input name="starts_at_local" type="time" required={needsTimes} className={input} />
+          <input name="starts_at_local" type="time" required={needsTimes} defaultValue={session?.starts_local ?? ""} className={input} />
         </Field>
         <Field label="Ends">
-          <input name="ends_at_local" type="time" required={needsTimes} className={input} />
+          <input name="ends_at_local" type="time" required={needsTimes} defaultValue={session?.ends_local ?? ""} className={input} />
         </Field>
-        <Field label="Title"><input name="title" placeholder="Revision clinic" className={input} /></Field>
+        <Field label="Title">
+          <input name="title" defaultValue={session?.title ?? ""} placeholder="Revision clinic" className={input} />
+        </Field>
         <Field label="Note" hint="Shown as the reason when cancelled.">
-          <input name="note" className={input} />
+          <input name="note" defaultValue={session?.note ?? ""} className={input} />
         </Field>
       </div>
-      <button type="submit" disabled={pending} className="rounded bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-40">
-        {pending ? "Saving…" : "Save session change"}
-      </button>
+      <div className="flex flex-wrap items-center gap-3">
+        <button type="submit" disabled={pending} className="rounded bg-slate-900 px-4 py-2 text-sm text-white disabled:opacity-40">
+          {pending ? "Saving…" : session ? "Save changes" : "Save session change"}
+        </button>
+        {session && <CancelEdit />}
+      </div>
     </form>
   );
 }

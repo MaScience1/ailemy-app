@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 import {
   PeriodActions, PeriodForm, RuleActions, RuleForm, SessionActions, SessionForm,
-  type CohortOption, type RuleOption,
+  type CohortOption, type PeriodValue, type RuleOption, type RuleValue, type SessionValue,
 } from "./_forms";
 
 /**
@@ -30,7 +30,18 @@ function isoPlusDays(n: number): string {
   return new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
 }
 
-export default async function AdminCalendarPage() {
+/**
+ * ⚠ WHICH ROW IS BEING EDITED LIVES IN THE URL, NOT IN CLIENT STATE (§19).
+ * The page is server-rendered from the database, so an edit form opened from a
+ * `?edit=` link is pre-filled with the row as it is RIGHT NOW rather than with
+ * whatever was on screen when the page loaded. It also survives a reload, is
+ * linkable, and works with no JavaScript — the same reasons the public calendar
+ * keeps its view and date in the URL.
+ */
+type Search = Promise<{ edit?: string }>;
+
+export default async function AdminCalendarPage({ searchParams }: { searchParams: Search }) {
+  const editing = (await searchParams).edit ?? null;
   const db = createAdminClient();
 
   // Every cohort, not just public ones — an admin builds a timetable before
@@ -46,7 +57,7 @@ export default async function AdminCalendarPage() {
     .from("schedule_periods").select("id,cohort_id,starts_on,ends_on,reason").order("starts_on");
   const sessionsRes = await db
     .from("tuition_sessions")
-    .select("id,cohort_id,schedule_id,occurs_on,status,kind,title,starts_at,ends_at,note")
+    .select("id,cohort_id,schedule_id,occurs_on,status,kind,title,starts_at,ends_at,timezone,note")
     .order("occurs_on");
 
   const dbError = cohortsRes.error ?? rulesRes.error ?? periodsRes.error ?? sessionsRes.error;
@@ -63,6 +74,7 @@ export default async function AdminCalendarPage() {
   const sessions = (sessionsRes.data ?? []) as unknown as {
     id: string; cohort_id: string; schedule_id: string | null; occurs_on: string;
     status: string; kind: string; title: string | null; note: string | null;
+    timezone: string | null; starts_at: string | null; ends_at: string | null;
   }[];
 
   const titleOf = (id: string | null) =>
@@ -72,6 +84,26 @@ export default async function AdminCalendarPage() {
     id: r.id,
     label: `${titleOf(r.cohort_id)} — ${WEEKDAY_LABEL.get(r.weekday as never) ?? r.weekday} ${r.start_time.slice(0, 5)}`,
   }));
+
+  const editRule = rules.find((r) => r.id === editing) ?? null;
+  const editPeriod = periods.find((p) => p.id === editing) ?? null;
+  const editSession = sessions.find((x) => x.id === editing) ?? null;
+
+  /**
+   * ⚠ RENDERED BACK IN THE ROW'S OWN ZONE, NOT THE SERVER'S. starts_at is a
+   * timestamptz; formatting it with toISOString() would pre-fill the form with
+   * UTC, and an admin in Doha pressing Save on an unchanged form would move the
+   * lesson three hours. The zone stored on the row is the one it was typed in.
+   */
+  const localTime = (iso: string | null, tz: string | null): string | null =>
+    iso === null ? null : formatTime(new Date(iso), tz ?? CANONICAL_TZ);
+
+  const sessionValue = (x: typeof sessions[number]): SessionValue => ({
+    id: x.id, cohort_id: x.cohort_id, schedule_id: x.schedule_id, occurs_on: x.occurs_on,
+    status: x.status, kind: x.kind, title: x.title, note: x.note, timezone: x.timezone,
+    starts_local: localTime(x.starts_at, x.timezone),
+    ends_local: localTime(x.ends_at, x.timezone),
+  });
 
   // ⚠ THE SAME READER EVERY PUBLIC PAGE USES.
   const preview = await loadCalendar({ from: isoPlusDays(0), to: isoPlusDays(56), includeCancelled: true });
@@ -94,36 +126,38 @@ export default async function AdminCalendarPage() {
       )}
 
       <Section title="Recurring timetable" subtitle="The rule. One row covers a whole term.">
-        <RuleForm cohorts={cohorts} />
+        {editRule ? <RuleForm cohorts={cohorts} rule={editRule as RuleValue} /> : <RuleForm cohorts={cohorts} />}
         <List empty="No recurring timetable yet.">
-          {rules.map((r) => (
+          {rules.filter((r) => r.id !== editing).map((r) => (
             <Row key={r.id}
               head={`${titleOf(r.cohort_id)} — ${WEEKDAY_LABEL.get(r.weekday as never) ?? `weekday ${r.weekday}`}`}
               meta={`${r.start_time.slice(0, 5)}–${r.end_time.slice(0, 5)} ${r.timezone} · from ${r.valid_from}${r.valid_until ? ` until ${r.valid_until}` : " (open-ended)"}${r.is_active ? "" : " · paused"}`}
-              actions={<RuleActions id={r.id} isActive={r.is_active} />} />
+              actions={<><EditLink id={r.id} /><RuleActions id={r.id} isActive={r.is_active} /></>} />
           ))}
         </List>
       </Section>
 
       <Section title="Breaks and holidays" subtitle="Cancels every lesson inside the dates, without touching the rule.">
-        <PeriodForm cohorts={cohorts} />
+        {editPeriod ? <PeriodForm cohorts={cohorts} period={editPeriod as PeriodValue} /> : <PeriodForm cohorts={cohorts} />}
         <List empty="No breaks.">
-          {periods.map((p) => (
+          {periods.filter((p) => p.id !== editing).map((p) => (
             <Row key={p.id} head={p.reason}
               meta={`${titleOf(p.cohort_id)} · ${p.starts_on} → ${p.ends_on}`}
-              actions={<PeriodActions id={p.id} />} />
+              actions={<><EditLink id={p.id} /><PeriodActions id={p.id} /></>} />
           ))}
         </List>
       </Section>
 
       <Section title="Individual lessons" subtitle="Move one, cancel one, or add a clinic, mock or onboarding.">
-        <SessionForm cohorts={cohorts} rules={ruleOptions} />
+        {editSession
+          ? <SessionForm cohorts={cohorts} rules={ruleOptions} session={sessionValue(editSession)} />
+          : <SessionForm cohorts={cohorts} rules={ruleOptions} />}
         <List empty="No individual changes.">
-          {sessions.map((s) => (
+          {sessions.filter((x) => x.id !== editing).map((s) => (
             <Row key={s.id}
               head={s.title ?? (s.schedule_id ? "Changed lesson" : "One-off session")}
               meta={`${titleOf(s.cohort_id)} · ${s.occurs_on} · ${s.kind} · ${s.status}${s.note ? ` · ${s.note}` : ""}`}
-              actions={<SessionActions id={s.id} restores={s.schedule_id !== null} />} />
+              actions={<><EditLink id={s.id} /><SessionActions id={s.id} restores={s.schedule_id !== null} /></>} />
           ))}
         </List>
       </Section>
@@ -151,6 +185,22 @@ export default async function AdminCalendarPage() {
         </List>
       </Section>
     </div>
+  );
+}
+
+/**
+ * ⚠ A LINK, NOT A BUTTON. Opening an edit form is navigation, not an action:
+ * it is safe to bookmark, safe to reload, and needs no JavaScript. Only the
+ * save is a mutation.
+ */
+function EditLink({ id }: { id: string }) {
+  return (
+    <a
+      href={`?edit=${id}`}
+      className="rounded border border-slate-300 px-2.5 py-1 text-xs text-slate-600 hover:border-slate-500"
+    >
+      Edit
+    </a>
   );
 }
 
