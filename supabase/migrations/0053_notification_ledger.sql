@@ -21,10 +21,24 @@
 --   account-less parent reachable, and it is also what made this verification
 --   possible with no identity created in production.
 --
---   ⊘ (f)(g)(i) NOT RUN — read-own, the in_app read_at column grant and
---     push_tokens own-row all need an authenticated student session. (g) in
---     particular is the one that proves the column grant and the policy fail
---     DIFFERENTLY, and it has not been observed. Founder paste issued.
+--   ⚠ AND (f)(g)(i) ARE NOW OBSERVED, 2026-08-20, from a real student session:
+--   (f)  A sees 1 event, user_id = A                                        ✓
+--        …and the EMAIL-ONLY event (user_id NULL, addressed to A's own
+--        address) is NOT among them — read_own gates on user_id, so an event
+--        with no account attached is not theirs to read                     ✓
+--        …and the 3 deliveries hanging off their own event ARE visible      ✓
+--   (g)  ⚠ BOTH HALVES, AND THEY FAIL DIFFERENTLY — the whole point:
+--        g1  read_at on the in_app row      → 1 row updated                 ✓
+--        g2  status on the SAME row         → 42501, THE COLUMN GRANT       ✓
+--            (proven by g1 succeeding on that very row; see 0052's header
+--             for why the message says 'table' and not 'column')
+--        g3  read_at on the EMAIL channel   → 0 rows, THE POLICY            ✓
+--        A grant refuses a COLUMN with an error; a policy refuses a ROW with
+--        silence. Two layers, two failure shapes, both seen.
+--   (i)  A cannot register a push token against B's account —
+--        RLS POLICY (WITH CHECK), 42501                                     ✓
+--        …and CAN register one for themselves, so (i) is not a table
+--        refusing everything                                                ✓
 --   ⊘ (k)(l) NOT RUN — information_schema unreachable.
 --
 -- ============================================================================

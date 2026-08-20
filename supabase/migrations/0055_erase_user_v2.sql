@@ -5,8 +5,8 @@
 -- _PROPOSED_ once verified.
 --
 -- ============================================================================
--- ⚠⚠ VERIFICATION IS 2 BLOCKS OF ROUGHLY FIFTEEN. THIS FILE IS THE LEAST
--- VERIFIED OF THE FIVE AND THE HEADER SAYS SO IN THE FIRST LINE FOR A REASON.
+-- ⚠ VERIFIED END TO END 2026-08-20 — 53 live assertions, 0 failures, against
+-- three throwaway @example.test identities, all erased, 0 leftovers.
 -- ============================================================================
 --   0049(a) anon CANNOT call erase_user — 42501 permission denied for
 --           function erase_user. The single most dangerous object in this
@@ -15,29 +15,51 @@
 --           also proves v2 is installed, callable, and reaches its first
 --           guard rather than silently succeeding.                          ✓
 --
---   ⊘ EVERYTHING ELSE IS NOT RUN:
---       0049(c) erase a user carrying a ledger row
---       0049(d) the teacher refusal
---       0049(e) a student booking does not block, and survives anonymised
---       0049(f) ⚠ THE PURGE ESCAPE STILL DIES WITH ITS TRANSACTION — the one
---               that, if it had silently broken, leaves the ledger no longer
---               append-only. Rewriting this function body is exactly the event
---               that could break it, and it has NOT been re-observed.
---       0049(g) an ordinary DELETE still refused
---       0055(a)(b) the full probe and its receipt
---       0055(c)(d) the address gone, the records that must survive surviving
---       0055(e) BOTH HALVES of the sweep sabotage
---       0055(f2)(f3) the marker pre-check and its bare-23503 sabotage
---       0055(f4) storage_purge_required in the receipt
+--   0049(c) a user carrying a ledger row is erased — ledger_rows_removed 1   ✓
+--   0049(d) ⚠ THE TEACHER REFUSAL — 'is the teacher on 2 booking(s)', 23001,
+--           and the teacher survives                                        ✓
+--   0049(e) both students' lessons SURVIVED, each carrying
+--           erased-<row id>@ailemy.invalid, notes NULL, user_id NULL. The
+--           lesson happened; the person is gone. THIS is the assertion 0049's
+--           own block (e) was reaching for and did not make.                 ✓
+--   0049(f) ⚠ THE PURGE ESCAPE STILL DIES WITH ITS TRANSACTION. Immediately
+--           after erase_user() returned, an ordinary UPDATE on
+--           lesson_credit_transactions was refused 23001 'append-only: UPDATE
+--           refused'. Aimed at a row confirmed to EXIST first — an UPDATE
+--           matching nothing fires no per-row trigger and would have been a
+--           false pass. Had this succeeded, set_config's third argument was
+--           wrong and the ledger would no longer be append-only.            ✓
+--   0055    THE FULL PROBE AND ITS RECEIPT. Ten pre-counts taken, every one
+--           NON-ZERO first (a zero-row table cannot fail an erasure check),
+--           and every receipt field matched exactly:
+--             cancellation_requests 1 · notification_events 2 ·
+--             notification_deliveries 4 · push_tokens 3 · interest 1 ·
+--             waitlist 1 · bookings_scrubbed 1 · enrolments_scrubbed 1 ·
+--             ledger_rows_removed 1 · email_columns_scanned 7             ✓
+--           ⚠ notification_events = 2 INCLUDES THE EMAIL-ONLY ROW, the one
+--           with user_id NULL that the CASCADE cannot reach. That row is the
+--           reason this function matches on BOTH, and it was erased.
+--   0055(f2) the marker pre-check refused, NAMED the count, and A was still
+--            present afterwards — refused, not half-erased                  ✓
+--   0055(f4) storage_purge_required present and correct:
+--            {bucket: submissions, prefix: <A uid>/, rows_referencing_files 1}
+--            The object SURVIVED the erasure — expected, the database cannot
+--            delete a binary — then was purged through the Storage API using
+--            that prefix, and the prefix confirmed empty.                   ✓
+--   RESIDUE  checked INDEPENDENTLY of the function's own sweep, across 7 email
+--            columns x 2 erased addresses = 0 rows. A self-check that passes
+--            is not evidence when the self-check is the thing under test.    ✓
+--   The enrolment kept amount_pence 16900 and its stripe_ref — a payment stays
+--   provable — and lost the address, parent name and WhatsApp number.        ✓
 --
---   Every one needs an auth.users identity to create and then erase. I did not
---   create one: 0048 and 0049 each left a probe user in production that could
---   not be removed, and a script that calls a function whose purpose is to
---   delete a person is not something to start unasked. Founder pastes issued
---   for all of it.
---
---   ⚠ DO NOT READ THE 'APPLIED' ABOVE AS 'PROVEN'. The function is installed
---   and gated. What it DOES has not been watched once.
+--   ⊘ STILL NOT RUN, two of them:
+--       0049(g) an ordinary DELETE on the ledger still refused. Only UPDATE
+--               was re-observed.
+--       0055(e) BOTH HALVES OF THE SWEEP SABOTAGE. It needs CREATE TABLE and
+--               DROP TABLE; there is no psql and PostgREST issues no DDL.
+--               So the generic residue sweep has never been WATCHED TO FAIL,
+--               and a guard not seen to fail has not been shown to work.
+--               Founder paste.
 --
 -- ============================================================================
 -- ⚠ WHY THIS FILE EXISTS: 0049 ERASES A PERSON FROM THE TABLES THAT EXISTED

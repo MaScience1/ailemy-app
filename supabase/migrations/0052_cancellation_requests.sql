@@ -13,16 +13,30 @@
 --   (c)  resolution='vibes' refused, 23514 …_resolution_check               ✓
 --   (d)  anon SELECT refused 42501, anon INSERT refused 42501               ✓
 --
---   ⊘⊘ (e)(f)(f2)(f3)(g) ARE NOT RUN, AND THEY ARE THE IMPORTANT ONES.
---   Every one needs a real authenticated STUDENT session. service_role holds
---   BYPASSRLS and table-wide privileges, so it cannot exercise a row policy or
---   a column grant — running these as service_role would pass for the wrong
---   reason and prove nothing.
+--   ⚠ AND THE POLICY BLOCKS ARE NOW OBSERVED TOO, 2026-08-20, against two
+--   real @example.test student sessions signed in with the ANON key:
+--   (e)  A sees 1 request, all user_id = A — B's is invisible               ✓
+--   (f)  A CANNOT open a request against B's booking —
+--        RLS POLICY (WITH CHECK), 42501 new row violates row-level security  ✓
+--   (f2) A CANNOT file their own refund — THE COLUMN GRANT refused          ✓
+--        ⚠ AND PROVING THAT TOOK A CONTROL, NOT A MESSAGE. Postgres words a
+--        WRITE-side column-privilege failure as 'permission denied for TABLE'
+--        (the per-column wording is SELECT-only), so the text alone cannot
+--        tell a column grant from a missing table grant. The same session
+--        inserting the SAME table without naming `status` succeeds, which
+--        rules the table grant out and leaves only the column grant.
+--   (f3) the ordinary request inserts, and status/resolution/resolved_by/
+--        resolved_at come back 'open'/NULL/NULL/NULL — the DEFAULTS, not the
+--        client                                                             ✓
+--   (g)  A cannot resolve their own request — 0 rows, no student UPDATE
+--        policy admits it (the grant passes; the policy is what refuses)     ✓
 --
---   ⚠ SO THE §2 OUTCOME PINS AND THE §3 COLUMN GRANT — the two layers this
---   file was amended to add — HAVE NOT BEEN EXERCISED AGAINST THE DATABASE.
---   They are correct by construction and by review; they are not yet observed.
---   Founder pastes issued. Do not read this header as saying otherwise.
+--   ⚠ ONE FINDING FROM DOING IT: the §2 OUTCOME PINS ARE UNREACHABLE FROM A
+--   PostgREST CLIENT while the §3 column grant stands. Grants are checked
+--   before RLS, so naming `status` never reaches the policy. The pins are
+--   defence for a path this API does not offer — a direct Postgres
+--   connection — and (f) is what actually exercises the WITH CHECK, via its
+--   ownership half. Both layers are observed; each by the case that reaches it.
 --
 --   ⊘ (i) three-privileges check NOT RUN — information_schema unreachable.
 --
