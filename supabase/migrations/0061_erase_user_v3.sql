@@ -1,9 +1,33 @@
 -- ============================================================================
--- 0061_PROPOSED_erase_user_v3.sql
+-- 0061_erase_user_v3.sql
 -- ----------------------------------------------------------------------------
--- ⚠ PROPOSED — NOT APPLIED. Number from the planning chat.
+-- ⚠ APPLIED 2026-08-20, LAST OF THE SET. Two pastes. DO NOT RE-RUN AGAINST
+-- PRODUCTION — this file exists so a rebuild matches what is already live.
 --
--- ⚠ APPLY THIS LAST, AND DO NOT APPLY 0060 WITHOUT IT.
+-- ⚠ THE GAP BETWEEN 0060 AND THIS FILE WAS ENTERED DELIBERATELY AND WATCHED.
+-- With 0060 applied and this file not, a probe holding a billing_profiles row
+-- was erased and erase_user REFUSED: 23001, naming billing_profiles.billing_email,
+-- "NOTHING WAS ERASED". The probe and its profile both survived, so the rollback
+-- held. That is the only evidence the sweep covers the new column, and it is
+-- only obtainable while the fix is absent. The SAME row erased cleanly after.
+--
+-- VERIFIED, and what each check actually observed:
+--   step 5        the same probe, not re-minted, now succeeds
+--   GATE 4        email_columns_scanned 7 -> 8 against a baseline captured
+--                 BEFORE 0060 landed
+--   (h)           an UNOWNED profile carrying the address is SCRUBBED
+--   (i)           a profile owned by SOMEBODY ELSE is REFUSED and NAMED; the
+--                 target survives and the third party's row is untouched
+--   (j)           payer_erasure_side_effects names a child with NO entitlements
+--   residue       0 across all 8 columns, enumerated independently of the
+--                 receipt, with the list length asserted against it
+--   0055 re-run   53/53 — the whole of v2's verification, including both halves
+--                 of the sabotage test
+--
+-- ⚠ SKIPPED, AND NOT COUNTED AS PASSED: (g)'s anon and authenticated halves.
+-- has_function_privilege is not reachable through PostgREST. service_role's
+-- EXECUTE is proven behaviourally by every erase above; the two `f`s are a
+-- founder SQL-Editor block that has not been run.
 -- ============================================================================
 -- 0055's generic sweep counts every text column in `public` named email or
 -- %_email against the address being erased, and RAISES if the address is still

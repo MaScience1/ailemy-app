@@ -1,10 +1,30 @@
 -- ============================================================================
--- 0058_PROPOSED_entitlements.sql
+-- 0058_entitlements.sql
 -- ----------------------------------------------------------------------------
--- ⚠ PROPOSED — NOT APPLIED. Number from the planning chat: 0050 and 0056 are
--- reserved, 0057 is claimed for the profiles.timezone CHECK, so this build
--- starts here. Run each section separately: a long paste has silently dropped
--- its trailing sections three times in this project while reporting success.
+-- ⚠ APPLIED 2026-08-20. Three pastes plus a standalone NOTIFY. DO NOT RE-RUN AGAINST
+-- PRODUCTION — this file exists so a rebuild matches what is already live. It
+-- is re-runnable (IF NOT EXISTS throughout, every policy dropped before it is
+-- created), so re-running is harmless, but nothing here is left to apply.
+--
+-- VERIFIED, and what each check actually observed:
+--   (a) 3 parts   subject/kind CHECK both directions, plus the accepted case
+--   (b) 2 parts   admin grant needs a note, and inserts with one
+--   (c) 2 parts   one ACTIVE per subject; the PARTIAL index lets a lapsed
+--                 row be replaced, so a student can re-subscribe
+--   (d)(e)        off-list source, off-list status, backwards window refused
+--   (f)           anon: 42501 permission denied — NOT 0 rows
+--   (i)           7 falses + control true
+--   (g)(h)        from REAL student sessions, 14/14: a student cannot INSERT,
+--                 UPDATE or DELETE an entitlement (all 42501 at the table
+--                 grant, with a SELECT control proving the session works), the
+--                 row is unchanged afterwards, and A cannot see B's — mirrored
+--                 from B's side, against a fixture confirmed non-empty first.
+--
+-- ⚠ (g3) — the DELETE attempt — IS NOT IN THIS FILE'S VERIFICATION BLOCK. It
+-- was added at run time: clearing a revocation is a third way to award yourself
+-- access, and the block only sketched INSERT and UPDATE.
+--
+-- Numbering: 0050, 0056 and 0057 remain reserved. 0062 is the next free number.
 --
 -- ============================================================================
 -- ⚠ WHAT A STUDENT OWNS, SEPARATE FROM HOW THEY BOUGHT IT (§75, §105)

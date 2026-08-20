@@ -1,8 +1,35 @@
 -- ============================================================================
--- 0059_PROPOSED_notification_preferences.sql
+-- 0059_notification_preferences.sql
 -- ----------------------------------------------------------------------------
--- ⚠ PROPOSED — NOT APPLIED. Number from the planning chat. Independent of
--- 0058. Run each section separately.
+-- ⚠ APPLIED 2026-08-20. Four pastes plus a standalone NOTIFY. DO NOT RE-RUN AGAINST
+-- PRODUCTION — this file exists so a rebuild matches what is already live.
+--
+-- VERIFIED, and what each check actually observed:
+--   (a)           defaults read back explicitly; marketing both FALSE and
+--                 marketing_opt_in_at NULL
+--   (b)           ⚠ RUN AS FOUR SEPARATE STATEMENTS. Trigger disabled, 23514
+--                 fired, trigger re-enabled, BOTH triggers confirmed 'O'.
+--                 The first attempt was run as one paste and had to be redone.
+--   (c)           operational in-app CHECK: 23514
+--   (j)           anon: 42501, postgres restored
+--   (k)           f,f,f,f,f,t
+--   (l)           the three withheld columns absent from both grants
+--   (a2)(d)-(i)   from REAL student sessions, 24/24
+--
+-- ⚠ WHAT (a2) OBSERVED, BECAUSE IT WILL BE MET AGAIN: PostgREST's .upsert()
+-- returns 42501 on this table. That is EXPECTED, not a broken grant — an upsert
+-- compiles to ON CONFLICT DO UPDATE SET user_id = EXCLUDED.user_id and user_id
+-- is withheld from the UPDATE grant because it is the primary key. The write
+-- path is UPDATE, then INSERT if it touched 0 rows.
+--
+-- ⚠ WHAT THE CONSENT LIFECYCLE OBSERVED: stamped at now() on opt-in with the
+-- client sending no timestamp; UNCHANGED when the second channel was turned on;
+-- cleared to NULL on withdrawal; re-stamped LATER on a second opt-in. All four,
+-- because a stamp alone would not have shown the invariant holds both ways.
+--
+-- ⚠ SKIPPED, AND NOT COUNTED AS PASSED: (c)'s second half — the same CHECK
+-- against academic_in_app rather than tuition_in_app — was printed but only the
+-- tuition half was confirmed run.
 --
 -- ============================================================================
 -- ⚠ TRANSACTIONAL AND MARKETING ARE NOT TWO VALUES OF ONE SETTING (§80)

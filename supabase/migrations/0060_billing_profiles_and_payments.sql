@@ -1,8 +1,35 @@
 -- ============================================================================
--- 0060_PROPOSED_billing_profiles_and_payments.sql
+-- 0060_billing_profiles_and_payments.sql
 -- ----------------------------------------------------------------------------
--- ⚠ PROPOSED — NOT APPLIED. Number from the planning chat. Apply AFTER 0058:
--- payments references entitlements. Run each section separately.
+-- ⚠ APPLIED 2026-08-20, AFTER 0058. Three pastes plus a standalone NOTIFY. DO NOT
+-- RE-RUN AGAINST PRODUCTION — this file exists so a rebuild matches what is
+-- already live.
+--
+-- VERIFIED, and what each check actually observed:
+--   (a) 7 parts   every CHECK refused, and the well-formed row inserted
+--   (b) 3 parts   duplicate provider_payment_id refused; TWO rows with a NULL
+--                 one both inserted, so the index is PARTIAL
+--   (g)           anon: 42501 on all three tables, postgres restored
+--   (h)           three rows, f,f,f,f,f,t on each
+--   (i)           0 card-shaped columns, with a 3-row control proving the scan
+--                 was looking at real columns and not at a typo'd table name
+--   (c)-(f)       from REAL sessions, 27/27
+--
+-- ⚠ WHAT (d) AND (e) OBSERVED — THE §109 PAIR: a student sees 0 billing_profiles
+-- and 0 billing_profile_students THOUGH one of each exists and names them,
+-- while the payer sees both. Run against a fixture confirmed non-empty first;
+-- either half alone is consistent with the policies being wrong in one
+-- direction.
+--
+-- ⚠ (f3) — a payer DELETING their billing profile out from under a payment —
+-- IS NOT IN THIS FILE'S VERIFICATION BLOCK. Added at run time; it refuses.
+--
+-- ⚠ RECEIPT_URL REMAINS A §109 LEAK THE DATABASE CANNOT CLOSE. Ruled at
+-- planning: keep the column, enforce in the application. See the comment on the
+-- column and src/lib/account/billing-view.ts. payment_receipts — moving it to
+-- its own payer-only table — is recorded at planning as a keys-day follow-up
+-- and is UNNUMBERED. It is free while payments is empty and becomes a data
+-- migration the day Stripe keys arrive.
 --
 -- ============================================================================
 -- ⚠ NOTHING WRITES TO THESE TABLES TODAY, AND THAT IS THE POINT
