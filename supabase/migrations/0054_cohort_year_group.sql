@@ -1,8 +1,32 @@
 -- ============================================================================
 -- 0054_PROPOSED_cohort_year_group.sql
 -- ----------------------------------------------------------------------------
--- ⚠ PROPOSED — NOT APPLIED. Number allocated by the planning chat. Independent
--- of every other file in this set. Run each section separately.
+-- ⚠ APPLIED TO PRODUCTION 2026-08-20. Renamed off _PROPOSED_ once verified.
+--
+-- VERIFICATION: 8 blocks RUN AND PASSING, 2 NOT RUN.
+--   (a)  ⚠ THE LIVE COMMERCIAL FACTS ARE UNCHANGED, checked FIRST and then
+--        AGAIN after the run's own UPDATEs were restored:
+--          ial-chemistry-as-sep-2026  16900  800  interest  cap 20
+--          igcse-chemistry-y11        14900  700  interest  cap 20
+--          igcse-chemistry-y10        13900  650  interest  cap 20          ✓✓
+--   (b)  gcse-y11 → Year 11 · gcse-y10 → Year 10 · ial-as → NULL            ✓
+--        …and 0 gcse-% rows missed by the backfill                          ✓
+--        ⚠ THE AS COHORT'S NULL IS CORRECT, NOT A MISS.
+--   (c)  year_group='Sixth Form' refused, 23514 cohorts_year_group_check    ✓
+--   (d)  …and 'Year 11' accepted, 1 row — so (c) is not a column refusing
+--        everything                                                         ✓
+--   (e)  NULL still allowed, 1 row — a future A2 cohort has no year group   ✓
+--   (g)  anon reads year_group on the three public cohorts, no new grant    ✓
+--   (h)  anon UPDATE refused, 42501                                         ✓
+--
+--   ⚠ (c)(d)(e) WRITE TO THE LIVE TABLE. Every year_group was captured before
+--   the run and restored after it, and (a) was re-read post-restore. That
+--   second read is the one that matters.
+--
+--   ⊘ (f) convalidated NOT RUN here — pg_constraint is unreachable through
+--     PostgREST. The founder's own sanity check reported convalidated=true;
+--     that is their observation, recorded as theirs, not re-derived by me.
+--   ⊘ (i) three-privileges check NOT RUN — information_schema unreachable.
 --
 -- ============================================================================
 -- ⚠⚠ THIS TOUCHES THE TABLE CARRYING THE LIVE AS COHORT. READ FIRST.

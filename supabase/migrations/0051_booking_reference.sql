@@ -1,11 +1,28 @@
 -- ============================================================================
 -- 0051_PROPOSED_booking_reference.sql
 -- ----------------------------------------------------------------------------
--- ⚠ PROPOSED — NOT APPLIED. Number allocated by the planning chat: 0051, first
--- of five (0050 stays reserved for announcement targeting). Apply FIRST of the
--- set; 0052 references private_bookings. Run each section separately: a long
--- paste has silently dropped its trailing sections three times in this project
--- while reporting success.
+-- ⚠ APPLIED TO PRODUCTION 2026-08-20, first of 0051–0055. Renamed off
+-- _PROPOSED_ once verified.
+--
+-- VERIFICATION: 9 of 10 blocks RUN AND PASSING, 1 NOT RUN.
+--   (a)  0 NULL booking_ref of 0 pre-existing rows                        ✓
+--   (b)  a new booking receives one from the DEFAULT — AIL-8YY3TV7J       ✓
+--   (b2) ⚠ AND IT WAS service_role THAT INSERTED IT. Run through a
+--        service-role PostgREST client, which IS that role over the wire a
+--        booking actually takes — a stronger check than SET ROLE, and the
+--        one (b) alone could never make because (b) runs as the owner.       ✓
+--   (c)  every ref in the table matches ^AIL-[23456789A-HJKMNP-Z]{8}$,
+--        0 malformed                                                        ✓
+--   (d)  a duplicate ref is refused, 23505 private_bookings_ref_unique      ✓
+--        ⚠ run with TWO probe bookings present; with one it is a no-op
+--        that looks like a pass.
+--   (e)  anon SELECT refused 42501 — NOT an empty result                    ✓
+--   (f)  anon cannot EXECUTE generate_booking_ref, 42501                    ✓
+--        …and service_role CAN — the §3 grant, proven in both directions.   ✓
+--
+--   ⊘ (h) the three-privileges check is NOT RUN. information_schema is not
+--     exposed through PostgREST and this machine has no psql and no
+--     DATABASE_URL. It is the founder's paste. THIS HEADER DOES NOT CLAIM IT.
 --
 -- A human-readable handle for a private booking (§74, §75).
 --

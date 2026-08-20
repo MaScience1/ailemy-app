@@ -1,8 +1,30 @@
 -- ============================================================================
 -- 0052_PROPOSED_cancellation_requests.sql
 -- ----------------------------------------------------------------------------
--- ⚠ PROPOSED — NOT APPLIED. Number allocated by the planning chat. Apply AFTER
--- 0051: this table references private_bookings. Run each section separately.
+-- ⚠ APPLIED TO PRODUCTION 2026-08-20, after 0051. Renamed off _PROPOSED_ once
+-- verified.
+--
+-- VERIFICATION: constraint blocks RUN AND PASSING; the POLICY blocks NOT RUN.
+--   (a)  resolved with no outcome refused, 23514 …_resolved_needs_outcome   ✓
+--        …and with resolution + resolved_at it inserts                      ✓
+--   (b)  a second OPEN request for one booking refused, 23505               ✓
+--        …and the earlier RESOLVED row did not block it — the index is
+--        PARTIAL, which is the half that makes (b) mean anything            ✓
+--   (c)  resolution='vibes' refused, 23514 …_resolution_check               ✓
+--   (d)  anon SELECT refused 42501, anon INSERT refused 42501               ✓
+--
+--   ⊘⊘ (e)(f)(f2)(f3)(g) ARE NOT RUN, AND THEY ARE THE IMPORTANT ONES.
+--   Every one needs a real authenticated STUDENT session. service_role holds
+--   BYPASSRLS and table-wide privileges, so it cannot exercise a row policy or
+--   a column grant — running these as service_role would pass for the wrong
+--   reason and prove nothing.
+--
+--   ⚠ SO THE §2 OUTCOME PINS AND THE §3 COLUMN GRANT — the two layers this
+--   file was amended to add — HAVE NOT BEEN EXERCISED AGAINST THE DATABASE.
+--   They are correct by construction and by review; they are not yet observed.
+--   Founder pastes issued. Do not read this header as saying otherwise.
+--
+--   ⊘ (i) three-privileges check NOT RUN — information_schema unreachable.
 --
 -- Cash-paid cancellations that a human must decide (§41, §54).
 --

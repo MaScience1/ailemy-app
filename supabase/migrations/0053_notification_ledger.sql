@@ -1,9 +1,31 @@
 -- ============================================================================
 -- 0053_PROPOSED_notification_ledger.sql
 -- ----------------------------------------------------------------------------
--- ⚠ PROPOSED — NOT APPLIED. Number allocated by the planning chat. Independent
--- of 0051 and 0052; must precede 0055, which names all three of its tables.
--- Run each section separately.
+-- ⚠ APPLIED TO PRODUCTION 2026-08-20. Renamed off _PROPOSED_ once verified.
+--
+-- VERIFICATION: constraint and anon blocks RUN AND PASSING; session blocks NOT.
+--   (a)  ⚠ THE IDEMPOTENCY KEY — the identical key refused, 23505
+--        notification_events_idempotency. This is the constraint that stops a
+--        retried server action emailing a family twice.                     ✓
+--   (b)  a second 'email' delivery for one event refused, 23505             ✓
+--        …and email + in_app + push for the SAME event all inserted —
+--        three channels, one fact. Without this half (b) proves only that
+--        an index rejects things.                                           ✓
+--   (c)  an event with neither user_id nor email refused, 23514             ✓
+--   (d)  status='sent' with no sent_at refused, 23514                       ✓
+--   (e)  anon SELECT refused 42501 on ALL THREE tables — not empty results  ✓
+--   (h)  anon cannot INSERT an event, 42501 — no grant at all               ✓
+--
+--   ⚠ (a)–(d) WERE TESTABLE WITHOUT AN auth USER because notification_events
+--   accepts an email-only row by design. That constraint is what makes an
+--   account-less parent reachable, and it is also what made this verification
+--   possible with no identity created in production.
+--
+--   ⊘ (f)(g)(i) NOT RUN — read-own, the in_app read_at column grant and
+--     push_tokens own-row all need an authenticated student session. (g) in
+--     particular is the one that proves the column grant and the policy fail
+--     DIFFERENTLY, and it has not been observed. Founder paste issued.
+--   ⊘ (k)(l) NOT RUN — information_schema unreachable.
 --
 -- ============================================================================
 -- ⚠ ONE EVENT ROW DRIVES EMAIL, IN-APP AND PUSH — WEB AND MOBILE ALIKE

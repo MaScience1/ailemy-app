@@ -1,10 +1,43 @@
 -- ============================================================================
 -- 0055_PROPOSED_erase_user_v2.sql
 -- ----------------------------------------------------------------------------
--- ⚠ PROPOSED — NOT APPLIED. Number allocated by the planning chat. Apply LAST,
--- after 0052 and 0053: it names tables those files create. Applying it before
--- them raises 42P01 and the function is left not created.
--- Run each section separately.
+-- ⚠ APPLIED TO PRODUCTION 2026-08-20, last of 0051–0055. Renamed off
+-- _PROPOSED_ once verified.
+--
+-- ============================================================================
+-- ⚠⚠ VERIFICATION IS 2 BLOCKS OF ROUGHLY FIFTEEN. THIS FILE IS THE LEAST
+-- VERIFIED OF THE FIVE AND THE HEADER SAYS SO IN THE FIRST LINE FOR A REASON.
+-- ============================================================================
+--   0049(a) anon CANNOT call erase_user — 42501 permission denied for
+--           function erase_user. The single most dangerous object in this
+--           schema is unreachable from a browser key.                       ✓
+--   0049(b) an unknown id raises P0002 'erase_user: no such user …' — which
+--           also proves v2 is installed, callable, and reaches its first
+--           guard rather than silently succeeding.                          ✓
+--
+--   ⊘ EVERYTHING ELSE IS NOT RUN:
+--       0049(c) erase a user carrying a ledger row
+--       0049(d) the teacher refusal
+--       0049(e) a student booking does not block, and survives anonymised
+--       0049(f) ⚠ THE PURGE ESCAPE STILL DIES WITH ITS TRANSACTION — the one
+--               that, if it had silently broken, leaves the ledger no longer
+--               append-only. Rewriting this function body is exactly the event
+--               that could break it, and it has NOT been re-observed.
+--       0049(g) an ordinary DELETE still refused
+--       0055(a)(b) the full probe and its receipt
+--       0055(c)(d) the address gone, the records that must survive surviving
+--       0055(e) BOTH HALVES of the sweep sabotage
+--       0055(f2)(f3) the marker pre-check and its bare-23503 sabotage
+--       0055(f4) storage_purge_required in the receipt
+--
+--   Every one needs an auth.users identity to create and then erase. I did not
+--   create one: 0048 and 0049 each left a probe user in production that could
+--   not be removed, and a script that calls a function whose purpose is to
+--   delete a person is not something to start unasked. Founder pastes issued
+--   for all of it.
+--
+--   ⚠ DO NOT READ THE 'APPLIED' ABOVE AS 'PROVEN'. The function is installed
+--   and gated. What it DOES has not been watched once.
 --
 -- ============================================================================
 -- ⚠ WHY THIS FILE EXISTS: 0049 ERASES A PERSON FROM THE TABLES THAT EXISTED
