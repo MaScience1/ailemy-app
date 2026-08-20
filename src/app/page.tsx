@@ -14,10 +14,9 @@ import { offersCurrencyChoice, type Currency } from "@/lib/public/currency";
 import { currentCurrency } from "@/lib/public/currency-server";
 import { CohortPrice } from "@/components/public/CohortPrice";
 import { CurrencyToggle } from "@/components/public/CurrencyToggle";
-import { SessionList } from "@/components/public/SessionList";
+import { EventChip } from "@/components/calendar/EventChip";
 import { TimezoneSync } from "@/components/public/TimezoneSync";
-import { loadCalendar } from "@/lib/schedule/readers";
-import { nextOccurrences } from "@/lib/schedule/recurrence";
+import { loadCalendarEvents, nextLive } from "@/lib/calendar/readers";
 import { viewerTimeZone } from "@/lib/schedule/viewer-tz";
 
 /**
@@ -55,32 +54,30 @@ export default async function Home() {
   const showToggle = offersCurrencyChoice(chemistryCohorts);
 
   /**
-   * ⚠ §18 + §67, AND THE TENSION BETWEEN THEM IS REAL.
+   * ⚠ §4 AND §18 — A COMPACT PREVIEW, NOT AN EMBEDDED MONTH GRID. The spec is
+   * explicit that the homepage must not carry an enormous calendar; it shows
+   * the next few sessions and leads into /calendar.
    *
-   * §67 says the homepage must not fetch months of calendar data. The first
-   * version honoured that with a 21-day window — and showed NOTHING, because
-   * the AS term starts 15 September and today is further out than that. A
-   * preview that is invisible for most of the year is not "the next few
-   * sessions", it is a dead section.
+   * ⚠ BUT IT SHARES THE READER AND THE CHIP, so it cannot drift from the full
+   * calendar. This is the §2 rule at its most tempting to break: a "quick
+   * preview" with its own query and its own markup is exactly how two surfaces
+   * start disagreeing about when a lesson is.
    *
-   * The window is 10 weeks because the COST IS IN RULES, NOT OCCURRENCES: the
-   * query fetches a handful of recurrence rules and the overrides inside the
-   * window, and the sessions are expanded in memory. Widening the window adds
-   * roughly nothing to the query, and the list is sliced to 3 regardless. What
-   * §67 forbids — dragging back every session row for a year — is not what this
-   * does at any window size.
-   *
-   * includeCancelled is FALSE here, and only here: a preview showing "the next
-   * lesson" must never show one that is not happening. /calendar shows
-   * cancellations because that is where you go to find out why.
+   * The window is 10 weeks because the cost is in RULES fetched, not
+   * occurrences — a handful of recurrence rows expand in memory and the list is
+   * sliced to 3. A 21-day window rendered nothing for most of the year, which
+   * is a dead section rather than a fast one.
    */
   const viewerTz = await viewerTimeZone();
-  const upcoming = await loadCalendar({
-    from: new Date().toISOString().slice(0, 10),
-    to: new Date(Date.now() + 70 * 86_400_000).toISOString().slice(0, 10),
-    includeCancelled: false,
+  const previewFrom = new Date().toISOString().slice(0, 10);
+  const previewTo = new Date(Date.now() + 70 * 86_400_000).toISOString().slice(0, 10);
+  const { events: previewEvents } = await loadCalendarEvents({
+    from: previewFrom, to: previewTo, mode: "public", type: "all",
   });
-  const nextSessions = nextOccurrences(upcoming.sessions, new Date(), 3) as typeof upcoming.sessions;
+  // ⚠ CANCELLED LESSONS ARE NEVER "NEXT". A preview showing a cancelled class as
+  // the next lesson is worse than showing nothing.
+  const nextSessions = nextLive(previewEvents, new Date(), 3);
+  const nextSlots = nextLive(previewEvents.filter((e) => e.type !== "group"), new Date(), 2);
 
   return (
     <div className="bg-parchment text-ink">
@@ -156,7 +153,29 @@ export default async function Home() {
           title="Upcoming lessons"
           lede="The next few live sessions. Times in Doha, and in your own timezone where we know it."
         >
-          <SessionList sessions={nextSessions} viewerTz={viewerTz} emptyMessage="" />
+          <ul className="divide-y divide-ink/10 border-y border-ink/10">
+            {nextSessions.map((ev) => (
+              <li key={ev.key} className="py-3.5">
+                <EventChip event={ev} viewerTz={viewerTz} />
+              </li>
+            ))}
+          </ul>
+
+          {/* ⚠ §4's SECOND BLOCK, AND IT IS ABSENT UNLESS REAL SLOTS EXIST.
+              "Next available: Monday 5:00 PM" with nothing behind it is the
+              fake scarcity the spec forbids by name. */}
+          {nextSlots.length > 0 && (
+            <div className="mt-8">
+              <h3 className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45">
+                1-to-1 availability
+              </h3>
+              <ul className="mt-3 divide-y divide-ink/10 border-y border-ink/10">
+                {nextSlots.map((ev) => (
+                  <li key={ev.key} className="py-3"><EventChip event={ev} viewerTz={viewerTz} /></li>
+                ))}
+              </ul>
+            </div>
+          )}
           <Link
             href="/calendar"
             className="mt-6 inline-block text-sm underline underline-offset-2 hover:text-ink"

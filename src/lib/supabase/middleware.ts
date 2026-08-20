@@ -17,6 +17,10 @@ const PUBLIC_PATHS = new Set<string>([
 
 function isProtectedPath(pathname: string): boolean {
   if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) return true;
+  // ⚠ /profile CARRIES A STUDENT'S OWN LESSONS AND CREDIT BALANCE. The page
+  // redirects an anonymous visitor itself, but a gated route must not depend on
+  // its own render to be gated — the proxy is the boundary.
+  if (pathname === "/profile" || pathname.startsWith("/profile/")) return true;
   if (pathname === "/app" || pathname.startsWith("/app/")) return true;
   if (pathname === "/admin" || pathname.startsWith("/admin/")) return true;
   return false;

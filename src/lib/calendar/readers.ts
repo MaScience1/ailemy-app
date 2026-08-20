@@ -160,3 +160,99 @@ export function nextLive(events: readonly CalendarEvent[], now: Date, limit: num
 
 /** Canonical zone, re-exported so surfaces do not re-import the schedule layer. */
 export { CANONICAL_TZ };
+
+
+// ============================================================================
+// PERSONAL MODE
+// ============================================================================
+
+import { loadMyTuition } from "@/lib/booking/student";
+
+/**
+ * What THIS student is attending (§33, §34, §70).
+ *
+ * ⚠ PUBLIC AND PERSONAL ARE DIFFERENT QUESTIONS, NOT DIFFERENT CALENDARS. The
+ * public reader answers "what does Ailemy offer"; this one answers "what am I
+ * attending". Same event shape, same component, same day rules — so a student
+ * browsing /calendar and then /profile is not learning two interfaces.
+ *
+ * ⚠ IT READS AS THE STUDENT, THROUGH loadMyTuition. Every row comes back via
+ * the session client, so 0046's private_bookings_read_own and 0047's
+ * lesson_credit_transactions_read_own are what decide visibility. A
+ * service-role read filtered by user_id in application code would work
+ * identically right up until the filter was wrong, and then it would hand one
+ * student another's lessons. The policy is the boundary; this is not.
+ */
+export async function loadPersonalCalendar(range: { from: string; to: string }): Promise<{
+  events: CalendarEvent[];
+  signedIn: boolean;
+  creditBalance: number;
+  enrolledCohortSlugs: string[];
+  notes: string[];
+}> {
+  const me = await loadMyTuition();
+  if (!me.signedIn) {
+    return { events: [], signedIn: false, creditBalance: 0, enrolledCohortSlugs: [], notes: me.notes };
+  }
+
+  const events: CalendarEvent[] = [];
+
+  // ⚠ ENROLLED GROUP LESSONS ONLY. loadMyTuition resolves them from
+  // cohort_enrolments, so a student who merely visited a cohort page never
+  // sees its lessons here (§31).
+  for (const s of me.groupSessions) {
+    if (s.startsAt.toISOString().slice(0, 10) < range.from) continue;
+    if (s.startsAt.toISOString().slice(0, 10) > range.to) continue;
+    events.push({
+      key: `g:${s.key}`,
+      type: "group",
+      status: s.status,
+      startsAt: s.startsAt,
+      endsAt: s.endsAt,
+      title: s.title ?? s.cohort.title,
+      subject: s.cohort.subject,
+      qualification: s.cohort.qualification,
+      yearGroup: null,
+      cohortSlug: s.cohort.slug,
+      teacherName: null,
+      cancelledReason: s.cancelledReason,
+      cohort: s.cohort,
+    });
+  }
+
+  // ⚠ THE VIEWER'S OWN BOOKINGS, AND ONLY THOSE. type private_booked exists
+  // solely in this mode; the public reader never produces one, so a public
+  // surface cannot render another person's lesson even by mistake.
+  for (const b of [...me.upcomingPrivate, ...me.pastPrivate]) {
+    const day = b.startsAt.toISOString().slice(0, 10);
+    if (day < range.from || day > range.to) continue;
+    events.push({
+      key: `b:${b.id}`,
+      type: "private_booked",
+      status: b.status === "cancelled" ? "cancelled" : "scheduled",
+      startsAt: b.startsAt,
+      endsAt: b.endsAt,
+      title: b.subject ? `1-to-1 ${b.subject}` : "1-to-1 lesson",
+      subject: b.subject,
+      qualification: null,
+      yearGroup: null,
+      cohortSlug: null,
+      teacherName: null,
+      cancelledReason: null,
+      // ⚠ NO booking REFERENCE YET — the column does not exist (schema-blocked).
+      // Null rather than an invented code, so the panel omits the line instead
+      // of printing something a support conversation cannot look up.
+      bookingRef: null,
+    });
+  }
+
+  events.sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime() || a.key.localeCompare(b.key));
+
+  return {
+    events,
+    signedIn: true,
+    creditBalance: me.creditBalance,
+    enrolledCohortSlugs: me.enrolledCohortSlugs,
+    notes: me.notes,
+  };
+}

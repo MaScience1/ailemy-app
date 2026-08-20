@@ -56,8 +56,15 @@ export type CalendarProps = {
   basePath: string;
   /** The day whose panel is open, if any. */
   openDay?: string | null;
-  /** Hide the filter row where a page has already filtered (subject pages). */
+  /** Hide the whole filter block (homepage preview, tight embeds). */
   showFilters?: boolean;
+  /**
+   * ⚠ ON /chemistry THE SUBJECT IS THE PAGE, NOT A FILTER. Rendering the
+   * subject row there would offer an "All" that silently turns the Chemistry
+   * calendar into the school calendar — the same URL, a different promise.
+   * Level and type still filter; subject is locked and stated.
+   */
+  lockedSubject?: string | null;
   /** Rendered when the whole range is empty — the caller knows why (§12, §57). */
   emptyMessage?: string;
 };
@@ -67,6 +74,7 @@ const MONTH_CELL_LIMIT = 3;
 
 export function Calendar(props: CalendarProps) {
   const { events, state, todayISO, viewerTz, basePath, showFilters = true } = props;
+  const lockedSubject = props.lockedSubject ?? null;
   const buckets = bucketByDay(events);
 
   const href = (patch: Partial<CalendarState> & { day?: string | null }) => {
@@ -85,7 +93,7 @@ export function Calendar(props: CalendarProps) {
     >
       <Toolbar state={state} todayISO={todayISO} href={href} viewerTz={viewerTz} />
 
-      {showFilters && <Filters state={state} href={href} />}
+      {showFilters && <Filters state={state} href={href} lockedSubject={lockedSubject} />}
 
       <div className="mt-6">
         {state.view === "month" && (
@@ -99,6 +107,18 @@ export function Calendar(props: CalendarProps) {
         {state.view === "upcoming" && (
           <UpcomingView events={events} viewerTz={viewerTz} href={href}
             emptyMessage={props.emptyMessage} />
+        )}
+
+        {/*
+          ⚠ AN EMPTY GRID DOES NOT EXPLAIN ITSELF (§12, §57). An empty LIST
+          reads as "nothing here"; a month of blank cells with a Year 11 filter
+          applied reads as "the calendar is broken". The note says which filter
+          emptied it, so the fix is one tap away rather than a guess.
+        */}
+        {events.length > 0 || state.view === "upcoming" ? null : (
+          <p className="mt-5 text-sm leading-relaxed text-ink/60">
+            {props.emptyMessage ?? "No lessons are scheduled in this period."}
+          </p>
         )}
       </div>
 
@@ -191,10 +211,11 @@ function Toolbar({
 }
 
 function Filters({
-  state, href,
+  state, href, lockedSubject,
 }: {
   state: CalendarState;
   href: (p: Partial<CalendarState> & { day?: string | null }) => string;
+  lockedSubject: string | null;
 }) {
   const row = (
     legend: string,
@@ -226,8 +247,9 @@ function Filters({
 
   return (
     <div className="mt-5 space-y-2" role="group" aria-label="Filter the calendar">
-      {row("Subject", [{ key: null, label: "All" }, ...SUBJECTS.map((s) => ({ key: s.slug, label: s.name }))],
-        state.subject, (k) => ({ subject: k }))}
+      {lockedSubject === null &&
+        row("Subject", [{ key: null, label: "All" }, ...SUBJECTS.map((s) => ({ key: s.slug, label: s.name }))],
+          state.subject, (k) => ({ subject: k }))}
       {row("Level", [{ key: null, label: "All" }, ...LEVELS.map((l) => ({ key: l.slug, label: l.label }))],
         state.level, (k) => ({ level: k }))}
       {row("Type", [

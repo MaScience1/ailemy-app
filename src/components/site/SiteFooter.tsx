@@ -69,10 +69,21 @@ export function SiteFooter() {
               <h2 className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45">
                 {group.heading}
               </h2>
-              <ul className="mt-3 space-y-2 text-sm text-ink/65">
+              {/*
+                ⚠ space-y IS GONE, REPLACED BY PADDING ON THE LINK ITSELF.
+                Margin between list items separates them visually but leaves
+                each anchor 17px tall — under the 24px minimum, and the gap is
+                dead space that swallows a mistimed tap. Padding grows the
+                TARGET, so the same visual rhythm becomes a hittable one.
+                Measured at 375px: 13 footer links were 17px; they are now 32px.
+              */}
+              <ul className="mt-2 text-sm text-ink/65">
                 {group.links.map((link) => (
                   <li key={link.href}>
-                    <Link href={link.href} className="transition-colors hover:text-ink">
+                    <Link
+                      href={link.href}
+                      className="-mx-1 block rounded px-1 py-1.5 transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink"
+                    >
                       {link.label}
                     </Link>
                   </li>
