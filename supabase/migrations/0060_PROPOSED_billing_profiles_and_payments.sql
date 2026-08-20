@@ -111,6 +111,39 @@ CREATE TABLE IF NOT EXISTS public.payments (
   /** Stripe's own identifiers, for reconciliation and the hosted receipt. */
   provider           text NOT NULL DEFAULT 'stripe',
   provider_payment_id text,
+
+  /**
+   * ============================================================================
+   * ⚠ receipt_url IS A §109 LEAK THAT THIS DATABASE CANNOT CLOSE. READ THIS
+   * BEFORE RENDERING IT ANYWHERE.
+   * ============================================================================
+   * A Stripe hosted receipt shows the amount, the date, the card's last four
+   * digits, and THE BILLING EMAIL THE CHARGE WAS MADE WITH. For a student whose
+   * parent paid, that is the parent's address and card metadata — exactly what
+   * the missing billing_profiles read policy above exists to withhold.
+   *
+   * ⚠ AND RLS CANNOT STOP IT, WHICH IS WHY THIS COMMENT IS HERE INSTEAD OF A
+   * POLICY. payments_read_as_student and payments_read_as_payer are two
+   * policies on ONE table, and both subjects are the role `authenticated`. RLS
+   * filters ROWS, never COLUMNS, so there is no way to admit a row to a student
+   * with this column hidden and to the payer with it shown. A column-level
+   * REVOKE would take it from both.
+   *
+   * ⚠ THE RULE, WHICH LIVES IN THE APPLICATION BECAUSE IT CANNOT LIVE HERE:
+   *
+   *     A STUDENT-FACING BILLING VIEW NEVER SELECTS OR RENDERS receipt_url.
+   *     A PAYER-FACING VIEW MAY.
+   *
+   * Enforced at compile time rather than by discipline: the student read model
+   * has no such field, so no component can render one. See
+   * src/lib/account/billing-view.ts, its test, and §129 step E.
+   *
+   * ⚠ RECOMMENDED FOLLOW-UP, NOT DONE HERE: move this column to its own
+   * payment_receipts table whose only policy is the payer's, which makes the
+   * leak impossible at the RLS layer instead of the type layer. It is free
+   * while payments is empty and becomes a data migration the day Stripe keys
+   * arrive. Deliberately deferred so it does not block this apply.
+   */
   receipt_url        text,
 
   /**

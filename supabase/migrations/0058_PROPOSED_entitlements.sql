@@ -159,7 +159,8 @@ NOTIFY pgrst, 'reload schema';
 -- identical to a typo'd table name; the control is what makes the negative
 -- mean something. This is the standard 0051–0055 were held to.
 --
--- (a) a platform entitlement must have no subject, and a course one must
+-- (a) a platform entitlement must have no subject, and a course one must have
+--     one — the same CHECK read in both directions.
 -- INSERT (user_id,kind,source,note) VALUES (<u>,'platform','admin_grant','probe');
 -- PASS: inserted.
 -- INSERT (user_id,kind,subject_ref,source,note) VALUES (<u>,'platform','x','admin_grant','probe');
