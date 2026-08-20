@@ -274,7 +274,16 @@ export function stateToQuery(s: CalendarState, todayISO: string, base = "/calend
   if (s.level) p.set("level", s.level);
   if (s.type !== "all") p.set("type", s.type);
   const q = p.toString();
-  return q ? `${base}?${q}` : base;
+  if (!q) return base;
+  /**
+   * ⚠ THE BASE MAY ALREADY CARRY A QUERY, AND JOINING WITH "?" TWICE BREAKS IT
+   * SILENTLY. The homepage's expanded calendar lives at `/?calendar=open`, so
+   * every link inside it has to keep that parameter — `/?calendar=open?view=week`
+   * would parse as a single parameter named `calendar` whose value is
+   * "open?view=week", the overlay would close on the first click, and nothing
+   * would error.
+   */
+  return `${base}${base.includes("?") ? "&" : "?"}${q}`;
 }
 
 /** Where "previous" and "next" go, per view. */

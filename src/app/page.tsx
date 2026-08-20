@@ -15,6 +15,7 @@ import { offersCurrencyChoice, type Currency } from "@/lib/public/currency";
 import { currentCurrency } from "@/lib/public/currency-server";
 import { CohortPrice } from "@/components/public/CohortPrice";
 import { CurrencyToggle } from "@/components/public/CurrencyToggle";
+import { HeroCalendarCard, HeroCalendarOverlay } from "@/components/calendar/HeroCalendar";
 import { Calendar } from "@/components/calendar/Calendar";
 import { TimezoneSync } from "@/components/public/TimezoneSync";
 import { loadCalendarEvents } from "@/lib/calendar/readers";
@@ -51,7 +52,8 @@ export const metadata: Metadata = {
 };
 
 type Search = Promise<{
-  view?: string; date?: string; subject?: string; level?: string; type?: string; day?: string;
+  view?: string; date?: string; subject?: string; level?: string; type?: string;
+  day?: string; calendar?: string;
 }>;
 
 export default async function Home({ searchParams }: { searchParams: Search }) {
@@ -100,6 +102,32 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
 
   const calendarState = readState(params, todayISO, handheld ? "upcoming" : "month");
   const openDay = params.day && parseDate(params.day) ? params.day : null;
+
+  /**
+   * ⚠ THE EXPANDED CALENDAR IS A URL STATE, NOT A useState. It renders on the
+   * server, the card is a link and the scrim is a link, so it opens and closes
+   * with JavaScript disabled and survives a reload. Escape and the focus trap
+   * are the only parts that need a browser, and they are layered on top.
+   *
+   * ⚠ CLOSING PRESERVES EVERYTHING ELSE. A reader who paged to November and
+   * opened a day should come back to November, not to today — so the close
+   * link drops only `calendar`, and keeps view, date and filters.
+   */
+  const calendarOpen = params.calendar === "open";
+  const qs = (patch: Record<string, string | null>) => {
+    const q = new URLSearchParams();
+    const base: Record<string, string | undefined> = {
+      view: params.view, date: params.date, subject: params.subject,
+      level: params.level, type: params.type, day: params.day, calendar: params.calendar,
+    };
+    for (const [k, v] of Object.entries({ ...base, ...patch })) {
+      if (v) q.set(k, String(v));
+    }
+    const str = q.toString();
+    return str ? `/?${str}#hero-calendar` : "/#hero-calendar";
+  };
+  const openCalendarHref = qs({ calendar: "open" });
+  const closeCalendarHref = qs({ calendar: null, day: null });
   const calendarRange = rangeFor(calendarState.view, calendarState.date);
 
   const { events: calendarEvents } = await loadCalendarEvents({
@@ -116,8 +144,21 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
       <TimezoneSync known={viewerTz !== null} />
       {/* 2 */} <SiteNav session={session} />
 
-      {/* ── 3. hero ───────────────────────────────────────────────────── */}
+      {/* ── 3. hero ─────────────────────────────────────────────────────
+          ⚠ TWO COLUMNS FROM 1024px (Tailwind `lg`), STACKED BELOW IT.
+          The container caps at max-w-6xl (1152px) less 48px of padding, so the
+          widest the row ever gets is 1104px. A 480px card plus a 40px gap
+          leaves 584px for the copy, which holds the 60px h1 on two lines. At
+          1024px it leaves 504px, which is the tightest this layout is allowed
+          to get — below that the columns stack rather than squeezing the
+          headline, because requirement 7 is that the copy must not reflow
+          awkwardly and a third line of 60px type is exactly that.
+
+          ⚠ items-center, so the card is vertically centred against the copy
+          rather than hanging off the top of a taller column. */}
       <header className="mx-auto max-w-6xl px-6 pt-16 pb-14 sm:pt-24 sm:pb-20">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_480px] lg:items-center lg:gap-10">
+        <div>
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink/50">
           Pearson Edexcel · GCSE · International GCSE · IAL
         </p>
@@ -141,6 +182,22 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           >
             Start practising →
           </Link>
+        </div>
+        </div>
+
+        {/* ⚠ SECOND COLUMN ON DESKTOP, BELOW THE CTAs ON A PHONE. The order in
+            the DOM is copy → CTAs → card, which is the reading order a phone
+            gets for free and the one a screen reader gets everywhere. */}
+        <div id="hero-calendar" className="lg:justify-self-end">
+          <HeroCalendarCard
+            events={calendarEvents}
+            state={calendarState}
+            todayISO={todayISO}
+            viewerTz={viewerTz}
+            openHref={openCalendarHref}
+            eventCount={calendarEvents.length}
+          />
+        </div>
         </div>
       </header>
 
@@ -193,102 +250,6 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           .
         </p>
       </Section>
-
-      {/* ── 6b. the Ailemy calendar ───────────────────────────────────────
-          ⚠ PLACED DIRECTLY AFTER TUITION, AND THAT IS THE WHOLE POINT. A parent
-          has just read what is taught, when it runs and what it costs; the next
-          question they actually ask is "does that fit our week?". Answering it
-          on the same scroll is what turns interest into an enrolment, and
-          answering it two sections later is a different page to them.
-
-          ⚠ AND IT SITS BELOW THE HERO AND THE SUBJECT CARDS, so the primary
-          entry points keep the fold to themselves. This section is the answer
-          to a question the page has already raised — it is not the opening
-          argument, and putting it above tuition would make it one. */}
-      <section id="calendar" className="border-t border-ink/10 py-14 sm:py-20">
-        <div className="mx-auto max-w-6xl px-6">
-          <h2 className="font-display max-w-3xl text-2xl font-medium tracking-tight sm:text-3xl">
-            The Ailemy Calendar
-          </h2>
-          {/* ⚠ TWO SENTENCES, WRITTEN FOR A PARENT SEEING THIS COLD. It says
-              what is in it, that the times are in their own clock, and — in the
-              same breath rather than in a disclaimer — that 1-to-1 booking is
-              not open yet. A section that implied you could book today would be
-              the dead CTA the standing rules forbid, written as prose. */}
-          <p className="mt-3 max-w-2xl text-base leading-relaxed text-ink/70">
-            Every live group lesson and every open 1-to-1 slot, in one place — shown in Doha time
-            and in yours. Open any day to see what is on; 1-to-1 sessions become bookable here as
-            soon as booking opens.
-          </p>
-
-          <div className="mt-8">
-            {/* ⚠ THE SHARED COMPONENT, IN PUBLIC MODE — not a fork and not a
-                second implementation. Filters are hidden because the homepage
-                is not where somebody narrows a search; everything else is the
-                calendar /calendar renders, including the day sheet. */}
-            <Calendar
-              events={calendarEvents}
-              state={calendarState}
-              todayISO={todayISO}
-              viewerTz={viewerTz}
-              mode="public"
-              basePath="/"
-              anchor="#calendar"
-              showFilters={false}
-              openDay={openDay}
-              /* ⚠ DERIVED, NOT WRITTEN. In August this reads "teaching begins
-                 Tue 15 Sep" from the cohort the page already loaded; once term
-                 has started it falls back to the plain sentence rather than
-                 talking about a date in the past. */
-              emptyMessage={emptyCalendarMessage(
-                cohorts, todayISO, (iso) => formatDay(new Date(`${iso}T12:00:00Z`), CANONICAL_TZ),
-              )}
-            />
-          </div>
-
-          {/* ⚠ A KEY, BECAUSE A MONTH CELL CANNOT CARRY THE WORDS. A 112px cell
-              already holds a time and a title, so EventChip drops the
-              GROUP / 1-TO-1 text when it renders dense and keeps only the shape
-              marker — a filled bar against a hollow ring, separable in
-              greyscale. The words exist in the day sheet and in the Upcoming
-              list; this is where they exist for the month grid, mapped to the
-              shapes rather than asserted somewhere the reader cannot see. */}
-          <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2">
-            <span className="flex items-center gap-2 text-xs text-ink/60">
-              <span aria-hidden className="h-2.5 w-1 shrink-0 rounded-full bg-ink/70" />
-              Group lesson
-            </span>
-            <span className="flex items-center gap-2 text-xs text-ink/60">
-              <span
-                aria-hidden
-                className="h-2.5 w-2.5 shrink-0 rounded-full border-[1.5px] border-ink/60 bg-transparent"
-              />
-              1-to-1 slot
-            </span>
-            <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-ink/40">
-              open a day for full details
-            </span>
-          </div>
-
-          {/* ⚠ TWO LINKS, NO BUTTONS. Stripe has no keys, so nothing here can
-              take money; a Book or Enrol control would be a promise this page
-              cannot keep. Both of these go somewhere that works today. */}
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href="/calendar"
-              className="rounded-full border border-ink/20 px-5 py-2.5 text-sm font-medium transition-colors hover:border-ink/40"
-            >
-              Open full calendar →
-            </Link>
-            <Link
-              href="/tuition/one-to-one"
-              className="rounded-full border border-ink/20 px-5 py-2.5 text-sm font-medium transition-colors hover:border-ink/40"
-            >
-              Explore 1-to-1 →
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* ── 7. interactive past papers ────────────────────────────────── */}
       <Section
@@ -439,6 +400,36 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           </Link>
         </div>
       </Section>
+
+      {/* ── the expanded calendar ────────────────────────────────────────
+          ⚠ RENDERED LAST IN THE DOM, ON PURPOSE. It is fixed-position, so
+          where it sits in the flow does not affect the layout — but it does
+          affect tab order, and a dialog that appears before the page content
+          would put a keyboard user inside it before they had read anything.
+          The focus trap moves them in when it opens. */}
+      {calendarOpen && (
+        <HeroCalendarOverlay closeHref={closeCalendarHref}>
+          {/* ⚠ THE COMPLETE EXPERIENCE — the same component /calendar renders,
+              with filters, the view toggle and day panels all on. Same data,
+              same range, one query for the whole page. */}
+          <Calendar
+            events={calendarEvents}
+            state={calendarState}
+            todayISO={todayISO}
+            viewerTz={viewerTz}
+            mode="public"
+            /* ⚠ THE BASE CARRIES calendar=open, so paging to next month or
+               opening a day KEEPS THE OVERLAY OPEN. Without it every control
+               inside the dialog would quietly dismiss it. */
+            basePath="/?calendar=open"
+            anchor="#hero-calendar"
+            openDay={openDay}
+            emptyMessage={emptyCalendarMessage(
+              cohorts, todayISO, (iso) => formatDay(new Date(`${iso}T12:00:00Z`), CANONICAL_TZ),
+            )}
+          />
+        </HeroCalendarOverlay>
+      )}
 
       {/* 14 */} <SiteFooter />
     </div>

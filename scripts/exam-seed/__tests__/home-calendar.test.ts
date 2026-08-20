@@ -22,6 +22,11 @@ const t = (n: string, c: boolean, got?: unknown) => {
 };
 
 const PAGE = readFileSync("src/app/page.tsx", "utf8");
+const CAL = readFileSync("src/components/calendar/Calendar.tsx", "utf8");
+const GRID = readFileSync("src/lib/calendar/grid.ts", "utf8");
+const HERO = readFileSync("src/components/calendar/HeroCalendar.tsx", "utf8");
+const heroCode = HERO.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+const OVERLAY = readFileSync("src/components/calendar/CalendarOverlay.tsx", "utf8");
 const code = PAGE.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
 const days = (a: string, b: string) =>
   Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000);
@@ -64,36 +69,72 @@ console.log("── ⚠ THE VISIBLE WINDOW ONLY — NEVER A YEAR ──");
 
 console.log("\n── ⚠ NO PAYABLE CTA WHILE STRIPE IS KEYLESS ──");
 {
-  const a = code.indexOf('id="calendar"');
-  const b = code.indexOf('id="papers"', a);
-  t("the calendar section was located in the source", a > 0 && b > a, `${a}..${b}`);
-  const sec = code.slice(a, b);
-
-  t("it links to the full calendar", sec.includes('href="/calendar"'));
-  t("…and to 1-to-1", sec.includes('href="/tuition/one-to-one"'));
-  // ⚠ THE ABSENCE THAT MATTERS. A Book or Enrol control on the homepage would
-  // be a promise this deployment cannot keep.
-  t("⚠ no Book, Enrol or Buy control in the section",
-    !/>\s*(Book|Enrol|Buy)\b/.test(sec), sec.match(/>\s*(Book|Enrol|Buy)\b.{0,30}/)?.[0]);
-  t("…and no Stripe checkout link", !/checkout|stripe/i.test(sec));
+  // ⚠ CHECKED IN BOTH STATES. A Book or Enrol control in the card or the
+  // expanded dialog would be a promise this deployment cannot keep.
+  t("⚠ no Book, Enrol or Buy control in the hero card or the overlay",
+    !/>\s*(Book|Enrol|Buy)\b/.test(heroCode), heroCode.match(/>\s*(Book|Enrol|Buy)\b.{0,30}/)?.[0]);
+  t("…and no checkout or Stripe reference", !/checkout|stripe/i.test(heroCode));
+  t("the expanded state carries the shareable /calendar link",
+    heroCode.includes('href="/calendar"'));
 }
 
 console.log("\n── ⚠ THE SHARED COMPONENT, NOT A SECOND IMPLEMENTATION ──");
 {
-  const a = code.indexOf('id="calendar"');
-  const sec = code.slice(a, code.indexOf('id="papers"', a));
-  t("it renders <Calendar", /<Calendar\b/.test(sec));
-  t("…in public mode", /mode="public"/.test(sec));
-  t("…with filters hidden — the homepage is not where you narrow a search",
-    /showFilters=\{false\}/.test(sec));
-  t("…anchored, so closing a day panel returns to the section not the hero",
-    /anchor="#calendar"/.test(sec));
-  // ⚠ A HAND-ROLLED GRID WOULD BE THE §2 VIOLATION. No <table>, no day loop.
-  t("⚠ the section builds no grid of its own",
-    !/<table|monthGrid\(|weekGrid\(/.test(sec));
+  t("the card renders <Calendar in the compact variant",
+    /<Calendar\b/.test(heroCode) && /variant="compact"/.test(heroCode));
+  t("…in public mode", /mode="public"/.test(heroCode));
+  t("the page renders the FULL calendar inside the overlay",
+    /<HeroCalendarOverlay/.test(code) && /<Calendar\b/.test(code));
+  // ⚠ THE OVERLAY IS THE COMPLETE EXPERIENCE — filters are NOT suppressed
+  // there, which is the whole difference between the card and the expansion.
+  t("…with filters ON in the expansion", !/showFilters=\{false\}/.test(code));
+  // ⚠ A HAND-ROLLED GRID WOULD BE THE §2 VIOLATION.
+  t("⚠ neither the card nor the page builds a grid of its own",
+    !/<table|monthGrid\(|weekGrid\(/.test(heroCode) && !/<table|monthGrid\(|weekGrid\(/.test(code));
   t("the old list preview is gone, so nothing renders the same lessons twice",
     !code.includes("nextSessions") && !code.includes('id="upcoming"'));
+  t("…and so is the standalone post-tuition section it replaced",
+    !/id="calendar" className/.test(code));
 }
+
+console.log("\n── ⚠ THE CARD IS ONE TAB STOP, AND THE OVERLAY KEEPS ITS QUERY ──");
+{
+  t("the compact variant renders no links, so wrapping it nests no anchors",
+    /variant === "compact"/.test(CAL) && /function CompactMonth/.test(CAL));
+  t("…and its grid is aria-hidden, so 42 dead cells are not announced",
+    /function CompactMonth[\s\S]{0,600}aria-hidden/.test(CAL));
+  /**
+   * ⚠ THE BUG THIS CATCHES. Every control inside the dialog is a link built by
+   * stateToQuery. If the base did not carry calendar=open, paging to the next
+   * month would silently DISMISS the overlay and nothing would error.
+   */
+  t("⚠ the overlay's basePath carries calendar=open",
+    /basePath="\/\?calendar=open"/.test(code));
+  t("…and stateToQuery joins with & when the base already has a query",
+    /base\.includes\("\?"\) \? "&" : "\?"/.test(GRID));
+}
+
+console.log("\n── ⚠ ESCAPE, THE TRAP, AND REDUCED MOTION ──");
+{
+  t("Escape closes the dialog",
+    /e\.key === "Escape"/.test(OVERLAY) && /router\.push\(closeHref/.test(OVERLAY));
+  t("Tab wraps forward at the end", /!e\.shiftKey && active === last/.test(OVERLAY));
+  t("…and backward at the start", /e\.shiftKey && active === first/.test(OVERLAY));
+  t("…and focus that escapes is pulled back", /!node\.contains\(active\)/.test(OVERLAY));
+  t("focus moves into the dialog when it opens", /focusables\(\)\[0\]\?\.focus\(\)/.test(OVERLAY));
+  t("the page behind cannot scroll while it is open",
+    /document\.body\.style\.overflow = "hidden"/.test(OVERLAY));
+  t("…and that is restored on close", /document\.body\.style\.overflow = previous/.test(OVERLAY));
+  // ⚠ THE SCRIM AND CLOSE ARE LINKS, so the dialog dismisses with no JS at all.
+  t("the scrim is a link, not a click handler", /href=\{closeHref\}/.test(heroCode));
+
+  const CSS = readFileSync("src/app/globals.css", "utf8");
+  t("the entrance is 150ms — inside the 200ms budget", /ailemy-calendar-expand 150ms/.test(CSS));
+  // ⚠ NOT SHORTENED FOR REDUCED MOTION — NOT RUN AT ALL.
+  t("⚠ and it is defined only inside prefers-reduced-motion: no-preference",
+    /@media \(prefers-reduced-motion: no-preference\)[\s\S]{0,260}\.ailemy-calendar-expand/.test(CSS));
+}
+
 
 console.log("\n── §58 — THE MOBILE DEGRADATION ──");
 {
@@ -166,11 +207,19 @@ console.log("\n── ⚠ AN EMPTY WINDOW THAT SAYS SOMETHING USEFUL ──");
 console.log("\n── PLACEMENT — hierarchy stays intact ──");
 {
   const at = (id: string) => code.indexOf(`id="${id}"`);
-  t("subjects comes before the calendar", at("subjects") < at("calendar"));
-  t("tuition comes before the calendar", at("tuition") < at("calendar"));
-  // ⚠ THE REQUIREMENT: it must not push the primary CTAs below the fold.
-  t("…and the calendar comes before papers and the footer CTA",
-    at("calendar") < at("papers") && at("calendar") < at("start"));
+  // ⚠ THE CARD IS IN THE HERO NOW, so it comes BEFORE everything — but as the
+  // second column, after the copy and CTAs in DOM order, which is the reading
+  // order a phone and a screen reader both get.
+  t("the hero card exists", at("hero-calendar") > 0);
+  t("…and the copy and CTAs precede it in the DOM",
+    code.indexOf('href="/tuition"') < at("hero-calendar")
+    && code.indexOf('href="/past-papers"') < at("hero-calendar"));
+  t("…so the hero still leads, and subjects follow it",
+    at("hero-calendar") < at("subjects") && at("subjects") < at("tuition"));
+  t("the two-column split is at lg (1024px), stacking below it",
+    /lg:grid-cols-\[minmax\(0,1fr\)_480px\]/.test(code));
+  t("…and the card is vertically centred against the copy",
+    /lg:items-center/.test(code));
 }
 
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);
