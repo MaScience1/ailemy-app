@@ -25,10 +25,27 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+/**
+ * ⚠ §57 — SITE-WIDE FALLBACK METADATA, AND IT WAS TWICE WRONG.
+ *
+ * It read: "Ailemy — Where reaction meets revelation." / "AI-native exam
+ * preparation for IB, IGCSE, and A-Level. Built on the spec, not around it."
+ *
+ *   • "AI-native" is the closest thing on the site to the public AI-marking
+ *     claim that is not allowed to exist. Marking is mark-scheme-informed and
+ *     human-reviewed; "AI-native" advertises the opposite emphasis.
+ *   • "IB, IGCSE, and A-Level" is the old positioning. Ailemy teaches Pearson
+ *     Edexcel GCSE, International GCSE and IAL, and the footer and homepage
+ *     were corrected to say so — this was the last place still disagreeing.
+ *
+ * No `title.template` deliberately: every page already sets a complete title
+ * ("Live tuition — Ailemy"), and a template would render "… · Ailemy · Ailemy".
+ */
 export const metadata: Metadata = {
-  title: "Ailemy — Where reaction meets revelation.",
+  title: "Ailemy — online science school and exam practice",
   description:
-    "AI-native exam preparation for IB, IGCSE, and A-Level. Built on the spec, not around it.",
+    "Live small-group science tuition, specification-mapped learning, past-paper practice with " +
+    "mark-scheme-informed marking, and progress tracking. Pearson Edexcel GCSE, International GCSE and IAL.",
 };
 
 export default function RootLayout({

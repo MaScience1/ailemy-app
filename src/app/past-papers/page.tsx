@@ -32,7 +32,8 @@ import {
 } from "./_single-paper";
 
 export const metadata: Metadata = {
-  title: "Past Exam Papers · IB, IGCSE, A-Level · Ailemy",
+  // ⚠ §57 — was "IB, IGCSE, A-Level".
+  title: "Past Exam Papers · GCSE, International GCSE, IAL · Ailemy",
   description:
     "Browse and filter past papers by subject, exam board, level, year and document type. Question papers, mark schemes, examiner reports and walkthroughs.",
 };
@@ -120,7 +121,7 @@ export default async function PastPapersPage({
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink/70">
               Narrow by subject, then board, then course — each choice filters
               the next. Download question papers and mark schemes, or watch an
-              examiner walkthrough.
+              examiner-style walkthrough.
             </p>
           </header>
 

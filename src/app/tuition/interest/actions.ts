@@ -46,6 +46,19 @@ const OPTIONAL = [
   "current_grade", "target_grade", "preferred_days", "preferred_times",
 ] as const;
 
+/**
+ * §51/0043. Written only when the columns exist — the page gates the inputs on
+ * the same probe, so in practice these arrive empty before 0043 is applied.
+ *
+ * ⚠ THE RETRY BELOW IS A SECOND LINE, NOT THE PLAN. If a stale page or a
+ * crafted POST sends them against a table without the columns, PostgREST
+ * rejects the WHOLE insert with PGRST204 and a family's contact details would
+ * be lost over three optional answers. The retry drops the three and keeps the
+ * registration — and says loudly in the log exactly what it dropped, because a
+ * silent drop is the thing this whole file exists to avoid.
+ */
+const DEMAND = ["year_group", "exam_year", "student_notes"] as const;
+
 const text = (fd: FormData, name: string): string => String(fd.get(name) ?? "").trim();
 
 export async function registerInterest(
@@ -55,7 +68,7 @@ export async function registerInterest(
   // Everything typed so far, echoed back on any failure. A parent who filled in
   // eleven fields and hit a database error must not lose them.
   const fields: Record<string, string> = {};
-  for (const k of [...REQUIRED, ...OPTIONAL]) fields[k] = text(fd, k);
+  for (const k of [...REQUIRED, ...OPTIONAL, ...DEMAND]) fields[k] = text(fd, k);
   fields.ready_to_start = fd.get("ready_to_start") ? "on" : "";
   fields.consent = fd.get("consent") ? "on" : "";
 
@@ -96,8 +109,30 @@ export async function registerInterest(
   };
   for (const k of OPTIONAL) row[k] = fields[k] || null;
 
+  // exam_year is a smallint with a plausibility CHECK (0043). A non-numeric or
+  // out-of-range answer is dropped rather than sent — the database would refuse
+  // the whole row, and losing a registration over a mistyped year is absurd.
+  const examYear = Number(fields.exam_year);
+  const demand: Record<string, unknown> = {
+    year_group: fields.year_group || null,
+    exam_year: Number.isInteger(examYear) && examYear >= 2024 && examYear <= 2040 ? examYear : null,
+    student_notes: fields.student_notes || null,
+  };
+  const sendingDemand = Object.values(demand).some((v) => v !== null);
+
   const supabase = await createClient();
-  const { error } = await supabase.from("interest_registrations").insert(row);
+  let { error } = await supabase
+    .from("interest_registrations")
+    .insert(sendingDemand ? { ...row, ...demand } : row);
+
+  // PGRST204 / 42703 = 0043 not applied. Keep the registration, drop the three.
+  if (error && sendingDemand && (error.code === "PGRST204" || error.code === "42703")) {
+    console.warn(
+      "[interest] 0043 not applied — retrying without the demand fields. DROPPED:",
+      JSON.stringify(demand),
+    );
+    ({ error } = await supabase.from("interest_registrations").insert(row));
+  }
 
   if (error) {
     // ⚠ THE ERROR IS SURFACED, NOT SWALLOWED. Logging this and returning

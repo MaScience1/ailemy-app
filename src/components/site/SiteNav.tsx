@@ -53,6 +53,9 @@ const NAV_LINKS: NavLink[] = [
   { label: "Physics", href: "/physics" },
   { label: "Past Papers", href: "/past-papers" },
   { label: "Live Tuition", href: "/tuition" },
+  // ⚠ §3 — Calendar is a permanent top-level entry, not a link buried in the
+  // tuition page. It is where a student checks when a class actually is.
+  { label: "Calendar", href: "/calendar" },
   // ⚠ "Resources" IS NOT HERE ON PURPOSE. Resources are discovered THROUGH a
   // subject — that is the canonical path, and a parallel top-level entry
   // offered a second, flatter route to the same material, which is how two

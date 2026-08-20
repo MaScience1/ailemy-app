@@ -17,10 +17,15 @@ export function AuthShell({ children }: { children: ReactNode }) {
           Ailemy<span className="text-flask">.</span>
         </Link>
 
+        {/* ⚠ §55. This read "Built for the spec. / Trusted by students." The
+            second line was a social-proof claim with nothing published behind
+            it — no testimonials, no cohort has started, no student outcomes
+            exist yet. Replaced with a second claim about the PRODUCT, which is
+            true today and stays true whatever the enrolment number is. */}
         <p className="font-display max-w-md text-3xl font-medium leading-[1.15] tracking-tight lg:text-4xl">
-          Built for the spec.
+          Built for the specification.
           <br />
-          Trusted by students.
+          Built for the exam.
         </p>
 
         <p className="font-mono text-xs uppercase tracking-[0.25em] text-parchment/40">

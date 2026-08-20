@@ -25,16 +25,25 @@ const BOARDS = ["Pearson Edexcel", "AQA", "OCR", "Cambridge (CAIE)", "Other", "N
 
 const initial: InterestState = { status: "idle" };
 
+const YEAR_GROUPS = ["Year 10", "Year 11", "Year 12 / AS", "Year 13 / A2", "Other"];
+
 export function InterestForm({
   defaultSubject,
   cohort,
   mode,
   mailto,
+  /**
+   * ⚠ §51/0043. False until the migration is applied, and then these three
+   * inputs simply are not rendered. Asking a family for a year group and
+   * throwing the answer away would be worse than not asking.
+   */
+  hasDemandFields,
 }: {
   defaultSubject: string;
   cohort: string | null;
   mode: string | null;
   mailto: string;
+  hasDemandFields: boolean;
 }) {
   const [state, action, pending] = useActionState(registerInterest, initial);
   const tz = useRef<HTMLInputElement>(null);
@@ -113,11 +122,30 @@ export function InterestForm({
         </Group>
 
         <Group title="Where you are, and when you can study">
+          {hasDemandFields && (
+            <>
+              <Select name="year_group" label="Year group" options={YEAR_GROUPS}
+                defaultValue={get("year_group")} />
+              <Field name="exam_year" label="Exam year" type="number" placeholder="e.g. 2027"
+                defaultValue={get("exam_year")} />
+            </>
+          )}
           <Field name="current_grade" label="Current grade" defaultValue={get("current_grade")} />
           <Field name="target_grade" label="Target grade" defaultValue={get("target_grade")} />
           <Field name="preferred_days" label="Preferred days" defaultValue={get("preferred_days")} />
           <Field name="preferred_times" label="Preferred times" defaultValue={get("preferred_times")} />
         </Group>
+
+        {hasDemandFields && (
+          <label className="block text-sm">
+            <span className="text-ink/75">Anything else we should know?</span>
+            <textarea
+              name="student_notes" rows={3} defaultValue={get("student_notes")}
+              placeholder="Topics you find hardest, timing constraints, anything at all."
+              className={inputClass}
+            />
+          </label>
+        )}
 
         <label className="flex items-start gap-3 text-sm text-ink/75">
           <input type="checkbox" name="ready_to_start" defaultChecked={get("ready_to_start") === "on"}

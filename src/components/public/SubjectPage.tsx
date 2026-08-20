@@ -10,6 +10,10 @@ import { offersCurrencyChoice } from "@/lib/public/currency";
 import { currentCurrency } from "@/lib/public/currency-server";
 import { CohortPrice } from "@/components/public/CohortPrice";
 import { CurrencyToggle } from "@/components/public/CurrencyToggle";
+import { SessionList } from "@/components/public/SessionList";
+import { TimezoneSync } from "@/components/public/TimezoneSync";
+import { loadCalendar } from "@/lib/schedule/readers";
+import { viewerTimeZone } from "@/lib/schedule/viewer-tz";
 
 /**
  * One subject page, rendered for all three sciences.
@@ -40,12 +44,27 @@ export async function SubjectPage({ slug }: { slug: string }) {
   const { data: allCohorts } = await loadCohorts();
   const cohorts = allCohorts.filter((c) => c.subject === slug);
   const { currency } = await currentCurrency();
+
+  /**
+   * ⚠ §15 — ONE IMPLEMENTATION, THREE SUBJECTS. This component renders
+   * /chemistry, /biology and /physics, so the subject calendar is written once
+   * and filtered by slug. Building it three times is how Biology ends up a
+   * year behind Chemistry.
+   */
+  const viewerTz = await viewerTimeZone();
+  const { sessions: subjectSessions } = await loadCalendar({
+    from: new Date().toISOString().slice(0, 10),
+    to: new Date(Date.now() + 56 * 86_400_000).toISOString().slice(0, 10),
+    subject: slug,
+    includeCancelled: true,
+  });
   const hasResources = subject.status === "available" && subject.exploreHref !== null;
 
   return (
     <div className="bg-parchment text-ink">
       <AnnouncementBar />
       <SiteNav session={session} />
+      <TimezoneSync known={viewerTz !== null} />
 
       <header className="mx-auto max-w-6xl px-6 pt-14 pb-10 sm:pt-20">
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink/50">
@@ -55,6 +74,43 @@ export async function SubjectPage({ slug }: { slug: string }) {
           {subject.name}
         </h1>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink/70">{subject.blurb}</p>
+
+        {/* ⚠ §49 — THE CANONICAL HANDOFF, MADE EXPLICIT.
+            /chemistry is the public subject hub; /learn/chemistry is the
+            structured course catalogue. That split already existed and was
+            only reachable through a "Lessons" card further down the page, so
+            the primary journey — arrive at the subject, start learning — had
+            no primary CTA. Past papers sit beside it because every subject has
+            them today, including the two with no lessons yet.
+
+            ⚠ THE LEARN CTA IS GATED ON exploreHref. Biology and Physics have
+            no course catalogue, so they get Past papers and Register interest
+            and NO "Start learning" — a button into an empty catalogue is the
+            dead CTA §32 forbids. */}
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          {subject.exploreHref && (
+            <Link
+              href={subject.exploreHref}
+              className="rounded-full bg-ink px-6 py-3 text-sm font-medium text-parchment transition-colors hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            >
+              Start learning →
+            </Link>
+          )}
+          <Link
+            href="/past-papers"
+            className="rounded-full border border-ink/20 px-6 py-3 text-sm font-medium transition-colors hover:border-ink/40"
+          >
+            Past papers
+          </Link>
+          {!subject.exploreHref && (
+            <Link
+              href={`/tuition/interest?subject=${subject.slug}`}
+              className="rounded-full border border-ink/20 px-6 py-3 text-sm font-medium transition-colors hover:border-ink/40"
+            >
+              Register interest
+            </Link>
+          )}
+        </div>
       </header>
 
       {/* ── qualifications ─────────────────────────────────────────────── */}
@@ -117,6 +173,41 @@ export async function SubjectPage({ slug }: { slug: string }) {
               will tell you when it lands.
             </p>
           )}
+        </div>
+      </section>
+
+      {/* ── subject calendar (§13–§15) ─────────────────────────────────── */}
+      <section className="border-t border-ink/10 py-12">
+        <div className="mx-auto max-w-6xl px-6">
+          <h2 className="font-display text-2xl font-medium tracking-tight">
+            Upcoming {subject.name} lessons
+          </h2>
+          <div className="mt-6">
+            {/* ⚠ THE EMPTY STATE IS THE HONEST ONE (§14). No invented sessions,
+                and no "coming soon" implying a date exists. It says the
+                timetable is not published and offers the only real next step. */}
+            <SessionList
+              sessions={subjectSessions}
+              viewerTz={viewerTz}
+              emptyMessage={`No ${subject.name} timetable has been published yet. Register interest and we will tell you the moment a cohort opens.`}
+            />
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              href={`/calendar?subject=${subject.slug}`}
+              className="text-sm underline underline-offset-2 hover:text-ink"
+            >
+              Full {subject.name} calendar →
+            </Link>
+            {subjectSessions.length === 0 && (
+              <Link
+                href={`/tuition/interest?subject=${subject.slug}`}
+                className="text-sm underline underline-offset-2 hover:text-ink"
+              >
+                Register interest →
+              </Link>
+            )}
+          </div>
         </div>
       </section>
 

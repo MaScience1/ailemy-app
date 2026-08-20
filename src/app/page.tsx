@@ -14,6 +14,11 @@ import { offersCurrencyChoice, type Currency } from "@/lib/public/currency";
 import { currentCurrency } from "@/lib/public/currency-server";
 import { CohortPrice } from "@/components/public/CohortPrice";
 import { CurrencyToggle } from "@/components/public/CurrencyToggle";
+import { SessionList } from "@/components/public/SessionList";
+import { TimezoneSync } from "@/components/public/TimezoneSync";
+import { loadCalendar } from "@/lib/schedule/readers";
+import { nextOccurrences } from "@/lib/schedule/recurrence";
+import { viewerTimeZone } from "@/lib/schedule/viewer-tz";
 
 /**
  * The Ailemy front door.
@@ -49,9 +54,38 @@ export default async function Home() {
   const { currency } = await currentCurrency();
   const showToggle = offersCurrencyChoice(chemistryCohorts);
 
+  /**
+   * ⚠ §18 + §67, AND THE TENSION BETWEEN THEM IS REAL.
+   *
+   * §67 says the homepage must not fetch months of calendar data. The first
+   * version honoured that with a 21-day window — and showed NOTHING, because
+   * the AS term starts 15 September and today is further out than that. A
+   * preview that is invisible for most of the year is not "the next few
+   * sessions", it is a dead section.
+   *
+   * The window is 10 weeks because the COST IS IN RULES, NOT OCCURRENCES: the
+   * query fetches a handful of recurrence rules and the overrides inside the
+   * window, and the sessions are expanded in memory. Widening the window adds
+   * roughly nothing to the query, and the list is sliced to 3 regardless. What
+   * §67 forbids — dragging back every session row for a year — is not what this
+   * does at any window size.
+   *
+   * includeCancelled is FALSE here, and only here: a preview showing "the next
+   * lesson" must never show one that is not happening. /calendar shows
+   * cancellations because that is where you go to find out why.
+   */
+  const viewerTz = await viewerTimeZone();
+  const upcoming = await loadCalendar({
+    from: new Date().toISOString().slice(0, 10),
+    to: new Date(Date.now() + 70 * 86_400_000).toISOString().slice(0, 10),
+    includeCancelled: false,
+  });
+  const nextSessions = nextOccurrences(upcoming.sessions, new Date(), 3) as typeof upcoming.sessions;
+
   return (
     <div className="bg-parchment text-ink">
       {/* 1 */} <AnnouncementBar />
+      <TimezoneSync known={viewerTz !== null} />
       {/* 2 */} <SiteNav session={session} />
 
       {/* ── 3. hero ───────────────────────────────────────────────────── */}
@@ -110,6 +144,27 @@ export default async function Home() {
           ))}
         </ol>
       </Section>
+
+      {/* ── 5b. upcoming lessons (§18) ─────────────────────────────────── */}
+      {/* ⚠ NO FAKE SLOTS. This section is ABSENT when nothing is scheduled —
+          not "no lessons this week", which reads as a school that has stopped.
+          Today it renders the published AS timetable; when Y11 and Y10 launch
+          from Admin they appear here with no code change (§5). */}
+      {nextSessions.length > 0 && (
+        <Section
+          id="upcoming"
+          title="Upcoming lessons"
+          lede="The next few live sessions. Times in Doha, and in your own timezone where we know it."
+        >
+          <SessionList sessions={nextSessions} viewerTz={viewerTz} emptyMessage="" />
+          <Link
+            href="/calendar"
+            className="mt-6 inline-block text-sm underline underline-offset-2 hover:text-ink"
+          >
+            View the full calendar →
+          </Link>
+        </Section>
+      )}
 
       {/* ── 6. live tuition ───────────────────────────────────────────── */}
       <Section
@@ -250,13 +305,22 @@ export default async function Home() {
       {/* ── 12. teacher credibility ───────────────────────────────────── */}
       {/* ⚠ NO TESTIMONIALS, RATINGS OR STUDENT COUNTS. None exist in the data,
           and an empty section is better than invented credibility (§17). The
-          claim below is about mark-scheme expertise, NOT examiner employment. */}
+          claim below is about mark-scheme expertise, NOT examiner employment.
+
+          ⚠ §53 — THIS USED TO CLAIM "every marking point on EVERY PAPER read,
+          ruled on and recorded". That was false. One paper has been ruled end
+          to end (WCH11/01 May–June 2025, 48/48); every other paper in the
+          archive has no mark-scheme items at all. The sentence described an
+          ambition as a finished state, on the page that asks people to trust
+          the marking. It now describes the METHOD, which is true of every
+          paper the moment it is ruled and stays true as the archive grows. */}
       <Section id="teachers" title="Built by teachers who understand the exam.">
         <div className="rounded-lg border border-ink/10 bg-snow p-6 sm:p-8">
           <p className="max-w-3xl text-sm leading-relaxed text-ink/75">
-            Ailemy's Chemistry teaching and mark schemes are prepared by a specialist chemistry
-            teacher working directly from the published Edexcel mark schemes — every marking
-            point on every paper read, ruled on and recorded before a single question is marked.
+            Ailemy's marking logic is built directly from published mark schemes, with marking
+            rules human-reviewed before they are used for automated marking. Chemistry teaching
+            and mark-scheme rulings are prepared by a specialist chemistry teacher working from
+            the published Edexcel mark schemes.
           </p>
         </div>
       </Section>
