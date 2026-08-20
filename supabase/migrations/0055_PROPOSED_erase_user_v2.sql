@@ -1,9 +1,9 @@
 -- ============================================================================
--- 00XX_PROPOSED_erase_user_v2.sql   ⚠ NUMBER FROM THE PLANNING CHAT
+-- 0055_PROPOSED_erase_user_v2.sql
 -- ----------------------------------------------------------------------------
--- ⚠ PROPOSED — NOT APPLIED. Apply LAST of this set: it names tables that the
--- cancellation-requests and notification-ledger files create. Applying it
--- before them raises 42P01 and the function is left not created.
+-- ⚠ PROPOSED — NOT APPLIED. Number allocated by the planning chat. Apply LAST,
+-- after 0052 and 0053: it names tables those files create. Applying it before
+-- them raises 42P01 and the function is left not created.
 -- Run each section separately.
 --
 -- ============================================================================
@@ -59,12 +59,53 @@
 --                                     that has to remain provable; who paid it
 --                                     does not.
 --
+-- ⚠ WHERE cohort_enrolments COMES FROM, because it is not obvious and was
+-- queried in review: 0009_cohort_intensive.sql line 53. It is under migration
+-- control and always has been. It is hard to find because 0009 is the ONLY
+-- lowercase-DDL migration in this folder — `create table if not exists
+-- public.cohort_enrolments` — so any case-sensitive grep for CREATE TABLE or
+-- REFERENCES auth.users misses it and every one of its four tables. That is
+-- also how the first draft of THIS file missed three more auth.users foreign
+-- keys in the same migration; see the marker check below.
+--
 --   CASCADES  profiles (0001), user_roles (0027), exam_attempts and their
 --             responses (0028), subscriptions, student_questions,
---             teacher_availability + availability_blocks (0045).
---             Verified as ON DELETE CASCADE from auth.users(id); no statement
---             needed and none added, but they are listed so a future reader
---             does not have to re-derive the list to trust this function.
+--             teacher_availability + availability_blocks (0045),
+--             submissions + topic_assessments (0009).
+--             Verified as ON DELETE CASCADE from auth.users(id) by a
+--             CASE-INSENSITIVE sweep; no statement needed and none added, but
+--             they are listed so a future reader does not have to re-derive the
+--             list to trust this function.
+--
+--   REFUSED   submission_feedback.marker_id (0009 line 129) — see below.
+--
+-- ============================================================================
+-- ⚠ ONE FOREIGN KEY IN THE SCHEMA HAS NO ON DELETE CLAUSE AT ALL, AND IT
+-- BLOCKS ERASURE TODAY
+-- ============================================================================
+--     marker_id uuid not null references auth.users(id)
+--
+-- No ON DELETE means NO ACTION. Erasing anyone who has ever marked a submission
+-- raises 23503 at `DELETE FROM auth.users` — after every delete and scrub in
+-- this function has already run. The transaction rolls back, so nothing is
+-- half-done, but the operator gets
+--   'update or delete on table "users" violates foreign key constraint'
+-- with no indication of which table, which person, or what to do.
+--
+-- ⚠ THIS IS ALREADY TRUE OF 0049 IN PRODUCTION. It is not introduced here.
+-- Nobody has hit it because nobody has yet asked to erase a marker.
+--
+-- The fix is a NAMED refusal before any write, the same shape as the teacher
+-- check — not a change to the foreign key. A marker's marking is the STUDENT's
+-- feedback: marks_awarded, marks_available and a comment in mark-scheme
+-- language. Cascading it away would delete another person's record of their own
+-- work to erase the marker, which is the wrong trade in the same way the
+-- teacher case is. A human reassigns, then erases.
+--
+-- ⚠ CHANGING THAT FK TO SET NULL IS THE RIGHT LONG-TERM ANSWER and it is NOT
+-- done here: marker_id is NOT NULL, so it needs a nullable column and a
+-- decision about what an unattributed mark means. That is its own migration,
+-- its own number, and its own conversation.
 --
 -- ⚠ A TOMBSTONE ADDRESS, NOT NULL, BECAUSE THE COLUMNS ARE NOT NULL. Scrubbed
 -- rows get 'erased-<row id>@ailemy.invalid'. `.invalid` is reserved by RFC 2606
@@ -90,6 +131,29 @@
 -- number), student_name, or free text in a notes column. Those are covered by
 -- the explicit statements above and by nothing else. This guard is a backstop
 -- against a forgotten table, not a proof that no personal data remains.
+--
+-- ============================================================================
+-- ⚠ AND IT CANNOT REACH THE FILES. THE FUNCTION REPORTS THEM INSTEAD OF
+-- PRETENDING.
+-- ============================================================================
+-- 0009 creates a private `submissions` bucket and stores a student's uploaded
+-- work — photographs of a child's handwriting — under a folder named by their
+-- uid: the policy is
+--     (storage.foldername(name))[1] = auth.uid()::text
+-- submissions.storage_path and submission_feedback.marked_file_path point into
+-- it, and both rows CASCADE away when the person is deleted.
+--
+-- ⚠ DELETING A ROW IN storage.objects WOULD NOT DELETE THE FILE. The object row
+-- is metadata; only the Storage API removes both. So deleting those rows here
+-- would orphan the binary in the bucket AND destroy the only record of its
+-- path — making the file permanently unreachable and permanently undeletable.
+-- That is strictly worse than leaving it.
+--
+-- So this function touches no storage row and instead RETURNS the prefix and
+-- the count, and the caller purges through the Storage API. The count is taken
+-- BEFORE the cascade, because afterwards there is nothing left to count. Same
+-- reasoning as push_tokens and APNs: the database's job is the row, and the
+-- number is how the obligation leaves this transaction.
 -- ============================================================================
 
 -- ── SECTION 1: THE FUNCTION ─────────────────────────────────────────────────
@@ -114,6 +178,8 @@ DECLARE
   bookings_scrubbed integer := 0;
   enrolments_scrubbed integer := 0;
   bookings_left     integer := 0;
+  feedback_left     integer := 0;
+  submission_files  integer := 0;
   cols_scanned      integer := 0;
   leftover          bigint;
   residue           text[] := ARRAY[]::text[];
@@ -143,6 +209,38 @@ BEGIN
       target_email, bookings_left
       USING ERRCODE = 'restrict_violation';
   END IF;
+
+  /**
+   * ⚠ THE MARKER CHECK, FOR THE ONE FK IN THE SCHEMA WITH NO ON DELETE CLAUSE.
+   * 0009 line 129: `marker_id uuid not null references auth.users(id)` — NO
+   * ACTION. Without this, erasing a marker reaches `DELETE FROM auth.users` and
+   * dies with a bare 23503 naming a constraint, after every scrub above has
+   * run. The rollback keeps it atomic; the message tells nobody anything.
+   *
+   * Refused rather than cascaded on purpose: a marker's marking is the
+   * STUDENT's feedback — their marks and a comment about their work. Deleting
+   * another person's record to erase this one is the wrong trade, exactly as it
+   * is for a teacher's delivered lessons.
+   */
+  SELECT count(*) INTO feedback_left
+    FROM public.submission_feedback WHERE marker_id = target;
+  IF feedback_left > 0 THEN
+    RAISE EXCEPTION
+      'erase_user: % has marked % submission(s). Reassign marker_id on those rows first — a marker''s marking is the student''s feedback, and submission_feedback.marker_id has no ON DELETE clause (0009), so the erasure would fail with a bare 23503 at the last statement.',
+      target_email, feedback_left
+      USING ERRCODE = 'restrict_violation';
+  END IF;
+
+  /**
+   * ⚠ COUNTED BEFORE THE CASCADE, BECAUSE AFTERWARDS THERE IS NOTHING TO COUNT.
+   * submissions.user_id is ON DELETE CASCADE, so these rows — and the only
+   * record of where the files live — vanish at the final statement. The count
+   * and the prefix go into the receipt so the caller can purge the bucket
+   * through the Storage API, which is the only thing that deletes the binary.
+   */
+  SELECT count(*) INTO submission_files
+    FROM public.submissions
+   WHERE user_id = target AND storage_path IS NOT NULL;
 
   -- ── the person's own rows ────────────────────────────────────────────────
 
@@ -294,7 +392,17 @@ BEGIN
     'waitlist_removed', waitlist_removed,
     'bookings_scrubbed', bookings_scrubbed,
     'enrolments_scrubbed', enrolments_scrubbed,
-    'email_columns_scanned', cols_scanned
+    'email_columns_scanned', cols_scanned,
+    /**
+     * ⚠ AN OBLIGATION, NOT A RESULT. Nothing in this transaction deleted a
+     * file. The caller must purge this prefix through the Storage API; a
+     * DELETE on storage.objects would strand the binary and lose its path.
+     */
+    'storage_purge_required', jsonb_build_object(
+      'bucket', 'submissions',
+      'prefix', target::text || '/',
+      'rows_referencing_files', submission_files
+    )
   );
 END;
 $$;
@@ -341,6 +449,10 @@ NOTIFY pgrst, 'reload schema';
 --     · an interest_registrations row
 --     · a waitlist row
 --     · a cohort_enrolments row
+--     · 2 submissions rows WITH a storage_path (for the storage receipt)
+--     · ⚠ and, for (f2) only and SEPARATELY, a submission_feedback row naming
+--       them as marker_id — kept out of the main probe because it REFUSES the
+--       erasure by design and would make every other block untestable
 --
 -- (a) ⚠ COUNT EVERY ROW BEFORE ERASING, AND WRITE THE NUMBERS DOWN.
 -- SELECT
@@ -409,6 +521,53 @@ NOTIFY pgrst, 'reload schema';
 -- (f) the teacher refusal still stands (0049 (d), re-run because the order of
 --     the check moved to the top of the function)
 -- PASS: 'erase_user: … is the teacher on N booking(s)…' and the teacher survives.
+--
+-- (f2) ⚠ THE MARKER REFUSAL — the FK with no ON DELETE clause. This is the one
+--      that fails as a bare 23503 if the check is ever removed, so prove both
+--      halves.
+-- (give the probe user a submission_feedback row as marker_id, then)
+-- SELECT public.erase_user('<uid>');
+-- PASS: 'erase_user: … has marked N submission(s). Reassign marker_id…'
+-- SELECT count(*) FROM auth.users WHERE id='<uid>';
+-- PASS: 1 — refused, not half-erased.
+--
+-- (f3) ⚠ SABOTAGE — CONFIRM THE BARE 23503 IS REAL AND THE CHECK IS WHAT STOPS
+--      IT. Without this, (f2) proves only that a message exists.
+--
+--      ⚠⚠ RUN THIS INSIDE AN EXPLICIT TRANSACTION AND ROLL IT BACK. It is a
+--      raw DELETE against auth.users. The SQL Editor autocommits, so a bare
+--      statement here would either raise (the expected case) or DELETE A REAL
+--      PERSON if you mistype the uid. BEGIN first. ROLLBACK always — even on
+--      the error, because an aborted transaction still holds the session open.
+--
+-- BEGIN;
+--   DELETE FROM auth.users WHERE id = '<the probe uid>';
+-- ROLLBACK;
+-- PASS: 'update or delete on table "users" violates foreign key constraint
+--   … on table "submission_feedback"' — 23503, naming nothing useful. THAT is
+--   what an operator would have seen before this check existed.
+--   ⚠ IF IT SUCCEEDS INSTEAD, the FK has been changed since 0009 and the marker
+--   check in section 1 is now dead weight guarding nothing. Say so — do not
+--   quietly leave a check whose premise has gone.
+--
+-- Then reassign marker_id to another account and re-run erase_user.
+-- PASS: succeeds.
+--
+-- (f4) ⚠ THE STORAGE OBLIGATION IS REPORTED, AND THE FILES ARE STILL THERE.
+--      This is a receipt for work the database did NOT do; verify it says so
+--      truthfully rather than assuming.
+-- (give the probe user 2 submissions rows with a storage_path, then erase)
+-- PASS: the returned jsonb carries
+--   storage_purge_required: {bucket: 'submissions',
+--                            prefix: '<uid>/', rows_referencing_files: 2}
+-- SELECT count(*) FROM public.submissions WHERE user_id = '<uid>';
+-- PASS: 0 — the ROWS cascaded.
+-- SELECT count(*) FROM storage.objects
+--  WHERE bucket_id='submissions' AND (storage.foldername(name))[1] = '<uid>';
+-- PASS: the files are STILL PRESENT. ⚠ THIS IS THE EXPECTED RESULT, not a
+--   failure. A 0 here would mean something deleted storage rows and stranded
+--   the binaries with no record of their paths. The purge is the caller's job,
+--   through the Storage API, using the prefix above.
 --
 -- (g) ⚠ CLEANUP DELETES ONLY WHAT THIS RUN CREATED, BY CAPTURED id — never a
 --     WHERE email LIKE 'probe-%' sweep across a live table. The probes above are

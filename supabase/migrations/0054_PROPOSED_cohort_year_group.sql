@@ -1,7 +1,8 @@
 -- ============================================================================
--- 00XX_PROPOSED_cohort_year_group.sql   ⚠ NUMBER FROM THE PLANNING CHAT
+-- 0054_PROPOSED_cohort_year_group.sql
 -- ----------------------------------------------------------------------------
--- ⚠ PROPOSED — NOT APPLIED. Run each section separately.
+-- ⚠ PROPOSED — NOT APPLIED. Number allocated by the planning chat. Independent
+-- of every other file in this set. Run each section separately.
 --
 -- ============================================================================
 -- ⚠⚠ THIS TOUCHES THE TABLE CARRYING THE LIVE AS COHORT. READ FIRST.

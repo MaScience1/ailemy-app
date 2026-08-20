@@ -1,7 +1,9 @@
 -- ============================================================================
--- 00XX_PROPOSED_notification_ledger.sql   ⚠ NUMBER FROM THE PLANNING CHAT
+-- 0053_PROPOSED_notification_ledger.sql
 -- ----------------------------------------------------------------------------
--- ⚠ PROPOSED — NOT APPLIED. Run each section separately.
+-- ⚠ PROPOSED — NOT APPLIED. Number allocated by the planning chat. Independent
+-- of 0051 and 0052; must precede 0055, which names all three of its tables.
+-- Run each section separately.
 --
 -- ============================================================================
 -- ⚠ ONE EVENT ROW DRIVES EMAIL, IN-APP AND PUSH — WEB AND MOBILE ALIKE
