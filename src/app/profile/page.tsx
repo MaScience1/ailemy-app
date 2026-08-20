@@ -12,6 +12,8 @@ import { getNavSession } from "@/lib/auth/nav-session";
 import { parseDate, rangeFor, readState } from "@/lib/calendar/grid";
 import { loadPersonalCalendar, nextLive } from "@/lib/calendar/readers";
 import { loadMyTuition } from "@/lib/booking/student";
+import { planCancellation, explainCancellation } from "@/lib/booking/cancellation";
+import { BookingActions, type CancelMode } from "@/components/booking/BookingActions";
 import { CANONICAL_TZ, calendarDate, dualTime, formatDay } from "@/lib/schedule/timezone";
 import { viewerTimeZone } from "@/lib/schedule/viewer-tz";
 
@@ -68,8 +70,41 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
   // The proxy gates /profile too, but a layout-free route must not rely on it.
   if (!personal.signedIn) redirect("/login?next=/profile");
 
-  const upcoming = nextLive(personal.events, new Date(), 6);
+  const now = new Date();
+  const upcoming = nextLive(personal.events, now, 6);
   const next = upcoming[0] ?? null;
+
+  /**
+   * ⚠ ONE PLANNER CALL PER BOOKING, SERVER-SIDE, FROM THE ROW loadMyTuition
+   * ALREADY READ. No extra query, and no second copy of the cutoff.
+   *
+   * ⚠ viewerId IS THE SESSION'S OWN ID. loadMyTuition read these rows through
+   * 0046's own-row policy, so they are already this student's — passing the
+   * same id back makes planCancellation's ownership branch a belt on top of a
+   * brace rather than the only check.
+   */
+  const byId = new Map(
+    [...me.upcomingPrivate, ...me.pastPrivate].map((b) => [b.id, b] as const),
+  );
+  const viewerId = me.userId;
+  const cancelModeFor = (bookingId: string): CancelMode => {
+    const b = byId.get(bookingId);
+    if (!b || viewerId === null) {
+      return { kind: "none", explanation: "Contact us about this lesson." };
+    }
+    const outcome = planCancellation({
+      booking: {
+        id: b.id, userId: viewerId, startsAt: b.startsAt,
+        status: b.status, paidWith: b.paidWith,
+      },
+      viewerId, now,
+    });
+    if (outcome.ok) return { kind: "cancel" };
+    if (outcome.action === "request") {
+      return { kind: "request", explanation: explainCancellation(outcome) };
+    }
+    return { kind: "none", explanation: explainCancellation(outcome) };
+  };
 
   return (
     <div className="bg-parchment text-ink">
@@ -170,17 +205,24 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
                     {formatDay(ev.startsAt, CANONICAL_TZ)}
                   </span>
                   <span className="min-w-0 flex-1"><EventChip event={ev} viewerTz={viewerTz} /></span>
-                  {/* ⚠ CONTACT, NOT CANCEL (§38, §42). A student may not cancel
-                      a group class at all, and self-service private cancellation
-                      needs a policy cutoff and a credit-restore path that are
-                      schema-blocked. An honest Contact beats a button that
-                      cannot keep its promise. */}
-                  <Link
-                    href={`/tuition/interest?mode=contact&about=${encodeURIComponent(ev.title)}`}
-                    className="shrink-0 text-xs underline underline-offset-2 text-ink/55 hover:text-ink"
-                  >
-                    Contact
-                  </Link>
+                  {/* ⚠ A GROUP LESSON IS NOT CANCELLABLE AT ALL (§38). One seat
+                      in a class of twenty is a withdrawal, and that is a
+                      conversation — so a group chip keeps Contact and only a
+                      private booking gets the lifecycle controls. */}
+                  {ev.type === "private_booked" && ev.bookingId ? (
+                    <BookingActions
+                      bookingId={ev.bookingId ?? ""}
+                      mode={cancelModeFor(ev.bookingId ?? "")}
+                      label={`${ev.title} on ${formatDay(ev.startsAt, CANONICAL_TZ)}`}
+                    />
+                  ) : (
+                    <Link
+                      href={`/tuition/interest?mode=contact&about=${encodeURIComponent(ev.title)}`}
+                      className="shrink-0 text-xs underline underline-offset-2 text-ink/55 hover:text-ink"
+                    >
+                      Contact
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>

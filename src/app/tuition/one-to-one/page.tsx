@@ -8,6 +8,9 @@ import { SiteNav } from "@/components/site/SiteNav";
 import { getNavSession } from "@/lib/auth/nav-session";
 import { stripeConfig } from "@/lib/booking/config";
 import { loadOpenSlots } from "@/lib/booking/readers";
+import { loadMyTuition } from "@/lib/booking/student";
+import { canRedeem } from "@/lib/booking/cancellation";
+import { BookWithCredit } from "./_book";
 import { CANONICAL_TZ, dualTime, formatDay } from "@/lib/schedule/timezone";
 import { viewerTimeZone } from "@/lib/schedule/viewer-tz";
 
@@ -15,15 +18,22 @@ import { viewerTimeZone } from "@/lib/schedule/viewer-tz";
  * 1-to-1 Chemistry tuition (§20–§22).
  *
  * ============================================================================
- * ⚠ THREE STATES, AND ONLY ONE OF THEM SHOWS A BOOK BUTTON
+ * ⚠ BUYING AND REDEEMING ARE TWO CAPABILITIES, NOT ONE
  * ============================================================================
- *   no Stripe keys        an honest "booking opens soon" with register interest
- *   keys but no slots     "no times published yet" with register interest
- *   keys and slots        real times, each bookable
+ *   no times published                  "no 1-to-1 times yet" + register interest
+ *   times, no way to act on them        "booking opens soon" + register interest
+ *   times + Stripe keys                 Book (checkout)
+ *   times + a credit already held       Use a credit  ← works with NO Stripe
  *
  * A Book button that cannot take money is the dead CTA the standing rails
  * forbid, and it is worse here than anywhere else on the site: the student has
  * decided to spend money and is being sent into a wall.
+ *
+ * ⚠ BUT THE KEYLESS GATE USED TO COVER BOTH, AND THAT WAS WRONG. A credit is
+ * money ALREADY TAKEN — charged when the package was bought, with the credit as
+ * the receipt. Refusing to let somebody spend one because this deployment
+ * cannot take a NEW payment strands a customer who has already paid us. The
+ * rule is no payable CTA; redeeming is not a payment.
  *
  * ⚠ NO PRICES ARE HARDCODED. §21 mentions 350–400 QAR/hour as the founder's
  * working figure; that is a number they will configure, not one this page
@@ -46,14 +56,23 @@ export default async function OneToOnePage() {
   const viewerTz = await viewerTimeZone();
   const stripe = stripeConfig();
 
-  const { slots, packages, hasAvailability } = await loadOpenSlots({
-    from: iso(0), to: iso(WEEKS * 7), now: new Date(),
-  });
+  const [{ slots, packages, hasAvailability }, me] = await Promise.all([
+    loadOpenSlots({ from: iso(0), to: iso(WEEKS * 7), now: new Date() }),
+    loadMyTuition(),
+  ]);
 
-  // ⚠ BOOKABLE MEANS: KEYS PRESENT, TIMES PUBLISHED, AND SOMETHING TO SELL.
-  // All three, or no Book button anywhere on this page.
+  // ⚠ BUYING NEEDS KEYS AND SOMETHING TO SELL. Both, or no Book button.
   const sellable = packages.filter((p) => p.stripePriceId !== null);
-  const bookable = stripe.configured && hasAvailability && slots.length > 0 && sellable.length > 0;
+  const canBuy = stripe.configured && sellable.length > 0;
+
+  // ⚠ REDEEMING NEEDS NEITHER. canRedeem never consults Stripe — see its
+  // header, and the assertion in booking-lifecycle.test.ts that proves the
+  // absence, since no test of a return value could.
+  const redeem = canRedeem({ signedIn: me.signedIn, creditBalance: me.creditBalance });
+
+  // Times are shown only when at least one of them can actually be acted on.
+  // Forty times with no button is the same dead end in a different shape.
+  const showTimes = hasAvailability && slots.length > 0 && (canBuy || redeem.ok);
 
   return (
     <div className="bg-parchment text-ink">
@@ -102,7 +121,14 @@ export default async function OneToOnePage() {
         <section className="mt-12">
           <h2 className="font-display text-xl font-medium">Choose a lesson time</h2>
 
-          {bookable ? (
+          {redeem.ok && (
+            <p className="mt-3 rounded border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-900">
+              You have <strong>{me.creditBalance}</strong> lesson credit{me.creditBalance === 1 ? "" : "s"}.
+              Pick a time below and it is booked straight away — nothing to pay.
+            </p>
+          )}
+
+          {showTimes ? (
             <>
               <p className="mt-3 text-sm text-ink/60">
                 Times in {CANONICAL_TZ === "Asia/Qatar" ? "Doha" : CANONICAL_TZ}
@@ -127,12 +153,22 @@ export default async function OneToOnePage() {
                           </span>
                         )}
                       </span>
-                      <Link
-                        href={`/tuition/one-to-one/book?slot=${encodeURIComponent(s.key)}`}
-                        className="shrink-0 rounded-full border border-ink/20 px-4 py-1.5 text-sm hover:border-ink/40"
-                      >
-                        Book
-                      </Link>
+                      {/* ⚠ REDEEM IS OFFERED FIRST WHEN BOTH ARE POSSIBLE. A
+                          student holding credits should spend one rather than
+                          be sold another lesson they have already paid for. */}
+                      {redeem.ok ? (
+                        <BookWithCredit
+                          slotKey={s.key}
+                          label={`${formatDay(s.startsAt, CANONICAL_TZ)} at ${start.canonical}`}
+                        />
+                      ) : (
+                        <Link
+                          href={`/tuition/one-to-one/book?slot=${encodeURIComponent(s.key)}`}
+                          className="shrink-0 rounded-full border border-ink/20 px-4 py-1.5 text-sm hover:border-ink/40"
+                        >
+                          Book
+                        </Link>
+                      )}
                     </li>
                   );
                 })}
@@ -147,9 +183,11 @@ export default async function OneToOnePage() {
                 Private tuition booking opens soon
               </p>
               <p className="mt-3 text-sm leading-relaxed text-ink/70">
-                {!hasAvailability
+                {!hasAvailability || slots.length === 0
                   ? "No 1-to-1 times have been published yet."
-                  : "Online booking is not switched on yet."}{" "}
+                  : me.signedIn
+                    ? "Online payment is not switched on yet, and you have no lesson credits to spend."
+                    : "Online payment is not switched on yet."}{" "}
                 Register your interest and we will contact you with times directly — you will be
                 first to know when self-service booking opens.
               </p>

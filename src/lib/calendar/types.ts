@@ -61,6 +61,17 @@ export type CalendarEvent = {
 
   /** Present for the viewer's own booking (§74). */
   bookingRef?: string | null;
+  /**
+   * ⚠ THE REAL private_bookings.id, CARRIED EXPLICITLY (personal mode only).
+   *
+   * /profile needs it to offer a cancel control. It was recovering it by
+   * stripping the "b:" prefix off `key` — which works until somebody changes
+   * the prefix, at which point the lookup silently misses and every booking
+   * quietly loses its cancel button with no error anywhere. Same argument as
+   * slotKey/parseSlotKey: an identity that crosses a boundary is carried, not
+   * re-derived by string surgery.
+   */
+  bookingId?: string | null;
 };
 
 export type CalendarMode = "public" | "personal";

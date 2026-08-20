@@ -26,6 +26,14 @@ export type MyBooking = {
 
 export type MyTuition = {
   signedIn: boolean;
+  /**
+   * ⚠ THE SESSION'S OWN id, SO A CALLER NEVER HAS TO RE-ASK auth FOR IT.
+   * Every row below came back through an own-row policy, so this is already
+   * the owner of all of them — it is exported so a policy decision (can this
+   * be cancelled?) can be made without a second round trip and without
+   * matching on email, which is not an identity.
+   */
+  userId: string | null;
   email: string | null;
   /** Group sessions for cohorts this student is enrolled on. */
   groupSessions: Awaited<ReturnType<typeof loadCalendar>>["sessions"];
@@ -47,7 +55,7 @@ export async function loadMyTuition(now = new Date()): Promise<MyTuition> {
   const { data: { user } } = await supabase.auth.getUser();
 
   const base: MyTuition = {
-    signedIn: Boolean(user), email: user?.email ?? null,
+    signedIn: Boolean(user), userId: user?.id ?? null, email: user?.email ?? null,
     groupSessions: [], enrolledCohortSlugs: [],
     upcomingPrivate: [], pastPrivate: [],
     creditBalance: 0, ledger: [], notes: [],

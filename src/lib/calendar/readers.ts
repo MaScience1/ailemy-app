@@ -239,10 +239,11 @@ export async function loadPersonalCalendar(range: { from: string; to: string }):
       cohortSlug: null,
       teacherName: null,
       cancelledReason: null,
-      // ⚠ NO booking REFERENCE YET — the column does not exist (schema-blocked).
-      // Null rather than an invented code, so the panel omits the line instead
-      // of printing something a support conversation cannot look up.
+      // ⚠ NO booking REFERENCE YET — the column arrives with 0051 and that is
+      // not applied. Null rather than an invented code, so the panel omits the
+      // line instead of printing something support cannot look up.
       bookingRef: null,
+      bookingId: b.id,
     });
   }
 
