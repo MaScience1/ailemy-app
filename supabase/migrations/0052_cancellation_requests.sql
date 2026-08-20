@@ -38,7 +38,20 @@
 --   connection — and (f) is what actually exercises the WITH CHECK, via its
 --   ownership half. Both layers are observed; each by the case that reaches it.
 --
---   ⊘ (i) three-privileges check NOT RUN — information_schema unreachable.
+--   (i)  the three privileges — observed 2026-08-20. Six falses, control
+--        (authenticated SELECT) TRUE.                                        ✓
+--
+--   ⚠ AND THE §3 COLUMN GRANT IS NOW READ DIRECTLY FROM THE CATALOGUE, not
+--   inferred from behaviour. Two observations:
+--     · has_table_privilege(authenticated, …, 'INSERT') is FALSE — there is
+--       no table-wide INSERT, which is the whole point of §3;
+--     · information_schema.column_privileges lists EXACTLY five INSERT
+--       columns: booking_id, reason, requested_by_email, student_note,
+--       user_id — and NO outcome column.
+--   Until this the grant was only inferred from a control insert succeeding
+--   and a status insert failing. That inference was sound; this is the
+--   direct reading, and it is what rules out a student filing their own
+--   refund rather than merely making it unlikely.
 --
 -- Cash-paid cancellations that a human must decide (§41, §54).
 --

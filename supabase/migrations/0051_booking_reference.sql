@@ -20,9 +20,16 @@
 --   (f)  anon cannot EXECUTE generate_booking_ref, 42501                    ✓
 --        …and service_role CAN — the §3 grant, proven in both directions.   ✓
 --
---   ⊘ (h) the three-privileges check is NOT RUN. information_schema is not
---     exposed through PostgREST and this machine has no psql and no
---     DATABASE_URL. It is the founder's paste. THIS HEADER DOES NOT CLAIM IT.
+--   (h)  the three privileges — observed 2026-08-20 via founder paste.
+--        anon and authenticated each hold FALSE for TRUNCATE, TRIGGER and
+--        REFERENCES; the control (authenticated SELECT) came back TRUE.       ✓
+--        ⚠ THE CONTROL IS WHY THE SIX FALSES MEAN ANYTHING. Asked with
+--        has_table_privilege() rather than role_table_grants, because that
+--        view only lists grants where the grantee is a currently ENABLED
+--        role — true here only because Supabase makes postgres a member of
+--        both, which is an assumption. has_table_privilege answers directly
+--        and ERRORS on a table or role that does not exist, so it cannot
+--        return a reassuring silence.
 --
 -- A human-readable handle for a private booking (§74, §75).
 --

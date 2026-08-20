@@ -39,7 +39,17 @@
 --        RLS POLICY (WITH CHECK), 42501                                     ✓
 --        …and CAN register one for themselves, so (i) is not a table
 --        refusing everything                                                ✓
---   ⊘ (k)(l) NOT RUN — information_schema unreachable.
+--   (k)  the three privileges, across all three tables — observed
+--        2026-08-20. Six falses on each, control TRUE on each.               ✓
+--   (l)  anon holds NO privilege at all on any of the three: 0.              ✓
+--        ⚠ PAIRED WITH A CROSS-TABLE CONTROL — the same query counting anon's
+--        grants on `cohorts` returned non-zero. Without it, 0 and 0 would be
+--        indistinguishable from a query that cannot see anon grants at all.
+--
+--   ⚠ AND THE read_at COLUMN GRANT IS NOW READ DIRECTLY. column_privileges
+--   lists exactly ONE authenticated UPDATE column on notification_deliveries:
+--   read_at. More than one would have meant a table-wide UPDATE grant and a
+--   student able to write status='sent' on their own delivery.
 --
 -- ============================================================================
 -- ⚠ ONE EVENT ROW DRIVES EMAIL, IN-APP AND PUSH — WEB AND MOBILE ALIKE

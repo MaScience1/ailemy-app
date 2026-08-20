@@ -23,10 +23,16 @@
 --   the run and restored after it, and (a) was re-read post-restore. That
 --   second read is the one that matters.
 --
---   ⊘ (f) convalidated NOT RUN here — pg_constraint is unreachable through
---     PostgREST. The founder's own sanity check reported convalidated=true;
---     that is their observation, recorded as theirs, not re-derived by me.
---   ⊘ (i) three-privileges check NOT RUN — information_schema unreachable.
+--   (f)  the constraint EXISTS (1) and is VALIDATED (1), out of 6 constraints
+--        on the table — observed 2026-08-20.                                 ✓
+--        ⚠ ASKED AS TWO COUNTS PLUS A TOTAL, because 0 rows from
+--        pg_constraint is NOT the same fact as convalidated=false, and a
+--        single boolean cannot tell them apart. exists=1 with validated=0
+--        would mean section 3's SECOND statement never ran — the
+--        trailing-statement failure that hit 0044 three times.
+--   (i)  the three privileges — six falses. Plus two controls this table
+--        needs specifically: anon SELECT is TRUE (or the homepage, /tuition
+--        and /calendar go blank) and anon UPDATE is FALSE.                   ✓
 --
 -- ============================================================================
 -- ⚠⚠ THIS TOUCHES THE TABLE CARRYING THE LIVE AS COHORT. READ FIRST.
