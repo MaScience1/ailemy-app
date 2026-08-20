@@ -22,18 +22,18 @@
  */
 
 /**
- * ⚠⚠ THE ONE INVENTED NUMBER IN THIS FILE, AND IT IS A COMMERCIAL POLICY.
+ * ⚠ 24 HOURS COMES FROM §39 OF THE BUILD SPEC, AND WAS RATIFIED 2026-08-20.
  *
- * Everything else here is derived from what the student paid and when. This is
- * not: it is the founder's call about how much notice is fair to a teacher who
- * has kept an evening free. 24 hours is the common default in tutoring and it
- * is a placeholder until it is ratified.
+ * Recorded because I first documented it as an invented placeholder, which was
+ * wrong and is the kind of wrong that gets a number changed casually. §39 sets
+ * self-cancellation at 24 hours or more; this constant IS that rule, not a
+ * guess standing in for it.
  *
- * It lives here, alone, exported, so changing it is one line and so that no
- * second copy of it can drift. It is deliberately NOT read from
+ * It lives here alone and exported so a policy change is one line and no second
+ * copy can drift. It is deliberately NOT read from
  * teacher_availability.booking_cutoff_hours: that column is how late you may
- * BOOK, which is a different question with a different right answer — booking
- * 3 hours ahead can be fine while cancelling 3 hours ahead is not.
+ * BOOK, a different question with a different right answer — booking 3 hours
+ * ahead can be fine while cancelling 3 hours ahead is not.
  */
 export const CANCELLATION_CUTOFF_HOURS = 24;
 

@@ -36,7 +36,10 @@ import { loadMyTuition } from "./student";
 export type BookingResult = { ok: true; message: string } | { ok: false; error: string };
 
 const SLOT_PATHS = [
-  "/", "/calendar", "/tuition", "/tuition/one-to-one", "/profile", "/my-tuition",
+  // ⚠ /my-tuition is NOT here: it redirects to /profile and has no content
+  // of its own to invalidate. Revalidating a redirect is a no-op that reads
+  // like coverage.
+  "/", "/calendar", "/tuition", "/tuition/one-to-one", "/profile",
   "/chemistry", "/biology", "/physics",
 ];
 function refresh() {

@@ -146,6 +146,6 @@ export async function resolveRequest(id: string, _prev: Result | null, fd: FormD
     idempotencyKey: eventKey("cancellation_resolved", id),
   });
 
-  for (const p of ["/profile", "/my-tuition", "/calendar", "/admin/cancellations"]) revalidatePath(p);
+  for (const p of ["/profile", "/calendar", "/admin/cancellations"]) revalidatePath(p);
   return { ok: true, message: `Recorded as ${resolution}.${creditNote}` };
 }

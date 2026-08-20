@@ -190,6 +190,39 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
           </div>
         </section>
 
+        {/* ── lesson credits (§33, §61) ───────────────────────────────────
+            ⚠ PORTED FROM /my-tuition, WHICH NOW REDIRECTS HERE. The tile above
+            shows the balance; this shows how it got there. A student querying a
+            balance needs the lines, not a number to take on trust — and the
+            balance is SUMMED from these rows, never read from a column, so the
+            lines ARE the balance rather than a second record of it. */}
+        {me.ledger.length > 0 && (
+          <section className="mt-12">
+            <h2 className="font-display text-2xl font-medium tracking-tight">Lesson credits</h2>
+            <p className="mt-2 text-sm text-ink/65">
+              {me.creditBalance} {me.creditBalance === 1 ? "lesson" : "lessons"} remaining, and every
+              change that got you there.
+            </p>
+            <ul className="mt-5 divide-y divide-ink/10 border-y border-ink/10 font-mono text-[11px]">
+              {me.ledger.slice(0, 12).map((tx) => (
+                <li key={tx.id} className="flex items-baseline gap-4 py-2.5">
+                  {/* ⚠ SIGN, NOT COLOUR ALONE — the +/- carries it in greyscale. */}
+                  <span className={`w-8 shrink-0 tabular-nums ${tx.delta > 0 ? "text-emerald-700" : "text-ink/60"}`}>
+                    {tx.delta > 0 ? `+${tx.delta}` : tx.delta}
+                  </span>
+                  <span className="flex-1 text-ink/70">{tx.reason.replace(/_/g, " ")}</span>
+                  <span className="text-ink/45">{tx.createdAt.slice(0, 10)}</span>
+                </li>
+              ))}
+            </ul>
+            {me.ledger.length > 12 && (
+              <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.15em] text-ink/40">
+                showing 12 of {me.ledger.length}
+              </p>
+            )}
+          </section>
+        )}
+
         {/* ── schedule updates (§47) ──────────────────────────────────────
             ⚠ ABOVE the lesson lists on purpose. This is where "your Saturday
             moved" appears, and a student who scrolls past it to read a

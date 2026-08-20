@@ -46,7 +46,10 @@ const FOOTER_GROUPS: { heading: string; links: FooterLink[] }[] = [
     heading: "Account",
     links: [
       { label: "Login", href: "/login" },
-      { label: "My tuition", href: "/my-tuition" },
+      // ⚠ /profile, NOT /my-tuition. The latter now redirects here, and a
+      // footer link that bounces through a redirect is a link with a stale
+      // destination — it works, so nothing ever fixes it.
+      { label: "My tuition", href: "/profile" },
       { label: "Create an account", href: "/signup" },
     ],
   },
