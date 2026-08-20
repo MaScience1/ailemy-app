@@ -1,7 +1,54 @@
 -- ============================================================================
 -- 0048_PROPOSED_ledger_erasure.sql
 -- ----------------------------------------------------------------------------
--- ⚠ PROPOSED — NOT APPLIED. Apply AFTER 0047. Run each section separately.
+-- ⚠ APPLIED TO PRODUCTION 2026-08-19, after 0047. Renamed from 0048_PROPOSED_
+-- once verified. VERIFICATION: 17 of 18 runnable assertions pass — and the ONE
+-- FAILURE IS THE POINT. See "WHAT THIS DID NOT FIX" below.
+--
+--   (a) the trigger STILL refuses ordinary mutation, as service_role:
+--         UPDATE refused 23001 · DELETE refused 23001                  ✓
+--         …row provably intact at delta -1 afterwards                  ✓
+--         …and the message now names the escape, so the next reader
+--         discovers it from the error rather than from this file       ✓
+--       ⚠ THE PROPERTY BEING KEPT. 0048 is a fix, not a loosening, and
+--       this block is what tells the two apart.
+--   (b) the purge transaction yields                                   — see below
+--   (c) the escape does not survive the transaction                    — see below
+--   (d) a user can be erased                                           ✗ SEE BELOW
+--   (e) deleting a booking a credit paid for is refused BY
+--       lesson_credit_transactions_booking_id_fkey, 23503 — a plain FK
+--       error naming the real relationship                             ✓
+--       …and NOT by the append-only trigger, which was the improvement ✓
+--   (f) cancelling it still works, and 0046's exclusion constraint
+--       frees the slot                                                 ✓
+--   (g) a booking with NO ledger row is still freely deletable         ✓
+--
+--   0047 regression, re-checked: the idempotency index and the
+--   one-debit-per-booking index both still bite, 23505 each            ✓
+--   anon still refused on the ledger, 42501                            ✓
+--
+--   ⚠ (b) AND (c) ARE NOT RUNNABLE FROM THE APPLICATION SIDE. SET LOCAL cannot
+--   be issued through PostgREST. They were covered by the founder's cleanup
+--   run: Step 1's purge DELETE succeeded, which is (b); Step 5's UPDATE was
+--   then refused with 23001, which is (c) — had SET LOCAL leaked past its
+--   transaction, that UPDATE would have passed. Step 5's INSERT and UPDATE
+--   shared one implicit transaction so the row rolled back with the raise;
+--   that does not weaken the evidence, because the refusal is the evidence.
+--
+-- ============================================================================
+-- ⚠⚠ WHAT THIS DID NOT FIX — BLOCK (d), AND 0049 EXISTS FOR IT
+-- ============================================================================
+--     supabase.auth.admin.deleteUser(<uid>)  →  "Database error deleting user"
+--
+-- The escape works, but only in a transaction that has issued SET LOCAL. The
+-- Supabase Admin API does not, and neither does the dashboard's Delete user
+-- button. So after 0048 a family who asks to be deleted still cannot be, unless
+-- somebody opens the SQL editor and runs three statements in the right order.
+--
+-- That is a runbook, not a working erasure path, and runbooks fail at the
+-- moment they are needed. 0049 adds erase_user(), a SECURITY DEFINER function
+-- that sets the flag for its own transaction — one auditable call, reachable
+-- from a server action, with everything above still true.
 --
 -- ============================================================================
 -- ⚠ FIXES A REAL DEFECT IN 0047 THAT ITS OWN VERIFICATION EXPOSED
