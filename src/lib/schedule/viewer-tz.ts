@@ -2,7 +2,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 
-import { isKnownTimeZone } from "./timezone.ts";
+import { canonicalTimeZone } from "./timezone.ts";
 
 /** Set by TimezoneSync on first visit; changeable later by the visitor. */
 export const TZ_COOKIE = "ailemy_tz";
@@ -22,7 +22,11 @@ export const TZ_COOKIE = "ailemy_tz";
 export async function viewerTimeZone(): Promise<string | null> {
   try {
     const raw = (await cookies()).get(TZ_COOKIE)?.value ?? null;
-    return isKnownTimeZone(raw) ? raw : null;
+    // ⚠ CANONICALISED ON READ TOO, because a cookie set before this validation
+    // existed may still carry an abbreviation — and that cookie outlives the
+    // deploy that fixed the writer. Returning null is the honest answer: the
+    // surface then shows Doha alone rather than a second, wrong clock.
+    return canonicalTimeZone(raw);
   } catch {
     return null;
   }

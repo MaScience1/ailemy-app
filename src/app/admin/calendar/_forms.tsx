@@ -1,5 +1,7 @@
 "use client";
 
+import { TimezoneField } from "@/components/admin/TimezoneField";
+
 import { useActionState } from "react";
 import { useState, useTransition } from "react";
 
@@ -98,9 +100,11 @@ export function RuleForm({ cohorts, rule }: { cohorts: CohortOption[]; rule?: Ru
         <Field label="Ends">
           <input name="end_time" type="time" required defaultValue={rule?.end_time.slice(0, 5) ?? "21:30"} className={input} />
         </Field>
-        <Field label="Timezone" hint="The school teaches in Asia/Qatar. Change only for a cohort taught elsewhere.">
-          <input name="timezone" defaultValue={rule?.timezone ?? "Asia/Qatar"} className={input} />
-        </Field>
+        <TimezoneField
+          name="timezone"
+          defaultValue={rule?.timezone ?? "Asia/Qatar"}
+          hint="The school teaches in Asia/Qatar. Change only for a cohort taught elsewhere."
+        />
         <Field label="Label" hint="Optional. Shown instead of the cohort name.">
           <input name="label" defaultValue={rule?.label ?? ""} placeholder="Teaching session" className={input} />
         </Field>
@@ -217,9 +221,7 @@ export function SessionForm({
             {SESSION_KINDS.map((k) => <option key={k} value={k}>{k}</option>)}
           </select>
         </Field>
-        <Field label="Timezone">
-          <input name="timezone" defaultValue={session?.timezone ?? "Asia/Qatar"} className={input} />
-        </Field>
+        <TimezoneField name="timezone" defaultValue={session?.timezone ?? "Asia/Qatar"} />
         {/* ⚠ THE TIMES ARE THE STORED INSTANT RENDERED BACK IN THE ROW'S OWN
             ZONE, not in the browser's. Pre-filling a 19:00 Doha lesson as
             "16:00" for a London admin and then saving it would move the lesson

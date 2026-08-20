@@ -2,7 +2,7 @@
 // specifiers literally, so a test running this file under plain `node` cannot
 // follow the "@/" alias or an extensionless path. Same convention as the rest
 // of the modules the suite imports.
-import { isKnownTimeZone, zonedTimeToInstant, CANONICAL_TZ } from "../schedule/timezone.ts";
+import { canonicalTimeZone, tzError, zonedTimeToInstant, CANONICAL_TZ } from "../schedule/timezone.ts";
 import type { IsoWeekday, SessionKind } from "../schedule/recurrence.ts";
 
 /**
@@ -64,10 +64,16 @@ export function readRuleForm(fd: FormData): Validated<RuleInput> {
   // negative-length and sorts wrongly — "the calendar is broken", not a typo.
   if (endTime <= startTime) return { ok: false, error: "The lesson must end after it starts." };
 
-  const timezone = str(fd, "timezone") || CANONICAL_TZ;
-  // ⚠ VALIDATED, NOT TRUSTED. A typo'd zone is stored happily by Postgres and
-  // then throws at render time on every page that shows this cohort.
-  if (!isKnownTimeZone(timezone)) return { ok: false, error: `"${timezone}" is not a timezone this system knows.` };
+  const timezoneRaw = str(fd, "timezone") || CANONICAL_TZ;
+  /**
+   * ⚠ VALIDATED AND CANONICALISED, NOT TRUSTED. A typo'd zone is stored happily
+   * by Postgres and throws at render time. Worse, an ABBREVIATION does not
+   * throw at all: "BST" is accepted by Intl and silently means Asia/Dhaka, so
+   * this rule would expand into lesson instants five hours from where the
+   * admin meant. canonicalTimeZone requires Region/City for exactly that.
+   */
+  const timezone = canonicalTimeZone(timezoneRaw);
+  if (!timezone) return { ok: false, error: tzError(timezoneRaw) };
 
   const validFrom = str(fd, "valid_from");
   if (!DATE_RE.test(validFrom)) return { ok: false, error: "Give a start date for the timetable." };
@@ -143,8 +149,9 @@ export function readSessionForm(fd: FormData): Validated<SessionInput> {
   }
 
   const scheduleId = orNull(fd, "schedule_id");
-  const timezone = str(fd, "timezone") || CANONICAL_TZ;
-  if (!isKnownTimeZone(timezone)) return { ok: false, error: `"${timezone}" is not a timezone this system knows.` };
+  const timezoneRaw = str(fd, "timezone") || CANONICAL_TZ;
+  const timezone = canonicalTimeZone(timezoneRaw);
+  if (!timezone) return { ok: false, error: tzError(timezoneRaw) };
 
   const startLocal = orNull(fd, "starts_at_local");
   const endLocal = orNull(fd, "ends_at_local");
