@@ -38,6 +38,7 @@ export default async function AdminLayout({
             <NavLink href="/admin/availability">1-to-1 availability</NavLink>
             <NavLink href="/admin/packages">1-to-1 packages</NavLink>
             <NavLink href="/admin/cancellations">Cancellations</NavLink>
+            <NavLink href="/admin/notifications">Notifications</NavLink>
             <NavLink href="/admin/interest">Tuition demand</NavLink>
             <div className="mt-6 mb-2 px-3 text-[10px] font-mono uppercase tracking-widest text-slate-400">
               Read-only
