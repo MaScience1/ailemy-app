@@ -59,6 +59,17 @@ export type CalendarProps = {
   /** Hide the whole filter block (homepage preview, tight embeds). */
   showFilters?: boolean;
   /**
+   * ⚠ FOR AN EMBED PART-WAY DOWN A LONG PAGE. Every link here is a real
+   * navigation, so the browser lands at the top of the destination — fine at
+   * /calendar, where the calendar IS the page, and wrong on the homepage, where
+   * closing a day panel would leave the reader at the hero having lost their
+   * place. An anchor puts them back at the section.
+   *
+   * Appended LAST, after the query string, because a fragment that precedes `?`
+   * is part of the fragment and the query is silently lost.
+   */
+  anchor?: string;
+  /**
    * ⚠ ON /chemistry THE SUBJECT IS THE PAGE, NOT A FILTER. Rendering the
    * subject row there would offer an "All" that silently turns the Chemistry
    * calendar into the school calendar — the same URL, a different promise.
@@ -80,10 +91,10 @@ export function Calendar(props: CalendarProps) {
   const href = (patch: Partial<CalendarState> & { day?: string | null }) => {
     const next: CalendarState = { ...state, ...patch };
     const q = stateToQuery(next, todayISO, basePath);
-    if (patch.day) {
-      return q.includes("?") ? `${q}&day=${patch.day}` : `${q}?day=${patch.day}`;
-    }
-    return q;
+    const withDay = patch.day
+      ? (q.includes("?") ? `${q}&day=${patch.day}` : `${q}?day=${patch.day}`)
+      : q;
+    return props.anchor ? `${withDay}${props.anchor}` : withDay;
   };
 
   return (

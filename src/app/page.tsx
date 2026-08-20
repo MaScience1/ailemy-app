@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -14,9 +15,12 @@ import { offersCurrencyChoice, type Currency } from "@/lib/public/currency";
 import { currentCurrency } from "@/lib/public/currency-server";
 import { CohortPrice } from "@/components/public/CohortPrice";
 import { CurrencyToggle } from "@/components/public/CurrencyToggle";
-import { EventChip } from "@/components/calendar/EventChip";
+import { Calendar } from "@/components/calendar/Calendar";
 import { TimezoneSync } from "@/components/public/TimezoneSync";
-import { loadCalendarEvents, nextLive } from "@/lib/calendar/readers";
+import { loadCalendarEvents } from "@/lib/calendar/readers";
+import { parseDate, rangeFor, readState } from "@/lib/calendar/grid";
+import { emptyCalendarMessage } from "@/lib/calendar/types";
+import { CANONICAL_TZ, calendarDate, formatDay } from "@/lib/schedule/timezone";
 import { viewerTimeZone } from "@/lib/schedule/viewer-tz";
 
 /**
@@ -46,38 +50,65 @@ export const metadata: Metadata = {
     "mark-scheme-informed marking, and progress tracking. Pearson Edexcel GCSE, International GCSE and IAL.",
 };
 
-export default async function Home() {
+type Search = Promise<{
+  view?: string; date?: string; subject?: string; level?: string; type?: string; day?: string;
+}>;
+
+export default async function Home({ searchParams }: { searchParams: Search }) {
   const session = await getNavSession();
+  const params = await searchParams;
   const { data: cohorts } = await loadCohorts();
   const chemistryCohorts = cohorts.filter((c) => c.subject === "chemistry");
   const { currency } = await currentCurrency();
   const showToggle = offersCurrencyChoice(chemistryCohorts);
 
   /**
-   * ⚠ §4 AND §18 — A COMPACT PREVIEW, NOT AN EMBEDDED MONTH GRID. The spec is
-   * explicit that the homepage must not carry an enormous calendar; it shows
-   * the next few sessions and leads into /calendar.
+   * ============================================================================
+   * ⚠ THE CALENDAR IS A HOMEPAGE FEATURE NOW. THIS SUPERSEDES §4 AND §18.
+   * ============================================================================
+   * Those sections said the homepage must not carry an embedded month grid, and
+   * this file used to carry a list preview because of them. Founder direction
+   * on 2026-08-20 reversed it: the calendar is the thing a parent needs in
+   * order to decide, so it is a section rather than a link to one.
    *
-   * ⚠ BUT IT SHARES THE READER AND THE CHIP, so it cannot drift from the full
-   * calendar. This is the §2 rule at its most tempting to break: a "quick
-   * preview" with its own query and its own markup is exactly how two surfaces
-   * start disagreeing about when a lesson is.
+   * The weight concern behind §18 is answered rather than ignored — a phone
+   * gets the Upcoming list, not a 7-column grid. Same component, same data,
+   * one range query.
    *
-   * The window is 10 weeks because the cost is in RULES fetched, not
-   * occurrences — a handful of recurrence rows expand in memory and the list is
-   * sliced to 3. A 21-day window rendered nothing for most of the year, which
-   * is a dead section rather than a fast one.
+   * ⚠ AND THE OLD "Upcoming lessons" SECTION IS GONE, DELIBERATELY. It listed
+   * the next three sessions higher up the page. Keeping it would have shown the
+   * same lessons twice on one page — and on a phone, where this section
+   * degrades to that exact list, the two would have been indistinguishable.
+   *
+   * ⚠ ONE RANGE QUERY, FOR THE VISIBLE WINDOW ONLY (§60). rangeFor() returns
+   * exactly what the chosen view shows: for a month that is the grid INCLUDING
+   * its leading and trailing days, so the cells that belong to the neighbouring
+   * months are populated rather than mysteriously empty. Never a year.
    */
   const viewerTz = await viewerTimeZone();
-  const previewFrom = new Date().toISOString().slice(0, 10);
-  const previewTo = new Date(Date.now() + 70 * 86_400_000).toISOString().slice(0, 10);
-  const { events: previewEvents } = await loadCalendarEvents({
-    from: previewFrom, to: previewTo, mode: "public", type: "all",
+  const todayISO = calendarDate(new Date(), CANONICAL_TZ);
+
+  /**
+   * ⚠ §58's PATTERN, AND ITS TRADE-OFF, UNCHANGED. The server cannot measure a
+   * viewport. A client component would flash the wrong view before hydrating,
+   * and rendering both behind CSS breakpoints would double the DOM on the
+   * heaviest page on the site. A coarse user-agent test decides a DEFAULT that
+   * the URL can still override.
+   */
+  const ua = (await headers()).get("user-agent") ?? "";
+  const handheld = /Android|iPhone|iPod|Windows Phone|\bMobi\b/i.test(ua) && !/iPad|Tablet/i.test(ua);
+
+  const calendarState = readState(params, todayISO, handheld ? "upcoming" : "month");
+  const openDay = params.day && parseDate(params.day) ? params.day : null;
+  const calendarRange = rangeFor(calendarState.view, calendarState.date);
+
+  const { events: calendarEvents } = await loadCalendarEvents({
+    from: calendarRange.from, to: calendarRange.to,
+    mode: "public",
+    subject: calendarState.subject,
+    level: calendarState.level,
+    type: calendarState.type,
   });
-  // ⚠ CANCELLED LESSONS ARE NEVER "NEXT". A preview showing a cancelled class as
-  // the next lesson is worse than showing nothing.
-  const nextSessions = nextLive(previewEvents, new Date(), 3);
-  const nextSlots = nextLive(previewEvents.filter((e) => e.type !== "group"), new Date(), 2);
 
   return (
     <div className="bg-parchment text-ink">
@@ -142,49 +173,6 @@ export default async function Home() {
         </ol>
       </Section>
 
-      {/* ── 5b. upcoming lessons (§18) ─────────────────────────────────── */}
-      {/* ⚠ NO FAKE SLOTS. This section is ABSENT when nothing is scheduled —
-          not "no lessons this week", which reads as a school that has stopped.
-          Today it renders the published AS timetable; when Y11 and Y10 launch
-          from Admin they appear here with no code change (§5). */}
-      {nextSessions.length > 0 && (
-        <Section
-          id="upcoming"
-          title="Upcoming lessons"
-          lede="The next few live sessions. Times in Doha, and in your own timezone where we know it."
-        >
-          <ul className="divide-y divide-ink/10 border-y border-ink/10">
-            {nextSessions.map((ev) => (
-              <li key={ev.key} className="py-3.5">
-                <EventChip event={ev} viewerTz={viewerTz} />
-              </li>
-            ))}
-          </ul>
-
-          {/* ⚠ §4's SECOND BLOCK, AND IT IS ABSENT UNLESS REAL SLOTS EXIST.
-              "Next available: Monday 5:00 PM" with nothing behind it is the
-              fake scarcity the spec forbids by name. */}
-          {nextSlots.length > 0 && (
-            <div className="mt-8">
-              <h3 className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45">
-                1-to-1 availability
-              </h3>
-              <ul className="mt-3 divide-y divide-ink/10 border-y border-ink/10">
-                {nextSlots.map((ev) => (
-                  <li key={ev.key} className="py-3"><EventChip event={ev} viewerTz={viewerTz} /></li>
-                ))}
-              </ul>
-            </div>
-          )}
-          <Link
-            href="/calendar"
-            className="mt-6 inline-block text-sm underline underline-offset-2 hover:text-ink"
-          >
-            View the full calendar →
-          </Link>
-        </Section>
-      )}
-
       {/* ── 6. live tuition ───────────────────────────────────────────── */}
       <Section
         id="tuition"
@@ -205,6 +193,102 @@ export default async function Home() {
           .
         </p>
       </Section>
+
+      {/* ── 6b. the Ailemy calendar ───────────────────────────────────────
+          ⚠ PLACED DIRECTLY AFTER TUITION, AND THAT IS THE WHOLE POINT. A parent
+          has just read what is taught, when it runs and what it costs; the next
+          question they actually ask is "does that fit our week?". Answering it
+          on the same scroll is what turns interest into an enrolment, and
+          answering it two sections later is a different page to them.
+
+          ⚠ AND IT SITS BELOW THE HERO AND THE SUBJECT CARDS, so the primary
+          entry points keep the fold to themselves. This section is the answer
+          to a question the page has already raised — it is not the opening
+          argument, and putting it above tuition would make it one. */}
+      <section id="calendar" className="border-t border-ink/10 py-14 sm:py-20">
+        <div className="mx-auto max-w-6xl px-6">
+          <h2 className="font-display max-w-3xl text-2xl font-medium tracking-tight sm:text-3xl">
+            The Ailemy Calendar
+          </h2>
+          {/* ⚠ TWO SENTENCES, WRITTEN FOR A PARENT SEEING THIS COLD. It says
+              what is in it, that the times are in their own clock, and — in the
+              same breath rather than in a disclaimer — that 1-to-1 booking is
+              not open yet. A section that implied you could book today would be
+              the dead CTA the standing rules forbid, written as prose. */}
+          <p className="mt-3 max-w-2xl text-base leading-relaxed text-ink/70">
+            Every live group lesson and every open 1-to-1 slot, in one place — shown in Doha time
+            and in yours. Open any day to see what is on; 1-to-1 sessions become bookable here as
+            soon as booking opens.
+          </p>
+
+          <div className="mt-8">
+            {/* ⚠ THE SHARED COMPONENT, IN PUBLIC MODE — not a fork and not a
+                second implementation. Filters are hidden because the homepage
+                is not where somebody narrows a search; everything else is the
+                calendar /calendar renders, including the day sheet. */}
+            <Calendar
+              events={calendarEvents}
+              state={calendarState}
+              todayISO={todayISO}
+              viewerTz={viewerTz}
+              mode="public"
+              basePath="/"
+              anchor="#calendar"
+              showFilters={false}
+              openDay={openDay}
+              /* ⚠ DERIVED, NOT WRITTEN. In August this reads "teaching begins
+                 Tue 15 Sep" from the cohort the page already loaded; once term
+                 has started it falls back to the plain sentence rather than
+                 talking about a date in the past. */
+              emptyMessage={emptyCalendarMessage(
+                cohorts, todayISO, (iso) => formatDay(new Date(`${iso}T12:00:00Z`), CANONICAL_TZ),
+              )}
+            />
+          </div>
+
+          {/* ⚠ A KEY, BECAUSE A MONTH CELL CANNOT CARRY THE WORDS. A 112px cell
+              already holds a time and a title, so EventChip drops the
+              GROUP / 1-TO-1 text when it renders dense and keeps only the shape
+              marker — a filled bar against a hollow ring, separable in
+              greyscale. The words exist in the day sheet and in the Upcoming
+              list; this is where they exist for the month grid, mapped to the
+              shapes rather than asserted somewhere the reader cannot see. */}
+          <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2">
+            <span className="flex items-center gap-2 text-xs text-ink/60">
+              <span aria-hidden className="h-2.5 w-1 shrink-0 rounded-full bg-ink/70" />
+              Group lesson
+            </span>
+            <span className="flex items-center gap-2 text-xs text-ink/60">
+              <span
+                aria-hidden
+                className="h-2.5 w-2.5 shrink-0 rounded-full border-[1.5px] border-ink/60 bg-transparent"
+              />
+              1-to-1 slot
+            </span>
+            <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-ink/40">
+              open a day for full details
+            </span>
+          </div>
+
+          {/* ⚠ TWO LINKS, NO BUTTONS. Stripe has no keys, so nothing here can
+              take money; a Book or Enrol control would be a promise this page
+              cannot keep. Both of these go somewhere that works today. */}
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href="/calendar"
+              className="rounded-full border border-ink/20 px-5 py-2.5 text-sm font-medium transition-colors hover:border-ink/40"
+            >
+              Open full calendar →
+            </Link>
+            <Link
+              href="/tuition/one-to-one"
+              className="rounded-full border border-ink/20 px-5 py-2.5 text-sm font-medium transition-colors hover:border-ink/40"
+            >
+              Explore 1-to-1 →
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* ── 7. interactive past papers ────────────────────────────────── */}
       <Section

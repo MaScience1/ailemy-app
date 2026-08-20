@@ -122,3 +122,54 @@ export function matchesFilters(
   if (f.type === "private" && ev.type === "group") return false;
   return true;
 }
+
+
+/**
+ * What to say when the visible window is empty (§12, §57).
+ *
+ * ============================================================================
+ * ⚠ "NOTHING SCHEDULED" IS TRUE AND USELESS IN AUGUST
+ * ============================================================================
+ * Teaching starts in September, so the homepage calendar opens on an empty
+ * month for the whole of the summer — and a conversion section whose first
+ * impression is a blank grid saying "try another month" has argued against
+ * itself. A parent needs to know that term has not started yet, which is a
+ * different fact from "we have nothing on".
+ *
+ * ⚠ DERIVED FROM THE COHORTS THE PAGE ALREADY LOADED, so it costs no extra
+ * query and cannot state a date the catalogue does not hold.
+ *
+ * ⚠⚠ A START DATE IS NOT A TIMETABLE, AND THE FIRST VERSION OF THIS GOT IT
+ * WRONG IN PRODUCTION. It took the earliest future firstClassOn across every
+ * cohort and rendered "teaching begins Tue 1 Sept" — from the Y11 and Y10 rows,
+ * which carry a nominal starts_on and scheduleSummary NULL. NULL there means
+ * exactly one thing, and the Cohort type says it in capitals: there is no
+ * public timetable, because those cohorts are demand-triggered and may never
+ * run. Announcing a start date for a class with no schedule is the invented
+ * timetable the catalogue warns about, told as a date instead of a weekday.
+ *
+ * The only cohort with a published timetable starts on the 15th, which is also
+ * the locked commercial fact. So a cohort qualifies here only when it has BOTH
+ * a future first class AND a schedule to teach it on.
+ *
+ * ⚠ AND IT ONLY SPEAKS ABOUT DATES IN THE FUTURE. Once term has started, "our
+ * first class is 15 September" is a stale sentence about the past; the generic
+ * message is the honest one then.
+ */
+export function emptyCalendarMessage(
+  cohorts: readonly { firstClassOn: string | null; scheduleSummary: string | null }[],
+  todayISO: string,
+  formatDate: (iso: string) => string,
+  fallback = "No lessons are scheduled in this period.",
+): string {
+  const upcoming = cohorts
+    // ⚠ BOTH CONDITIONS. A date without a timetable is a hope, not a lesson.
+    .filter((c) => typeof c.scheduleSummary === "string" && c.scheduleSummary.trim().length > 0)
+    .map((c) => c.firstClassOn)
+    .filter((d): d is string => typeof d === "string" && d > todayISO)
+    .sort();
+
+  if (upcoming.length === 0) return fallback;
+  return `Nothing in this period — teaching begins ${formatDate(upcoming[0])}. ` +
+    "Look ahead a month, or open the full calendar.";
+}
