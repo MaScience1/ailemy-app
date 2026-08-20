@@ -11,10 +11,13 @@ import { offersCurrencyChoice } from "@/lib/public/currency";
 import { currentCurrency } from "@/lib/public/currency-server";
 import { CohortPrice } from "@/components/public/CohortPrice";
 import { CurrencyToggle } from "@/components/public/CurrencyToggle";
-import { SessionList } from "@/components/public/SessionList";
+import { Calendar } from "@/components/calendar/Calendar";
+import { parseDate, rangeFor, readState } from "@/lib/calendar/grid";
+import { loadCalendarEvents } from "@/lib/calendar/readers";
 import { TimezoneSync } from "@/components/public/TimezoneSync";
-import { loadCalendar } from "@/lib/schedule/readers";
+
 import { viewerTimeZone } from "@/lib/schedule/viewer-tz";
+import { CANONICAL_TZ, calendarDate } from "@/lib/schedule/timezone";
 
 /**
  * The tuition destination (§23).
@@ -33,15 +36,30 @@ export const metadata: Metadata = {
     "Edexcel IAL Chemistry AS, and GCSE / International GCSE Chemistry.",
 };
 
-export default async function TuitionPage() {
+type Search = Promise<{
+  view?: string; date?: string; subject?: string; level?: string; type?: string; day?: string;
+}>;
+
+export default async function TuitionPage({ searchParams }: { searchParams: Search }) {
+  const params = await searchParams;
   const session = await getNavSession();
   const { data: cohorts } = await loadCohorts();
   const { currency } = await currentCurrency();
   const viewerTz = await viewerTimeZone();
-  const { sessions: upcoming } = await loadCalendar({
-    from: new Date().toISOString().slice(0, 10),
-    to: new Date(Date.now() + 56 * 86_400_000).toISOString().slice(0, 10),
-    includeCancelled: true,
+
+  /**
+   * ⚠ THE SAME CALENDAR AS /calendar, NOT A SECOND ONE (§2, §85). This page
+   * used a flat SessionList over its own 56-day window; it now reads the URL
+   * and renders the shared component, so a schedule change lands here and on
+   * /calendar in the same breath rather than in two places that can drift.
+   */
+  const todayISO = calendarDate(new Date(), CANONICAL_TZ);
+  const state = readState(params, todayISO, "upcoming");
+  const openDay = params.day && parseDate(params.day) ? params.day : null;
+  const range = rangeFor(state.view, state.date);
+  const { events } = await loadCalendarEvents({
+    from: range.from, to: range.to, mode: "public",
+    subject: state.subject, level: state.level, type: state.type,
   });
   return (
     <div className="bg-parchment text-ink">
@@ -98,10 +116,15 @@ export default async function TuitionPage() {
             Doha, and in your own timezone where we know it.
           </p>
           <div className="mt-6">
-            <SessionList
-              sessions={upcoming}
+            <Calendar
+              events={events}
+              state={state}
+              todayISO={todayISO}
               viewerTz={viewerTz}
-              emptyMessage="No timetable has been published yet. The cards above show what is opening; register interest and we will tell you the dates as soon as they are set."
+              mode="public"
+              basePath="/tuition"
+              openDay={openDay}
+              emptyMessage="No timetable has been published for this period. The cards above show what is opening; register interest and we will tell you the dates as soon as they are set."
             />
           </div>
           <Link href="/calendar" className="mt-6 inline-block text-sm underline underline-offset-2 hover:text-ink">

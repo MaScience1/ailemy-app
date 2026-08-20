@@ -49,3 +49,29 @@ export function stripeConfig(env: Record<string, string | undefined> = process.e
 export function stripeConfigured(env: Record<string, string | undefined> = process.env): boolean {
   return stripeConfig(env).configured;
 }
+
+/**
+ * ============================================================================
+ * ⚠ IS THERE ANYWHERE FOR A "BOOK" BUTTON TO GO? THIS IS NOT THE SAME QUESTION
+ * AS "DOES STRIPE HAVE KEYS".
+ * ============================================================================
+ * Two places linked to /tuition/one-to-one/book — a route that has never
+ * existed. Both were gated on Stripe being configured, so neither rendered and
+ * neither 404'd; they were dead links waiting for the keys to arrive, at which
+ * point the first thing a paying customer would have met is a Not Found.
+ *
+ * Stripe having keys is necessary and NOT sufficient. beginCheckout() still
+ * answers "checkout is not built yet" even with keys, because it is not. So the
+ * gate is this constant, and flipping it is a promise that the route exists.
+ *
+ * ⚠ FLIPPING THIS TO true WITHOUT CREATING src/app/tuition/one-to-one/book/
+ * FAILS route-integrity.test.ts. That is deliberate: the test resolves every
+ * internal href against the actual router tree, so the link cannot come back
+ * without its destination.
+ */
+export const CHECKOUT_BUILT = false;
+
+/** Keys AND a checkout to send somebody to. Both, or no payable CTA. */
+export function checkoutReady(env: Record<string, string | undefined> = process.env): boolean {
+  return CHECKOUT_BUILT && stripeConfig(env).configured;
+}

@@ -10,9 +10,11 @@ import { offersCurrencyChoice } from "@/lib/public/currency";
 import { currentCurrency } from "@/lib/public/currency-server";
 import { CohortPrice } from "@/components/public/CohortPrice";
 import { CurrencyToggle } from "@/components/public/CurrencyToggle";
-import { SessionList } from "@/components/public/SessionList";
+import { Calendar } from "@/components/calendar/Calendar";
 import { TimezoneSync } from "@/components/public/TimezoneSync";
-import { loadCalendar } from "@/lib/schedule/readers";
+import { parseDate, rangeFor, readState } from "@/lib/calendar/grid";
+import { loadCalendarEvents } from "@/lib/calendar/readers";
+import { CANONICAL_TZ, calendarDate } from "@/lib/schedule/timezone";
 import { viewerTimeZone } from "@/lib/schedule/viewer-tz";
 
 /**
@@ -36,7 +38,11 @@ import { viewerTimeZone } from "@/lib/schedule/viewer-tz";
  * teaching, they are not the same qualification, and collapsing them in the UI
  * is how they end up collapsed in the data.
  */
-export async function SubjectPage({ slug }: { slug: string }) {
+export type SubjectSearch = {
+  view?: string; date?: string; level?: string; type?: string; day?: string;
+};
+
+export async function SubjectPage({ slug, params }: { slug: string; params?: SubjectSearch }) {
   const session = await getNavSession();
   const subject = SUBJECTS.find((s) => s.slug === slug);
   if (!subject) return null;
@@ -52,11 +58,25 @@ export async function SubjectPage({ slug }: { slug: string }) {
    * year behind Chemistry.
    */
   const viewerTz = await viewerTimeZone();
-  const { sessions: subjectSessions } = await loadCalendar({
-    from: new Date().toISOString().slice(0, 10),
-    to: new Date(Date.now() + 56 * 86_400_000).toISOString().slice(0, 10),
-    subject: slug,
-    includeCancelled: true,
+
+  /**
+   * ⚠ ONE IMPLEMENTATION, THREE SUBJECTS (§11, §15). This component renders
+   * /chemistry, /biology and /physics; the subject is a parameter, never three
+   * copies of the same logic. When a Biology teacher publishes a timetable, this
+   * page fills in with no code change.
+   *
+   * ⚠ THE SUBJECT IS LOCKED, NOT FILTERED. state.subject is forced to this
+   * page's slug so a level filter cannot widen the Chemistry calendar into the
+   * school calendar under the same URL.
+   */
+  const todayISO = calendarDate(new Date(), CANONICAL_TZ);
+  const base = readState(params ?? {}, todayISO, "upcoming");
+  const state = { ...base, subject: slug };
+  const openDay = params?.day && parseDate(params.day) ? params.day : null;
+  const range = rangeFor(state.view, state.date);
+  const { events: subjectEvents } = await loadCalendarEvents({
+    from: range.from, to: range.to, mode: "public",
+    subject: slug, level: state.level, type: state.type,
   });
   const hasResources = subject.status === "available" && subject.exploreHref !== null;
 
@@ -186,9 +206,15 @@ export async function SubjectPage({ slug }: { slug: string }) {
             {/* ⚠ THE EMPTY STATE IS THE HONEST ONE (§14). No invented sessions,
                 and no "coming soon" implying a date exists. It says the
                 timetable is not published and offers the only real next step. */}
-            <SessionList
-              sessions={subjectSessions}
+            <Calendar
+              events={subjectEvents}
+              state={state}
+              todayISO={todayISO}
               viewerTz={viewerTz}
+              mode="public"
+              basePath={`/${slug}`}
+              openDay={openDay}
+              lockedSubject={slug}
               emptyMessage={`No ${subject.name} timetable has been published yet. Register interest and we will tell you the moment a cohort opens.`}
             />
           </div>
@@ -199,7 +225,7 @@ export async function SubjectPage({ slug }: { slug: string }) {
             >
               Full {subject.name} calendar →
             </Link>
-            {subjectSessions.length === 0 && (
+            {subjectEvents.length === 0 && (
               <Link
                 href={`/tuition/interest?subject=${subject.slug}`}
                 className="text-sm underline underline-offset-2 hover:text-ink"

@@ -69,11 +69,13 @@ export async function createRule(_prev: Result | null, fd: FormData): Promise<Re
 export async function setRuleActive(id: string, isActive: boolean): Promise<Result> {
   await assertAdmin();
   if (!id) return { ok: false, error: "Missing rule id." };
-  const { error } = await createAdminClient()
+  const { data, error } = await createAdminClient()
     .from("cohort_schedules")
     .update({ is_active: isActive, updated_at: new Date().toISOString() })
-    .eq("id", id);
+    .eq("id", id)
+    .select("id");
   if (error) return { ok: false, error: explain(error) };
+  if (!data || data.length === 0) return missing("timetable rule");
   refresh();
   return { ok: true };
 }
@@ -87,8 +89,10 @@ export async function setRuleActive(id: string, isActive: boolean): Promise<Resu
 export async function deleteRule(id: string): Promise<Result> {
   await assertAdmin();
   if (!id) return { ok: false, error: "Missing rule id." };
-  const { error } = await createAdminClient().from("cohort_schedules").delete().eq("id", id);
+  const { data, error } = await createAdminClient()
+    .from("cohort_schedules").delete().eq("id", id).select("id");
   if (error) return { ok: false, error: explain(error) };
+  if (!data || data.length === 0) return missing("timetable rule");
   refresh();
   return { ok: true };
 }
@@ -111,8 +115,10 @@ export async function createPeriod(_prev: Result | null, fd: FormData): Promise<
 export async function deletePeriod(id: string): Promise<Result> {
   await assertAdmin();
   if (!id) return { ok: false, error: "Missing period id." };
-  const { error } = await createAdminClient().from("schedule_periods").delete().eq("id", id);
+  const { data, error } = await createAdminClient()
+    .from("schedule_periods").delete().eq("id", id).select("id");
   if (error) return { ok: false, error: explain(error) };
+  if (!data || data.length === 0) return missing("break");
   refresh();
   return { ok: true };
 }
@@ -145,8 +151,117 @@ export async function createSession(_prev: Result | null, fd: FormData): Promise
 export async function deleteSession(id: string): Promise<Result> {
   await assertAdmin();
   if (!id) return { ok: false, error: "Missing session id." };
-  const { error } = await createAdminClient().from("tuition_sessions").delete().eq("id", id);
+  const { data, error } = await createAdminClient()
+    .from("tuition_sessions").delete().eq("id", id).select("id");
   if (error) return { ok: false, error: explain(error) };
+  if (!data || data.length === 0) return missing("lesson change");
+  refresh();
+  return { ok: true };
+}
+
+// ── editing what already exists (§19) ───────────────────────────────────────
+/**
+ * ============================================================================
+ * ⚠ EVERY EDIT PATH WAS CREATE-OR-DELETE UNTIL NOW, AND THAT IS NOT A GAP IN
+ * CONVENIENCE — IT IS A GAP THAT LOSES DATA
+ * ============================================================================
+ * Changing a Tuesday lesson from 19:00 to 20:00 meant deleting the rule and
+ * making a new one. Deleting a rule CASCADES to its overrides (0044's FK), so
+ * "the class now starts an hour later" silently discarded every individual
+ * cancellation, every moved week and every clinic attached to it. The admin
+ * would have no way to know: the delete succeeds, the new rule looks right, and
+ * the losses are invisible until a student turns up to a lesson that was
+ * cancelled weeks ago.
+ *
+ * An UPDATE keeps the row's identity, so the overrides stay attached to it.
+ *
+ * ⚠ AND EVERY ONE OF THESE ASSERTS IT CHANGED A ROW. PostgREST reports an
+ * UPDATE that matched nothing exactly as it reports one that matched: no error,
+ * empty result. Without `.select("id")` and a length check, editing a rule
+ * somebody else deleted a second earlier returns "Saved" and changes nothing —
+ * partial success reported as success, which is this project's known defect
+ * class. The same check is added to the delete and pause paths below, which had
+ * the same hole for the same reason.
+ */
+
+function missing(what: string): Result {
+  return {
+    ok: false,
+    error: `That ${what} no longer exists — someone may have deleted it. Reload the page.`,
+  };
+}
+
+export async function updateRule(id: string, _prev: Result | null, fd: FormData): Promise<Result> {
+  await assertAdmin();
+  if (!id) return { ok: false, error: "Missing rule id." };
+  const parsed = readRuleForm(fd);
+  if (!parsed.ok) return parsed;
+  const v = parsed.value;
+
+  // ⚠ THE SAME VALIDATOR AS createRule, DELIBERATELY. A second copy of "what a
+  // valid rule is" is two implementations free to disagree, and the one that
+  // drifts is always the one with fewer eyes on it.
+  const { data, error } = await createAdminClient()
+    .from("cohort_schedules")
+    .update({
+      cohort_id: v.cohortId, weekday: v.weekday,
+      start_time: v.startTime, end_time: v.endTime, timezone: v.timezone,
+      valid_from: v.validFrom, valid_until: v.validUntil,
+      label: v.label, is_active: v.isActive,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .select("id");
+  if (error) return { ok: false, error: explain(error) };
+  if (!data || data.length === 0) return missing("timetable rule");
+  refresh();
+  return { ok: true };
+}
+
+export async function updatePeriod(id: string, _prev: Result | null, fd: FormData): Promise<Result> {
+  await assertAdmin();
+  if (!id) return { ok: false, error: "Missing period id." };
+  const parsed = readPeriodForm(fd);
+  if (!parsed.ok) return parsed;
+  const v = parsed.value;
+
+  const { data, error } = await createAdminClient()
+    .from("schedule_periods")
+    .update({ cohort_id: v.cohortId, starts_on: v.startsOn, ends_on: v.endsOn, reason: v.reason })
+    .eq("id", id)
+    .select("id");
+  if (error) return { ok: false, error: explain(error) };
+  if (!data || data.length === 0) return missing("break");
+  refresh();
+  return { ok: true };
+}
+
+/**
+ * ⚠ MOVING AN OVERRIDE CAN COLLIDE WITH ANOTHER ONE. 0044 holds one override
+ * per (schedule_id, occurs_on); editing this one onto a date that already has
+ * one raises 23505, which explain() already turns into a sentence naming the
+ * real problem rather than an index name.
+ */
+export async function updateSession(id: string, _prev: Result | null, fd: FormData): Promise<Result> {
+  await assertAdmin();
+  if (!id) return { ok: false, error: "Missing session id." };
+  const parsed = readSessionForm(fd);
+  if (!parsed.ok) return parsed;
+  const v = parsed.value;
+
+  const { data, error } = await createAdminClient()
+    .from("tuition_sessions")
+    .update({
+      cohort_id: v.cohortId, schedule_id: v.scheduleId, occurs_on: v.occursOn,
+      status: v.status, kind: v.kind, title: v.title,
+      starts_at: v.startsAtISO, ends_at: v.endsAtISO,
+      timezone: v.timezone, note: v.note,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .select("id");
+  if (error) return { ok: false, error: explain(error) };
+  if (!data || data.length === 0) return missing("lesson change");
   refresh();
   return { ok: true };
 }

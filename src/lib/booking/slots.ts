@@ -69,6 +69,43 @@ const overlaps = (aS: number, aE: number, bS: number, bE: number): boolean => aS
  * — three would only fit with no buffer at all. Advancing by the slot alone
  * would publish adjacent lessons with no gap to breathe.
  */
+/**
+ * ⚠ THE KEY IS BUILT AND PARSED IN ONE PLACE, ON PURPOSE.
+ *
+ * This string is the identity of a slot across a form submission: rendered into
+ * a hidden field, posted back, and re-resolved against fresh availability. When
+ * the builder and the parser live apart they drift — a separator changes on one
+ * side and every booking silently stops resolving, with no error anywhere
+ * because an unparseable key just looks like a slot that is no longer open.
+ *
+ * parseSlotKey VALIDATES rather than trusting. The value is attacker-controlled
+ * by the time it comes back: an unparseable date would reach Postgres as 22P02,
+ * and a negative or absurd duration would describe a lesson that ends before it
+ * starts.
+ */
+export function slotKey(teacherId: string, startsAt: Date, minutes: number): string {
+  return `${teacherId}::${startsAt.toISOString()}::${minutes}`;
+}
+
+export type ParsedSlotKey = { teacherId: string; startsAt: Date; minutes: number };
+
+export function parseSlotKey(key: string): ParsedSlotKey | null {
+  const parts = key.split("::");
+  if (parts.length !== 3) return null;
+  const [teacherId, iso, mins] = parts;
+  if (!teacherId) return null;
+  const startsAt = new Date(iso);
+  if (Number.isNaN(startsAt.getTime())) return null;
+  // ⚠ ROUND-TRIP CHECKED. `new Date("2026-13-40")` is Invalid Date and caught
+  // above, but `new Date("2026-06-01")` silently widens a date-only string into
+  // midnight UTC — a different slot from the one that was rendered. Requiring
+  // the input to be exactly what toISOString() would emit refuses both.
+  if (startsAt.toISOString() !== iso) return null;
+  const minutes = Number(mins);
+  if (!Number.isInteger(minutes) || minutes < 1 || minutes > 480) return null;
+  return { teacherId, startsAt, minutes };
+}
+
 export function slotsForDate(rule: AvailabilityRule, dateISO: string): Slot[] {
   if (!rule.isActive) return [];
   if (rule.validFrom && dateISO < rule.validFrom) return [];
@@ -101,7 +138,7 @@ export function slotsForDate(rule: AvailabilityRule, dateISO: string): Slot[] {
       subject: rule.subject,
       startsAt, endsAt,
       minutes: rule.slotMinutes,
-      key: `${rule.teacherId}::${startsAt.toISOString()}::${rule.slotMinutes}`,
+      key: slotKey(rule.teacherId, startsAt, rule.slotMinutes),
     });
   }
   return out;

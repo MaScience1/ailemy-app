@@ -22,10 +22,20 @@ import { balance, ledgerLines, type CreditTx } from "./credits.ts";
 export type MyBooking = {
   id: string; startsAt: Date; endsAt: Date; subject: string | null;
   status: string; paidWith: string;
+  /** 0051's AIL- handle. Nullable: a row could predate the backfill. */
+  bookingRef: string | null;
 };
 
 export type MyTuition = {
   signedIn: boolean;
+  /**
+   * ⚠ THE SESSION'S OWN id, SO A CALLER NEVER HAS TO RE-ASK auth FOR IT.
+   * Every row below came back through an own-row policy, so this is already
+   * the owner of all of them — it is exported so a policy decision (can this
+   * be cancelled?) can be made without a second round trip and without
+   * matching on email, which is not an identity.
+   */
+  userId: string | null;
   email: string | null;
   /** Group sessions for cohorts this student is enrolled on. */
   groupSessions: Awaited<ReturnType<typeof loadCalendar>>["sessions"];
@@ -47,7 +57,7 @@ export async function loadMyTuition(now = new Date()): Promise<MyTuition> {
   const { data: { user } } = await supabase.auth.getUser();
 
   const base: MyTuition = {
-    signedIn: Boolean(user), email: user?.email ?? null,
+    signedIn: Boolean(user), userId: user?.id ?? null, email: user?.email ?? null,
     groupSessions: [], enrolledCohortSlugs: [],
     upcomingPrivate: [], pastPrivate: [],
     creditBalance: 0, ledger: [], notes: [],
@@ -84,7 +94,7 @@ export async function loadMyTuition(now = new Date()): Promise<MyTuition> {
   const past: MyBooking[] = [];
   const bookings = await supabase
     .from("private_bookings")
-    .select("id,starts_at,ends_at,subject,status,paid_with")
+    .select("id,starts_at,ends_at,subject,status,paid_with,booking_ref")
     .order("starts_at", { ascending: true });
   if (bookings.error) {
     if (!NOT_MIGRATED.has(bookings.error.code ?? "")) {
@@ -98,6 +108,7 @@ export async function loadMyTuition(now = new Date()): Promise<MyTuition> {
         id, startsAt: new Date(s), endsAt: new Date(e),
         subject: str(r.subject), status: str(r.status) ?? "confirmed",
         paidWith: str(r.paid_with) ?? "single",
+        bookingRef: str(r.booking_ref),
       };
       // A cancelled lesson is history the moment it is cancelled, whatever
       // its date — showing it under "upcoming" would read as still happening.
