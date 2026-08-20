@@ -1,7 +1,58 @@
 -- ============================================================================
 -- 0047_PROPOSED_packages_and_credits.sql
 -- ----------------------------------------------------------------------------
--- ⚠ PROPOSED — NOT APPLIED. Apply AFTER 0046. Run each section separately.
+-- ⚠ APPLIED TO PRODUCTION 2026-08-19, after 0046. Renamed from
+-- 0047_PROPOSED_ once verified. VERIFICATION: ALL RUNNABLE ASSERTIONS PASS —
+-- AND THE RUN EXPOSED A DEFECT IN THIS FILE. SEE THE BOTTOM OF THIS BLOCK.
+--
+--   (a) an ACTIVE package with no stripe_price_id refused BY
+--       tuition_packages_active_needs_price — the dead-Buy guard        ✓
+--       …draft with no price fine · active WITH a price fine            ✓
+--   (b) THE APPEND-ONLY TRIGGER, run as service_role — the role that
+--       HOLDS every grant:
+--         UPDATE refused, 23001, message names append-only              ✓
+--         DELETE refused, 23001                                         ✓
+--         …and the row provably intact at delta 4 afterwards            ✓
+--   (c) a webhook RETRY refused BY …_idempotency, 23505                 ✓
+--       ⚠ THIS IS WHAT STOPS A STRIPE RETRY DOUBLING SOMEBODY'S CREDITS.
+--       …and two NULL-key rows both insert — the index is partial       ✓
+--   (d) a second debit for one booking refused BY …_one_debit_per_
+--       booking, 23505                                                  ✓
+--       …but a POSITIVE row for that booking IS allowed — the refund    ✓
+--   (e) delta 0 refused BY …_delta_nonzero                              ✓
+--   (f) a signed-in student read ONLY their own ledger; another
+--       student's 50 credits did not appear                             ✓
+--       …and the balance summed correctly to 10                         ✓
+--   (g) …and they CANNOT grant themselves credits, 42501                ✓
+--   (h) anon REFUSED on the ledger and on payment_events, 42501         ✓
+--   (i) anon sees an active package and NOT a draft                     ✓
+--   (j) the same Stripe event_id cannot be recorded twice, 23505        ✓
+--
+-- ============================================================================
+-- ⚠⚠ DEFECT FOUND BY THIS VERIFICATION — FIXED BY 0048
+-- ============================================================================
+-- The trigger above works exactly as specified. What is wrong is that
+-- append-only was made ABSOLUTE, while two foreign keys on this table perform
+-- writes of their own:
+--
+--   booking_id … ON DELETE SET NULL   deleting a booking fires an UPDATE
+--   user_id    … ON DELETE CASCADE    deleting a user fires a DELETE
+--
+-- Both are refused by the trigger. The second means NO USER WHO HAS EVER HELD
+-- A CREDIT CAN BE DELETED — and the interest form and privacy policy both
+-- promise families their data can be erased on request.
+--
+-- 0048 adds a named, transaction-scoped escape (SET LOCAL app.ledger_purge)
+-- and changes the two references to ON DELETE RESTRICT. Ordinary mutation is
+-- still refused from every role; erasing a PERSON becomes possible, which is a
+-- different act and a legal requirement.
+--
+-- ⚠ THIS RUN THEREFORE LEFT ROWS BEHIND: 7 ledger rows, 1 private booking and
+-- 2 probe auth users, which could not be cleaned up for precisely this reason.
+-- 0048's footer carries the exact statements to remove them.--
+--   ⚠ THE THREE PRIVILEGES WAS NOT RUN AND IS NOT CLAIMED. information_schema
+--   is not exposed through PostgREST and TRUNCATE/TRIGGER/REFERENCES cannot be
+--   exercised over REST. SQL Editor only.
 --
 -- ============================================================================
 -- ⚠ A LEDGER, NOT A COUNTER (§61)

@@ -1,8 +1,27 @@
 -- ============================================================================
 -- 0045_PROPOSED_private_availability.sql
 -- ----------------------------------------------------------------------------
--- ⚠ PROPOSED — NOT APPLIED. Rename to 0045_private_availability.sql only once
--- applied, and record the verification result in this header at the same time.
+-- ⚠ APPLIED TO PRODUCTION 2026-08-19. Renamed from 0045_PROPOSED_ once
+-- verified. VERIFICATION: ALL RUNNABLE ASSERTIONS PASS.
+--
+--   (a) weekday AND date together refused BY …_recurring_xor_dated      ✓
+--       …and NEITHER refused by the same constraint                     ✓
+--       weekday-only accepted · date-only accepted                      ✓
+--   (b) weekday 0 refused BY teacher_availability_weekday_iso           ✓
+--       — the getUTCDay trap, closed here as in 0044
+--   (c) an inverted window refused BY …_time_ordered                    ✓
+--   (d) anon CAN read availability                                      ✓
+--   (e) anon CAN read a block's times                                   ✓
+--       …and CANNOT read its `reason` — 42501, permission denied        ✓
+--       ⚠ THE COLUMN-LEVEL GRANT DOING THE ONE THING RLS CANNOT. A row
+--       policy cannot hide a column; the grant can, and does.
+--   (f) is_active hides a row from anon                                 ✓
+--       …and it returns when re-activated — the positive half           ✓
+--   (g) anon INSERT refused on both tables, 42501                       ✓
+--   (h) every probe row removed by captured id; both tables empty       ✓--
+--   ⚠ THE THREE PRIVILEGES WAS NOT RUN AND IS NOT CLAIMED. information_schema
+--   is not exposed through PostgREST and TRUNCATE/TRIGGER/REFERENCES cannot be
+--   exercised over REST. SQL Editor only.
 --
 -- ⚠ APPLY 0045, 0046 AND 0047 IN ORDER. 0046 references teacher_availability
 -- and 0047 references private_bookings.

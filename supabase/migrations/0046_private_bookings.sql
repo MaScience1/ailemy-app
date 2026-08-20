@@ -1,7 +1,36 @@
 -- ============================================================================
 -- 0046_PROPOSED_private_bookings.sql
 -- ----------------------------------------------------------------------------
--- ⚠ PROPOSED — NOT APPLIED. Apply AFTER 0045. Run each section separately.
+-- ⚠ APPLIED TO PRODUCTION 2026-08-19, after 0045. Renamed from
+-- 0046_PROPOSED_ once verified. VERIFICATION: ALL RUNNABLE ASSERTIONS PASS.
+--
+--   (a) an OVERLAPPING booking for one teacher refused BY the exclusion
+--       constraint private_bookings_no_overlap, 23P01                   ✓
+--       ⚠ THE DOUBLE-BOOKING GUARD, PROVEN. Two students clicking the
+--       same slot cannot both end up owning it.
+--   (b) …but the same time for a DIFFERENT teacher inserts              ✓
+--   (c) …and a CANCELLED booking frees its slot                         ✓
+--   (d) 13:00–14:00 and 14:00–15:00 do not collide — tstzrange is
+--       half-open, so back-to-back lessons are legal                    ✓
+--   (e) single with no payment_ref refused BY …_single_needs_payment    ✓
+--       …and paid_with 'credit' with none IS accepted                   ✓
+--   (f) anon REFUSED OUTRIGHT on both tables, 42501 — the PII line      ✓
+--       …and no column-level way in either                              ✓
+--       ⚠ CHECKED AS AN ERROR, NOT AS A ZERO. 0 rows would mean a grant
+--       existed and RLS merely filtered.
+--   (g) A SIGNED-IN STUDENT SEES ONLY THEIR OWN                         ✓
+--       every row returned belonged to them; another student's booking
+--       was invisible; their own hold was visible
+--   (h) …and CANNOT write their own booking, 42501                      ✓
+--   (i) a hold expiring in the past refused BY …_expiry_future          ✓
+--
+--   ⚠ (g)/(h) HAD NEVER BEEN RUN BEFORE. Every earlier round skipped the
+--   own-row policies for want of an authenticated session, and service_role
+--   is not a substitute — it bypasses RLS and proves nothing about a policy.
+--   This run created throwaway users, signed in as one, and tested for real.--
+--   ⚠ THE THREE PRIVILEGES WAS NOT RUN AND IS NOT CLAIMED. information_schema
+--   is not exposed through PostgREST and TRUNCATE/TRIGGER/REFERENCES cannot be
+--   exercised over REST. SQL Editor only.
 --
 -- ============================================================================
 -- ⚠ THE CENTRAL RULE: A SLOT IS NOT BOOKED UNTIL PAYMENT SUCCEEDS (§26)
