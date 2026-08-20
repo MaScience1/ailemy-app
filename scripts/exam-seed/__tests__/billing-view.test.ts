@@ -134,6 +134,19 @@ console.log("\n=== 4. repo scan — where the name is allowed to appear ===");
   ];
   /** A path is payer-scoped if it says so in its own name. */
   const PAYER_SCOPED = /(^|\/)payer[-.]/i;
+  /**
+   * ⚠ ONE EXEMPT CATEGORY, ADDED WHEN THIS GUARD CAUGHT A REAL FILE.
+   * scripts/db-checks/ holds verification scripts that run as service_role
+   * against the database and RENDER NOTHING. billing-0060-sessions.ts seeds a
+   * payment carrying a receipt_url precisely to prove a student cannot see it —
+   * the guard fired on the test FOR the rule.
+   *
+   * This is a category, not a path, and that is deliberate: a fourth db-check
+   * naming the column should not require editing this list, and no file under
+   * that directory can ever be a student surface. Every OTHER directory still
+   * needs an exact-path entry, so widening stays a decision rather than a habit.
+   */
+  const DB_CHECK = /^scripts\/db-checks\//;
 
   const roots = ["src", "scripts"];
   const offenders: string[] = [];
@@ -147,7 +160,7 @@ console.log("\n=== 4. repo scan — where the name is allowed to appear ===");
       if (!/\.(ts|tsx)$/.test(entry)) continue;
       scanned++;
       const rel = relative(".", full);
-      if (ALLOWED.includes(rel) || PAYER_SCOPED.test(rel)) continue;
+      if (ALLOWED.includes(rel) || PAYER_SCOPED.test(rel) || DB_CHECK.test(rel)) continue;
       if (/receipt_url|receiptUrl/.test(readFileSync(full, "utf8"))) offenders.push(rel);
     }
   };
@@ -159,6 +172,15 @@ console.log("\n=== 4. repo scan — where the name is allowed to appear ===");
     ALLOWED.join(", "));
   t("⚠ receipt_url appears in NO other file — a student surface cannot name it",
     offenders.length === 0, offenders.join("\n      "));
+
+  // ⚠ THE EXEMPTION MUST BE EXERCISED, OR IT IS AN UNTESTED HOLE. If no
+  // db-check names the column any more, the category is dead code pretending to
+  // be a safeguard, and this line says so instead of passing quietly.
+  const dbChecksNaming = readdirSync("scripts/db-checks")
+    .filter((f) => /\.ts$/.test(f))
+    .filter((f) => /receipt_url|receiptUrl/.test(readFileSync(join("scripts/db-checks", f), "utf8")));
+  t("⚠ the db-checks exemption is USED — at least one verification script names it on purpose",
+    dbChecksNaming.length > 0, dbChecksNaming.join(", ") || "none — the exemption is now dead code");
 }
 
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);
