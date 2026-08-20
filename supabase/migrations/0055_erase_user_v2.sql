@@ -5,8 +5,9 @@
 -- _PROPOSED_ once verified.
 --
 -- ============================================================================
--- ⚠ VERIFIED END TO END 2026-08-20 — 53 live assertions, 0 failures, against
--- three throwaway @example.test identities, all erased, 0 leftovers.
+-- ⚠ VERIFIED END TO END 2026-08-20 — 53 scripted assertions plus a founder
+-- paste run for the two DDL blocks. 0 failures, 0 leftovers. Every block in
+-- this file has now been observed at least once.
 -- ============================================================================
 --   0049(a) anon CANNOT call erase_user — 42501 permission denied for
 --           function erase_user. The single most dangerous object in this
@@ -52,14 +53,52 @@
 --   The enrolment kept amount_pence 16900 and its stripe_ref — a payment stays
 --   provable — and lost the address, parent name and WhatsApp number.        ✓
 --
---   ⊘ STILL NOT RUN, two of them:
---       0049(g) an ordinary DELETE on the ledger still refused. Only UPDATE
---               was re-observed.
---       0055(e) BOTH HALVES OF THE SWEEP SABOTAGE. It needs CREATE TABLE and
---               DROP TABLE; there is no psql and PostgREST issues no DDL.
---               So the generic residue sweep has never been WATCHED TO FAIL,
---               and a guard not seen to fail has not been shown to work.
---               Founder paste.
+--   0049(g) an ordinary DELETE on the ledger is still refused. Observed
+--           2026-08-20 via founder paste: 23001, and the message says DELETE
+--           rather than UPDATE — TG_OP is interpolated, so the word proves
+--           which verb was refused. The row was then counted and found
+--           INTACT (1). Both halves; a refusal with no surviving row would
+--           only have proved that something errored.                        ✓
+--
+--   0055(e) ⚠ BOTH HALVES OF THE SWEEP SABOTAGE, observed 2026-08-20.
+--           HALF ONE  a probe table carrying the target's address made
+--                     erase_user REFUSE, naming it: 'the address still
+--                     appears in 1 — sabotage_probe.email (1 row(s)).
+--                     NOTHING WAS ERASED'                                   ✓
+--           HALF TWO  the table dropped, the same call SUCCEEDED with a
+--                     receipt — so the refusal was CAUSED by the sweep and
+--                     not by some unrelated fault sitting in the way        ✓
+--           The generic residue sweep has now been watched to fail. Until
+--           this run it had not, and a guard not seen to fail has not been
+--           shown to work.
+--
+--   ⚠ ROLLBACK TOTALITY WAS PROVEN TRANSITIVELY, NOT DIRECTLY, AND THE
+--   DIFFERENCE IS RECORDED RATHER THAN GLOSSED. The block that reads the
+--   user and ledger row between the refusal and the retry was run OUT OF
+--   ORDER — after the successful erase — so it returned 0,0: true, and about
+--   the wrong moment. What stands in its place:
+--       · the retry returned a RECEIPT, not P0002. erase_user raises P0002
+--         if and only if the target row is absent, so the user was still
+--         there after the refusal.
+--       · that receipt carried ledger_rows_removed = 1, and that number is a
+--         GET DIAGNOSTICS ROW_COUNT of its own DELETE — so exactly one ledger
+--         row was still there to remove.
+--       · nothing between the two could have restored either: the
+--         out-of-order block is read-only and the only other statement was
+--         DROP TABLE on an unrelated table with no foreign key to either.
+--   Both rows therefore survived the refusal, which is what total rollback
+--   means. The probe held no other rows, so this covers everything the
+--   refused transaction would have touched.
+--
+--   ⚠ AND THE FIRST ATTEMPT AT THIS BLOCK FAILED IN THE WAY THIS FILE'S OWN
+--   HEADER WARNS ABOUT. public.sabotage_probe already existed, CREATE TABLE
+--   raised 42P07, the editor aborted the rest of that paste, and the fixture
+--   INSERT never ran — leaving an EMPTY trap. erase_user found no residue,
+--   succeeded, and destroyed the probe it was meant to be refused on. A
+--   ZERO-ROW TABLE CANNOT FAIL AN ERASURE CHECK: the rule was written here
+--   for the pre-counts and not applied to the fixture. The re-run added a
+--   fixture pre-check that stops if the trap is empty, and split CREATE,
+--   REVOKE and INSERT into separate pastes so one abort cannot skip another.
 --
 -- ============================================================================
 -- ⚠ WHY THIS FILE EXISTS: 0049 ERASES A PERSON FROM THE TABLES THAT EXISTED
