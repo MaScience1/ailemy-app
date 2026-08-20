@@ -1,7 +1,43 @@
 -- ============================================================================
 -- 0049_PROPOSED_erase_user_rpc.sql
 -- ----------------------------------------------------------------------------
--- ⚠ PROPOSED — NOT APPLIED. Apply AFTER 0048. Run each section separately.
+-- ⚠ APPLIED TO PRODUCTION 2026-08-19, after 0048. Renamed from
+-- 0049_PROPOSED_ once verified. VERIFICATION: ALL 28 RUNNABLE ASSERTIONS PASS.
+--
+--   (a) anon CANNOT call it, 42501                                     ✓
+--       a SIGNED-IN user cannot either, 42501                          ✓
+--       …not even on themselves                                        ✓
+--       ⚠ THE CHECK THAT THE REVOKE RAN, NOT THE GRANT. Postgres gives
+--       EXECUTE on a new function to PUBLIC by default, so a missing
+--       REVOKE would hand anon the ability to delete any user by id.
+--       Tested as anon AND as a real signed-in session, not inferred.
+--   (b) an unknown id refused, P0002 'no such user'                    ✓
+--   (c) a user WITH a ledger row is erased                             ✓
+--       …and admin.deleteUser STILL fails on the same user first,
+--       confirming the old path is unchanged and this is the fix       ✓
+--       …reports ledger_rows_removed: 1 · rows gone · person gone      ✓
+--   (d) refuses while they are the TEACHER on a booking, naming the
+--       count, and the teacher survives                                ✓
+--   (e) a STUDENT booking does not block it: the student is erased and
+--       the lesson SURVIVES with user_id NULL — it happened, the
+--       person is gone                                                 ✓
+--       …and once the bookings are gone the teacher CAN be erased      ✓
+--   (f) THE ESCAPE DIED WITH ITS TRANSACTION. After an erase_user call,
+--       an ordinary UPDATE on the ledger is still refused, 23001       ✓
+--       ⚠ HAD THIS PASSED INSTEAD, set_config's third argument was
+--       wrong and the ledger would no longer be append-only — worse
+--       than the defect this file fixes.
+--   (g) an ordinary DELETE still refused, 23001, row provably intact   ✓
+--
+--   ⚠ AND THIS RUN LEFT NOTHING BEHIND, unlike 0047's and 0048's. The
+--   function cleans up after its own probes, which is the first time the
+--   verification for this table has been able to.
+--
+-- ============================================================================
+-- ⚠ THE SCHEMA IS NOW CLOSED. 0050 is RESERVED for announcement targeting;
+-- the next free number is 0051, and it comes from the planning chat, never
+-- from a folder listing.
+-- ============================================================================
 --
 -- ============================================================================
 -- ⚠ 0048 FIXED ERASURE FOR A HUMAN AT A SQL PROMPT. IT DID NOT FIX IT FOR THE
