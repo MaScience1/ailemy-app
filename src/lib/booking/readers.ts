@@ -63,6 +63,21 @@ const hhmm = (v: unknown): string | null => {
 
 export async function loadOpenSlots(args: {
   from: string; to: string; now: Date; subject?: string;
+  /**
+   * ⚠ THE VIEWER'S OWN HOLD IS NOT AN OBSTACLE TO THE VIEWER (§28).
+   *
+   * A hold exists to stop OTHER people taking a slot while one person pays for
+   * it. Counting a student's own hold against them means an abandoned checkout
+   * locks them out of the very slot they were trying to buy, for fifteen
+   * minutes, with no way to tell them why — and planHold already takes exactly
+   * this position, allowing a re-hold of your own slot.
+   *
+   * Omitted on public reads, so a visitor still sees the slot as taken. Passed
+   * only on the write path, where we know who is asking. Matched on EMAIL, not
+   * user id, because a hold may predate the account (0046's column is NOT NULL
+   * for exactly that reason).
+   */
+  ignoreHoldsForEmail?: string;
 }): Promise<SlotsLoad> {
   const empty: SlotsLoad = { slots: [], packages: [], hasAvailability: false };
   const db = admin();
@@ -138,7 +153,13 @@ export async function loadOpenSlots(args: {
   }
   // ⚠ EXPIRY IS APPLIED HERE, ON READ. No sweep job is required for the slot
   // to come back; an abandoned checkout releases itself.
-  busy.push(...holdsAsBusy(liveHoldRows, args.now));
+  const mine = args.ignoreHoldsForEmail?.trim().toLowerCase() ?? null;
+  busy.push(
+    ...holdsAsBusy(
+      mine === null ? liveHoldRows : liveHoldRows.filter((h) => h.email.toLowerCase() !== mine),
+      args.now,
+    ),
+  );
 
   // ⚠ THE GROUP TIMETABLE, FROM THE ONE SCHEDULE SOURCE (§25).
   const cal = await loadCalendar({ from: args.from, to: args.to, includeCancelled: false });
