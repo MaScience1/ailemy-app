@@ -24,10 +24,20 @@
 --   0055 re-run   53/53 — the whole of v2's verification, including both halves
 --                 of the sabotage test
 --
--- ⚠ SKIPPED, AND NOT COUNTED AS PASSED: (g)'s anon and authenticated halves.
--- has_function_privilege is not reachable through PostgREST. service_role's
--- EXECUTE is proven behaviourally by every erase above; the two `f`s are a
--- founder SQL-Editor block that has not been run.
+--   (g)           f, f, t — proven BEHAVIOURALLY, not from the catalogue.
+--                 has_function_privilege is not reachable through PostgREST, so
+--                 each role was made to TRY: anon 42501, a real authenticated
+--                 student 42501 (including at their OWN uid, and the account
+--                 survived), service_role P0002 'no such user'.
+--
+-- ⚠ THE (g) TARGET WAS A UUID THAT DOES NOT EXIST, AND THAT IS THE SAFETY
+-- DESIGN. erase_user resolves the email and raises P0002 before any write, so
+-- even the catastrophic outcome — anon can execute it — erases nobody. A test
+-- for "can this delete people" must not be able to delete anybody. It also
+-- makes the two answers cleanly distinguishable: 42501 is the grant refusing,
+-- P0002 is the function running.
+--
+-- Nothing in this file's verification is now unrun.
 -- ============================================================================
 -- 0055's generic sweep counts every text column in `public` named email or
 -- %_email against the address being erased, and RAISES if the address is still
