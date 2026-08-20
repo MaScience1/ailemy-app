@@ -11,6 +11,7 @@ import { createClient as createServerClient } from "@/lib/supabase/server";
 import { planCancellation, canRedeem, explainCancellation } from "./cancellation.ts";
 import { stripeConfig } from "./config.ts";
 import { planRestore, planSpend } from "./credits.ts";
+import { eventKey, notifyQuietly } from "./notify";
 import { parseSlotKey } from "./slots.ts";
 import { loadOpenSlots } from "./readers";
 import { loadMyTuition } from "./student";
@@ -158,7 +159,11 @@ export async function bookWithCredit(_prev: BookingResult | null, fd: FormData):
     // inapplicable — a credit booking has no payment_ref and must not invent one.
     paid_with: "credit",
     status: "confirmed",
-  }).select("id").single();
+    // ⚠ booking_ref IS NOT SET HERE. 0051's DEFAULT generates it, and the
+    // column is selected back so the student can be told it in the same breath
+    // as "booked" — a reference they are given only by email is a reference
+    // they do not have when they need it.
+  }).select("id,booking_ref").single();
 
   if (created.error) return { ok: false, error: explain(created.error, "private_bookings") };
   const bookingId = (created.data as { id: string }).id;
@@ -195,8 +200,39 @@ export async function bookWithCredit(_prev: BookingResult | null, fd: FormData):
     .eq("starts_at", slot.startsAt.toISOString())
     .ilike("email", user.email);
 
+  /**
+   * ⚠ THE OUTBOX ROW, AFTER THE FACT IT DESCRIBES — not before, and not inside
+   * the same transaction, because PostgREST does not offer one. It is written
+   * quietly: the lesson IS booked, and failing the student's booking because an
+   * outbox row did not write would be a lie about the thing they care about.
+   *
+   * The key is the BOOKING ID, so a double-submitted form records one fact.
+   */
+  const ref = (created.data as { booking_ref?: string | null }).booking_ref ?? null;
+  await notifyQuietly({
+    kind: "booking_confirmed",
+    userId: user.id,
+    email: user.email,
+    subjectType: "private_booking",
+    subjectId: bookingId,
+    // Facts a template renders, never a rendered sentence.
+    payload: {
+      bookingRef: ref,
+      startsAt: slot.startsAt.toISOString(),
+      endsAt: slot.endsAt.toISOString(),
+      subject: slot.subject,
+      paidWith: "credit",
+    },
+    idempotencyKey: eventKey("booking_confirmed", bookingId),
+  });
+
   refresh();
-  return { ok: true, message: "Booked. It is on your calendar and we have emailed nobody yet — notifications land with 0053." };
+  return {
+    ok: true,
+    message: ref
+      ? `Booked — your reference is ${ref}. It is on your calendar.`
+      : "Booked. It is on your calendar.",
+  };
 }
 
 /**
@@ -313,6 +349,25 @@ export async function cancelOwnBooking(bookingId: string): Promise<BookingResult
     return { ok: true, message: "Lesson cancelled. Your credit did not return automatically — we are on it." };
   }
 
+  await notifyQuietly({
+    kind: "booking_cancelled",
+    userId: user.id, email: null,
+    subjectType: "private_booking", subjectId: bookingId,
+    payload: { cancelledBy: "student", creditRestored: true },
+    idempotencyKey: eventKey("booking_cancelled", bookingId),
+  });
+  // ⚠ A SECOND, SEPARATE FACT. "Your lesson is cancelled" and "your credit is
+  // back" are two things a student checks independently, and folding them into
+  // one row would mean the credit note could never be re-sent without re-sending
+  // the cancellation. Distinct keys, distinct rows.
+  await notifyQuietly({
+    kind: "credit_restored",
+    userId: user.id, email: null,
+    subjectType: "private_booking", subjectId: bookingId,
+    payload: { delta: 1, reason: "cancellation_refund" },
+    idempotencyKey: eventKey("credit_restored", bookingId),
+  });
+
   refresh();
   return { ok: true, message: "Lesson cancelled and your credit is back on your account." };
 }
@@ -367,6 +422,19 @@ export async function requestCancellation(_prev: BookingResult | null, fd: FormD
     }
     return { ok: false, error: explain(created.error, "cancellation_requests") };
   }
+
+  const requestId = ((created.data ?? []) as { id: string }[])[0]?.id ?? bookingId;
+  await notifyQuietly({
+    kind: "cancellation_requested",
+    userId: user.id, email: user.email,
+    subjectType: "cancellation_request", subjectId: requestId,
+    // ⚠ THE REASON IS NOT COPIED INTO THE PAYLOAD. It is the family's own words
+    // about why they cannot attend, it already lives on the request row, and a
+    // second copy inside a jsonb blob is a second thing 0055's erasure would
+    // have to find. One home for sensitive free text.
+    payload: { bookingId, lessonStaysBooked: true },
+    idempotencyKey: eventKey("cancellation_requested", requestId),
+  });
 
   refresh();
   return { ok: true, message: "Request sent. We will come back to you — the lesson stays booked until we do." };

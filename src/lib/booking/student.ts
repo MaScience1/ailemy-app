@@ -22,6 +22,8 @@ import { balance, ledgerLines, type CreditTx } from "./credits.ts";
 export type MyBooking = {
   id: string; startsAt: Date; endsAt: Date; subject: string | null;
   status: string; paidWith: string;
+  /** 0051's AIL- handle. Nullable: a row could predate the backfill. */
+  bookingRef: string | null;
 };
 
 export type MyTuition = {
@@ -92,7 +94,7 @@ export async function loadMyTuition(now = new Date()): Promise<MyTuition> {
   const past: MyBooking[] = [];
   const bookings = await supabase
     .from("private_bookings")
-    .select("id,starts_at,ends_at,subject,status,paid_with")
+    .select("id,starts_at,ends_at,subject,status,paid_with,booking_ref")
     .order("starts_at", { ascending: true });
   if (bookings.error) {
     if (!NOT_MIGRATED.has(bookings.error.code ?? "")) {
@@ -106,6 +108,7 @@ export async function loadMyTuition(now = new Date()): Promise<MyTuition> {
         id, startsAt: new Date(s), endsAt: new Date(e),
         subject: str(r.subject), status: str(r.status) ?? "confirmed",
         paidWith: str(r.paid_with) ?? "single",
+        bookingRef: str(r.booking_ref),
       };
       // A cancelled lesson is history the moment it is cancelled, whatever
       // its date — showing it under "upcoming" would read as still happening.

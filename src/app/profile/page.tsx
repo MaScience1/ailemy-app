@@ -240,6 +240,13 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
                     {formatDay(b.startsAt, CANONICAL_TZ)}
                   </span>
                   <span className="flex-1">{b.subject ?? "1-to-1"}</span>
+                  {/* ⚠ THE REFERENCE IS SHOWN WHERE A SUPPORT CONVERSATION
+                      STARTS. A past lesson is the one a family emails about,
+                      and a code they can read aloud beats "the Tuesday one".
+                      Omitted, not faked, when the row predates 0051. */}
+                  {b.bookingRef && (
+                    <span className="font-mono text-[10px] tracking-wider text-ink/45">{b.bookingRef}</span>
+                  )}
                   <span className="font-mono text-[10px] uppercase tracking-wider">{b.status}</span>
                 </li>
               ))}

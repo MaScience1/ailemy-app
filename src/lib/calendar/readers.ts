@@ -239,10 +239,11 @@ export async function loadPersonalCalendar(range: { from: string; to: string }):
       cohortSlug: null,
       teacherName: null,
       cancelledReason: null,
-      // ⚠ NO booking REFERENCE YET — the column arrives with 0051 and that is
-      // not applied. Null rather than an invented code, so the panel omits the
-      // line instead of printing something support cannot look up.
-      bookingRef: null,
+      // ⚠ 0051 IS APPLIED, so this is a real AIL- reference now. Still nullable
+      // in the type: a reader that assumes it exists would break the page for
+      // any row written before the backfill, and `null` renders as an omitted
+      // line rather than an invented code support cannot look up.
+      bookingRef: b.bookingRef,
       bookingId: b.id,
     });
   }
