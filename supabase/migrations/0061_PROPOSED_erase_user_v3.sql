@@ -19,6 +19,23 @@
 -- erasure extension in the SAME set as the tables is the standing correction,
 -- not a courtesy.
 --
+-- ⚠ AMENDED AFTER AN ADVERSARIAL REVIEW, BEFORE FIRST APPLY. Four independent
+-- lenses found the same blocking defect: the billing_profiles tombstone
+-- matched only owner_user_id, while private_bookings and cohort_enrolments
+-- have matched `user_id = target OR lower(email) = lower(target_email)` since
+-- 0055 — and this file's own comment claimed parity with them. billing_profiles
+-- is the ONE table where that second arm is not optional: 0060 makes
+-- owner_user_id nullable on purpose and billing_email NOT NULL, so a personal
+-- address is guaranteed to exist there with no pointer beside it.
+--
+-- An unowned profile carrying the target's address would have made erase_user
+-- refuse FOREVER — the sweep finds the address, raises 23001, and tells the
+-- operator to extend a function that already covers the table. Fixed three
+-- ways: a new pre-check that refuses and NAMES a profile owned by somebody
+-- else, a two-armed tombstone, and the same two arms on the Stripe collection.
+-- payer_erasure_side_effects also lost an entitlements join that would have
+-- made it almost always empty. See (h), (i) and (j).
+--
 -- WHAT CHANGES FROM v2 — nothing is removed, five things are added:
 --
 --   entitlements                — DELETE, counted (0058)
@@ -75,6 +92,7 @@ DECLARE
   payments_unlinked    integer := 0;
   stripe_customers     text[] := ARRAY[]::text[];
   payerless_students   uuid[] := ARRAY[]::uuid[];
+  foreign_profiles     text[] := ARRAY[]::text[];
 BEGIN
   SELECT u.email INTO target_email FROM auth.users u WHERE u.id = target;
   IF target_email IS NULL THEN
@@ -119,6 +137,43 @@ BEGIN
     RAISE EXCEPTION
       'erase_user: % has marked % submission(s). Reassign marker_id on those rows first — a marker''s marking is the student''s feedback, and submission_feedback.marker_id has no ON DELETE clause (0009), so the erasure would fail with a bare 23503 at the last statement.',
       target_email, feedback_left
+      USING ERRCODE = 'restrict_violation';
+  END IF;
+
+  /**
+   * ⚠ THE THIRD PRE-CHECK, ADDED IN REVIEW: A BILLING PROFILE CARRYING THIS
+   * ADDRESS THAT SOMEBODY ELSE OWNS.
+   * ============================================================================
+   * billing_profiles is the one table where a personal address is guaranteed to
+   * exist independently of any pointer: 0060 makes owner_user_id NULLABLE on
+   * purpose (an admin may create a profile for a family that pays by transfer
+   * and has no login) while billing_email is NOT NULL. That is exactly the
+   * shape 0055's header rule names — "SET NULL ON A user_id DOES NOT ANONYMISE
+   * A ROW THAT ALSO STORES AN EMAIL ADDRESS."
+   *
+   * The scrub below therefore covers TWO cases: the profile this person owns,
+   * and an UNOWNED profile carrying their address. It cannot cover the third —
+   * a profile owned by a DIFFERENT LIVE ACCOUNT that happens to carry this
+   * address, which a two-parent family produces routinely. Scrubbing that would
+   * rewrite a third party's billing identity to erase this person, and this
+   * function's whole doctrine is that it does not delete one person's record to
+   * erase another's.
+   *
+   * So it REFUSES, in the same shape as the teacher and marker checks, and
+   * NAMES THE PROFILE. Without this the operator meets a bare sweep failure
+   * telling them to "extend erase_user() to cover that table" — a table it
+   * already covers — with no way to see which row is at fault.
+   */
+  SELECT coalesce(array_agg(b.id::text), ARRAY[]::text[])
+    INTO foreign_profiles
+    FROM public.billing_profiles b
+   WHERE lower(b.billing_email) = lower(target_email)
+     AND b.owner_user_id IS NOT NULL
+     AND b.owner_user_id <> target;
+  IF array_length(foreign_profiles, 1) > 0 THEN
+    RAISE EXCEPTION
+      'erase_user: % is the billing address on % profile(s) owned by somebody else — %. Change billing_email on those rows, or reassign them, before erasing. They are not scrubbed automatically: rewriting a third party''s billing identity to erase this person is the wrong trade, the same one refused for a teacher''s lessons and a marker''s marking.',
+      target_email, array_length(foreign_profiles, 1), array_to_string(foreign_profiles, ', ')
       USING ERRCODE = 'restrict_violation';
   END IF;
 
@@ -273,20 +328,35 @@ BEGIN
   SELECT coalesce(array_agg(b.stripe_customer_id), ARRAY[]::text[])
     INTO stripe_customers
     FROM public.billing_profiles b
-   WHERE b.owner_user_id = target AND b.stripe_customer_id IS NOT NULL;
+   WHERE (b.owner_user_id = target
+          OR (b.owner_user_id IS NULL AND lower(b.billing_email) = lower(target_email)))
+     AND b.stripe_customer_id IS NOT NULL;
 
   /**
    * ⚠ WHO ELSE THIS ERASURE AFFECTS. A parent being erased may be paying for a
-   * child who is not. Their entitlements and payments survive untouched — this
-   * refuses nothing — but somebody has to know the payer behind a live seat is
-   * now a tombstone. Named in the receipt rather than discovered at renewal.
+   * child who is not. Their records survive untouched — this refuses nothing —
+   * but somebody has to know the payer behind a live seat is now a tombstone.
+   * Named in the receipt rather than discovered at renewal.
+   *
+   * ⚠ NO JOIN TO entitlements, AND THE FIRST DRAFT HAD ONE. It required an
+   * ACTIVE entitlement per child, which would have made this array almost
+   * always empty and the emptiness meaningless: 0058's own header says
+   * entitlements is NOT how private tuition or cohort seats are represented —
+   * those are lesson_credit_transactions and cohort_enrolments — and with
+   * Stripe keyless the only rows that can exist at all are admin grants. A
+   * parent paying for two children by lesson credits would have been reported
+   * as affecting nobody, and the operator would have read [] as "safe".
+   *
+   * The right population is simply: everybody linked to a profile this
+   * transaction is about to tombstone, minus the person being erased.
    */
   SELECT coalesce(array_agg(DISTINCT bps.student_id), ARRAY[]::uuid[])
     INTO payerless_students
     FROM public.billing_profile_students bps
     JOIN public.billing_profiles b ON b.id = bps.billing_profile_id
-    JOIN public.entitlements e ON e.user_id = bps.student_id AND e.status = 'active'
-   WHERE b.owner_user_id = target AND bps.student_id <> target;
+   WHERE (b.owner_user_id = target
+          OR (b.owner_user_id IS NULL AND lower(b.billing_email) = lower(target_email)))
+     AND bps.student_id <> target;
 
   /**
    * ⚠ SCRUBBED, NOT DELETED, AND IT MUST RUN BEFORE `DELETE FROM auth.users`.
@@ -297,13 +367,24 @@ BEGIN
    *
    * The row survives because payments reference it and because it may pay for
    * somebody who has not asked to be erased. What leaves is the person.
+   *
+   * ⚠ TWO ARMS, NOT ONE, AND THE SECOND WAS MISSING UNTIL REVIEW. The pointer
+   * arm alone left an UNOWNED profile carrying this address untouched — the
+   * sweep then found it and refused the whole erasure permanently, telling the
+   * operator to extend a function that already covered the table. private_bookings
+   * and cohort_enrolments above have carried both arms since 0055 for exactly
+   * this reason; this one had imported only half of the pattern it cites.
+   *
+   * The third case — a profile owned by somebody ELSE carrying this address —
+   * is refused by the pre-check at the top, not scrubbed here.
    */
   UPDATE public.billing_profiles
      SET billing_name    = 'Erased user',
          billing_email   = 'erased-' || target::text || '@ailemy.invalid',
          billing_country = NULL,
          updated_at      = now()
-   WHERE owner_user_id = target;
+   WHERE owner_user_id = target
+      OR (owner_user_id IS NULL AND lower(billing_email) = lower(target_email));
   GET DIAGNOSTICS billing_scrubbed = ROW_COUNT;
 
   -- ── the person ───────────────────────────────────────────────────────────
@@ -455,8 +536,15 @@ GRANT EXECUTE ON FUNCTION public.erase_user(uuid) TO service_role;
 -- (e) both obligations are present and populated
 -- PASS: stripe_erasure_required is a JSON array containing the probe's
 --   customer id — not [], because the fixture gave them one.
---   ⚠ AN EMPTY ARRAY HERE WITH A CUSTOMER ID IN THE FIXTURE MEANS THE
---   COLLECTION RAN AFTER THE SCRUB. Order matters; that is why it is above it.
+--   ⚠ AN EMPTY ARRAY HERE WITH A CUSTOMER ID IN THE FIXTURE MEANS THE PROFILE'S
+--   owner_user_id DID NOT MATCH — look there first, not at statement order.
+--   (An earlier draft of this note blamed the ordering. That was wrong: the
+--   scrub writes billing_name, billing_email, billing_country and updated_at
+--   and touches NEITHER column the collection reads, so moving the collection
+--   below it would return a byte-identical array. The collection's placement is
+--   load-bearing only against `DELETE FROM auth.users`, which is what actually
+--   nulls owner_user_id. A diagnostic that names the wrong cause sends the
+--   operator to re-read correct code while the real fault goes uninvestigated.)
 -- PASS: payer_erasure_side_effects is present. With the fixture as described
 --   (A pays only for themselves) it is []. To see it populated, link a SECOND
 --   probe student B to A's billing profile and give B an ACTIVE entitlement:
@@ -478,3 +566,40 @@ GRANT EXECUTE ON FUNCTION public.erase_user(uuid) TO service_role;
 --   has_function_privilege('authenticated','public.erase_user(uuid)','EXECUTE') AS u_x,
 --   has_function_privilege('service_role','public.erase_user(uuid)','EXECUTE')  AS control_true;
 -- PASS: f, f, t.
+--
+-- (h) ⚠ AN UNOWNED PROFILE CARRYING THE ADDRESS IS SCRUBBED — the arm that was
+--     missing, and the one that would have made erasure impossible.
+-- (as service_role) seed a SECOND profile for a fresh probe Y:
+--   INSERT INTO public.billing_profiles (owner_user_id, billing_name, billing_email)
+--   VALUES (NULL, 'Bank transfer family', '<Y''s address>');
+--   ⚠ owner_user_id NULL is not a contrivance — 0060 documents it as the
+--   admin-created bank-transfer case.
+-- Confirm it exists, then erase Y.
+-- PASS: a receipt, with billing_profiles_scrubbed >= 1, and the row now reads
+--   billing_email = 'erased-<Y-uid>@ailemy.invalid'.
+--   ⚠ WITHOUT THIS BLOCK THE FIX IS UNTESTED. Every other block seeds a profile
+--   the probe OWNS, which is the one case the original predicate handled.
+--
+-- (i) ⚠ A PROFILE OWNED BY SOMEBODY ELSE IS REFUSED, AND NAMED
+-- (as service_role) with probes Y and Z both present, give Z a profile
+-- carrying Y's address:
+--   INSERT INTO public.billing_profiles (owner_user_id, billing_name, billing_email)
+--   VALUES ('<Z''s uid>', 'Other parent', '<Y''s address>');
+-- Then erase Y.
+-- PASS: 23001, naming the profile id, saying the address is on a profile owned
+--   by somebody else and that it is not scrubbed automatically.
+-- PASS: Y is STILL PRESENT, and Z's profile is UNCHANGED — refused, not
+--   half-applied, and no third party's billing identity was rewritten.
+--   ⚠ THIS IS THE CASE THAT MUST NOT BE "FIXED" BY WIDENING THE SCRUB. A
+--   two-parent family produces it routinely.
+--
+-- (j) payer_erasure_side_effects names children with NO entitlements row
+-- (as service_role) link a probe child C to the payer's profile and give C
+-- NOTHING — no entitlement, no payment. Erase the payer.
+-- PASS: payer_erasure_side_effects contains C's uid.
+--   ⚠ THE FIRST DRAFT JOINED entitlements AND WOULD HAVE RETURNED []. Nothing
+--   writes entitlements while Stripe is keyless, and 0058 says cohort seats and
+--   1-to-1 credits are not represented there at all — so the array would have
+--   been empty for every real family and the operator would have read that as
+--   "nobody else is affected".
+--
