@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/run-tests.ts",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json",
+    "lesson:ingest": "python3 scripts/lesson-ingest/ingest.py"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",
