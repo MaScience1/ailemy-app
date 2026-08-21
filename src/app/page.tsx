@@ -12,6 +12,10 @@ import { TryAilemy } from "@/components/home/TryAilemy";
 import { HomeFaq } from "@/components/home/Faq";
 import { WaitlistForm } from "@/components/tuition/WaitlistForm";
 import { loadCapacity, type Capacity } from "@/lib/public/capacity";
+import { NextStep } from "@/components/home/NextStep";
+import { SocialProof } from "@/components/home/SocialProof";
+import { loadIdentity } from "@/lib/account/identity";
+import { loadProfileCourses } from "@/lib/account/profile-reader";
 import { nextSession, distanceLabel } from "@/lib/calendar/next-session";
 import { dayKeyOf } from "@/lib/calendar/grid";
 import { getNavSession } from "@/lib/auth/nav-session";
@@ -72,6 +76,19 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
   const chemistryCohorts = cohorts.filter((c) => c.subject === "chemistry");
   const { currency } = await currentCurrency();
   const showToggle = offersCurrencyChoice(chemistryCohorts);
+
+  /**
+   * ⚠ §31 — ONLY FOR SOMEBODY WE ACTUALLY KNOW SOMETHING ABOUT. Signed in AND
+   * enrolled. An anonymous visitor gets nothing rather than a personalised-
+   * looking panel addressed to no one, and a signed-in student with no
+   * enrolments gets nothing rather than an empty "your next step".
+   *
+   * ⚠ AND IT COSTS NOTHING WHEN SIGNED OUT — neither read is issued.
+   */
+  const identity = session ? await loadIdentity() : null;
+  const myCourses = identity ? await loadProfileCourses(identity.account.userId) : null;
+  const firstCourse =
+    myCourses?.available === true && myCourses.courses.length > 0 ? myCourses.courses[0] : null;
 
   /**
    * ⚠ ONE RPC PER CHEMISTRY COHORT SHOWN, and only those. The homepage renders
@@ -306,6 +323,20 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
       >
         <TryAilemy />
       </Section>
+
+      {/* ── 3d. your next step (§31) ─────────────────────────────────────
+          ⚠ ABSENT ENTIRELY FOR A STRANGER. A header with nothing under it is
+          worse than nothing at all. */}
+      {firstCourse && (
+        <div className="mx-auto max-w-6xl px-6 pb-10 sm:pb-14">
+          <NextStep
+            courseName={[firstCourse.curriculum, firstCourse.subject, firstCourse.level]
+              .filter(Boolean).join(" ") || firstCourse.courseName}
+            subject={firstCourse.subject}
+            courseSlug={firstCourse.courseSlug}
+          />
+        </div>
+      )}
 
       {/* ── 4. subject selector ───────────────────────────────────────── */}
       <Section id="subjects" title="Three sciences, one platform">
@@ -551,6 +582,21 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           or endorsed by any examination board.
         </p>
       </Section>
+
+      {/* ── 12a. social proof (§29, §27 position 12) ─────────────────────
+          ⚠ RENDERS NOTHING TODAY, AND THAT IS THE CORRECT OUTPUT. Every metric
+          is null because none is non-zero: one paper is ruled end to end and no
+          student has sat anything. The component drops null metrics and returns
+          null when nothing survives, so there is no empty band and no
+          placeholder. It lights up when a reader supplies real figures — papers
+          completed, questions answered and answers marked are all countable the
+          day students start attempting work. */}
+      <SocialProof
+        metrics={[
+          { label: "Papers completed", value: null, unit: "papers" },
+          { label: "Answers marked", value: null, unit: "answers" },
+        ]}
+      />
 
       {/* ── 12b. FAQ (§30, §27 position 13) ─────────────────────────────
           ⚠ IMMEDIATELY BEFORE THE FINAL CTA, WHICH IS THE POINT. These are
