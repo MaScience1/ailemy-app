@@ -314,3 +314,115 @@ export function periodLabel(view: CalendarView, dateISO: string): string {
   }
   return `Next ${UPCOMING_DAYS} days`;
 }
+
+// ============================================================================
+// HOUR GRID — the week timetable (§8)
+// ============================================================================
+
+/**
+ * ⚠ THE HOUR RANGE IS DERIVED FROM THE LESSONS, NOT HARDCODED.
+ *
+ * Ailemy teaches 7:00–9:30 PM Doha today, so a fixed 06:00–22:00 axis would be
+ * sixteen rows of empty to show two of content — a timetable that looks like
+ * nothing is happening, which is the §63 failure in a different view. And a
+ * fixed 18:00–22:00 axis would silently CROP a morning mock the day somebody
+ * schedules one.
+ *
+ * So the window is the events' own span, padded by an hour each side for air,
+ * clamped to a sane minimum height so a single lesson does not become one
+ * enormous row.
+ *
+ * ⚠ HOURS ARE IN THE CANONICAL ZONE, ALWAYS. A grid whose rows are the
+ * viewer's hours and whose events are placed by Doha hours puts a 7pm lesson in
+ * the 4pm row for a student in London. Same rule as dayKeyOf, same reason.
+ */
+export const DEFAULT_HOUR_FROM = 17;
+export const DEFAULT_HOUR_TO = 22;
+export const MIN_HOUR_SPAN = 4;
+
+export type HourWindow = { from: number; to: number };
+
+export function hourWindow(
+  events: readonly { startsAt: Date; endsAt: Date }[],
+  hourOf: (d: Date) => number,
+): HourWindow {
+  if (events.length === 0) return { from: DEFAULT_HOUR_FROM, to: DEFAULT_HOUR_TO };
+
+  let lo = 23;
+  let hi = 0;
+  for (const e of events) {
+    const s = hourOf(e.startsAt);
+    // ⚠ CEIL THE END. A lesson finishing at 21:30 occupies the 21:00 row and
+    // must not be cut off at 21:00 — the row it ends inside is still its row.
+    const endH = hourOf(e.endsAt);
+    const endsExactlyOnTheHour =
+      e.endsAt.getTime() % 3_600_000 === 0 && e.endsAt.getMinutes() === 0;
+    const eH = endsExactlyOnTheHour ? endH : endH + 1;
+    if (s < lo) lo = s;
+    if (eH > hi) hi = eH;
+  }
+
+  let from = Math.max(0, lo - 1);
+  let to = Math.min(24, hi + 1);
+  // Keep the grid from collapsing to one or two rows.
+  while (to - from < MIN_HOUR_SPAN) {
+    if (to < 24) to += 1;
+    else if (from > 0) from -= 1;
+    else break;
+  }
+  return { from, to };
+}
+
+/** The rows, top to bottom. */
+export function hourRows(w: HourWindow): number[] {
+  const out: number[] = [];
+  for (let h = w.from; h < w.to; h++) out.push(h);
+  return out;
+}
+
+/**
+ * Which hour row an event starts in, and how many rows it spans.
+ *
+ * ⚠ SPAN IS AT LEAST 1. A 30-minute clinic must still occupy a visible cell;
+ * a span of 0 renders as nothing and the session vanishes from the timetable
+ * while remaining in the data — the worst kind of missing.
+ */
+export function hourSpan(
+  ev: { startsAt: Date; endsAt: Date },
+  hourOf: (d: Date) => number,
+  w: HourWindow,
+): { row: number; span: number } | null {
+  const s = hourOf(ev.startsAt);
+  /**
+   * ⚠ BOTH BOUNDS, AND THE LOWER ONE IS THE DANGEROUS OMISSION. Checking only
+   * `s >= w.to` let a 09:00 session against an 18:00–22:00 window fall through
+   * to Math.max(w.from, s), which clamped it to row 0 — rendering a morning
+   * mock at 6 PM. A missing session is obvious; a session shown at the wrong
+   * hour is a wrong time stated confidently, which is worse.
+   *
+   * ⚠ OVERLAP, NOT CONTAINMENT. A 17:00–19:00 session against an 18:00 window
+   * genuinely belongs on the grid, clipped to row 0. Only something entirely
+   * outside is refused.
+   */
+  const endsAtHour = hourOf(ev.endsAt);
+  const endsExactlyOnTheHour = ev.endsAt.getUTCMinutes() === 0;
+  const endBoundary = endsExactlyOnTheHour ? endsAtHour : endsAtHour + 1;
+  if (s >= w.to) return null;
+  if (endBoundary <= w.from) return null;
+  const minutes = Math.max(1, (ev.endsAt.getTime() - ev.startsAt.getTime()) / 60_000);
+  const rawSpan = Math.max(1, Math.ceil((s * 60 + minutesOf(ev.startsAt) + minutes) / 60) - s);
+  const row = Math.max(w.from, s) - w.from;
+  const span = Math.max(1, Math.min(rawSpan, w.to - Math.max(w.from, s)));
+  return { row, span };
+}
+
+function minutesOf(d: Date): number {
+  return d.getUTCMinutes();
+}
+
+/** "7 PM", "12 PM", "9 AM" — the row label. */
+export function hourLabel(h: number): string {
+  if (h === 0) return "12 AM";
+  if (h === 12) return "12 PM";
+  return h < 12 ? `${h} AM` : `${h - 12} PM`;
+}

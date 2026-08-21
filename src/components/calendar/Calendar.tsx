@@ -4,11 +4,13 @@ import {
   MONTH_LONG, WEEKDAY_SHORT, addDays, bucketByDay, cellEvents, monthGrid,
   parseDate, periodLabel, stateToQuery, step, weekGrid,
   type CalendarState, type CalendarView, type GridDay,
+  hourWindow, hourRows, hourLabel,
 } from "@/lib/calendar/grid";
 import type { CalendarEvent, CalendarMode } from "@/lib/calendar/types";
+import type { Capacity } from "@/lib/public/capacity-rules";
 import { LEVELS } from "@/lib/calendar/types";
 import { SUBJECTS } from "@/lib/public/catalogue";
-import { CANONICAL_LABEL } from "@/lib/schedule/timezone";
+import { CANONICAL_LABEL, CANONICAL_TZ, hourIn } from "@/lib/schedule/timezone";
 
 import { DayPanel } from "./DayPanel";
 import { EventChip, TypeMarker, describeEvent } from "./EventChip";
@@ -58,6 +60,24 @@ export type CalendarProps = {
   openDay?: string | null;
   /** Hide the whole filter block (homepage preview, tight embeds). */
   showFilters?: boolean;
+  /**
+   * Seats taken per cohort slug, resolved SERVER-SIDE from 0063's
+   * cohort_seats_taken.
+   *
+   * ⚠ OPTIONAL, AND ITS ABSENCE MEANS SILENCE RATHER THAN ZERO. Surfaces that
+   * have not resolved it — the compact hero card, an embed — simply show no
+   * capacity line. A default of an empty Map would be identical in behaviour
+   * and would invite a caller to believe capacity had been checked.
+   */
+  capacityBySlug?: Map<string, Capacity>;
+  /**
+   * ⚠ §40/§41 — WHERE "jump to the first teaching week" GOES, resolved by the
+   * server from real sessions. Absent means no future teaching is known, and
+   * the link is not rendered: a jump that lands on another empty month is
+   * worse than no jump.
+   */
+  jumpToISO?: string | null;
+  jumpToLabel?: string | null;
   /**
    * ⚠ FOR AN EMBED PART-WAY DOWN A LONG PAGE. Every link here is a real
    * navigation, so the browser lands at the top of the destination — fine at
@@ -129,11 +149,13 @@ export function Calendar(props: CalendarProps) {
       <div className="mt-6">
         {state.view === "month" && (
           <MonthView weeks={monthGrid(state.date)} buckets={buckets} state={state}
-            todayISO={todayISO} viewerTz={viewerTz} href={href} />
+            todayISO={todayISO} viewerTz={viewerTz} href={href}
+            capacityBySlug={props.capacityBySlug} />
         )}
         {state.view === "week" && (
           <WeekView days={weekGrid(state.date)} buckets={buckets} state={state}
-            todayISO={todayISO} viewerTz={viewerTz} href={href} />
+            todayISO={todayISO} viewerTz={viewerTz} href={href}
+            capacityBySlug={props.capacityBySlug} />
         )}
         {state.view === "upcoming" && (
           <UpcomingView events={events} viewerTz={viewerTz} href={href}
@@ -147,9 +169,44 @@ export function Calendar(props: CalendarProps) {
           emptied it, so the fix is one tap away rather than a guess.
         */}
         {events.length > 0 || state.view === "upcoming" ? null : (
-          <p className="mt-5 text-sm leading-relaxed text-ink/60">
-            {props.emptyMessage ?? "No lessons are scheduled in this period."}
-          </p>
+          <div className="mt-5 rounded-lg border border-ink/10 bg-parchment-2/40 px-4 py-4">
+            <p className="text-sm leading-relaxed text-ink/70">
+              {props.emptyMessage ?? "No lessons are scheduled in this period."}
+            </p>
+            {/* ⚠ §40 — A BLANK CALENDAR MUST OFFER SOMETHING TO DO. "Nothing in
+                this period" with no way forward is the passive empty state the
+                brief calls out: the visitor's only options are to guess a month
+                or leave.
+
+                ⚠ AND THE JUMP LINK ONLY APPEARS WHEN THERE IS SOMEWHERE TO
+                JUMP TO. `jumpToISO` is resolved by the server from real
+                sessions; absent means no future teaching is known, and a
+                "jump to the first teaching week" button that lands on another
+                empty month is worse than no button. */}
+            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
+              {props.jumpToISO && (
+                <Link
+                  href={href({ date: props.jumpToISO, view: state.view })}
+                  data-cta="calendar_explore"
+                  className="text-sm font-medium underline underline-offset-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                >
+                  {props.jumpToLabel ?? "Jump to the first teaching week"} →
+                </Link>
+              )}
+              <Link
+                href={href({ view: "upcoming" })}
+                className="text-sm underline underline-offset-2 text-ink/70 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                View upcoming sessions →
+              </Link>
+              <Link
+                href="/tuition/one-to-one"
+                className="text-sm underline underline-offset-2 text-ink/70 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                One-to-one tuition →
+              </Link>
+            </div>
+          </div>
         )}
       </div>
 
@@ -160,6 +217,7 @@ export function Calendar(props: CalendarProps) {
           viewerTz={viewerTz}
           mode={props.mode}
           closeHref={href({ day: null })}
+          capacityBySlug={props.capacityBySlug}
         />
       )}
     </section>
@@ -298,6 +356,8 @@ type ViewProps = {
   todayISO: string;
   viewerTz: string | null;
   href: (p: Partial<CalendarState> & { day?: string | null }) => string;
+  /** Seats taken per cohort slug (0063). Absent = show no capacity anywhere. */
+  capacityBySlug?: Map<string, Capacity>;
 };
 
 function MonthView({ weeks, ...p }: ViewProps & { weeks: GridDay[][] }) {
@@ -387,7 +447,7 @@ function CompactMonth({
   );
 }
 
-function DayCell({ day, buckets, todayISO, viewerTz, href }: ViewProps & { day: GridDay }) {
+function DayCell({ day, buckets, todayISO, viewerTz, href, capacityBySlug }: ViewProps & { day: GridDay }) {
   const all = buckets.get(day.date) ?? [];
   const { shown, hidden } = cellEvents(all, MONTH_CELL_LIMIT);
   const isToday = day.date === todayISO;
@@ -437,7 +497,33 @@ function DayCell({ day, buckets, todayISO, viewerTz, href }: ViewProps & { day: 
       </span>
 
       <span className="flex flex-col gap-0.5">
-        {shown.map((ev) => <EventChip key={ev.key} event={ev} viewerTz={viewerTz} dense />)}
+        {shown.map((ev) => (
+          <span key={ev.key} className="flex flex-col">
+            <EventChip event={ev} viewerTz={viewerTz} dense />
+            {/* ⚠ §6 — CAPACITY IN THE CELL, BUT ONLY WHERE IT IS REAL. The
+                label is null at 0 paid seats and on a failed read, so the line
+                is absent rather than reading "20 places left" on an empty
+                cohort. One line, and only for the first chip of a cohort, so a
+                Tuesday and a Saturday of the same class do not each claim
+                their own count. */}
+            {(() => {
+              const cap = ev.cohortSlug ? capacityBySlug?.get(ev.cohortSlug) : undefined;
+              if (!cap || cap.known !== true || !cap.label) return null;
+              const firstOfCohort =
+                shown.findIndex((x) => x.cohortSlug === ev.cohortSlug) === shown.indexOf(ev);
+              if (!firstOfCohort) return null;
+              return (
+                <span
+                  className={`font-mono text-[9px] uppercase tracking-[0.1em] ${
+                    cap.state === "few-left" || cap.state === "full" ? "text-amber-800" : "text-ink/45"
+                  }`}
+                >
+                  {cap.label}
+                </span>
+              );
+            })()}
+          </span>
+        ))}
         {hidden > 0 && (
           <span className="font-mono text-[10px] text-ink/50">+{hidden} more</span>
         )}
@@ -448,38 +534,138 @@ function DayCell({ day, buckets, todayISO, viewerTz, href }: ViewProps & { day: 
 
 // ── week ────────────────────────────────────────────────────────────────────
 
+/**
+ * The week as an actual timetable (§8).
+ *
+ * ============================================================================
+ * ⚠ SEVEN COLUMNS OF LISTS IS NOT A TIMETABLE
+ * ============================================================================
+ * The previous week view stacked each day's lessons in a list. That answers
+ * "what is on Tuesday" and cannot answer the question §8 actually asks — "is
+ * 8 PM free" — because nothing is positioned in time. Two lessons an hour apart
+ * and two lessons back to back looked identical.
+ *
+ * An hour axis answers both, and it makes an EMPTY slot visible, which is the
+ * whole point when half the product is bookable 1-to-1 time.
+ *
+ * ⚠ THE AXIS IS DERIVED FROM THE WEEK'S OWN LESSONS (grid.ts hourWindow), so
+ * teaching at 19:00–21:30 gets a compact five-row grid rather than sixteen
+ * empty rows, and a morning mock stretches it rather than being cropped.
+ *
+ * ⚠ ON A PHONE IT IS NOT A GRID AT ALL. Seven columns × five rows at 375px
+ * gives 45px cells — unreadable, and the brief says explicitly not to shrink
+ * desktop UI until text becomes unreadable. Below `sm` this falls back to the
+ * day-by-day list, which is the right shape for a narrow screen.
+ */
 function WeekView({ days, ...p }: ViewProps & { days: GridDay[] }) {
+  const all = days.flatMap((d) => p.buckets.get(d.date) ?? []);
+  // ⚠ CANONICAL HOURS, ALWAYS — see hourIn's own note. The rows are Doha's.
+  const canonicalHour = (d: Date) => hourIn(d, CANONICAL_TZ);
+  const win = hourWindow(all, canonicalHour);
+  const rows = hourRows(win);
+
   return (
-    <div className="grid gap-px overflow-hidden rounded-lg bg-ink/10 sm:grid-cols-7">
-      {days.map((day) => {
-        const all = p.buckets.get(day.date) ?? [];
-        const d = parseDate(day.date);
-        const isToday = day.date === p.todayISO;
-        return (
-          <div key={day.date} className="flex min-h-[160px] flex-col bg-parchment">
-            <Link
-              href={p.href({ day: day.date })}
-              className="flex items-baseline gap-2 border-b border-ink/10 px-2 py-2 transition-colors hover:bg-ink/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ink"
-              aria-label={`${WEEKDAY_SHORT[day.weekday]} ${d?.getUTCDate()}, ${all.length} ${all.length === 1 ? "lesson" : "lessons"}`}
-            >
-              <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink/45">
-                {WEEKDAY_SHORT[day.weekday]}
-              </span>
-              <span className={`font-mono text-xs tabular-nums ${isToday ? "rounded-full bg-ink px-1.5 text-parchment" : "text-ink/70"}`}>
-                {d?.getUTCDate()}
-              </span>
-            </Link>
-            <div className="flex flex-1 flex-col gap-1.5 p-2">
-              {all.length === 0 ? (
-                <span className="font-mono text-[10px] text-ink/30">—</span>
-              ) : (
-                all.map((ev) => <EventChip key={ev.key} event={ev} viewerTz={p.viewerTz} />)
-              )}
+    <>
+      {/* ── phone: the list, unchanged ─────────────────────────────────── */}
+      <div className="grid gap-px overflow-hidden rounded-lg bg-ink/10 sm:hidden">
+        {days.map((day) => {
+          const dayEvents = p.buckets.get(day.date) ?? [];
+          const d = parseDate(day.date);
+          const isToday = day.date === p.todayISO;
+          return (
+            <div key={day.date} className="flex min-h-[64px] flex-col bg-parchment">
+              <Link
+                href={p.href({ day: day.date })}
+                className="flex items-baseline gap-2 border-b border-ink/10 px-2 py-2 transition-colors hover:bg-ink/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ink"
+                aria-label={`${WEEKDAY_SHORT[day.weekday]} ${d?.getUTCDate()}, ${dayEvents.length} ${dayEvents.length === 1 ? "session" : "sessions"}`}
+              >
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink/45">
+                  {WEEKDAY_SHORT[day.weekday]}
+                </span>
+                <span className={`font-mono text-xs tabular-nums ${isToday ? "rounded-full bg-ink px-1.5 text-parchment" : "text-ink/70"}`}>
+                  {d?.getUTCDate()}
+                </span>
+              </Link>
+              <div className="flex flex-1 flex-col gap-1.5 p-2">
+                {dayEvents.length === 0 ? (
+                  <span className="font-mono text-[10px] text-ink/30">—</span>
+                ) : (
+                  dayEvents.map((ev) => <EventChip key={ev.key} event={ev} viewerTz={p.viewerTz} />)
+                )}
+              </div>
             </div>
+          );
+        })}
+      </div>
+
+      {/* ── tablet and up: the hour grid ───────────────────────────────── */}
+      <div className="hidden sm:block">
+        <div className="overflow-hidden rounded-lg border border-ink/10">
+          {/* Day header row */}
+          <div className="grid grid-cols-[3.25rem_repeat(7,minmax(0,1fr))] border-b border-ink/10 bg-parchment-2/40">
+            <div aria-hidden />
+            {days.map((day) => {
+              const d = parseDate(day.date);
+              const isToday = day.date === p.todayISO;
+              return (
+                <Link
+                  key={day.date}
+                  href={p.href({ day: day.date })}
+                  className="flex items-baseline justify-center gap-1.5 border-l border-ink/10 py-2 transition-colors hover:bg-ink/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ink"
+                >
+                  <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink/45">
+                    {WEEKDAY_SHORT[day.weekday]}
+                  </span>
+                  <span className={`font-mono text-xs tabular-nums ${isToday ? "rounded-full bg-ink px-1.5 text-parchment" : "text-ink/70"}`}>
+                    {d?.getUTCDate()}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
-        );
-      })}
-    </div>
+
+          {/* Hour rows */}
+          {rows.map((h) => (
+            <div
+              key={h}
+              className="grid grid-cols-[3.25rem_repeat(7,minmax(0,1fr))] border-b border-ink/[0.06] last:border-b-0"
+            >
+              <div className="flex items-start justify-end pr-2 pt-1.5">
+                <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-ink/35">
+                  {hourLabel(h)}
+                </span>
+              </div>
+              {days.map((day) => {
+                const dayEvents = p.buckets.get(day.date) ?? [];
+                /**
+                 * ⚠ AN EVENT IS RENDERED IN ITS STARTING ROW ONLY. Repeating it
+                 * in every hour it spans would announce the same lesson three
+                 * times to a screen reader and triple-count it by eye.
+                 */
+                const starting = dayEvents.filter((ev) => canonicalHour(ev.startsAt) === h);
+                return (
+                  <div
+                    key={day.date + h}
+                    className="min-h-[42px] border-l border-ink/10 p-1"
+                  >
+                    {starting.map((ev) => (
+                      <EventChip key={ev.key} event={ev} viewerTz={p.viewerTz} />
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+
+        {/* ⚠ THE AXIS IS DOHA, SAID OUT LOUD. A grid of hours with no zone on it
+            is the silent-wrong-hour failure this project already fixed once in
+            the timezone work. */}
+        <p className="mt-2 text-right font-mono text-[9px] uppercase tracking-[0.14em] text-ink/40">
+          Hours shown in Doha
+        </p>
+      </div>
+    </>
   );
 }
 

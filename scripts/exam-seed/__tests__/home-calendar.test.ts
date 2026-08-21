@@ -62,9 +62,34 @@ console.log("── ⚠ THE VISIBLE WINDOW ONLY — NEVER A YEAR ──");
     /rangeFor\(calendarState\.view, calendarState\.date\)/.test(code));
   t("…and the old fixed 70-day fetch is gone",
     !/70 \* 86_400_000/.test(code), code.match(/.{0,40}86_400_000.{0,20}/)?.[0]);
-  t("…and there is exactly ONE calendar query on the page",
-    (code.match(/loadCalendarEvents\(/g) ?? []).length === 1,
-    (code.match(/loadCalendarEvents\(/g) ?? []).length);
+  /**
+   * ⚠ THE RULE IS "AT MOST ONE FETCH PER RENDER", NOT "ONE CALL SITE".
+   *
+   * This counted call sites, which was the same thing until §63 needed a
+   * second window: the month in view cannot answer "when is the next lesson",
+   * because for the whole summer the month in view is an empty August. A
+   * lookahead is a genuinely different question and needs a different range.
+   *
+   * Relaxing this to `<= 2` would have been the wrong repair — it licenses a
+   * third. So the guard now asserts the PROPERTY that made one call safe:
+   *   - the lookahead is CONDITIONAL on the first result being empty, so a
+   *     populated month still costs exactly one round trip; and
+   *   - it is BOUNDED by a named constant, not open-ended.
+   */
+  const calls = (code.match(/loadCalendarEvents\(/g) ?? []).length;
+  t("at most two calendar queries — the view, and a lookahead", calls <= 2, calls);
+  t("⚠ …and the second is CONDITIONAL on the first being empty, so a populated month costs one fetch",
+    /calendarEvents\.length === 0\s*\?\s*await loadCalendarEvents\(/.test(code),
+    // ⚠ NO /s FLAG — tsconfig.scripts.json targets below es2018, where
+    // dotAll is not available and tsc rejects it. [\s\S] is the portable
+    // spelling and means the same thing.
+    code.match(/[\s\S]{0,60}calendarEvents\.length === 0[\s\S]{0,40}/)?.[0]);
+  t("⚠ …and the lookahead is BOUNDED by a named constant, not open-ended",
+    /AHEAD_DAYS\s*=\s*\d+/.test(code) && /AHEAD_DAYS \* 86_400_000/.test(code),
+    code.match(/AHEAD_DAYS\s*=\s*\d+/)?.[0]);
+  t("⚠ …and that bound is a term, not a year",
+    Number(code.match(/AHEAD_DAYS\s*=\s*(\d+)/)?.[1] ?? 9999) <= 180,
+    code.match(/AHEAD_DAYS\s*=\s*(\d+)/)?.[1]);
 }
 
 console.log("\n── ⚠ NO PAYABLE CTA WHILE STRIPE IS KEYLESS ──");
@@ -211,9 +236,24 @@ console.log("\n── PLACEMENT — hierarchy stays intact ──");
   // second column, after the copy and CTAs in DOM order, which is the reading
   // order a phone and a screen reader both get.
   t("the hero card exists", at("hero-calendar") > 0);
+  /**
+   * ⚠ ANCHORED ON data-cta, NOT ON AN href LITERAL. The primary CTA's
+   * destination is now conditional — `href={session ? "/profile" :
+   * "/past-papers"}` — because a signed-in student must not be invited to
+   * start something they already started. A literal-href search silently
+   * stopped finding it and this assertion went red for a reason that had
+   * nothing to do with placement.
+   *
+   * data-cta is the stabler anchor and a stronger one: it names the CTA's ROLE
+   * in the funnel, so it survives a destination change and a copy change, and
+   * it is the same identifier the analytics naming convention uses.
+   */
+  const cta = (name: string) => code.indexOf(`data-cta="${name}"`);
+  t("both hero CTAs are present and named for the funnel",
+    cta("hero_start_practising") > 0 && cta("hero_live_tuition") > 0);
   t("…and the copy and CTAs precede it in the DOM",
-    code.indexOf('href="/tuition"') < at("hero-calendar")
-    && code.indexOf('href="/past-papers"') < at("hero-calendar"));
+    cta("hero_start_practising") < at("hero-calendar")
+    && cta("hero_live_tuition") < at("hero-calendar"));
   t("…so the hero still leads, and subjects follow it",
     at("hero-calendar") < at("subjects") && at("subjects") < at("tuition"));
   t("the two-column split is at lg (1024px), stacking below it",

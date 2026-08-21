@@ -5,6 +5,20 @@ import Link from "next/link";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
+import { CapabilityStrip } from "@/components/home/CapabilityStrip";
+import { SubjectCard } from "@/components/home/SubjectCard";
+import { StickyCta } from "@/components/home/StickyCta";
+import { TryAilemy } from "@/components/home/TryAilemy";
+import { HomeFaq } from "@/components/home/Faq";
+import { WaitlistForm } from "@/components/tuition/WaitlistForm";
+import { InteractiveCard } from "@/components/ui/InteractiveCard";
+import { loadCapacity, type Capacity } from "@/lib/public/capacity";
+import { NextStep } from "@/components/home/NextStep";
+import { SocialProof } from "@/components/home/SocialProof";
+import { loadIdentity } from "@/lib/account/identity";
+import { loadProfileCourses } from "@/lib/account/profile-reader";
+import { nextSession, distanceLabel } from "@/lib/calendar/next-session";
+import { dayKeyOf } from "@/lib/calendar/grid";
 import { getNavSession } from "@/lib/auth/nav-session";
 import {
   SUBJECTS, ctaFor,
@@ -21,7 +35,7 @@ import { TimezoneSync } from "@/components/public/TimezoneSync";
 import { loadCalendarEvents } from "@/lib/calendar/readers";
 import { parseDate, rangeFor, readState } from "@/lib/calendar/grid";
 import { emptyCalendarMessage } from "@/lib/calendar/types";
-import { CANONICAL_TZ, calendarDate, formatDay } from "@/lib/schedule/timezone";
+import { CANONICAL_TZ, calendarDate, dualTime, formatDay } from "@/lib/schedule/timezone";
 import { viewerTimeZone } from "@/lib/schedule/viewer-tz";
 
 /**
@@ -63,6 +77,32 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
   const chemistryCohorts = cohorts.filter((c) => c.subject === "chemistry");
   const { currency } = await currentCurrency();
   const showToggle = offersCurrencyChoice(chemistryCohorts);
+
+  /**
+   * ⚠ §31 — ONLY FOR SOMEBODY WE ACTUALLY KNOW SOMETHING ABOUT. Signed in AND
+   * enrolled. An anonymous visitor gets nothing rather than a personalised-
+   * looking panel addressed to no one, and a signed-in student with no
+   * enrolments gets nothing rather than an empty "your next step".
+   *
+   * ⚠ AND IT COSTS NOTHING WHEN SIGNED OUT — neither read is issued.
+   */
+  const identity = session ? await loadIdentity() : null;
+  const myCourses = identity ? await loadProfileCourses(identity.account.userId) : null;
+  const firstCourse =
+    myCourses?.available === true && myCourses.courses.length > 0 ? myCourses.courses[0] : null;
+
+  /**
+   * ⚠ ONE RPC PER CHEMISTRY COHORT SHOWN, and only those. The homepage renders
+   * three; a helper that fetched the whole catalogue would do work nothing
+   * displays. Absent or unread means the card shows no capacity line at all —
+   * silence, never a number derived from a failed call.
+   */
+  const cohortCapacity = new Map<string, Capacity>();
+  await Promise.all(
+    chemistryCohorts.map(async (c) => {
+      cohortCapacity.set(c.slug, await loadCapacity(c.slug, c.seatCap));
+    }),
+  );
 
   /**
    * ============================================================================
@@ -138,6 +178,49 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
     type: calendarState.type,
   });
 
+  /**
+   * ⚠ §63 — THE CARD MUST NOT LOOK EMPTY, AND THE MONTH IN VIEW CANNOT ANSWER
+   * THAT. Teaching begins 15 September, so for the whole summer the grid is a
+   * blank August and the visitor concludes nothing is happening. This asks the
+   * different question — when is the next actual lesson — and it needs a window
+   * the current view does not cover.
+   *
+   * ⚠ BOUNDED AT 120 DAYS, NOT A YEAR (§35). The performance rule is that the
+   * calendar never downloads an enormous range. A term is about sixteen weeks;
+   * 120 days reaches the next teaching block from anywhere in the summer without
+   * pulling a year of sessions to render one line. If nothing falls inside it
+   * the card simply omits the banner, which is honest.
+   *
+   * ⚠ AND IT IS SKIPPED ENTIRELY WHEN THE VIEW ALREADY HAS EVENTS. The banner
+   * only renders when eventCount is 0, so fetching for a populated month would
+   * be a round-trip whose result is discarded.
+   */
+  const AHEAD_DAYS = 120;
+  const lookahead = new Date(Date.now() + AHEAD_DAYS * 86_400_000);
+  const { events: aheadEvents } = calendarEvents.length === 0
+    ? await loadCalendarEvents({
+        from: todayISO,
+        to: calendarDate(lookahead, CANONICAL_TZ),
+        mode: "public",
+        subject: calendarState.subject,
+        level: calendarState.level,
+        type: calendarState.type,
+      })
+    : { events: [] as typeof calendarEvents };
+
+  const upcomingLesson = nextSession(aheadEvents, new Date(), dayKeyOf, todayISO);
+  const nextLesson = upcomingLesson.kind === "session"
+    ? {
+        title: upcomingLesson.event.title,
+        dayLabel: formatDay(upcomingLesson.event.startsAt, CANONICAL_TZ),
+        // ⚠ DOHA, LABELLED. An unlabelled time on a site taught from Doha to
+        // students anywhere is the silent-wrong-hour failure feat/tz-validation
+        // exists for; the expanded calendar shows the viewer's zone alongside.
+        timeLabel: `${dualTime(upcomingLesson.event.startsAt, viewerTz).canonical} Doha`,
+        distance: distanceLabel(upcomingLesson.daysAway),
+      }
+    : null;
+
   return (
     <div className="bg-parchment text-ink">
       {/* 1 */} <AnnouncementBar />
@@ -162,25 +245,45 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink/50">
           Pearson Edexcel · GCSE · International GCSE · IAL
         </p>
+        {/* ⚠ THE HEADLINE IS THE PRODUCT, NOT A SLOGAN (§1). "Master science.
+            Ace the exam." is an outcome anyone could promise; the four verbs
+            below are what Ailemy actually does, in the order a student does
+            them — and the third one is the differentiator, because everybody
+            else stops at "practise". */}
         <h1 className="font-display mt-5 max-w-3xl text-4xl font-medium leading-[1.05] tracking-tight sm:text-6xl">
-          Master science. Ace the exam.
+          Learn it. Practise it.<br className="hidden sm:block" /> Get it marked. Master the exam.
         </h1>
         <p className="mt-6 max-w-2xl text-base leading-relaxed text-ink/70 sm:text-lg">
-          Expert live tuition, specification-mapped learning, past-paper practice, marked
-          answers and personalised progress — in one place.
+          Specification-mapped lessons, revision resources, past papers, exam practice,
+          intelligent marking, progress tracking and expert live tuition — all in one
+          science platform.
         </p>
+        {/* ⚠ THE PRIMARY AND SECONDARY HAVE SWAPPED, AND THAT IS THE POINT OF
+            §1. Tuition was the filled button, which told every visitor the
+            product is a tutoring service. Practice is free, needs no account to
+            start, and is what most visitors can act on today — so it takes the
+            filled treatment and tuition takes the outline.
+
+            ⚠ WORDING TRACKS THE SESSION (§53). "Start practising free" to a
+            stranger; "Continue studying" to somebody signed in, who has already
+            started and would read an invitation to start as the site forgetting
+            them. */}
         <div className="mt-9 flex flex-wrap gap-3">
           <Link
-            href="/tuition"
-            className="rounded-full bg-ink px-6 py-3 text-sm font-medium text-parchment hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            href={session ? "/profile" : "/past-papers"}
+            data-cta="hero_start_practising"
+            className="group rounded-full bg-ink px-6 py-3 text-sm font-medium text-parchment transition-colors duration-200 hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
-            Join live tuition →
+            {session ? "Continue studying" : "Start practising free"}{" "}
+            <span aria-hidden className="inline-block transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">→</span>
           </Link>
           <Link
-            href="/past-papers"
-            className="rounded-full border border-ink/20 px-6 py-3 text-sm font-medium hover:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            href="/tuition"
+            data-cta="hero_live_tuition"
+            className="group rounded-full border border-ink/20 px-6 py-3 text-sm font-medium transition-colors duration-200 hover:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
-            Start practising →
+            View live tuition{" "}
+            <span aria-hidden className="inline-block transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">→</span>
           </Link>
         </div>
         </div>
@@ -196,30 +299,79 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
             viewerTz={viewerTz}
             openHref={openCalendarHref}
             eventCount={calendarEvents.length}
+            next={nextLesson}
           />
         </div>
         </div>
       </header>
 
+      {/* ── 3b. capability strip (§2) ────────────────────────────────────
+          ⚠ IMMEDIATELY AFTER THE HERO, ABOVE EVERYTHING ELSE. Its job is the
+          three-second read: this is a platform, not a tutor. A visitor who has
+          to scroll to learn that has already formed the other impression. */}
+      <CapabilityStrip />
+
+      {/* ── 3c. product demonstration (§25, §27 position 3) ──────────────
+          ⚠ BEFORE THE SUBJECT CARDS, AND THAT IS THE FUNNEL. §27 puts the
+          demonstration third, above the sciences: a visitor who has just been
+          told Ailemy marks answers should be able to see it happen before
+          being asked to choose a subject. Describing marking and then showing
+          it two screens later is the order that loses people. */}
+      <Section
+        id="try"
+        title="Try it. Write an answer and see it marked."
+        lede="This is how Ailemy marks — against the points a real mark scheme awards, with the reason for each one."
+      >
+        <TryAilemy />
+      </Section>
+
+      {/* ── 3d. your next step (§31) ─────────────────────────────────────
+          ⚠ ABSENT ENTIRELY FOR A STRANGER. A header with nothing under it is
+          worse than nothing at all. */}
+      {firstCourse && (
+        <div className="mx-auto max-w-6xl px-6 pb-10 sm:pb-14">
+          <NextStep
+            courseName={[firstCourse.curriculum, firstCourse.subject, firstCourse.level]
+              .filter(Boolean).join(" ") || firstCourse.courseName}
+            subject={firstCourse.subject}
+            courseSlug={firstCourse.courseSlug}
+          />
+        </div>
+      )}
+
       {/* ── 4. subject selector ───────────────────────────────────────── */}
       <Section id="subjects" title="Three sciences, one platform">
         <div className="grid gap-4 sm:grid-cols-3">
-          {SUBJECTS.map((s) => <SubjectCard key={s.slug} subject={s} />)}
+          {SUBJECTS.map((s) => (
+            <SubjectCard
+              key={s.slug}
+              subject={{
+                slug: s.slug, name: s.name, qualifications: s.qualifications,
+                blurb: s.blurb, status: s.status, exploreHref: s.exploreHref,
+              }}
+            />
+          ))}
         </div>
       </Section>
 
       {/* ── 5. the learning system ────────────────────────────────────── */}
       <Section
         id="how"
-        title="Learn → Practise → Get marked → Improve"
+        title="Everything between learning the topic and sitting the exam."
         lede="Ailemy knows what you have studied, what you attempted, where you lost marks and what to do next."
       >
-        <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* ⚠ NUMBERED BECAUSE IT IS GENUINELY A SEQUENCE. A student does these
+            in this order and each depends on the last — which is the only thing
+            that justifies 01/02/03 markers. Numbering a set of unordered
+            features would be decoration pretending to be structure. */}
+        <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[
             ["Learn", "Specification-mapped lessons and expert live teaching."],
             ["Practise", "Topic questions, worksheets and full past papers."],
-            ["Get marked", "Submit an answer and see it marked against the mark scheme, with feedback."],
-            ["Improve", "Weak areas are identified and you are pointed at what to practise next."],
+            ["Submit", "Answer inside Ailemy — no scanning, no uploading, no waiting."],
+            ["Get marked", "Marked against the points a real mark scheme awards, with the reason for each."],
+            ["Improve", "See exactly what cost you marks, not just what you scored."],
+            ["Master", "Track a topic until the evidence says you are exam-ready."],
           ].map(([step, body], i) => (
             <li key={step} className="rounded-lg border border-ink/10 bg-snow p-6">
               <span className="font-mono text-[11px] text-ink/40">0{i + 1}</span>
@@ -236,9 +388,32 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         title="Learn live with Ailemy"
         lede="Small-group science tuition built around the exact specification and exam requirements."
       >
+        {/* ── §67 — VALUE BEFORE PRICE ──────────────────────────────────
+            ⚠ ABOVE THE CARDS, NOT INSIDE THEM. A parent reading £169 needs to
+            already know it is not four Zoom hours. Repeating this list in each
+            card would be three copies of the same sentence competing with the
+            details that differ between programmes. */}
+        <div className="mb-6 rounded-lg border border-ink/10 bg-parchment-2/40 px-5 py-4">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink/50">
+            Every programme includes
+          </p>
+          <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-ink/70">
+            {[
+              "Live teaching", "Ailemy platform access", "Homework",
+              "Exam practice", "Marking and feedback", "Progress tracking",
+            ].map((v) => (
+              <li key={v} className="flex items-center gap-1.5">
+                <span aria-hidden className="h-1 w-1 rounded-full bg-lime" />
+                {v}
+              </li>
+            ))}
+          </ul>
+        </div>
         {showToggle && <div className="mb-6"><CurrencyToggle current={currency} /></div>}
         <div className="grid gap-4 lg:grid-cols-3">
-          {chemistryCohorts.map((c) => <CohortCard key={c.slug} cohort={c} currency={currency} />)}
+          {chemistryCohorts.map((c) => (
+            <CohortCard key={c.slug} cohort={c} currency={currency} capacity={cohortCapacity.get(c.slug) ?? null} />
+          ))}
         </div>
         {/* ⚠ 1-TO-1 IS OFF-MENU (§24) — mentioned, deliberately not priced
             beside the group cohorts, where it would undercut the offer. */}
@@ -258,26 +433,28 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         lede="Choose a subject, qualification, unit and series — then sit it question by question."
       >
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-lg border border-ink/10 bg-snow p-6">
+          <InteractiveCard
+            href="/past-papers"
+            ariaLabel="Browse past papers — sit a paper interactively, question by question"
+            cta="Browse past papers"
+          >
             <h3 className="font-display text-xl font-medium">Sit it interactively</h3>
-            <p className="mt-2 text-sm leading-relaxed text-ink/70">
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-ink/70">
               Answer question by question. Your responses are captured, marked against the
               mark scheme, and turned into topic performance you can act on.
             </p>
-            <Link href="/past-papers" className="mt-4 inline-block text-sm underline underline-offset-2">
-              Browse past papers →
-            </Link>
-          </div>
-          <div className="rounded-lg border border-ink/10 bg-snow p-6">
+          </InteractiveCard>
+          <InteractiveCard
+            href="/past-papers"
+            ariaLabel="View papers — question paper, mark scheme and examiner report as PDFs"
+            cta="View papers"
+          >
             <h3 className="font-display text-xl font-medium">Or read the PDFs</h3>
-            <p className="mt-2 text-sm leading-relaxed text-ink/70">
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-ink/70">
               Question paper, mark scheme and examiner report remain one click away. Being
               better than a download repository does not mean removing the downloads.
             </p>
-            <Link href="/past-papers" className="mt-4 inline-block text-sm underline underline-offset-2">
-              View papers →
-            </Link>
-          </div>
+          </InteractiveCard>
         </div>
       </Section>
 
@@ -378,15 +555,59 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           ambition as a finished state, on the page that asks people to trust
           the marking. It now describes the METHOD, which is true of every
           paper the moment it is ruled and stays true as the archive grows. */}
+      {/* ⚠ THE SAME THREE CLAIMS, SPLIT — NOT THREE NEW ONES. §28 asks for the
+          paragraph to become scannable, and every sentence below is already in
+          the paragraph it replaces. Turning a trust section into bullet points
+          is an invitation to add a fourth, stronger-sounding one; there isn't
+          a fourth true one, so there are three. */}
       <Section id="teachers" title="Built by teachers who understand the exam.">
-        <div className="rounded-lg border border-ink/10 bg-snow p-6 sm:p-8">
-          <p className="max-w-3xl text-sm leading-relaxed text-ink/75">
-            Ailemy's marking logic is built directly from published mark schemes, with marking
-            rules human-reviewed before they are used for automated marking. Chemistry teaching
-            and mark-scheme rulings are prepared by a specialist chemistry teacher working from
-            the published Edexcel mark schemes.
-          </p>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {[
+            ["Built from real mark schemes",
+             "Ailemy's marking rules are derived from published examination mark schemes — not from a general model's opinion of your answer."],
+            ["Reviewed by subject specialists",
+             "Automated marking rules are human-reviewed before they are used to mark anyone's work."],
+            ["Designed around the exam",
+             "Lessons, questions and feedback follow the specification students are actually assessed on."],
+          ].map(([title, body]) => (
+            <div key={title} className="rounded-lg border border-ink/10 bg-snow p-6">
+              <h3 className="font-display text-lg font-medium tracking-tight">{title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-ink/70">{body}</p>
+            </div>
+          ))}
         </div>
+        {/* ⚠ NOT AN AFFILIATION CLAIM (§46). "Prepared from the published
+            Edexcel mark schemes" is a statement about a source document, which
+            is lawful and true. "Edexcel-approved" would be neither. */}
+        <p className="mt-5 max-w-3xl text-[13px] leading-relaxed text-ink/55">
+          Chemistry teaching and mark-scheme rulings are prepared by a specialist chemistry
+          teacher working from the published Edexcel mark schemes. Ailemy is not affiliated with
+          or endorsed by any examination board.
+        </p>
+      </Section>
+
+      {/* ── 12a. social proof (§29, §27 position 12) ─────────────────────
+          ⚠ RENDERS NOTHING TODAY, AND THAT IS THE CORRECT OUTPUT. Every metric
+          is null because none is non-zero: one paper is ruled end to end and no
+          student has sat anything. The component drops null metrics and returns
+          null when nothing survives, so there is no empty band and no
+          placeholder. It lights up when a reader supplies real figures — papers
+          completed, questions answered and answers marked are all countable the
+          day students start attempting work. */}
+      <SocialProof
+        metrics={[
+          { label: "Papers completed", value: null, unit: "papers" },
+          { label: "Answers marked", value: null, unit: "answers" },
+        ]}
+      />
+
+      {/* ── 12b. FAQ (§30, §27 position 13) ─────────────────────────────
+          ⚠ IMMEDIATELY BEFORE THE FINAL CTA, WHICH IS THE POINT. These are
+          conversion objections — is it free, do I need tuition, is my board
+          supported — and answering them anywhere else means the visitor meets
+          the last ask still carrying the doubt. */}
+      <Section id="faq" title="Questions people ask before they start.">
+        <HomeFaq />
       </Section>
 
       {/* ── 13. final CTA ─────────────────────────────────────────────── */}
@@ -431,6 +652,12 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         </HeroCalendarOverlay>
       )}
 
+      {/* ── persistent conversion CTA (§19, §20) ────────────────────────
+          ⚠ AFTER the footer in the DOM, so it is the last thing a screen
+          reader meets rather than an interruption between sections. It is
+          position:fixed, so DOM order costs nothing visually. */}
+      <StickyCta signedIn={session !== null} />
+
       {/* 14 */} <SiteFooter />
     </div>
   );
@@ -451,37 +678,42 @@ function Section({
   );
 }
 
-function SubjectCard({ subject }: { subject: Subject }) {
-  const LABEL: Record<Subject["status"], string> = {
-    available: "Available",
-    expanding: "Expanding",
-    interest: "Register interest",
-  };
-  return (
-    <div className="flex flex-col rounded-lg border border-ink/10 bg-snow p-7">
-      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45">
-        {LABEL[subject.status]}
-      </span>
-      <h3 className="font-display mt-3 text-2xl font-medium tracking-tight">{subject.name}</h3>
-      <p className="mt-1 font-mono text-[11px] text-ink/50">{subject.qualifications.join(" · ")}</p>
-      <p className="mt-4 flex-1 text-sm leading-relaxed text-ink/70">{subject.blurb}</p>
-      {/* ⚠ NO "Explore" WHERE THERE IS NOTHING TO EXPLORE. exploreHref is null
-          for Biology and Physics, and a link that goes nowhere is the fake
-          functionality §32 forbids. */}
-      <Link
-        href={subject.exploreHref ?? `/tuition/interest?subject=${subject.slug}`}
-        className="mt-6 text-sm underline underline-offset-2 hover:text-ink"
-      >
-        {subject.exploreHref ? `Explore ${subject.name} →` : "Register interest →"}
-      </Link>
-    </div>
-  );
-}
 
-function CohortCard({ cohort, currency }: { cohort: Cohort; currency: Currency }) {
+/**
+ * A programme card (§66, §67).
+ *
+ * ⚠ SCANNABLE ORDER, NOT NARRATIVE ORDER (§66). Programme, price, shape of the
+ * week, dates, capacity, what is included, CTA — each on its own line so a
+ * parent can find the number they came for without reading a paragraph. The
+ * CTA anchors the bottom of every card at the same height, which is why the
+ * feature list carries flex-1.
+ *
+ * ⚠ AND THE CTA STILL COMES FROM ctaFor(). Stripe is keyless, so it renders
+ * "Register interest" and never a payable control — one decision point shared
+ * with /tuition and the calendar, so no surface can promise what another
+ * refuses.
+ */
+function CohortCard({
+  cohort, currency, capacity,
+}: {
+  cohort: Cohort; currency: Currency; capacity?: Capacity | null;
+}) {
   const cta = ctaFor(cohort);
-  return (
-    <div className="flex flex-col rounded-lg border border-ink/10 bg-snow p-7">
+  const full = capacity?.known === true && capacity.state === "full";
+
+  /**
+   * ⚠ A FULL COHORT CANNOT BE A CLICKABLE CARD, AND THIS IS NOT A STYLE CHOICE.
+   * When it is full the card renders a WaitlistForm — a <form> with an <input>
+   * and a submit <button>. Nesting interactive controls inside an anchor is
+   * invalid HTML, and in practice the anchor swallows the click so the email
+   * field cannot be focused and the form cannot be submitted. The whole-card
+   * affordance would break the only action left on the card.
+   *
+   * So a full cohort stays a plain container. It loses the ribbon and the lift;
+   * it keeps the thing a visitor came to do.
+   */
+  const body = (
+    <>
       <h3 className="font-display text-xl font-medium tracking-tight">{cohort.title}</h3>
       <CohortPrice cohort={cohort} currency={currency} />
       <p className="mt-1 font-mono text-[11px] text-ink/55">
@@ -498,17 +730,45 @@ function CohortCard({ cohort, currency }: { cohort: Cohort; currency: Currency }
           Onboarding {fmt(cohort.onboardingOn)} · first class {fmt(cohort.firstClassOn)}
         </p>
       )}
+      {/* ⚠ CAPACITY ONLY WHERE PAID SEATS EXIST (§14). Silent at zero. */}
+      {capacity?.known === true && capacity.label && (
+        <p
+          className={`mt-2 font-mono text-[11px] uppercase tracking-[0.14em] ${
+            capacity.state === "few-left" || capacity.state === "full" ? "text-amber-800" : "text-ink/55"
+          }`}
+        >
+          {capacity.label}
+        </p>
+      )}
       <p className="mt-4 text-sm leading-relaxed text-ink/70">{cohort.summary}</p>
       <ul className="mt-4 flex-1 space-y-1 text-sm text-ink/65">
         {cohort.features.map((f) => <li key={f}>· {f}</li>)}
       </ul>
-      <Link
-        href={cta.href}
-        className="mt-6 inline-block rounded-full border border-ink/20 px-4 py-2 text-center text-sm hover:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-      >
-        {cta.label} →
-      </Link>
-    </div>
+      {/* ⚠ §65 — A FULL COHORT OFFERS THE LIST INSTEAD OF A DEAD CTA. It does
+          not promise a place, and it only appears when capacity is genuinely
+          known to be full — never on an unread or empty figure. */}
+    </>
+  );
+
+  if (full) {
+    return (
+      <div className="flex flex-col rounded-lg border border-ink/10 bg-snow p-7">
+        {body}
+        <WaitlistForm cohortSlug={cohort.slug} />
+      </div>
+    );
+  }
+
+  return (
+    <InteractiveCard
+      href={cta.href}
+      dataCta="chemistry_course"
+      ariaLabel={`${cta.label} — ${cohort.title}`}
+      cta={cta.label}
+      className="p-7"
+    >
+      {body}
+    </InteractiveCard>
   );
 }
 

@@ -55,6 +55,14 @@ export type Cohort = {
   scheduleSummary: string | null;
   onboardingOn: string | null;
   firstClassOn: string | null;
+  /**
+   * ⚠ NULLABLE, AND THAT IS LOAD-BEARING. cohorts.year_group arrives with 0054
+   * and every AS cohort legitimately has none — a year group is a GCSE concept.
+   * cohortFromRow REFUSES rows rather than defaulting them, so a required field
+   * here would make every existing row unmappable the moment the column is
+   * absent or empty, and loadCohorts would return nothing with no error.
+   */
+  yearGroup: string | null;
   seatCap: number;
   status: CohortStatus;
   /**
@@ -83,6 +91,8 @@ const COHORTS: Cohort[] = [
     scheduleSummary: "Tuesday + Saturday · 7:00–9:30 PM Doha · 2 hours teaching + short break",
     onboardingOn: "2026-09-13",
     firstClassOn: "2026-09-15",
+    // ⚠ NULL FOR AS IS CORRECT, NOT A MISS — 0054's own verification says so.
+    yearGroup: null,
     seatCap: 20,
     // ⚠ 'interest' UNTIL A PAYMENT LINK EXISTS. The founding cohort is real and
     // dated, but enrolmentUrl is null, and a card that says Enrol without one
@@ -115,6 +125,8 @@ const COHORTS: Cohort[] = [
     scheduleSummary: null,
     onboardingOn: null,
     firstClassOn: null,
+    // 0054 stores the LABEL, not a slug — levelForYearGroup bridges them.
+    yearGroup: "Year 11",
     seatCap: 20,
     status: "interest",
     enrolmentUrl: null,
@@ -141,6 +153,8 @@ const COHORTS: Cohort[] = [
     scheduleSummary: null,
     onboardingOn: null,
     firstClassOn: null,
+    // 0054 stores the LABEL, not a slug — levelForYearGroup bridges them.
+    yearGroup: "Year 10",
     seatCap: 20,
     status: "interest",
     enrolmentUrl: null,
@@ -359,6 +373,8 @@ export function cohortFromRow(row: Record<string, unknown>): Mapped<Cohort> {
       scheduleSummary: str(row.schedule_summary),
       onboardingOn: str(row.onboarding_on),
       firstClassOn: str(row.starts_on),
+      // ⚠ NULL STAYS NULL — see the type. An AS cohort has no year group.
+      yearGroup: str(row.year_group),
       seatCap: num(row.seat_cap) ?? 0,
       status,
       enrolmentUrl,

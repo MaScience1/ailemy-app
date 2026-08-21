@@ -1,3 +1,4 @@
+import { Analytics } from "@/components/analytics/Analytics";
 import type { Metadata } from "next";
 import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
@@ -59,6 +60,10 @@ export default function RootLayout({
       className={`${fraunces.variable} ${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {/* ⚠ RENDERS NOTHING AND SENDS NOTHING WITHOUT A KEY. See
+            lib/analytics/posthog.ts — keyless is the normal state, and the
+            privacy policy ships in the same branch as the key. */}
+        <Analytics />
         {children}
         {/*
           Renders null for every non-admin (server-side branch), so students

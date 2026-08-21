@@ -5,7 +5,7 @@ import { loadOpenSlots } from "@/lib/booking/readers";
 import { stripeConfig } from "@/lib/booking/config";
 import { CANONICAL_TZ } from "@/lib/schedule/timezone";
 
-import { matchesFilters, type CalendarEvent, type CalendarQuery } from "./types.ts";
+import { matchesFilters, type CalendarEvent, type CalendarQuery, levelForYearGroup } from "./types.ts";
 
 /**
  * The one reader every calendar surface calls (§2).
@@ -76,11 +76,14 @@ export async function loadCalendarEvents(q: CalendarQuery): Promise<CalendarLoad
         endsAt: s.endsAt,
         title: s.title ?? s.cohort.title,
         subject: s.cohort.subject,
-        // ⚠ STRUCTURED, NOT PARSED OUT OF THE TITLE (§73). qualification is a
-        // real column; year_group is NOT one on cohorts yet, so it stays null
-        // rather than being guessed from a slug.
+        // ⚠ STRUCTURED, NOT PARSED OUT OF THE TITLE (§73). Both are real
+        // columns now — 0054 added cohorts.year_group, and this comment used to
+        // say it did not exist. It stayed null here for so long that the Year 10
+        // and Year 11 entries in the level filter matched nothing: matchesFilters
+        // checks `ev.yearGroup !== f.level`, against a value hardcoded to null,
+        // so two of the four levels were silently dead options.
         qualification: s.cohort.qualification,
-        yearGroup: null,
+        yearGroup: levelForYearGroup(s.cohort.yearGroup),
         cohortSlug: s.cohort.slug,
         teacherName: null,
         cancelledReason: s.cancelledReason,

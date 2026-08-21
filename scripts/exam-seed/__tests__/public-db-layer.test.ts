@@ -44,6 +44,11 @@ const rowFrom = (c: Cohort): Record<string, unknown> => ({
   price_pence: c.pricePence, price_qar: c.priceQar, currency: c.currency, hours_per_week: c.hoursPerWeek,
   sessions_per_week: c.sessionsPerWeek, schedule_summary: c.scheduleSummary,
   onboarding_on: c.onboardingOn, starts_on: c.firstClassOn, seat_cap: c.seatCap,
+  // ⚠ 0054's column. Added when Cohort gained yearGroup — and this round-trip
+  // is what caught the omission: the field went in and came back null, which
+  // is exactly the "a new field silently arrives as a default" failure the
+  // derived-row rule exists to prevent.
+  year_group: c.yearGroup,
   status: c.status, enrolment_url: c.enrolmentUrl, summary: c.summary, features: c.features,
 });
 
