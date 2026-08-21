@@ -1,4 +1,5 @@
 import { dualTime } from "@/lib/schedule/timezone";
+import { subjectColour, subjectVars } from "@/lib/design/subject-colours";
 import type { CalendarEvent } from "@/lib/calendar/types";
 
 /**
@@ -50,12 +51,35 @@ export function EventChip({
   const cancelled = event.status === "cancelled";
   const t = dualTime(event.startsAt, viewerTz);
 
+  /**
+   * ⚠ SUBJECT COLOUR ON GROUP EVENTS ONLY (§3, §6). A bookable 1-to-1 slot gets
+   * the neutral outlined treatment §6 asks for, because it is a different KIND
+   * of thing — an offer rather than a scheduled lesson — and painting it
+   * chemistry orange would make it read as a fourth Chemistry class.
+   *
+   * ⚠ AND A CANCELLED LESSON LOSES ITS COLOUR. An orange bar beside struck-out
+   * text says "this is happening, in Chemistry"; the strike-through and the
+   * grey have to agree with each other.
+   */
+  const colour = event.type === "group" && !cancelled ? subjectColour(event.subject) : null;
+
   return (
     <span
+      style={subjectVars(colour)}
       className={`flex items-start gap-1.5 ${dense ? "text-[11px] leading-tight" : "text-xs"} ${
         cancelled ? "text-ink/40" : "text-ink/85"
       }`}
     >
+      {/* ⚠ A 2px RULE, NOT A FILLED CHIP. §3 says these are accents and the site
+          must not become coloured blocks; in a 112px month cell a filled chip
+          would also drown the text it is meant to label. */}
+      {colour && (
+        <span
+          aria-hidden
+          className="mt-[3px] h-[9px] w-[2px] shrink-0 rounded-full"
+          style={{ background: "var(--subject-accent)" }}
+        />
+      )}
       <TypeMarker type={event.type} />
       <span className="min-w-0 flex-1">
         <span className={`font-mono tabular-nums ${cancelled ? "line-through" : ""}`}>{t.canonical}</span>{" "}

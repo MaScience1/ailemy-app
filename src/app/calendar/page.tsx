@@ -1,3 +1,4 @@
+import { loadCapacity, type Capacity } from "@/lib/public/capacity";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import Link from "next/link";
@@ -80,6 +81,27 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
   const subjectName = SUBJECTS.find((s) => s.slug === state.subject)?.name ?? null;
   const level = levelLabel(state.level);
 
+  /**
+   * ⚠ ONE RPC PER COHORT VISIBLE IN THE WINDOW, NOT PER EVENT. A month of
+   * twice-weekly lessons is eight or nine events for ONE cohort; keying the
+   * lookup by slug first means one call, not nine.
+   *
+   * ⚠ AND ONLY FOR COHORTS THAT ARE ACTUALLY ON SCREEN. Fetching capacity for
+   * the whole catalogue would be work whose result nothing renders.
+   */
+  const visibleCohorts = new Map<string, number>();
+  for (const ev of events) {
+    if (ev.type !== "group" || !ev.cohortSlug || !ev.cohort) continue;
+    visibleCohorts.set(ev.cohortSlug, ev.cohort.seatCap);
+  }
+  const capacityBySlug = new Map<string, Capacity>();
+  await Promise.all(
+    [...visibleCohorts].map(async ([slug, cap]) => {
+      capacityBySlug.set(slug, await loadCapacity(slug, cap));
+    }),
+  );
+
+
   return (
     <div className="bg-parchment text-ink">
       <AnnouncementBar />
@@ -109,6 +131,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
           basePath="/calendar"
           openDay={openDay}
           emptyMessage={emptyFor(subjectName, level)}
+          capacityBySlug={capacityBySlug}
         />
 
         {/* ⚠ THE EMPTY STATE OFFERS THE ONE HONEST NEXT STEP (§12, §57) — never

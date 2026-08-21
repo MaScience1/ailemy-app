@@ -7,6 +7,7 @@ import {
   hourWindow, hourRows, hourLabel,
 } from "@/lib/calendar/grid";
 import type { CalendarEvent, CalendarMode } from "@/lib/calendar/types";
+import type { Capacity } from "@/lib/public/capacity-rules";
 import { LEVELS } from "@/lib/calendar/types";
 import { SUBJECTS } from "@/lib/public/catalogue";
 import { CANONICAL_LABEL, CANONICAL_TZ, hourIn } from "@/lib/schedule/timezone";
@@ -59,6 +60,16 @@ export type CalendarProps = {
   openDay?: string | null;
   /** Hide the whole filter block (homepage preview, tight embeds). */
   showFilters?: boolean;
+  /**
+   * Seats taken per cohort slug, resolved SERVER-SIDE from 0063's
+   * cohort_seats_taken.
+   *
+   * ⚠ OPTIONAL, AND ITS ABSENCE MEANS SILENCE RATHER THAN ZERO. Surfaces that
+   * have not resolved it — the compact hero card, an embed — simply show no
+   * capacity line. A default of an empty Map would be identical in behaviour
+   * and would invite a caller to believe capacity had been checked.
+   */
+  capacityBySlug?: Map<string, Capacity>;
   /**
    * ⚠ FOR AN EMBED PART-WAY DOWN A LONG PAGE. Every link here is a real
    * navigation, so the browser lands at the top of the destination — fine at
@@ -161,6 +172,7 @@ export function Calendar(props: CalendarProps) {
           viewerTz={viewerTz}
           mode={props.mode}
           closeHref={href({ day: null })}
+          capacityBySlug={props.capacityBySlug}
         />
       )}
     </section>

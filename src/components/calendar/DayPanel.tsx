@@ -4,6 +4,7 @@ import { MONTH_LONG, parseDate, WEEKDAY_SHORT } from "@/lib/calendar/grid";
 import type { CalendarEvent, CalendarMode } from "@/lib/calendar/types";
 import { CANONICAL_TZ, dualTime } from "@/lib/schedule/timezone";
 import { ctaFor, priceLabel } from "@/lib/public/catalogue";
+import type { Capacity } from "@/lib/public/capacity-rules";
 
 /**
  * Everything happening on one day (§8, §86).
@@ -35,13 +36,21 @@ import { ctaFor, priceLabel } from "@/lib/public/catalogue";
  */
 
 export function DayPanel({
-  dayISO, events, viewerTz, mode, closeHref,
+  dayISO, events, viewerTz, mode, closeHref, capacityBySlug,
 }: {
   dayISO: string;
   events: readonly CalendarEvent[];
   viewerTz: string | null;
   mode: CalendarMode;
   closeHref: string;
+  /**
+   * ⚠ RESOLVED BY THE SERVER AND PASSED IN, NEVER READ HERE. The only source of
+   * a seat count is 0063's cohort_seats_taken, and a component that fetched it
+   * itself would need the calendar to become a client boundary — or worse, a
+   * grant on cohort_enrolments. Absent means show no capacity line, which is
+   * the correct behaviour on every surface that has not resolved it.
+   */
+  capacityBySlug?: Map<string, Capacity>;
 }) {
   const d = parseDate(dayISO);
   const heading = d
@@ -101,7 +110,17 @@ export function DayPanel({
 
         {group.length > 0 && (
           <Section title="Group lessons">
-            {group.map((ev) => <GroupRow key={ev.key} event={ev} viewerTz={viewerTz} mode={mode} />)}
+            {group.map((ev) => (
+              <GroupRow
+                key={ev.key}
+                event={ev}
+                viewerTz={viewerTz}
+                mode={mode}
+                /* ⚠ KEYED BY COHORT SLUG, so two lessons of the same cohort on
+                   one day share one figure rather than each implying its own. */
+                capacity={ev.cohortSlug ? capacityBySlug?.get(ev.cohortSlug) ?? null : null}
+              />
+            ))}
           </Section>
         )}
 
@@ -152,9 +171,11 @@ function Meta({ event }: { event: CalendarEvent }) {
 }
 
 function GroupRow({
-  event, viewerTz, mode,
+  event, viewerTz, mode, capacity,
 }: {
   event: CalendarEvent; viewerTz: string | null; mode: CalendarMode;
+  /** Resolved server-side from cohort_seats_taken (0063). Absent = say nothing. */
+  capacity?: Capacity | null;
 }) {
   const cancelled = event.status === "cancelled";
   const cohort = event.cohort;
@@ -183,6 +204,28 @@ function GroupRow({
           {cohort && (
             <p className="mt-2 text-sm text-ink/70">
               {priceLabel(cohort)} · cap {cohort.seatCap}
+            </p>
+          )}
+          {/* ⚠ CAPACITY ONLY WHEN IT IS REAL, AND ONLY FROM cohort_seats_taken
+              (0063). `capacity` arrives as a prop already resolved by the
+              server — this component does no reading of its own, because a
+              client-side count would need a grant on cohort_enrolments that
+              must never exist.
+
+              ⚠ A LABEL OF null MEANS "SAY NOTHING", NOT "SAY ZERO". An empty
+              cohort and a failed read both render no line here; the card above
+              already states the cap, which is the fact worth knowing before
+              anybody has enrolled. */}
+          {capacity?.known === true && capacity.label && (
+            <p
+              className={`mt-1.5 font-mono text-[10px] uppercase tracking-[0.15em] ${
+                capacity.state === "few-left" || capacity.state === "full"
+                  ? "text-amber-800"
+                  : "text-ink/55"
+              }`}
+            >
+              {/* ⚠ THE STATE IS IN THE WORDS, NOT ONLY THE COLOUR (§34). */}
+              {capacity.label}
             </p>
           )}
           {/* ⚠ A STUDENT CANNOT CANCEL A GROUP CLASS (§42) — there is no such
