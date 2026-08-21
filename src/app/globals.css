@@ -248,3 +248,14 @@
     animation: ailemy-calendar-expand 150ms cubic-bezier(0.2, 0, 0.2, 1) both;
   }
 }
+
+/* §72 — lesson decks are an in-app resource. Browser print of a lesson page
+   omits the player and practice: honest deterrence (screenshots remain
+   possible and no DRM is claimed), it just stops Ctrl+P being a clean
+   deck-export flow. Accessibility unaffected — screen readers use the live
+   page, and slide text alternatives live in the player's alt attributes. */
+@media print {
+  [data-lesson-deck] {
+    display: none;
+  }
+}

@@ -111,6 +111,11 @@ export type LessonForCatalogue = Lesson & {
 /** Lesson row used by the lesson page itself. */
 export type LessonForPage = Lesson & {
   spec_points: SpecPoint[];
+  /** Bucket directory of the PUBLISHED interactive deck (0008's column, now
+   *  consumed): "lessons/<id>/deck/v<k>". Null = no deck published, and the
+   *  lesson page keeps its video-or-placeholder behaviour untouched. Lives on
+   *  the PAGE type, not the base Lesson — catalogue cards never need it. */
+  deck_path: string | null;
 };
 
 /** A tiny neighbour row for prev/next nav. */

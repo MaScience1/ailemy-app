@@ -21,6 +21,7 @@ import type {
   LessonNeighbour,
   Subject,
 } from "@/lib/catalogue/types";
+import { LessonDeckSection } from "@/components/lesson/LessonDeckSection";
 import { InlineEditBoundary } from "@/components/admin-inline/InlineEditBoundary";
 import { LessonEditBarSlot } from "@/components/admin-inline/slots";
 
@@ -236,7 +237,33 @@ function LiveLesson({
 
           <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-12">
             <div className="min-w-0">
-              {lesson.voice_video_mux_id ? (
+              {/* ⚠ THE DECK IS THE PRIMARY LESSON EXPERIENCE (§4). Precedence:
+                  a published deck renders the interactive player (and the
+                  10-question practice beneath it); with no deck, the previous
+                  behaviour is preserved exactly — video if one exists, else
+                  the placeholder. A published deck DEMOTES the placeholder
+                  rather than sitting under it: a giant "video coming soon" is
+                  not the main content of a lesson that has a full deck. When a
+                  lesson eventually has BOTH deck and video, the video renders
+                  below the deck — a switcher is deliberately deferred until a
+                  lesson actually has both (no dead UI for a state that does
+                  not exist yet). */}
+              {lesson.deck_path ? (
+                <>
+                  <LessonDeckSection lessonSlug={lesson.slug} deckPath={lesson.deck_path} />
+                  {lesson.voice_video_mux_id && (
+                    <div className="mt-10">
+                      <h2 className="font-mono mb-4 text-xs uppercase tracking-[0.25em] text-ink/55">
+                        Lesson video
+                      </h2>
+                      <MuxLessonPlayer
+                        playbackId={lesson.voice_video_mux_id}
+                        title={lesson.title}
+                      />
+                    </div>
+                  )}
+                </>
+              ) : lesson.voice_video_mux_id ? (
                 <MuxLessonPlayer
                   playbackId={lesson.voice_video_mux_id}
                   title={lesson.title}

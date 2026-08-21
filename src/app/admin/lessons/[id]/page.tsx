@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { LessonForm } from "../_form";
+import { LessonContentPanel } from "./deck/LessonContentPanel";
 
 export const metadata = { title: "Edit lesson · Admin · Ailemy" };
 export const dynamic = "force-dynamic";
@@ -107,6 +108,12 @@ export default async function EditLessonPage({
             topic_id: s.topic_id,
           }))}
         />
+
+      <LessonContentPanel
+        lessonId={lesson.id as string}
+        lessonSlug={lesson.slug as string}
+        deckPath={(lesson.deck_path as string | null) ?? null}
+      />
       </div>
     </div>
   );

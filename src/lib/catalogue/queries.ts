@@ -372,7 +372,7 @@ export async function getLessonByCourseAndSlug(
       `
       id, course_id, unit_id, slug, title, description, lesson_number,
       is_core_practical, status, sort_order, estimated_duration_minutes, summary_md,
-      voice_video_mux_id,
+      voice_video_mux_id, deck_path,
       course:courses!inner(slug),
       lesson_spec_points(spec_points(id, topic_id, code, title, description, command_terms, status, sort_order))
       `,
@@ -408,6 +408,7 @@ export async function getLessonByCourseAndSlug(
     estimated_duration_minutes: number | null;
     summary_md: string | null;
     voice_video_mux_id: string | null;
+    deck_path: string | null;
     lesson_spec_points: { spec_points: SpecPointRow | null }[] | null;
   };
 
@@ -431,6 +432,7 @@ export async function getLessonByCourseAndSlug(
     estimated_duration_minutes: row.estimated_duration_minutes,
     summary_md: row.summary_md,
     voice_video_mux_id: row.voice_video_mux_id,
+    deck_path: row.deck_path,
     spec_points: specPoints,
   };
 }
