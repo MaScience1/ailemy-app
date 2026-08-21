@@ -21,6 +21,13 @@ import { CANONICAL_TZ, calendarDate, currentTimeIn, dualTime, formatDay } from "
 import { viewerTimeZone } from "@/lib/schedule/viewer-tz";
 
 import { EventChip } from "@/components/calendar/EventChip";
+import { MyCourses } from "@/components/account/MyCourses";
+import { ProfileAnnouncements } from "@/components/account/ProfileAnnouncements";
+import { loadIdentity, displayName, placeLine } from "@/lib/account/identity";
+import { accountTuition } from "@/lib/account/course-state";
+import {
+  loadProfileCourses, loadAcademicSummary, loadProfileAnnouncements,
+} from "@/lib/account/profile-reader";
 
 /**
  * The student profile (§29–§37, §77).
@@ -65,14 +72,35 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
   const openDay = params.day && parseDate(params.day) ? params.day : null;
 
   const range = rangeFor(state.view, state.date);
-  const [me, personal, inbox] = await Promise.all([
+  const [me, personal, inbox, identity] = await Promise.all([
     loadMyTuition(),
     loadPersonalCalendar(range),
     loadInbox(),
+    loadIdentity(),
   ]);
 
   // The proxy gates /profile too, but a layout-free route must not rely on it.
   if (!personal.signedIn) redirect("/login?next=/profile");
+
+  /**
+   * ⚠ COURSES FIRST, THEN THE SUMMARY THAT DEPENDS ON THEIR SLUGS. Two round
+   * trips rather than one, because the second query is scoped BY the first's
+   * result — asking for every attempt and filtering client-side would pull
+   * another student's rows into this process on a staff session (0028:599).
+   */
+  const coursesLoad = identity ? await loadProfileCourses(identity.account.userId) : null;
+  const courseSlugs =
+    coursesLoad?.available === true ? coursesLoad.courses.map((c) => c.courseSlug) : [];
+  const [academics, announcements] = await Promise.all([
+    identity && courseSlugs.length > 0
+      ? loadAcademicSummary(identity.account.userId, courseSlugs)
+      : Promise.resolve(null),
+    loadProfileAnnouncements(3),
+  ]);
+
+  // §11 — tuition is an ACCOUNT fact. public.cohorts has no course_id (0009),
+  // so it cannot be attached to a course; 0062 is reserved for that column.
+  const tuition = accountTuition(personal.enrolledCohortSlugs);
 
   const now = new Date();
   const upcoming = nextLive(personal.events, now, 6);
@@ -120,9 +148,27 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
         {/* ── identity (§30) ─────────────────────────────────────────────── */}
         <header>
           <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink/50">Your account</p>
+          {/* ⚠ THE NAME IF WE HAVE ONE, THE ADDRESS IF WE DO NOT, AND THEY
+              LOOK DIFFERENT. displayName's ladder ends at null rather than at a
+              placeholder — "Student" or "there" looks like the system knows who
+              you are and got it wrong (§8: only show fields actually known). */}
           <h1 className="font-display mt-3 text-3xl font-medium tracking-tight sm:text-4xl">
-            {me.email ?? "My profile"}
+            {(() => {
+              const n = identity ? displayName(identity) : null;
+              if (!n) return "My profile";
+              return n.kind === "name" ? n.value : <span className="font-mono text-2xl sm:text-3xl">{n.value}</span>;
+            })()}
           </h1>
+          {/* The qualification line — only the parts that are known. */}
+          {coursesLoad?.available === true && coursesLoad.courses.length > 0 && (
+            <p className="mt-1.5 text-sm font-medium text-ink/75">
+              {[
+                coursesLoad.courses[0].curriculum,
+                coursesLoad.courses[0].subject,
+                coursesLoad.courses[0].level,
+              ].filter(Boolean).join(" ")}
+            </p>
+          )}
           {/* ⚠ THE CLOCK BESIDE THE ZONE IS THE CHECK. A zone NAME cannot be
               verified by reading it — "Asia/Qatar" and "America/Anchorage" look
               equally plausible — but the time in it can be, at a glance, by the
@@ -130,18 +176,23 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
               finding: ICU accepts bare abbreviations and resolves them
               elsewhere, so a wrong zone is otherwise completely silent. */}
           <p className="mt-2 text-sm text-ink/60">
-            {me.email}
-            {" · "}
+            {identity?.profile.fullName && <>{me.email}{" · "}</>}
             <span className="font-mono text-[11px]">
-              {viewerTz ?? CANONICAL_TZ}
+              {/* ⚠ THE STORED ZONE IF IT IS READABLE, otherwise the detected
+                  one — and placeLine puts the CLOCK beside it, which is the
+                  only way a wrong zone is visible to the one person who knows
+                  what time it is where they are. */}
+              {identity ? (placeLine(identity, now) ?? `${viewerTz ?? CANONICAL_TZ}${currentTimeIn(viewerTz ?? CANONICAL_TZ) ? ` · ${currentTimeIn(viewerTz ?? CANONICAL_TZ)} there now` : ""}`) : (viewerTz ?? CANONICAL_TZ)}
             </span>
-            {(() => {
-              const local = currentTimeIn(viewerTz ?? CANONICAL_TZ);
-              return local ? (
-                <span className="font-mono text-[11px] text-ink/45"> · {local} there now</span>
-              ) : null;
-            })()}
           </p>
+          {/* ⚠ A STORED ZONE WE CANNOT READ IS SAID OUT LOUD, not silently
+              replaced. profiles.timezone is bare text with no CHECK (0057 is
+              reserved for one), and ICU resolves "AST" to Alaska without
+              complaint — so a silent fallback is how a lesson renders at the
+              wrong hour with total confidence. */}
+          {identity?.refusals.map((r) => (
+            <p key={r} className="mt-1.5 text-[13px] leading-relaxed text-amber-800">{r}</p>
+          ))}
           {/* ⚠ §21 — THE ZONE IS NAMED, AND CHANGEABLE. Silent conversion is how
               a student turns up an hour late. profiles.timezone exists (0017) and
               carries a column-level UPDATE grant (0018); the editor is the next
@@ -176,6 +227,49 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
             hint={next ? dualTime(next.startsAt, viewerTz).canonical + " Doha" : "Nothing scheduled"}
           />
         </div>
+
+        {/* ── my courses + academic overview (§10, §12) ───────────────────
+            ⚠ ABOVE the calendar. §7 says Profile answers "who am I, what am I
+            studying, what am I part of" — studying comes before scheduling, and
+            a student who has to scroll past a month grid to find their courses
+            has been told the calendar is the point. */}
+        <section className="mt-12">
+          <div className="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 className="font-display text-2xl font-medium tracking-tight">My courses</h2>
+            <Link href="/learn" className="font-mono text-[10px] uppercase tracking-[0.15em] text-ink/45 underline underline-offset-2 hover:text-ink">
+              All courses →
+            </Link>
+          </div>
+          {coursesLoad === null ? null : coursesLoad.available === false ? (
+            /* ⚠ A READ FAILURE IS NOT AN EMPTY STATE. "You have no courses" is a
+               claim about the student; this is a claim about the request. */
+            <p className="mt-3 rounded border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              {coursesLoad.reason}
+            </p>
+          ) : (
+            <MyCourses
+              courses={coursesLoad.courses}
+              academics={academics?.available === true ? academics.byCourseSlug : null}
+            />
+          )}
+
+          {/* ⚠ §11 — TUITION IS AN ACCOUNT FACT AND SAYS SO. public.cohorts has
+              no course_id (0009), so a live class cannot be attached to a
+              course; matching a slug against a subject name would be exactly
+              the inference §10 forbids. 0062 is reserved for that column. */}
+          {tuition.cohortSlugs.length > 0 && (
+            <p className="mt-4 text-[13px] leading-relaxed text-ink/60">
+              You also hold a seat in {tuition.cohortSlugs.length}{" "}
+              {tuition.cohortSlugs.length === 1 ? "live class" : "live classes"}. Live tuition is
+              listed separately from courses because a class is not yet linked to a course in the
+              timetable.{" "}
+              <Link href="/tuition" className="underline underline-offset-2 hover:text-ink">
+                See tuition
+              </Link>
+              .
+            </p>
+          )}
+        </section>
 
         {/* ── my calendar (§33, §34) ─────────────────────────────────────── */}
         <section className="mt-12">
@@ -265,6 +359,23 @@ export default async function ProfilePage({ searchParams }: { searchParams: Sear
               })}
             />
           </div>
+        </section>
+
+        {/* ── announcements (§17) ─────────────────────────────────────────
+            ⚠ BELOW Schedule Updates, and that placement IS the requirement.
+            §17 wants operational changes more prominent than general news, and
+            the announcements table cannot express the distinction — no
+            audience, severity or is_operational column; category is a topic
+            vocabulary and priority is a global ordering. So prominence is
+            position, and the ledger sits above. */}
+        <section className="mt-12">
+          <div className="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 className="font-display text-2xl font-medium tracking-tight">Announcements</h2>
+            <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-ink/40">
+              General news
+            </p>
+          </div>
+          <ProfileAnnouncements load={announcements} />
         </section>
 
         {/* ── upcoming lessons (§36, §37) ────────────────────────────────── */}
