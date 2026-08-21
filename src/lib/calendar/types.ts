@@ -111,6 +111,34 @@ export function isLevel(v: unknown): v is LevelSlug {
   return typeof v === "string" && LEVELS.some((l) => l.slug === v);
 }
 
+/**
+ * cohorts.year_group holds a LABEL; LEVELS holds a SLUG. This bridges them.
+ *
+ * ============================================================================
+ * ⚠ TWO VOCABULARIES THAT LOOK LIKE ONE, WHICH IS WHY THE FILTER WAS DEAD
+ * ============================================================================
+ * 0054's CHECK constrains year_group to 'Year 9'…'Year 13' — human labels. The
+ * level filter's slugs are 'gcse-y11' and 'gcse-y10'. matchesFilters compares
+ * `ev.yearGroup !== f.level`, so even once the column is wired through, "Year
+ * 11" would never equal "gcse-y11" and the Year 10 and Year 11 filter options
+ * would still silently match nothing.
+ *
+ * ⚠ THE MAPPING LIVES HERE, NOT IN A COMPONENT, and it returns null for a year
+ * group with no filter option rather than inventing a slug. 'Year 9', 'Year 12'
+ * and 'Year 13' are all valid in the database and none of them is offered as a
+ * filter — a cohort in one of those is simply not matched by any level, which
+ * is correct and is not the same as being matched by all of them.
+ */
+const YEAR_GROUP_TO_LEVEL: Record<string, LevelSlug> = {
+  "Year 11": "gcse-y11",
+  "Year 10": "gcse-y10",
+};
+
+export function levelForYearGroup(yearGroup: string | null | undefined): LevelSlug | null {
+  if (!yearGroup) return null;
+  return YEAR_GROUP_TO_LEVEL[yearGroup.trim()] ?? null;
+}
+
 /** Does this event match the active filters? Pure, so it is testable. */
 export function matchesFilters(
   ev: CalendarEvent,

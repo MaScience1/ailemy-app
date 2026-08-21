@@ -91,7 +91,7 @@ export async function loadCohorts(): Promise<CohortLoad> {
     .select(
       "slug,title,subject,qualification,price_pence,price_qar,currency,hours_per_week," +
         "sessions_per_week,schedule_summary,onboarding_on,starts_on,seat_cap," +
-        "status,enrolment_url,summary,features,display_order",
+        "status,enrolment_url,summary,features,display_order,year_group",
     )
     .eq("is_public", true)
     .order("display_order", { ascending: true })
