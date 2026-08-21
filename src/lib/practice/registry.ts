@@ -5,6 +5,10 @@ import { join } from "node:path";
 
 import type { Family, FamilyStatus } from "./engine.ts";
 import { FAMILIES as L1 } from "./families/definitions-formulae-and-the-mole.ts";
+import { FAMILIES as L2 } from "./families/balancing-equations-full-and-ionic.ts";
+import { FAMILIES as L3 } from "./families/relative-mass-molar-mass-and-ppm.ts";
+import { FAMILIES as L4 } from "./families/solution-concentration.ts";
+import { FAMILIES as L5 } from "./families/empirical-and-molecular-formulae.ts";
 
 export { buildSourcePack } from "./engine.ts";
 
@@ -30,7 +34,15 @@ export { buildSourcePack } from "./engine.ts";
  * second permanent store.
  */
 
-const ALL_FAMILIES: Family[] = [...L1];
+/**
+ * ⚠ L2–L5 WERE AI-DRAFTED AND AI-AUDITED, AND THAT IS WHY DRAFT STATUS IS THE
+ * DEFAULT AND THE GATE. Each module was drafted from its deck's extracted
+ * text, then adversarially audited (chemistry recomputed by hand, grounding
+ * terms machine-checked, impossible-hydrocarbon and cross-variant-feedback
+ * errors caught and fixed). None of that substitutes for the founder: every
+ * family serves students only after explicit admin approval (§67).
+ */
+const ALL_FAMILIES: Family[] = [...L1, ...L2, ...L3, ...L4, ...L5];
 
 export function familiesForLesson(lessonSlug: string): Family[] {
   return ALL_FAMILIES.filter((f) => f.lessonSlug === lessonSlug);

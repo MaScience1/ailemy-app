@@ -106,10 +106,24 @@ def slide_title(root):
 
 def spec_codes(text):
     """Codes the deck itself claims, e.g. a 'SPEC 1.2' chip. Detection only —
-    nothing is invented; a deck with no chips yields []. Both 'SPEC 1.2' in one
-    run and 'SPEC' / '1.2' split across runs are matched."""
+    nothing is invented; a deck with no chips yields [].
+
+    ⚠ A CHIP IS OFTEN A LIST OR A RANGE, AND ONLY CAPTURING THE FIRST CODE
+    UNDERCOUNTED EVERY COMBINED CHIP. 'SPEC 1.3 + 1.12' teaches BOTH codes on
+    that slide; 'SPEC 1.1–1.2' is a two-ended range. The first version of this
+    regex took one code per SPEC and tagged 28 of the L2 deck's slides 1.3-only
+    — which then dropped 1.12 below the taught-codes threshold and made every
+    1.12 family unservable. The whole chip token is captured now and split on
+    +, comma, and both dash kinds.
+    """
     joined = " ".join(text.split())
-    return sorted(set(re.findall(r"SPEC\s*[·:\-]?\s*(\d+\.\d+)", joined, re.I)))
+    out = set()
+    for chip in re.findall(
+        r"(?:SPEC|LO)\s*[·:\-]?\s*((?:\d+\.\d+)(?:\s*[+,–\-]\s*\d+\.\d+)*)",
+        joined, re.I,
+    ):
+        out.update(re.findall(r"\d+\.\d+", chip))
+    return sorted(out)
 
 def build_steps(root):
     """([[spid, …], …], ghost_count) — one entry per click that can actually
@@ -266,6 +280,10 @@ def main():
     ap.add_argument("--slug", required=True)
     ap.add_argument("--version", type=int, default=1)
     ap.add_argument("--dpi", type=int, default=140)
+    ap.add_argument("--metadata-only", action="store_true",
+                    help="rebuild manifest/notes/groundtruth against EXISTING "
+                         "frames (verified by count) without re-rendering — for "
+                         "extraction fixes that do not touch pixels")
     ap.add_argument("--out", default="content/decks")
     args = ap.parse_args()
 
@@ -277,9 +295,13 @@ def main():
 
     bundle = Path(args.out) / args.slug / f"v{args.version}"
     frames_dir = bundle / "frames"
-    if bundle.exists():
-        shutil.rmtree(bundle)  # regenerating THIS version only — never another
-    frames_dir.mkdir(parents=True)
+    if args.metadata_only:
+        if not frames_dir.exists():
+            die("--metadata-only needs an existing rendered bundle", 2)
+    else:
+        if bundle.exists():
+            shutil.rmtree(bundle)  # regenerating THIS version only — never another
+        frames_dir.mkdir(parents=True)
 
     z = zipfile.ZipFile(src)
     names = z.namelist()
@@ -302,7 +324,7 @@ def main():
 
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
-        base_pdf = render_pdf(src, tmp, len(slide_names))
+        base_pdf = None if args.metadata_only else render_pdf(src, tmp, len(slide_names))
 
         slides_meta, notes_meta, total_frames = [], [], 0
         for n, sn in enumerate(slide_names, 1):
@@ -318,18 +340,34 @@ def main():
             runs = text_runs(root)
             frame_files = []
 
-            # frames 0..len(steps)-1 come from surgically reduced packages …
-            for k in range(len(steps)):
-                variant = tmp / f"s{n}-f{k}.pptx"
-                frame_pptx(src, sn, steps, k, variant)
-                pdf = render_pdf(variant, tmp, len(slide_names))
-                img = render_page(pdf, n, tmp / f"s{n}-f{k}", args.dpi)
-                dest = frames_dir / f"s{n:02d}-f{k}.png"
+            if args.metadata_only:
+                # The pixels are already on disk — re-list and VERIFY them.
+                # A missing frame means the extraction change altered the step
+                # structure, and metadata-only would lie about the bundle:
+                # refuse and demand a full re-render.
+                for k in range(len(steps) + 1):
+                    dest = frames_dir / f"s{n:02d}-f{k}.png"
+                    if not dest.exists():
+                        die(f"--metadata-only: frame {dest.name} does not exist — "
+                            f"the step structure changed; run a full ingest", 5)
+                    frame_files.append(f"frames/{dest.name}")
+                stray = frames_dir / f"s{n:02d}-f{len(steps) + 1}.png"
+                if stray.exists():
+                    die(f"--metadata-only: {stray.name} exists beyond the current "
+                        f"step count — the step structure changed; run a full ingest", 5)
+            else:
+                # frames 0..len(steps)-1 come from surgically reduced packages …
+                for k in range(len(steps)):
+                    variant = tmp / f"s{n}-f{k}.pptx"
+                    frame_pptx(src, sn, steps, k, variant)
+                    pdf = render_pdf(variant, tmp, len(slide_names))
+                    img = render_page(pdf, n, tmp / f"s{n}-f{k}", args.dpi)
+                    dest = frames_dir / f"s{n:02d}-f{k}.png"
+                    shutil.move(img, dest); frame_files.append(f"frames/{dest.name}")
+                # … the FINAL frame from the untouched deck.
+                img = render_page(base_pdf, n, tmp / f"s{n}-final", args.dpi)
+                dest = frames_dir / f"s{n:02d}-f{len(steps)}.png"
                 shutil.move(img, dest); frame_files.append(f"frames/{dest.name}")
-            # … the FINAL frame from the untouched deck.
-            img = render_page(base_pdf, n, tmp / f"s{n}-final", args.dpi)
-            dest = frames_dir / f"s{n:02d}-f{len(steps)}.png"
-            shutil.move(img, dest); frame_files.append(f"frames/{dest.name}")
 
             total_frames += len(frame_files)
             slides_meta.append({
