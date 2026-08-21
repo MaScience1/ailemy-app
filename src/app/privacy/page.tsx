@@ -22,12 +22,27 @@ export const metadata: Metadata = {
  * — student written answers are sent for marking), Mux (@mux/mux-node,
  * @mux/mux-player-react — lesson and paper video).
  *
+ * ⚠ POSTHOG IS NOW INSTALLED, AND THIS TEXT CHANGED IN THE SAME BRANCH.
+ * The rule this file set — "if any of them goes live this page must be updated
+ * BEFORE it does; that is a release step, not a follow-up" — is what is being
+ * honoured here. posthog-js is a dependency and src/lib/analytics/ exists, so
+ * the clause below describes it.
+ *
+ * ⚠ AND IT IS DESCRIBED AS CONDITIONAL, BECAUSE IT IS. Nothing loads and
+ * nothing is sent without NEXT_PUBLIC_POSTHOG_KEY, which is unset. The text
+ * says "when analytics is switched on" rather than claiming current
+ * processing — and it remains accurate on the day the key is added, which is
+ * the point of writing it now rather than after.
+ *
+ * ⚠ THE COOKIE SENTENCE IS LOAD-BEARING. persistence is "memory" in
+ * lib/analytics/posthog.ts, so no analytics cookie is set and no consent
+ * banner is owed. If anyone ever changes that line, this paragraph becomes
+ * false and a banner becomes a legal requirement.
+ *
  * VERIFIED ABSENT at the time of writing, and therefore NOT described as
- * current processing: Stripe, PostHog and Resend are not installed, appear
- * nowhere in src/, and no analytics script is present in any layout. Stripe is
- * described conditionally because payments are planned; the other two are
- * simply not mentioned. If any of them goes live this page must be updated
- * BEFORE it does — that is a release step, not a follow-up.
+ * current processing: Stripe and Resend are not installed and appear nowhere
+ * in src/. Stripe is described conditionally because payments are planned;
+ * Resend is simply not mentioned. The same release rule applies to both.
  *
  * Nothing here claims a certification, a DPO, or an ICO registration number.
  * None was supplied and none is invented.
@@ -129,8 +144,20 @@ export default async function PrivacyPage() {
                 Card details are entered with Stripe and never reach our servers. This does not
                 apply yet.
               </>,
+              <>
+                <strong>PostHog</strong> — product analytics, hosted in the EU. When analytics is
+                switched on, we record which pages are opened and which buttons are pressed, so we
+                can see where the site is confusing. We send a fixed list of events and nothing
+                else: no names, no email addresses, no answers you write, and no recordings of
+                your screen or your typing. Analytics is currently switched off.
+              </>,
             ]}
           />
+          <p>
+            <strong>We do not use analytics cookies.</strong> Our analytics is configured to keep
+            nothing on your device between visits, which is why you are not asked to accept
+            cookies to use Ailemy.
+          </p>
           <p>
             <strong>We do not sell your personal data, and we never will.</strong> We do not share
             it with advertisers.
