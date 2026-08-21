@@ -62,9 +62,31 @@ console.log("── ⚠ THE VISIBLE WINDOW ONLY — NEVER A YEAR ──");
     /rangeFor\(calendarState\.view, calendarState\.date\)/.test(code));
   t("…and the old fixed 70-day fetch is gone",
     !/70 \* 86_400_000/.test(code), code.match(/.{0,40}86_400_000.{0,20}/)?.[0]);
-  t("…and there is exactly ONE calendar query on the page",
-    (code.match(/loadCalendarEvents\(/g) ?? []).length === 1,
-    (code.match(/loadCalendarEvents\(/g) ?? []).length);
+  /**
+   * ⚠ THE RULE IS "AT MOST ONE FETCH PER RENDER", NOT "ONE CALL SITE".
+   *
+   * This counted call sites, which was the same thing until §63 needed a
+   * second window: the month in view cannot answer "when is the next lesson",
+   * because for the whole summer the month in view is an empty August. A
+   * lookahead is a genuinely different question and needs a different range.
+   *
+   * Relaxing this to `<= 2` would have been the wrong repair — it licenses a
+   * third. So the guard now asserts the PROPERTY that made one call safe:
+   *   - the lookahead is CONDITIONAL on the first result being empty, so a
+   *     populated month still costs exactly one round trip; and
+   *   - it is BOUNDED by a named constant, not open-ended.
+   */
+  const calls = (code.match(/loadCalendarEvents\(/g) ?? []).length;
+  t("at most two calendar queries — the view, and a lookahead", calls <= 2, calls);
+  t("⚠ …and the second is CONDITIONAL on the first being empty, so a populated month costs one fetch",
+    /calendarEvents\.length === 0\s*\?\s*await loadCalendarEvents\(/.test(code),
+    code.match(/.{0,60}calendarEvents\.length === 0.{0,40}/s)?.[0]);
+  t("⚠ …and the lookahead is BOUNDED by a named constant, not open-ended",
+    /AHEAD_DAYS\s*=\s*\d+/.test(code) && /AHEAD_DAYS \* 86_400_000/.test(code),
+    code.match(/AHEAD_DAYS\s*=\s*\d+/)?.[0]);
+  t("⚠ …and that bound is a term, not a year",
+    Number(code.match(/AHEAD_DAYS\s*=\s*(\d+)/)?.[1] ?? 9999) <= 180,
+    code.match(/AHEAD_DAYS\s*=\s*(\d+)/)?.[1]);
 }
 
 console.log("\n── ⚠ NO PAYABLE CTA WHILE STRIPE IS KEYLESS ──");
