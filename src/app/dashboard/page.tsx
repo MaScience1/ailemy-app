@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 
 import { createClient } from "@/lib/supabase/server";
+import { displayName, loadIdentity } from "@/lib/account/identity";
 import { SignOutButton } from "./sign-out-button";
 
 export default async function DashboardPage() {
@@ -16,32 +17,29 @@ export default async function DashboardPage() {
     redirect("/login?next=/dashboard");
   }
 
-  // maybeSingle (not single) so a missing/blocked row returns null rather than
-  // throwing. Single's no-row error was being swallowed by the destructure,
-  // silently masking real failures and falling through to the email.
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("full_name, role")
-    .eq("id", user.id)
-    .maybeSingle();
+  /**
+   * ⚠ ONE LADDER, AND IT IS identity.ts's.
+   *
+   * This page used to read profiles itself and end its ladder at the literal
+   * "there" — so an account with no name was greeted "Welcome, there." while
+   * /profile, reading the same row through displayName(), deliberately ends at
+   * NULL and falls back to a TITLE. Two answers to one question, and the wrong
+   * one was the friendlier-looking one: a placeholder reads as though the system
+   * knows who you are and got it wrong, which is worse than not greeting a
+   * stranger by name.
+   *
+   * Reading through loadIdentity() also removes the second, divergent profiles
+   * query. identity.ts already carries the maybeSingle discipline this page had
+   * to state for itself, and its refusals travel with the result.
+   */
+  const identity = await loadIdentity();
+  const name = identity ? displayName(identity) : null;
 
-  if (profileError) {
-    // Server logs only — surfaces RLS/PostgREST issues without crashing the
-    // page. The fallback ladder below still renders a usable dashboard.
-    console.error("[dashboard] failed to load profile", profileError);
+  for (const r of identity?.refusals ?? []) {
+    // Server logs only — surfaces RLS/PostgREST faults without crashing the
+    // page, exactly as before. A refusal costs the name, never the page.
+    console.error("[dashboard] identity refusal:", r);
   }
-
-  // Display name priority:
-  //   1. profiles.full_name (trimmed, non-empty)
-  //   2. auth user email
-  //   3. literal "there" — only if both above are missing
-  const trimmedFullName = profile?.full_name?.trim();
-  const displayName =
-    trimmedFullName && trimmedFullName.length > 0
-      ? trimmedFullName
-      : (user.email ?? "there");
-
-  const role = profile?.role ?? "student";
 
   return (
     <div className="flex min-h-screen flex-col bg-parchment text-ink">
@@ -63,13 +61,38 @@ export default async function DashboardPage() {
             Dashboard
           </p>
 
+          {/* ⚠ NO NAME MEANS NO NAME — "Welcome." is a complete sentence. And
+              an address is set in mono so it does not masquerade as one, which
+              is the same treatment /profile gives it. */}
           <h1 className="font-display mt-6 max-w-[760px] text-4xl font-medium leading-[1.1] tracking-tight md:text-6xl">
-            Welcome, {displayName}.
+            {name === null ? (
+              "Welcome."
+            ) : name.kind === "name" ? (
+              <>Welcome, {name.value}.</>
+            ) : (
+              <>
+                Welcome,{" "}
+                <span className="font-mono text-2xl md:text-4xl">{name.value}</span>.
+              </>
+            )}
           </h1>
 
+          {/* ⚠ THE ROLE LINE IS GONE, NOT RELOCATED. It read profiles.role — the
+              legacy 0001 column — while every authorisation gate in the app now
+              resolves public.user_roles (0027). Printing the losing side of that
+              split to the student was telling them something the system does not
+              act on. Nothing here needed it. */}
           <p className="mt-6 max-w-[620px] text-lg leading-relaxed text-ink/70">
-            You&apos;re signed in as a {role}.
+            You&apos;re signed in. Your courses, tuition and progress live on your
+            profile.
           </p>
+
+          <Link
+            href="/profile"
+            className="mt-8 inline-flex rounded-full bg-ink px-6 py-3 text-sm font-medium text-parchment transition-colors duration-200 hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+          >
+            Open my profile →
+          </Link>
         </div>
       </main>
     </div>

@@ -18,12 +18,37 @@ import { useState } from "react";
  * Writing the two that fit while silently discarding the other two would be
  * worse than not writing any: a student would answer four questions, see a
  * confirmation, and have two of their answers vanish. So this collects all four
- * and states plainly that it is not saved yet, with a link to the profile where
- * a target grade CAN be set today.
+ * and states plainly that it is not saved yet.
  *
  * ⚠ THAT IS A DELIBERATE, VISIBLE LIMITATION RATHER THAN A HIDDEN ONE. The
  * alternative — a spinner and a "saved!" toast — is the fake functionality the
  * standing rules forbid, and a student would only discover it much later.
+ *
+ * ============================================================================
+ * ⚠ AND THIS FILE USED TO GIVE A FALSE REMEDY, WHICH IS THE SUBTLER FAULT
+ * ============================================================================
+ * It said — here in the header, and twice on screen — that a target grade "can
+ * be set today, on your profile". It cannot. There is no profile editor, no
+ * /settings route, and nothing anywhere in the application writes
+ * student_courses; the only reads are at profile-reader.ts:99.
+ *
+ * That is a worse failure than the one this component was so careful about. It
+ * told the student the truth in one sentence ("nothing you typed has been sent
+ * anywhere") and then handed them a remedy that does not exist in the next —
+ * so the student goes to /profile, cannot find the control, and concludes they
+ * are the one who is lost. An honest limitation followed by a false workaround
+ * reads as a working product with a confusing UI.
+ *
+ * ⚠ AND WIRING IT INSTEAD OF CORRECTING IT WOULD NOT HAVE WORKED. target_grade
+ * lives on student_courses (0017 §3b), one row per course a student studies.
+ * A student arriving at /welcome has just signed up and has no such row, and
+ * no enrolment flow exists to create one — so the write would fail for exactly
+ * the audience this page serves. The editor is Phase 3 work and needs the
+ * enrolment path underneath it.
+ *
+ * ⚠ WHEN THAT EDITOR LANDS, THIS COPY IS PART OF THE SAME CHANGE, and
+ * no-false-remedies.test.ts goes red to say so rather than leaving it to
+ * memory.
  *
  * ⚠ ONE QUESTION AT A TIME, EACH SKIPPABLE, PROGRESS VISIBLE. A student who
  * stops halfway has lost nothing, because nothing was ever a requirement.
@@ -72,29 +97,40 @@ export function OnboardingSteps() {
               Ailemy cannot store these yet — the questions are ready before the place to keep
               them is. Nothing you typed has been sent anywhere.
             </p>
+            {/* ⚠ NO REMEDY IS OFFERED, BECAUSE THERE IS NOT ONE YET. This
+                sentence used to send the student to a profile editor that does
+                not exist. Saying what will happen to the answer — nothing, for
+                now — is the only claim this page can currently keep. */}
             <p className="mt-3 text-sm leading-relaxed text-ink/70">
-              Your <strong>target grade</strong> can be set today, on your profile, and it is the
-              one Ailemy measures progress against.
+              Nothing is lost by that: none of it is needed to start. Ailemy learns what you
+              are strong and weak at from the questions you actually answer, not from what you
+              told it at signup.
             </p>
           </>
         ) : (
           <p className="mt-3 text-sm leading-relaxed text-ink/70">
-            No problem — you can set a target grade any time from your profile.
+            No problem — none of it is needed to start. Ailemy learns what you are strong and
+            weak at from the questions you actually answer.
           </p>
         )}
 
         <div className="mt-5 flex flex-wrap gap-3">
-          <Link
-            href="/profile"
-            className="rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-parchment transition-colors hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-          >
-            Go to my profile →
-          </Link>
+          {/* ⚠ PRACTISING IS THE PRIMARY ACTION NOW. It was second to a profile
+              link that promised a control the profile does not have; the button
+              that leads somewhere the student can actually do something should
+              be the loud one. /profile stays, described as what it is — a place
+              to look, not a place to set this. */}
           <Link
             href="/past-papers"
-            className="rounded-full border border-ink/20 px-5 py-2.5 text-sm font-medium transition-colors hover:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            className="rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-parchment transition-colors hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
             Start practising →
+          </Link>
+          <Link
+            href="/profile"
+            className="rounded-full border border-ink/20 px-5 py-2.5 text-sm font-medium transition-colors hover:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+          >
+            See my profile →
           </Link>
         </div>
       </div>
