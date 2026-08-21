@@ -8,6 +8,7 @@ import { AnnouncementBar } from "@/components/public/AnnouncementBar";
 import { CapabilityStrip } from "@/components/home/CapabilityStrip";
 import { SubjectCard } from "@/components/home/SubjectCard";
 import { StickyCta } from "@/components/home/StickyCta";
+import { TryAilemy } from "@/components/home/TryAilemy";
 import { nextSession, distanceLabel } from "@/lib/calendar/next-session";
 import { dayKeyOf } from "@/lib/calendar/grid";
 import { getNavSession } from "@/lib/auth/nav-session";
@@ -275,6 +276,20 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           three-second read: this is a platform, not a tutor. A visitor who has
           to scroll to learn that has already formed the other impression. */}
       <CapabilityStrip />
+
+      {/* ── 3c. product demonstration (§25, §27 position 3) ──────────────
+          ⚠ BEFORE THE SUBJECT CARDS, AND THAT IS THE FUNNEL. §27 puts the
+          demonstration third, above the sciences: a visitor who has just been
+          told Ailemy marks answers should be able to see it happen before
+          being asked to choose a subject. Describing marking and then showing
+          it two screens later is the order that loses people. */}
+      <Section
+        id="try"
+        title="Try it. Write an answer and see it marked."
+        lede="This is how Ailemy marks — against the points a real mark scheme awards, with the reason for each one."
+      >
+        <TryAilemy />
+      </Section>
 
       {/* ── 4. subject selector ───────────────────────────────────────── */}
       <Section id="subjects" title="Three sciences, one platform">
