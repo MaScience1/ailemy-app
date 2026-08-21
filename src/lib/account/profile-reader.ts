@@ -322,3 +322,139 @@ export async function loadProfileAnnouncements(limit = 3): Promise<Announcements
   }
   return { available: true, items };
 }
+
+// ============================================================================
+// ACADEMIC OVERVIEW (§12)
+// ============================================================================
+
+export type CourseAcademics = {
+  /** Papers with submitted_at set. An opened-and-abandoned paper is not one. */
+  papersCompleted: number;
+  questionsAnswered: number;
+  /** Mark-weighted across submitted attempts (§95), or a stated refusal (§96). */
+  assessed: Unavailable | { available: true; awarded: number; outOf: number; percent: number };
+  /** ⚠ ALWAYS unavailable today — see the reason it carries. */
+  weakestTopic: Unavailable;
+};
+
+export type AcademicsLoad =
+  | Unavailable
+  | { available: true; byCourseSlug: Map<string, CourseAcademics> };
+
+/**
+ * ⚠ EVERY FIGURE HERE IS ZERO OR UNAVAILABLE FOR EVERY STUDENT TODAY, AND THAT
+ * IS THE CORRECT OUTPUT. No student has submitted an attempt. §12 says "do not
+ * show values if data is insufficient" — so this returns the shape and the
+ * refusals, and the section renders an empty state rather than a row of zeros
+ * that looks like a verdict.
+ *
+ * ⚠ THE COURSE LINK IS exam_attempts -> past_papers.course_id (0007:23). It is
+ * a real foreign key, so this is per-course rather than account-wide.
+ *
+ * ⚠ student_id IS NAMED, NOT LEFT TO RLS. exam_attempts_select is
+ * `student_id = auth.uid() OR public.is_staff()` (0028:599): a staff member
+ * opening their own profile would otherwise see every student's work summed
+ * into their own overview.
+ *
+ * ⚠ SUBMITTED ONLY. started_at is stamped when a paper is opened, so an
+ * abandoned page-open would otherwise count as a completed paper.
+ */
+export async function loadAcademicSummary(
+  studentId: string, courseSlugs: string[],
+): Promise<AcademicsLoad> {
+  if (courseSlugs.length === 0) return { available: true, byCourseSlug: new Map() };
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("exam_attempts")
+    .select("id, total_awarded, total_available, submitted_at, past_papers!inner(courses!inner(slug))")
+    .eq("student_id", studentId)
+    .not("submitted_at", "is", null);
+
+  if (error) {
+    return {
+      available: false,
+      reason: `Your academic summary could not be loaded (${error.code ?? "unknown error"}).`,
+    };
+  }
+
+  const rows = (data ?? []) as unknown as Record<string, unknown>[];
+  const attemptIdsBySlug = new Map<string, string[]>();
+  const tally = new Map<string, { awarded: number; outOf: number; papers: number }>();
+
+  for (const row of rows) {
+    const paper = row.past_papers as Record<string, unknown> | null;
+    const course = paper?.courses as Record<string, unknown> | null;
+    const slug = str(course?.slug);
+    if (!slug || !courseSlugs.includes(slug)) continue;
+
+    const t = tally.get(slug) ?? { awarded: 0, outOf: 0, papers: 0 };
+    t.papers += 1;
+    /**
+     * ⚠ BOTH OR NEITHER. total_awarded is service-role-only (0037 revoked the
+     * table-wide UPDATE and re-granted only submitted_at, updated_at and
+     * total_available), so a submitted-but-unmarked attempt has an available
+     * total and a NULL awarded one. Counting the denominator without the
+     * numerator would report the student scoring zero on a paper nobody has
+     * marked yet — the same defect gradeFor shipped once.
+     */
+    const aw = typeof row.total_awarded === "number" ? row.total_awarded : null;
+    const of = typeof row.total_available === "number" ? row.total_available : null;
+    if (aw !== null && of !== null && of > 0) { t.awarded += aw; t.outOf += of; }
+    tally.set(slug, t);
+
+    const id = str(row.id);
+    if (id) attemptIdsBySlug.set(slug, [...(attemptIdsBySlug.get(slug) ?? []), id]);
+  }
+
+  const questionCounts = await questionsBySlug(supabase, attemptIdsBySlug);
+
+  const byCourseSlug = new Map<string, CourseAcademics>();
+  for (const slug of courseSlugs) {
+    const t = tally.get(slug);
+    byCourseSlug.set(slug, {
+      papersCompleted: t?.papers ?? 0,
+      questionsAnswered: questionCounts.get(slug) ?? 0,
+      assessed:
+        t && t.outOf > 0
+          ? { available: true, awarded: t.awarded, outOf: t.outOf, percent: Math.round((t.awarded / t.outOf) * 100) }
+          : {
+              available: false,
+              reason: (t?.papers ?? 0) > 0
+                ? "Your submitted papers have not been marked yet, so there is no assessed figure."
+                : "Complete your first practice set to begin building your performance record.",
+            },
+      weakestTopic: {
+        available: false,
+        /**
+         * ⚠ NOT "no weak topics". Topic mastery needs question_topics populated
+         * AND enough assessed marks per topic; the mark-scheme seed for WCH11/01
+         * has not landed. Saying "none" would be a claim about the student.
+         */
+        reason: "Topic breakdown appears once the question bank is tagged and you have attempted enough marks in a topic.",
+      },
+    });
+  }
+  return { available: true, byCourseSlug };
+}
+
+/** Questions answered, per course, via the attempt ids already gathered. */
+async function questionsBySlug(
+  db: Db, attemptIdsBySlug: Map<string, string[]>,
+): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  const all = [...attemptIdsBySlug.values()].flat();
+  if (all.length === 0) return out;
+  const { data, error } = await db
+    .from("question_attempts")
+    .select("id, exam_attempt_id")
+    .in("exam_attempt_id", all);
+  if (error) return out;
+  const bySlug = new Map<string, string>();
+  for (const [slug, ids] of attemptIdsBySlug) for (const id of ids) bySlug.set(id, slug);
+  for (const row of (data ?? []) as unknown as Record<string, unknown>[]) {
+    const slug = bySlug.get(str(row.exam_attempt_id) ?? "");
+    if (slug) out.set(slug, (out.get(slug) ?? 0) + 1);
+  }
+  return out;
+}
