@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { ChevronDown, Menu, X } from "lucide-react";
 
+import { navToneVars, type NavToneKey } from "@/lib/design/subject-colours";
+
 /**
  * Site-wide top navigation. Used on the marketing landing page and on every
  * /learn/* route (via src/app/learn/layout.tsx).
@@ -29,7 +31,67 @@ import { ChevronDown, Menu, X } from "lucide-react";
  * who can never use it. The form also works with JavaScript disabled.
  */
 
-type NavLink = { label: string; href: string };
+type NavLink = { label: string; href: string; tone: NavToneKey };
+
+/**
+ * ============================================================================
+ * ⚠ THE HOVER CAPSULE — ONE CLASS STRING, SEVEN TABS, TWO VARIABLES
+ * ============================================================================
+ * Every tab renders the identical geometry, timing, scale and focus ring, and
+ * differs ONLY in --nav-tint and --nav-border. Seven per-tab class strings
+ * would drift the moment one of them is adjusted; this cannot.
+ *
+ * ⚠ THE CAPSULE'S PADDING AND BORDER EXIST AT REST, TRANSPARENT. If the pill
+ * only appeared on hover, the tab would gain 24px of width and a 1px border at
+ * the moment the pointer arrived — the row would jump and the item would move
+ * out from under the cursor. So the box is always there and only its COLOURS
+ * change. Nothing reflows, ever.
+ *
+ * ⚠ WHICH IS WHY gap-10 BECAME gap-[14px], AND WHY IT IS NOT gap-4. The old row
+ * put 40px between the label text of adjacent tabs. Each tab now carries 12px
+ * of padding AND a 1px transparent border, so the glyph run sits 13px inside
+ * its box, not 12. gap-4 looked like the right answer and measured 42px —
+ * 13 + 16 + 13 — quietly loosening every gap in the nav by 2px. 40 − 26 = 14.
+ *
+ * The border is the easy thing to forget here: it is invisible at rest, so it
+ * contributes nothing you can see and 2px you can measure.
+ *
+ * ⚠ HOVER IS NEVER THE ONLY TRIGGER and the ring is never the capsule. Every
+ * hover declaration is repeated on focus-visible, the transform sits behind
+ * motion-safe:, and the ink outline is a separate property outside the pill —
+ * a decorative fill that doubles as the focus indicator stops being an
+ * indicator the moment somebody restyles the decoration.
+ *
+ * Measured, ink on each tint, against the 6.48:1 the nav has at rest:
+ *   chemistry 16.54:1 · biology 16.28:1 · physics 16.09:1
+ *   gold      14.78:1 · neutral 14.65:1
+ */
+const TAB = [
+  "group relative inline-flex items-center rounded-full border border-transparent px-3 py-1.5",
+  "cursor-pointer transition-[color,background-color,border-color,transform] duration-200 ease-out",
+  "hover:border-[var(--nav-border)] hover:bg-[var(--nav-tint)] hover:text-ink",
+  "focus-visible:border-[var(--nav-border)] focus-visible:bg-[var(--nav-tint)] focus-visible:text-ink",
+  "origin-center motion-safe:hover:scale-[1.06] motion-safe:focus-visible:scale-[1.06]",
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink",
+].join(" ");
+
+/**
+ * ⚠ THE MOBILE EQUIVALENT KEEPS THE COLOUR AND DROPS THE PILL. A capsule that
+ * spans a full-width dropdown row is not a capsule, it is a bar; and a 1.06
+ * scale on a touch target under a finger is movement the finger did not ask
+ * for. So a phone gets the same tint and hairline on a rounded row, no scale.
+ * The colour language is identical, the geometry suits the surface.
+ *
+ * -mx-[13px] cancels the padding AND the transparent border, so the labels stay
+ * flush with the panel's own padding and the touched row bleeds out to meet it.
+ */
+const TAB_MOBILE = [
+  "block rounded-lg border border-transparent px-3 py-2",
+  "transition-[color,background-color,border-color] duration-200 ease-out",
+  "hover:border-[var(--nav-border)] hover:bg-[var(--nav-tint)] hover:text-ink",
+  "focus-visible:border-[var(--nav-border)] focus-visible:bg-[var(--nav-tint)] focus-visible:text-ink",
+  "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink",
+].join(" ");
 
 /**
  * ⚠ THE PERMANENT ARCHITECTURE, NOT ONE CAMPAIGN.
@@ -48,14 +110,18 @@ type NavLink = { label: string; href: string };
  * until they are complete, loses every visitor who came looking for them.
  */
 const NAV_LINKS: NavLink[] = [
-  { label: "Chemistry", href: "/chemistry" },
-  { label: "Biology", href: "/biology" },
-  { label: "Physics", href: "/physics" },
-  { label: "Past Papers", href: "/past-papers" },
-  { label: "Live Tuition", href: "/tuition" },
+  { label: "Chemistry", href: "/chemistry", tone: "chemistry" },
+  { label: "Biology", href: "/biology", tone: "biology" },
+  { label: "Physics", href: "/physics", tone: "physics" },
+  // ⚠ GOLD, NOT A FOURTH SUBJECT HUE. These are cross-subject platform
+  // features, and the homepage capability strip already renders the words
+  // "Past papers" and "Live tuition" as gold capsules — the same label gets
+  // the same treatment in both places. See NAV_TONES for the full reasoning.
+  { label: "Past Papers", href: "/past-papers", tone: "gold" },
+  { label: "Live Tuition", href: "/tuition", tone: "gold" },
   // ⚠ §3 — Calendar is a permanent top-level entry, not a link buried in the
   // tuition page. It is where a student checks when a class actually is.
-  { label: "Calendar", href: "/calendar" },
+  { label: "Calendar", href: "/calendar", tone: "gold" },
   // ⚠ "Resources" IS NOT HERE ON PURPOSE. Resources are discovered THROUGH a
   // subject — that is the canonical path, and a parallel top-level entry
   // offered a second, flatter route to the same material, which is how two
@@ -113,13 +179,14 @@ export function SiteNav({ session = null }: { session?: NavSession }) {
         </Link>
 
         {/* Desktop primary links */}
-        <ul className="hidden items-center gap-10 text-sm font-medium text-ink/70 md:flex">
+        {/* ⚠ -mx-[13px] KEEPS THE ROW'S OUTER EDGES WHERE THEY WERE — 13, not
+            12, for the same reason gap is 14: padding plus the transparent
+            border. Without it the group is 26px wider and the nav's balance
+            against the logo shifts. */}
+        <ul className="-mx-[13px] hidden items-center gap-[14px] text-sm font-medium text-ink/70 md:flex">
           {NAV_LINKS.map((link) => (
             <li key={link.href}>
-              <Link
-                href={link.href}
-                className="transition-colors duration-200 hover:text-ink"
-              >
+              <Link href={link.href} style={navToneVars(link.tone)} className={TAB}>
                 {link.label}
               </Link>
             </li>
@@ -139,7 +206,18 @@ export function SiteNav({ session = null }: { session?: NavSession }) {
                 // The full address is in `title` because the visible label is
                 // truncated — a long email must not push the nav around.
                 title={session.email}
-                className="inline-flex max-w-[16rem] cursor-pointer items-center gap-1.5 rounded-md px-2 py-1.5 text-sm font-medium text-ink/75 transition-colors hover:bg-ink/[0.04] hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                style={navToneVars("neutral")}
+                /**
+                 * ⚠ THE SAME CAPSULE AS Login, BECAUSE IT IS THE SAME SLOT.
+                 * Signed out this position holds a Login link; signed in it
+                 * holds this control. If only one of them grew a capsule, the
+                 * nav would change shape on sign-in for no reason the user can
+                 * see. Its own hover:bg-ink/[0.04] is what the neutral tone was
+                 * derived from, so this is that behaviour formalised, not
+                 * replaced. max-w and truncate stay: a long address must never
+                 * push the nav around, capsule or not.
+                 */
+                className={`${TAB} max-w-[16rem] gap-1.5 text-sm font-medium text-ink/75`}
               >
                 <span className="min-w-0 truncate">{session.email}</span>
                 <ChevronDown
@@ -167,7 +245,8 @@ export function SiteNav({ session = null }: { session?: NavSession }) {
           ) : (
             <Link
               href="/login"
-              className="text-sm font-medium text-ink/75 transition-colors hover:text-ink"
+              style={navToneVars("neutral")}
+              className={`${TAB} text-sm font-medium text-ink/75`}
             >
               Login
             </Link>
@@ -198,13 +277,14 @@ export function SiteNav({ session = null }: { session?: NavSession }) {
           className="absolute inset-x-0 top-full z-50 border-b border-ink/10 bg-parchment shadow-[0_8px_24px_-12px_rgba(15,20,25,0.10)] md:hidden"
         >
           <div className="mx-auto w-full max-w-7xl px-6 py-6">
-            <ul className="space-y-1 text-base font-medium text-ink">
+            <ul className="-mx-[13px] space-y-1 text-base font-medium text-ink">
               {NAV_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
                     onClick={closeMenu}
-                    className="block py-2 transition-colors hover:text-ink/70"
+                    style={navToneVars(link.tone)}
+                    className={TAB_MOBILE}
                   >
                     {link.label}
                   </Link>

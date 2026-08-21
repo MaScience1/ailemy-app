@@ -27,6 +27,11 @@ import {
   subjectColour,
   subjectVars,
   NEUTRAL_SLOT,
+  NAV_TONES,
+  GOLD,
+  overParchment,
+  navToneVars,
+  type NavToneKey,
 } from "../../../src/lib/design/subject-colours.ts";
 
 let pass = 0, fail = 0;
@@ -150,6 +155,99 @@ console.log("\n=== 6. ⚠ §34 — IDENTITY IS NEVER COLOUR ALONE ===");
   }
   const codes = SUBJECT_ORDER.map((k) => SUBJECT_COLOURS[k].code);
   t("the codes are distinct", new Set(codes).size === codes.length, codes.join(", "));
+}
+
+// ============================================================================
+console.log("\n=== 7. NAV TONES — the hover capsule behind each top-level tab ===");
+// ============================================================================
+{
+  /**
+   * ⚠ THE MEASURING STICK FIRST, AGAIN. overParchment is what DERIVES the gold
+   * and neutral washes, so a bug in it silently moves every ratio below. Two
+   * endpoints pin it: 0% must return the ground untouched, 100% the colour
+   * untouched. Neither is an opinion.
+   */
+  t("overParchment(x, 0) returns the parchment ground",
+    overParchment("#B08D57", 0).toUpperCase() === PARCHMENT.toUpperCase(),
+    overParchment("#B08D57", 0));
+  t("overParchment(x, 1) returns the colour itself",
+    overParchment("#B08D57", 1).toUpperCase() === "#B08D57",
+    overParchment("#B08D57", 1));
+
+  /** Composite a translucent ink over an opaque background. */
+  const inkOver = (alpha: number, bg: string) => {
+    const b = bg.replace("#", "");
+    const out = [0, 2, 4].map((i) => {
+      const fg = parseInt("0F1419".slice(i, i + 2), 16);
+      return Math.round(fg * alpha + parseInt(b.slice(i, i + 2), 16) * (1 - alpha));
+    });
+    return `#${out.map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+  };
+
+  /**
+   * ⚠ THE BAR IS THE REST STATE, NOT 4.5. The nav reads ink/70 on parchment
+   * when nothing is hovered. A capsule that merely cleared AA could still make
+   * a tab HARDER to read than doing nothing, which is a strange thing for a
+   * hover affordance to do. So the invariant is: every tone must beat rest.
+   */
+  const REST = contrast(inkOver(0.7, PARCHMENT), PARCHMENT);
+  console.log(`  (the bar: ink/70 on parchment = ${round2(REST)}:1)`);
+  t("the rest state is itself AA", REST >= 4.5, round2(REST));
+
+  const keys: NavToneKey[] = ["chemistry", "biology", "physics", "gold", "neutral"];
+  for (const key of keys) {
+    const tone = NAV_TONES[key];
+    const r = contrast("#0F1419", tone.tint);
+    t(`${key}: ink on its tint (${tone.tint}) is ${round2(r)}:1 — beats the ${round2(REST)}:1 rest state`,
+      r > REST, round2(r));
+  }
+
+  /**
+   * ⚠ THIS ONE ASSERTS THE REJECTED OPTION, WHICH IS THE POINT OF IT.
+   *
+   * The expressive alternative was a subject's own `text` colour on its own
+   * `tint`. It was rejected because Chemistry lands BELOW the rest state there,
+   * so hovering that one tab would very slightly reduce legibility. A comment
+   * saying so can be deleted by anyone who thinks orange-on-orange looks nicer.
+   * This cannot: switch the nav to subject text and the reason it was not done
+   * is sitting in the suite with the number attached.
+   */
+  const chemExpressive = contrast(SUBJECT_COLOURS.chemistry.text, SUBJECT_COLOURS.chemistry.tint);
+  t(`⚠ WHY NOT SUBJECT-TEXT-ON-TINT: chemistry gives ${round2(chemExpressive)}:1, BELOW the ${round2(REST)}:1 rest state`,
+    chemExpressive < REST, round2(chemExpressive));
+  t("   …and it is still AA, so this was a regression in degree, not a failure",
+    chemExpressive >= 4.5, round2(chemExpressive));
+
+  /**
+   * ⚠ DERIVED, NOT COPIED — the rule this repo already has for fixtures applies
+   * to tokens too. If somebody hard-codes "#FDF0E4" into NAV_TONES and later
+   * nudges SUBJECT_COLOURS, the nav and the subject cards drift apart with
+   * nothing going red. Identity against the source is what forbids that.
+   */
+  for (const key of SUBJECT_ORDER) {
+    t(`${key} nav tone is READ from SUBJECT_COLOURS, not restated`,
+      NAV_TONES[key].tint === SUBJECT_COLOURS[key].tint &&
+      NAV_TONES[key].border === SUBJECT_COLOURS[key].border,
+      `${NAV_TONES[key].tint} vs ${SUBJECT_COLOURS[key].tint}`);
+  }
+
+  // The gold wash must actually come from the ramp, not near it.
+  t("the gold tone derives from GOLD.sheen and GOLD.body over parchment",
+    NAV_TONES.gold.tint === overParchment(GOLD.sheen, 0.22) &&
+    NAV_TONES.gold.border === overParchment(GOLD.body, 0.55),
+    `${NAV_TONES.gold.tint} / ${NAV_TONES.gold.border}`);
+
+  // Every tone must be visually distinct, or the scheme conveys nothing.
+  const tints = keys.map((k) => NAV_TONES[k].tint);
+  t("all five tones are distinct", new Set(tints).size === tints.length, tints.join(" "));
+
+  // The vars helper must emit both custom properties for every key.
+  for (const key of keys) {
+    const v = navToneVars(key) as Record<string, string>;
+    t(`navToneVars("${key}") emits both custom properties`,
+      v["--nav-tint"] === NAV_TONES[key].tint && v["--nav-border"] === NAV_TONES[key].border,
+      JSON.stringify(v));
+  }
 }
 
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);

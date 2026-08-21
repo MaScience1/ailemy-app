@@ -150,3 +150,107 @@ export const NEUTRAL_SLOT = {
   tint: "#FFFFFF",
   border: "#D8D2C6",
 } as const;
+
+// ============================================================================
+// NAVIGATION TONES — the hover capsule behind each top-level tab
+// ============================================================================
+//
+// ⚠ THE CAPSULE IS TINT + HAIRLINE + ink, AND THE INK IS THE POINT. The
+// expressive alternative — a subject's own `text` colour on its own `tint` —
+// was measured and rejected: Chemistry lands at 6.16:1 there, BELOW the 6.48:1
+// the nav already has at rest. Hovering a tab would have made it very slightly
+// harder to read, and only on one of the three, which is the worst kind of
+// inconsistency. `ink` on tint gives 16.54 / 16.28 / 16.09 — the token file's
+// own documented contract ("a wash behind a chip … type on it is ink"), and it
+// beats the rest state everywhere.
+//
+// The subject is still carried by the capsule, which is what identifies it.
+//
+// ⚠ THE NON-SUBJECT TABS SPLIT TWO WAYS, AND NOT ARBITRARILY.
+//
+//   gold     Past Papers · Live Tuition · Calendar — cross-subject PLATFORM
+//            features. The homepage capability strip already renders the exact
+//            words "Past papers" and "Live tuition" as gold capsules, so the
+//            same label gets the same treatment in both places. Making these
+//            three a fourth subject hue would invent a subject that does not
+//            exist; making them neutral would say they are chrome.
+//
+//   neutral  Login and the signed-in account control — an ACCOUNT action, not
+//            content. Gold here would put the site's premium accent on a
+//            utility. It also matches what that control already does today
+//            (hover:bg-ink/[0.04]), so the neutral tone is a formalisation of
+//            existing behaviour rather than a new look.
+
+/**
+ * The gold ramp. These four values were literals in InteractiveCard and
+ * CapabilityStrip before they were here.
+ *
+ * ⚠ THOSE TWO FILES STILL CARRY THEM AS LITERALS, AND THAT IS NOT AN OVERSIGHT.
+ * Tailwind generates a class only when it can SEE the value in the source, so
+ * `hover:bg-[#B08D57]` cannot be fed from a constant — the literal has to stay
+ * in the class string. This export is the source for everything that goes
+ * through inline styles or CSS custom properties, which is where a constant
+ * actually works. If the ramp ever changes, it changes in three places, and
+ * this comment is how the next person finds the other two.
+ */
+export const GOLD = {
+  sheen: "#D9C08A",
+  body: "#B08D57",
+  deep: "#8C6A3F",
+  /** AA on parchment (6.62:1) — the card CTA colour. */
+  text: "#6B4F2A",
+} as const;
+
+/**
+ * Composite a colour over the parchment ground and return an opaque hex.
+ *
+ * ⚠ DERIVED, NOT TYPED OUT. The gold and neutral washes below are alpha values
+ * conceptually — "22% sheen", "5% ink" — and writing their composited results
+ * in by hand would pin today's parchment forever. PARCHMENT is imported above;
+ * change it and these move with it. That is the whole reason this function
+ * exists rather than four more hex constants.
+ *
+ * ⚠ AND IT IS ONLY VALID BECAUSE THE NAV IS ALWAYS ON PARCHMENT. The header
+ * sets bg-parchment unconditionally. A caller that puts these on another ground
+ * has to re-derive; the ratios asserted in the test are parchment ratios.
+ */
+export function overParchment(hex: string, alpha: number): string {
+  const h = hex.replace("#", "");
+  const p = PARCHMENT.replace("#", "");
+  const out = [0, 2, 4].map((i) => {
+    const fg = parseInt(h.slice(i, i + 2), 16);
+    const bg = parseInt(p.slice(i, i + 2), 16);
+    return Math.round(fg * alpha + bg * (1 - alpha));
+  });
+  return `#${out.map((v) => v.toString(16).padStart(2, "0")).join("")}`.toUpperCase();
+}
+
+export type NavToneKey = SubjectKey | "gold" | "neutral";
+export type NavTone = { tint: string; border: string };
+
+/**
+ * ⚠ THE SUBJECT ENTRIES ARE READ FROM SUBJECT_COLOURS, NOT RESTATED. A nav tab
+ * and a subject card must not be able to disagree about what Chemistry looks
+ * like, and the only way to guarantee that is to have one of them read the
+ * other rather than both reading a memory of the same decision.
+ */
+export const NAV_TONES: Record<NavToneKey, NavTone> = {
+  chemistry: { tint: SUBJECT_COLOURS.chemistry.tint, border: SUBJECT_COLOURS.chemistry.border },
+  biology: { tint: SUBJECT_COLOURS.biology.tint, border: SUBJECT_COLOURS.biology.border },
+  physics: { tint: SUBJECT_COLOURS.physics.tint, border: SUBJECT_COLOURS.physics.border },
+  gold: { tint: overParchment(GOLD.sheen, 0.22), border: overParchment(GOLD.body, 0.55) },
+  neutral: { tint: overParchment("#0F1419", 0.05), border: overParchment("#0F1419", 0.15) },
+};
+
+/**
+ * CSS custom properties for one nav tab.
+ *
+ * ⚠ CUSTOM PROPERTIES RATHER THAN SEVEN CLASS STRINGS. Every tab shares ONE
+ * class string and differs only in two variables, so the capsule geometry, the
+ * timing, the scale and the focus ring cannot drift apart between tabs — which
+ * is exactly what happens when each tab carries its own copy of the styling.
+ */
+export function navToneVars(key: NavToneKey): React.CSSProperties {
+  const t = NAV_TONES[key];
+  return { "--nav-tint": t.tint, "--nav-border": t.border } as React.CSSProperties;
+}
