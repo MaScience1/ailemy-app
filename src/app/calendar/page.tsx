@@ -9,11 +9,12 @@ import { TimezoneSync } from "@/components/public/TimezoneSync";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
 import { getNavSession } from "@/lib/auth/nav-session";
-import { parseDate, rangeFor, readState } from "@/lib/calendar/grid";
+import { dayKeyOf, parseDate, rangeFor, readState } from "@/lib/calendar/grid";
 import { loadCalendarEvents } from "@/lib/calendar/readers";
 import { levelLabel } from "@/lib/calendar/types";
+import { nextSession } from "@/lib/calendar/next-session";
 import { SUBJECTS } from "@/lib/public/catalogue";
-import { CANONICAL_TZ, calendarDate } from "@/lib/schedule/timezone";
+import { CANONICAL_TZ, calendarDate, formatDay } from "@/lib/schedule/timezone";
 import { viewerTimeZone } from "@/lib/schedule/viewer-tz";
 
 /**
@@ -89,6 +90,28 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
    * ⚠ AND ONLY FOR COHORTS THAT ARE ACTUALLY ON SCREEN. Fetching capacity for
    * the whole catalogue would be work whose result nothing renders.
    */
+  /**
+   * ⚠ §40/§41 — WHERE "jump to the first teaching week" GOES. Resolved from
+   * real sessions in a bounded forward window, exactly like the homepage
+   * banner: 120 days reaches the next teaching block without downloading a
+   * year, and nothing found means no link rather than a link to nowhere.
+   *
+   * ⚠ ONLY FETCHED WHEN THE CURRENT WINDOW IS EMPTY. A populated month has no
+   * empty state to put the link in, so the round trip would be discarded.
+   */
+  const AHEAD_DAYS = 120;
+  const { events: aheadEvents } = events.length === 0
+    ? await loadCalendarEvents({
+        from: todayISO,
+        to: calendarDate(new Date(Date.now() + AHEAD_DAYS * 86_400_000), CANONICAL_TZ),
+        mode: "public", subject: state.subject, level: state.level, type: state.type,
+      })
+    : { events: [] as typeof events };
+  const jump = nextSession(aheadEvents, new Date(), dayKeyOf, todayISO);
+  const jumpLabel = jump.kind === "session"
+    ? formatDay(jump.event.startsAt, CANONICAL_TZ)
+    : "";
+
   const visibleCohorts = new Map<string, number>();
   for (const ev of events) {
     if (ev.type !== "group" || !ev.cohortSlug || !ev.cohort) continue;
@@ -132,6 +155,8 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
           openDay={openDay}
           emptyMessage={emptyFor(subjectName, level)}
           capacityBySlug={capacityBySlug}
+          jumpToISO={jump.kind === "session" ? jump.dateISO : null}
+          jumpToLabel={jump.kind === "session" ? `Jump to ${jumpLabel}` : null}
         />
 
         {/* ⚠ THE EMPTY STATE OFFERS THE ONE HONEST NEXT STEP (§12, §57) — never

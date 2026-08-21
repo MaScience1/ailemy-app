@@ -71,6 +71,14 @@ export type CalendarProps = {
    */
   capacityBySlug?: Map<string, Capacity>;
   /**
+   * ⚠ §40/§41 — WHERE "jump to the first teaching week" GOES, resolved by the
+   * server from real sessions. Absent means no future teaching is known, and
+   * the link is not rendered: a jump that lands on another empty month is
+   * worse than no jump.
+   */
+  jumpToISO?: string | null;
+  jumpToLabel?: string | null;
+  /**
    * ⚠ FOR AN EMBED PART-WAY DOWN A LONG PAGE. Every link here is a real
    * navigation, so the browser lands at the top of the destination — fine at
    * /calendar, where the calendar IS the page, and wrong on the homepage, where
@@ -141,11 +149,13 @@ export function Calendar(props: CalendarProps) {
       <div className="mt-6">
         {state.view === "month" && (
           <MonthView weeks={monthGrid(state.date)} buckets={buckets} state={state}
-            todayISO={todayISO} viewerTz={viewerTz} href={href} />
+            todayISO={todayISO} viewerTz={viewerTz} href={href}
+            capacityBySlug={props.capacityBySlug} />
         )}
         {state.view === "week" && (
           <WeekView days={weekGrid(state.date)} buckets={buckets} state={state}
-            todayISO={todayISO} viewerTz={viewerTz} href={href} />
+            todayISO={todayISO} viewerTz={viewerTz} href={href}
+            capacityBySlug={props.capacityBySlug} />
         )}
         {state.view === "upcoming" && (
           <UpcomingView events={events} viewerTz={viewerTz} href={href}
@@ -159,9 +169,44 @@ export function Calendar(props: CalendarProps) {
           emptied it, so the fix is one tap away rather than a guess.
         */}
         {events.length > 0 || state.view === "upcoming" ? null : (
-          <p className="mt-5 text-sm leading-relaxed text-ink/60">
-            {props.emptyMessage ?? "No lessons are scheduled in this period."}
-          </p>
+          <div className="mt-5 rounded-lg border border-ink/10 bg-parchment-2/40 px-4 py-4">
+            <p className="text-sm leading-relaxed text-ink/70">
+              {props.emptyMessage ?? "No lessons are scheduled in this period."}
+            </p>
+            {/* ⚠ §40 — A BLANK CALENDAR MUST OFFER SOMETHING TO DO. "Nothing in
+                this period" with no way forward is the passive empty state the
+                brief calls out: the visitor's only options are to guess a month
+                or leave.
+
+                ⚠ AND THE JUMP LINK ONLY APPEARS WHEN THERE IS SOMEWHERE TO
+                JUMP TO. `jumpToISO` is resolved by the server from real
+                sessions; absent means no future teaching is known, and a
+                "jump to the first teaching week" button that lands on another
+                empty month is worse than no button. */}
+            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
+              {props.jumpToISO && (
+                <Link
+                  href={href({ date: props.jumpToISO, view: state.view })}
+                  data-cta="calendar_explore"
+                  className="text-sm font-medium underline underline-offset-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                >
+                  {props.jumpToLabel ?? "Jump to the first teaching week"} →
+                </Link>
+              )}
+              <Link
+                href={href({ view: "upcoming" })}
+                className="text-sm underline underline-offset-2 text-ink/70 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                View upcoming sessions →
+              </Link>
+              <Link
+                href="/tuition/one-to-one"
+                className="text-sm underline underline-offset-2 text-ink/70 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                One-to-one tuition →
+              </Link>
+            </div>
+          </div>
         )}
       </div>
 
@@ -311,6 +356,8 @@ type ViewProps = {
   todayISO: string;
   viewerTz: string | null;
   href: (p: Partial<CalendarState> & { day?: string | null }) => string;
+  /** Seats taken per cohort slug (0063). Absent = show no capacity anywhere. */
+  capacityBySlug?: Map<string, Capacity>;
 };
 
 function MonthView({ weeks, ...p }: ViewProps & { weeks: GridDay[][] }) {
@@ -400,7 +447,7 @@ function CompactMonth({
   );
 }
 
-function DayCell({ day, buckets, todayISO, viewerTz, href }: ViewProps & { day: GridDay }) {
+function DayCell({ day, buckets, todayISO, viewerTz, href, capacityBySlug }: ViewProps & { day: GridDay }) {
   const all = buckets.get(day.date) ?? [];
   const { shown, hidden } = cellEvents(all, MONTH_CELL_LIMIT);
   const isToday = day.date === todayISO;
@@ -450,7 +497,33 @@ function DayCell({ day, buckets, todayISO, viewerTz, href }: ViewProps & { day: 
       </span>
 
       <span className="flex flex-col gap-0.5">
-        {shown.map((ev) => <EventChip key={ev.key} event={ev} viewerTz={viewerTz} dense />)}
+        {shown.map((ev) => (
+          <span key={ev.key} className="flex flex-col">
+            <EventChip event={ev} viewerTz={viewerTz} dense />
+            {/* ⚠ §6 — CAPACITY IN THE CELL, BUT ONLY WHERE IT IS REAL. The
+                label is null at 0 paid seats and on a failed read, so the line
+                is absent rather than reading "20 places left" on an empty
+                cohort. One line, and only for the first chip of a cohort, so a
+                Tuesday and a Saturday of the same class do not each claim
+                their own count. */}
+            {(() => {
+              const cap = ev.cohortSlug ? capacityBySlug?.get(ev.cohortSlug) : undefined;
+              if (!cap || cap.known !== true || !cap.label) return null;
+              const firstOfCohort =
+                shown.findIndex((x) => x.cohortSlug === ev.cohortSlug) === shown.indexOf(ev);
+              if (!firstOfCohort) return null;
+              return (
+                <span
+                  className={`font-mono text-[9px] uppercase tracking-[0.1em] ${
+                    cap.state === "few-left" || cap.state === "full" ? "text-amber-800" : "text-ink/45"
+                  }`}
+                >
+                  {cap.label}
+                </span>
+              );
+            })()}
+          </span>
+        ))}
         {hidden > 0 && (
           <span className="font-mono text-[10px] text-ink/50">+{hidden} more</span>
         )}
