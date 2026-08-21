@@ -81,6 +81,28 @@ function SignupForm() {
 
   return (
     <AuthShell>
+      {/* ── §24 — WHY AN ACCOUNT, NOT JUST HOW ──────────────────────────
+          ⚠ EVERY LINE MAPS TO SOMETHING A STUDENT CAN DO THE DAY THEY SIGN IN.
+          No "AI tutor", no "guaranteed grade", nothing that needs a feature
+          which does not exist. The brief is explicit that claims must
+          correspond to real or legitimately-coming functionality — so
+          "get answers marked" is here and "personalised revision plan" is not,
+          because the second has no writer behind it yet. */}
+      <ul className="mb-6 grid gap-1.5 text-[13px] text-ink/70 sm:grid-cols-2">
+        {[
+          "Save your progress",
+          "Get answers marked",
+          "See weak topics",
+          "Practise past papers",
+          "Track your revision",
+          "Join live tuition",
+        ].map((b) => (
+          <li key={b} className="flex items-start gap-1.5">
+            <span aria-hidden className="mt-px text-ink/35">✓</span>
+            {b}
+          </li>
+        ))}
+      </ul>
       <p className="font-mono text-xs uppercase tracking-[0.25em] text-ink/55">
         Create your account
       </p>
