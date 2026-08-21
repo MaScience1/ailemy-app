@@ -5,6 +5,8 @@ import Link from "next/link";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
+import { CapabilityStrip } from "@/components/home/CapabilityStrip";
+import { SubjectCard } from "@/components/home/SubjectCard";
 import { getNavSession } from "@/lib/auth/nav-session";
 import {
   SUBJECTS, ctaFor,
@@ -162,25 +164,45 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink/50">
           Pearson Edexcel · GCSE · International GCSE · IAL
         </p>
+        {/* ⚠ THE HEADLINE IS THE PRODUCT, NOT A SLOGAN (§1). "Master science.
+            Ace the exam." is an outcome anyone could promise; the four verbs
+            below are what Ailemy actually does, in the order a student does
+            them — and the third one is the differentiator, because everybody
+            else stops at "practise". */}
         <h1 className="font-display mt-5 max-w-3xl text-4xl font-medium leading-[1.05] tracking-tight sm:text-6xl">
-          Master science. Ace the exam.
+          Learn it. Practise it.<br className="hidden sm:block" /> Get it marked. Master the exam.
         </h1>
         <p className="mt-6 max-w-2xl text-base leading-relaxed text-ink/70 sm:text-lg">
-          Expert live tuition, specification-mapped learning, past-paper practice, marked
-          answers and personalised progress — in one place.
+          Specification-mapped lessons, revision resources, past papers, exam practice,
+          intelligent marking, progress tracking and expert live tuition — all in one
+          science platform.
         </p>
+        {/* ⚠ THE PRIMARY AND SECONDARY HAVE SWAPPED, AND THAT IS THE POINT OF
+            §1. Tuition was the filled button, which told every visitor the
+            product is a tutoring service. Practice is free, needs no account to
+            start, and is what most visitors can act on today — so it takes the
+            filled treatment and tuition takes the outline.
+
+            ⚠ WORDING TRACKS THE SESSION (§53). "Start practising free" to a
+            stranger; "Continue studying" to somebody signed in, who has already
+            started and would read an invitation to start as the site forgetting
+            them. */}
         <div className="mt-9 flex flex-wrap gap-3">
           <Link
-            href="/tuition"
-            className="rounded-full bg-ink px-6 py-3 text-sm font-medium text-parchment hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            href={session ? "/profile" : "/past-papers"}
+            data-cta="hero_start_practising"
+            className="group rounded-full bg-ink px-6 py-3 text-sm font-medium text-parchment transition-colors duration-200 hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
-            Join live tuition →
+            {session ? "Continue studying" : "Start practising free"}{" "}
+            <span aria-hidden className="inline-block transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">→</span>
           </Link>
           <Link
-            href="/past-papers"
-            className="rounded-full border border-ink/20 px-6 py-3 text-sm font-medium hover:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            href="/tuition"
+            data-cta="hero_live_tuition"
+            className="group rounded-full border border-ink/20 px-6 py-3 text-sm font-medium transition-colors duration-200 hover:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
-            Start practising →
+            View live tuition{" "}
+            <span aria-hidden className="inline-block transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">→</span>
           </Link>
         </div>
         </div>
@@ -201,10 +223,24 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         </div>
       </header>
 
+      {/* ── 3b. capability strip (§2) ────────────────────────────────────
+          ⚠ IMMEDIATELY AFTER THE HERO, ABOVE EVERYTHING ELSE. Its job is the
+          three-second read: this is a platform, not a tutor. A visitor who has
+          to scroll to learn that has already formed the other impression. */}
+      <CapabilityStrip />
+
       {/* ── 4. subject selector ───────────────────────────────────────── */}
       <Section id="subjects" title="Three sciences, one platform">
         <div className="grid gap-4 sm:grid-cols-3">
-          {SUBJECTS.map((s) => <SubjectCard key={s.slug} subject={s} />)}
+          {SUBJECTS.map((s) => (
+            <SubjectCard
+              key={s.slug}
+              subject={{
+                slug: s.slug, name: s.name, qualifications: s.qualifications,
+                blurb: s.blurb, status: s.status, exploreHref: s.exploreHref,
+              }}
+            />
+          ))}
         </div>
       </Section>
 
@@ -451,32 +487,6 @@ function Section({
   );
 }
 
-function SubjectCard({ subject }: { subject: Subject }) {
-  const LABEL: Record<Subject["status"], string> = {
-    available: "Available",
-    expanding: "Expanding",
-    interest: "Register interest",
-  };
-  return (
-    <div className="flex flex-col rounded-lg border border-ink/10 bg-snow p-7">
-      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45">
-        {LABEL[subject.status]}
-      </span>
-      <h3 className="font-display mt-3 text-2xl font-medium tracking-tight">{subject.name}</h3>
-      <p className="mt-1 font-mono text-[11px] text-ink/50">{subject.qualifications.join(" · ")}</p>
-      <p className="mt-4 flex-1 text-sm leading-relaxed text-ink/70">{subject.blurb}</p>
-      {/* ⚠ NO "Explore" WHERE THERE IS NOTHING TO EXPLORE. exploreHref is null
-          for Biology and Physics, and a link that goes nowhere is the fake
-          functionality §32 forbids. */}
-      <Link
-        href={subject.exploreHref ?? `/tuition/interest?subject=${subject.slug}`}
-        className="mt-6 text-sm underline underline-offset-2 hover:text-ink"
-      >
-        {subject.exploreHref ? `Explore ${subject.name} →` : "Register interest →"}
-      </Link>
-    </div>
-  );
-}
 
 function CohortCard({ cohort, currency }: { cohort: Cohort; currency: Currency }) {
   const cta = ctaFor(cohort);

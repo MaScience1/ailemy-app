@@ -211,9 +211,24 @@ console.log("\n── PLACEMENT — hierarchy stays intact ──");
   // second column, after the copy and CTAs in DOM order, which is the reading
   // order a phone and a screen reader both get.
   t("the hero card exists", at("hero-calendar") > 0);
+  /**
+   * ⚠ ANCHORED ON data-cta, NOT ON AN href LITERAL. The primary CTA's
+   * destination is now conditional — `href={session ? "/profile" :
+   * "/past-papers"}` — because a signed-in student must not be invited to
+   * start something they already started. A literal-href search silently
+   * stopped finding it and this assertion went red for a reason that had
+   * nothing to do with placement.
+   *
+   * data-cta is the stabler anchor and a stronger one: it names the CTA's ROLE
+   * in the funnel, so it survives a destination change and a copy change, and
+   * it is the same identifier the analytics naming convention uses.
+   */
+  const cta = (name: string) => code.indexOf(`data-cta="${name}"`);
+  t("both hero CTAs are present and named for the funnel",
+    cta("hero_start_practising") > 0 && cta("hero_live_tuition") > 0);
   t("…and the copy and CTAs precede it in the DOM",
-    code.indexOf('href="/tuition"') < at("hero-calendar")
-    && code.indexOf('href="/past-papers"') < at("hero-calendar"));
+    cta("hero_start_practising") < at("hero-calendar")
+    && cta("hero_live_tuition") < at("hero-calendar"));
   t("…so the hero still leads, and subjects follow it",
     at("hero-calendar") < at("subjects") && at("subjects") < at("tuition"));
   t("the two-column split is at lg (1024px), stacking below it",
