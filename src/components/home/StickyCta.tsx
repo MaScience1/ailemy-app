@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
+import { QuickSignup } from "./QuickSignup";
+
 /**
  * The persistent conversion CTA (§19, §20).
  *
@@ -89,16 +91,37 @@ export function StickyCta({
           </p>
         </div>
 
-        <Link
-          href={href}
-          data-cta={cta}
-          tabIndex={shown ? undefined : -1}
-          className="group shrink-0 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-parchment transition-colors duration-200 hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-        >
-          <span className="hidden sm:inline">{label} </span>
-          <span className="sm:hidden">Start free </span>
-          <span aria-hidden className="inline-block transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">→</span>
-        </Link>
+        {/* ⚠ A MODAL FOR A STRANGER, A LINK FOR A MEMBER. §21 says the
+            persistent CTA must not dump a visitor onto a long registration
+            page — but a signed-in student pressing "Continue studying" wants
+            their profile, not a dialog asking who they are. */}
+        {signedIn ? (
+          <Link
+            href={href}
+            data-cta={cta}
+            tabIndex={shown ? undefined : -1}
+            className="group shrink-0 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-parchment transition-colors duration-200 hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+          >
+            <span className="hidden sm:inline">{label} </span>
+            <span className="sm:hidden">Continue </span>
+            <span aria-hidden className="inline-block transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">→</span>
+          </Link>
+        ) : (
+          <QuickSignup
+            trigger={
+              <button
+                type="button"
+                data-cta={cta}
+                tabIndex={shown ? undefined : -1}
+                className="group shrink-0 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-parchment transition-colors duration-200 hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                <span className="hidden sm:inline">{label} </span>
+                <span className="sm:hidden">Start free </span>
+                <span aria-hidden className="inline-block transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">→</span>
+              </button>
+            }
+          />
+        )}
 
         {/* ⚠ DISMISSIBLE, BECAUSE A BAR THAT CANNOT BE CLOSED IS THE
             "obnoxious" §19 rules out. It only hides for this page view — no

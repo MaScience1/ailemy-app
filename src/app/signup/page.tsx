@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 import { AuthShell } from "@/components/auth/auth-shell";
@@ -16,10 +16,35 @@ type Role = "student" | "parent";
 const FORM_INPUT_CLASS =
   "h-10 rounded-md border-ink/15 bg-snow text-ink focus-visible:border-flask focus-visible:ring-flask/30 md:text-sm";
 
+/**
+ * ⚠ PREFILL ONLY, AND THE AUTH CALL IS UNTOUCHED. The quick-signup drawer on
+ * the homepage collects name, year group, subjects and country so that THIS
+ * form only has to ask for a password — which is the short-signup requirement.
+ * Nothing here changes how an account is created; the params seed two initial
+ * useState values and are then ignored.
+ *
+ * ⚠ NO PASSWORD IS EVER READ FROM THE URL, and none is ever put there. A query
+ * string lands in browser history and in every proxy log between here and the
+ * server. A name is fine there; a credential is not.
+ *
+ * ⚠ Suspense, BECAUSE useSearchParams OPTS A ROUTE INTO CLIENT RENDERING. Next
+ * requires the boundary, and without it the build fails on this page rather
+ * than degrading — which is the correct direction, but only if the boundary
+ * exists.
+ */
 export default function SignupPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignupForm />
+    </Suspense>
+  );
+}
+
+function SignupForm() {
   const router = useRouter();
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
+  const params = useSearchParams();
+  const [fullName, setFullName] = useState(params.get("name") ?? "");
+  const [email, setEmail] = useState(params.get("email") ?? "");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<Role>("student");
   const [error, setError] = useState<string | null>(null);
