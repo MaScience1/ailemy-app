@@ -9,6 +9,7 @@ import { CapabilityStrip } from "@/components/home/CapabilityStrip";
 import { SubjectCard } from "@/components/home/SubjectCard";
 import { StickyCta } from "@/components/home/StickyCta";
 import { TryAilemy } from "@/components/home/TryAilemy";
+import { HomeFaq } from "@/components/home/Faq";
 import { nextSession, distanceLabel } from "@/lib/calendar/next-session";
 import { dayKeyOf } from "@/lib/calendar/grid";
 import { getNavSession } from "@/lib/auth/nav-session";
@@ -309,15 +310,21 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
       {/* ── 5. the learning system ────────────────────────────────────── */}
       <Section
         id="how"
-        title="Learn → Practise → Get marked → Improve"
+        title="Everything between learning the topic and sitting the exam."
         lede="Ailemy knows what you have studied, what you attempted, where you lost marks and what to do next."
       >
-        <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* ⚠ NUMBERED BECAUSE IT IS GENUINELY A SEQUENCE. A student does these
+            in this order and each depends on the last — which is the only thing
+            that justifies 01/02/03 markers. Numbering a set of unordered
+            features would be decoration pretending to be structure. */}
+        <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[
             ["Learn", "Specification-mapped lessons and expert live teaching."],
             ["Practise", "Topic questions, worksheets and full past papers."],
-            ["Get marked", "Submit an answer and see it marked against the mark scheme, with feedback."],
-            ["Improve", "Weak areas are identified and you are pointed at what to practise next."],
+            ["Submit", "Answer inside Ailemy — no scanning, no uploading, no waiting."],
+            ["Get marked", "Marked against the points a real mark scheme awards, with the reason for each."],
+            ["Improve", "See exactly what cost you marks, not just what you scored."],
+            ["Master", "Track a topic until the evidence says you are exam-ready."],
           ].map(([step, body], i) => (
             <li key={step} className="rounded-lg border border-ink/10 bg-snow p-6">
               <span className="font-mono text-[11px] text-ink/40">0{i + 1}</span>
@@ -476,15 +483,44 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           ambition as a finished state, on the page that asks people to trust
           the marking. It now describes the METHOD, which is true of every
           paper the moment it is ruled and stays true as the archive grows. */}
+      {/* ⚠ THE SAME THREE CLAIMS, SPLIT — NOT THREE NEW ONES. §28 asks for the
+          paragraph to become scannable, and every sentence below is already in
+          the paragraph it replaces. Turning a trust section into bullet points
+          is an invitation to add a fourth, stronger-sounding one; there isn't
+          a fourth true one, so there are three. */}
       <Section id="teachers" title="Built by teachers who understand the exam.">
-        <div className="rounded-lg border border-ink/10 bg-snow p-6 sm:p-8">
-          <p className="max-w-3xl text-sm leading-relaxed text-ink/75">
-            Ailemy's marking logic is built directly from published mark schemes, with marking
-            rules human-reviewed before they are used for automated marking. Chemistry teaching
-            and mark-scheme rulings are prepared by a specialist chemistry teacher working from
-            the published Edexcel mark schemes.
-          </p>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {[
+            ["Built from real mark schemes",
+             "Ailemy's marking rules are derived from published examination mark schemes — not from a general model's opinion of your answer."],
+            ["Reviewed by subject specialists",
+             "Automated marking rules are human-reviewed before they are used to mark anyone's work."],
+            ["Designed around the exam",
+             "Lessons, questions and feedback follow the specification students are actually assessed on."],
+          ].map(([title, body]) => (
+            <div key={title} className="rounded-lg border border-ink/10 bg-snow p-6">
+              <h3 className="font-display text-lg font-medium tracking-tight">{title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-ink/70">{body}</p>
+            </div>
+          ))}
         </div>
+        {/* ⚠ NOT AN AFFILIATION CLAIM (§46). "Prepared from the published
+            Edexcel mark schemes" is a statement about a source document, which
+            is lawful and true. "Edexcel-approved" would be neither. */}
+        <p className="mt-5 max-w-3xl text-[13px] leading-relaxed text-ink/55">
+          Chemistry teaching and mark-scheme rulings are prepared by a specialist chemistry
+          teacher working from the published Edexcel mark schemes. Ailemy is not affiliated with
+          or endorsed by any examination board.
+        </p>
+      </Section>
+
+      {/* ── 12b. FAQ (§30, §27 position 13) ─────────────────────────────
+          ⚠ IMMEDIATELY BEFORE THE FINAL CTA, WHICH IS THE POINT. These are
+          conversion objections — is it free, do I need tuition, is my board
+          supported — and answering them anywhere else means the visitor meets
+          the last ask still carrying the doubt. */}
+      <Section id="faq" title="Questions people ask before they start.">
+        <HomeFaq />
       </Section>
 
       {/* ── 13. final CTA ─────────────────────────────────────────────── */}
