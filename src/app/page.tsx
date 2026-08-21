@@ -10,6 +10,8 @@ import { SubjectCard } from "@/components/home/SubjectCard";
 import { StickyCta } from "@/components/home/StickyCta";
 import { TryAilemy } from "@/components/home/TryAilemy";
 import { HomeFaq } from "@/components/home/Faq";
+import { WaitlistForm } from "@/components/tuition/WaitlistForm";
+import { loadCapacity, type Capacity } from "@/lib/public/capacity";
 import { nextSession, distanceLabel } from "@/lib/calendar/next-session";
 import { dayKeyOf } from "@/lib/calendar/grid";
 import { getNavSession } from "@/lib/auth/nav-session";
@@ -70,6 +72,19 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
   const chemistryCohorts = cohorts.filter((c) => c.subject === "chemistry");
   const { currency } = await currentCurrency();
   const showToggle = offersCurrencyChoice(chemistryCohorts);
+
+  /**
+   * ⚠ ONE RPC PER CHEMISTRY COHORT SHOWN, and only those. The homepage renders
+   * three; a helper that fetched the whole catalogue would do work nothing
+   * displays. Absent or unread means the card shows no capacity line at all —
+   * silence, never a number derived from a failed call.
+   */
+  const cohortCapacity = new Map<string, Capacity>();
+  await Promise.all(
+    chemistryCohorts.map(async (c) => {
+      cohortCapacity.set(c.slug, await loadCapacity(c.slug, c.seatCap));
+    }),
+  );
 
   /**
    * ============================================================================
@@ -341,9 +356,32 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         title="Learn live with Ailemy"
         lede="Small-group science tuition built around the exact specification and exam requirements."
       >
+        {/* ── §67 — VALUE BEFORE PRICE ──────────────────────────────────
+            ⚠ ABOVE THE CARDS, NOT INSIDE THEM. A parent reading £169 needs to
+            already know it is not four Zoom hours. Repeating this list in each
+            card would be three copies of the same sentence competing with the
+            details that differ between programmes. */}
+        <div className="mb-6 rounded-lg border border-ink/10 bg-parchment-2/40 px-5 py-4">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink/50">
+            Every programme includes
+          </p>
+          <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-ink/70">
+            {[
+              "Live teaching", "Ailemy platform access", "Homework",
+              "Exam practice", "Marking and feedback", "Progress tracking",
+            ].map((v) => (
+              <li key={v} className="flex items-center gap-1.5">
+                <span aria-hidden className="h-1 w-1 rounded-full bg-lime" />
+                {v}
+              </li>
+            ))}
+          </ul>
+        </div>
         {showToggle && <div className="mb-6"><CurrencyToggle current={currency} /></div>}
         <div className="grid gap-4 lg:grid-cols-3">
-          {chemistryCohorts.map((c) => <CohortCard key={c.slug} cohort={c} currency={currency} />)}
+          {chemistryCohorts.map((c) => (
+            <CohortCard key={c.slug} cohort={c} currency={currency} capacity={cohortCapacity.get(c.slug) ?? null} />
+          ))}
         </div>
         {/* ⚠ 1-TO-1 IS OFF-MENU (§24) — mentioned, deliberately not priced
             beside the group cohorts, where it would undercut the offer. */}
@@ -592,8 +630,27 @@ function Section({
 }
 
 
-function CohortCard({ cohort, currency }: { cohort: Cohort; currency: Currency }) {
+/**
+ * A programme card (§66, §67).
+ *
+ * ⚠ SCANNABLE ORDER, NOT NARRATIVE ORDER (§66). Programme, price, shape of the
+ * week, dates, capacity, what is included, CTA — each on its own line so a
+ * parent can find the number they came for without reading a paragraph. The
+ * CTA anchors the bottom of every card at the same height, which is why the
+ * feature list carries flex-1.
+ *
+ * ⚠ AND THE CTA STILL COMES FROM ctaFor(). Stripe is keyless, so it renders
+ * "Register interest" and never a payable control — one decision point shared
+ * with /tuition and the calendar, so no surface can promise what another
+ * refuses.
+ */
+function CohortCard({
+  cohort, currency, capacity,
+}: {
+  cohort: Cohort; currency: Currency; capacity?: Capacity | null;
+}) {
   const cta = ctaFor(cohort);
+  const full = capacity?.known === true && capacity.state === "full";
   return (
     <div className="flex flex-col rounded-lg border border-ink/10 bg-snow p-7">
       <h3 className="font-display text-xl font-medium tracking-tight">{cohort.title}</h3>
@@ -612,16 +669,34 @@ function CohortCard({ cohort, currency }: { cohort: Cohort; currency: Currency }
           Onboarding {fmt(cohort.onboardingOn)} · first class {fmt(cohort.firstClassOn)}
         </p>
       )}
+      {/* ⚠ CAPACITY ONLY WHERE PAID SEATS EXIST (§14). Silent at zero. */}
+      {capacity?.known === true && capacity.label && (
+        <p
+          className={`mt-2 font-mono text-[11px] uppercase tracking-[0.14em] ${
+            capacity.state === "few-left" || capacity.state === "full" ? "text-amber-800" : "text-ink/55"
+          }`}
+        >
+          {capacity.label}
+        </p>
+      )}
       <p className="mt-4 text-sm leading-relaxed text-ink/70">{cohort.summary}</p>
       <ul className="mt-4 flex-1 space-y-1 text-sm text-ink/65">
         {cohort.features.map((f) => <li key={f}>· {f}</li>)}
       </ul>
-      <Link
-        href={cta.href}
-        className="mt-6 inline-block rounded-full border border-ink/20 px-4 py-2 text-center text-sm hover:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-      >
-        {cta.label} →
-      </Link>
+      {/* ⚠ §65 — A FULL COHORT OFFERS THE LIST INSTEAD OF A DEAD CTA. It does
+          not promise a place, and it only appears when capacity is genuinely
+          known to be full — never on an unread or empty figure. */}
+      {full ? (
+        <WaitlistForm cohortSlug={cohort.slug} />
+      ) : (
+        <Link
+          href={cta.href}
+          data-cta="chemistry_course"
+          className="mt-6 inline-block rounded-full border border-ink/20 px-4 py-2 text-center text-sm hover:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+        >
+          {cta.label} →
+        </Link>
+      )}
     </div>
   );
 }
