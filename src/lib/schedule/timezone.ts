@@ -252,3 +252,30 @@ export function tzError(raw: string): string {
   }
   return `"${raw}" is not a timezone this system knows.`;
 }
+
+/**
+ * The hour of the day, 0–23, in a named zone.
+ *
+ * ⚠ THROUGH Intl, NOT THROUGH getHours() PLUS AN OFFSET. Adding
+ * zoneOffsetMinutes to a UTC hour looks equivalent and drifts on the two days a
+ * year a zone changes — and Asia/Qatar never does, which is exactly why an
+ * offset bug here would sit undetected until the first student in a
+ * DST-observing country loaded a week view.
+ *
+ * Used by the week timetable to decide which hour ROW a session belongs in.
+ * The row must be the canonical hour for everyone, or a 7 PM Doha lesson lands
+ * in the 4 PM row for a student in London — the same rule dayKeyOf enforces for
+ * which day-square an event falls in.
+ */
+export function hourIn(instant: Date, tz: string): number {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: tz,
+    hour: "2-digit",
+    hour12: false,
+  }).formatToParts(instant);
+  const h = parts.find((p) => p.type === "hour")?.value ?? "0";
+  // ⚠ "24" IS A REAL ANSWER FROM Intl AT MIDNIGHT in some locales/options
+  // combinations. Normalised so callers never index a 25th row.
+  const n = Number(h);
+  return Number.isFinite(n) ? n % 24 : 0;
+}
