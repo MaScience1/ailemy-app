@@ -40,6 +40,7 @@ export function StickyCta({
 }) {
   const [shown, setShown] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const [inTuition, setInTuition] = useState(false);
 
   useEffect(() => {
     /**
@@ -53,11 +54,44 @@ export function StickyCta({
     return () => window.removeEventListener("scroll", onScroll);
   }, [revealAfter]);
 
+  /**
+   * ⚠ §68 — THE LABEL ADAPTS, BUT ONLY ONCE AND ONLY BETWEEN TWO STATES.
+   * §68 permits this "only if it remains visually stable and does not feel
+   * distracting", and a control that relabels itself at every section boundary
+   * is a flicker, not a feature. So there is exactly one switch: inside the
+   * tuition section, where "start learning free" is the wrong ask because the
+   * reader is looking at a price.
+   *
+   * ⚠ IntersectionObserver, NOT A SCROLL-POSITION CALCULATION. Measuring
+   * offsetTop on every scroll frame forces layout and is the performance cost
+   * §35 rules out; the observer fires only when the boundary is crossed.
+   */
+  useEffect(() => {
+    const el = document.getElementById("tuition");
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      ([entry]) => setInTuition(entry.isIntersecting),
+      { rootMargin: "-40% 0px -40% 0px" },   // "in view" means near the middle
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   if (dismissed) return null;
 
-  const label = signedIn ? "Continue studying" : "Start learning free";
-  const href = signedIn ? "/profile" : "/signup";
-  const cta = signedIn ? "floating_continue_studying" : "floating_start_learning";
+  /**
+   * ⚠ THREE STATES, AND EACH IS THE RIGHT ASK FOR WHERE THE READER IS (§53,
+   * §68). A signed-in student is never invited to create an account; a reader
+   * looking at £169 is offered the tuition rather than a free account.
+   */
+  const signedInState = { label: "Continue studying", href: "/profile", cta: "floating_continue_studying" as const };
+  const tuitionState = { label: "View live tuition", href: "/tuition", cta: "floating_start_learning" as const };
+  const defaultState = { label: "Start learning free", href: "/signup", cta: "floating_start_learning" as const };
+  const { label, href, cta } = signedIn ? signedInState : inTuition ? tuitionState : defaultState;
+  // ⚠ THE MODAL IS THE SIGNUP PATH ONLY. In the tuition state the CTA is a real
+  // navigation to /tuition — opening a signup dialog there would answer a
+  // question the reader did not ask.
+  const useModal = !signedIn && !inTuition;
 
   return (
     <div
@@ -87,7 +121,7 @@ export function StickyCta({
           {/* ⚠ THE REASSURANCE IS THE POINT OF §19's MICROCOPY. "Free account ·
               no card" removes the objection the button itself creates. */}
           <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-ink/50">
-            {signedIn ? "Your progress is saved" : "Free account · no card"}
+            {signedIn ? "Your progress is saved" : inTuition ? "Small groups · capped at 20" : "Free account · no card"}
           </p>
         </div>
 
@@ -95,7 +129,7 @@ export function StickyCta({
             persistent CTA must not dump a visitor onto a long registration
             page — but a signed-in student pressing "Continue studying" wants
             their profile, not a dialog asking who they are. */}
-        {signedIn ? (
+        {!useModal ? (
           <Link
             href={href}
             data-cta={cta}
@@ -103,7 +137,7 @@ export function StickyCta({
             className="group shrink-0 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-parchment transition-colors duration-200 hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
             <span className="hidden sm:inline">{label} </span>
-            <span className="sm:hidden">Continue </span>
+            <span className="sm:hidden">{signedIn ? "Continue" : "Tuition"} </span>
             <span aria-hidden className="inline-block transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">→</span>
           </Link>
         ) : (
