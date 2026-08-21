@@ -80,7 +80,10 @@ console.log("── ⚠ THE VISIBLE WINDOW ONLY — NEVER A YEAR ──");
   t("at most two calendar queries — the view, and a lookahead", calls <= 2, calls);
   t("⚠ …and the second is CONDITIONAL on the first being empty, so a populated month costs one fetch",
     /calendarEvents\.length === 0\s*\?\s*await loadCalendarEvents\(/.test(code),
-    code.match(/.{0,60}calendarEvents\.length === 0.{0,40}/s)?.[0]);
+    // ⚠ NO /s FLAG — tsconfig.scripts.json targets below es2018, where
+    // dotAll is not available and tsc rejects it. [\s\S] is the portable
+    // spelling and means the same thing.
+    code.match(/[\s\S]{0,60}calendarEvents\.length === 0[\s\S]{0,40}/)?.[0]);
   t("⚠ …and the lookahead is BOUNDED by a named constant, not open-ended",
     /AHEAD_DAYS\s*=\s*\d+/.test(code) && /AHEAD_DAYS \* 86_400_000/.test(code),
     code.match(/AHEAD_DAYS\s*=\s*\d+/)?.[0]);
