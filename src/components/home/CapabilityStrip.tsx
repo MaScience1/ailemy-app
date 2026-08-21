@@ -21,17 +21,84 @@ import Link from "next/link";
  * progress tracking links to the profile, which exists and shows real shapes.
  *
  * ============================================================================
- * ⚠ SIZED TO STAY ON ONE LINE AT DESKTOP, WHICH IS A REAL CONSTRAINT
+ * ⚠ TWO LINES AT DESKTOP, AND THAT IS ARITHMETIC RATHER THAN TASTE
  * ============================================================================
- * Seven items at 13px with 0.14em tracking measure roughly 990px inside a
- * 1104px content box — comfortable. The previous 11px was safe but read as a
- * caption rather than an inventory. Going to 14px pushes the row past 1090px
- * and it wraps, which turns the strip back into a paragraph.
+ * This strip used to be sized to hold one desktop line: seven items at 13px
+ * measured 988px of the 1104px content box, with 115px to spare. The ruling
+ * asks for a clear step up in size AND a capsule around each item, and those
+ * two do not both fit:
  *
- * So the size is 13px and the tracking came DOWN from 0.16em to 0.14em to buy
- * the room. `lg:flex-nowrap` makes the one-line rule explicit at desktop rather
- * than leaving it to luck: if a future item is added, the row will overflow
- * visibly instead of silently reflowing into two lines nobody notices.
+ *   text at 13px            868px  +  6 gaps        =  988px   fits
+ *   text at 15px           1002px  +  capsules      = ~1250px  does not
+ *
+ * A capsule costs ~32px of horizontal padding per item — 224px across seven,
+ * which is on its own nearly twice the headroom the old layout had. So the
+ * ruling's own fallback applies: WRAP, do not shrink the text.
+ *
+ * ⚠ AND THE TWO LINES ARE BALANCED BY CONSTRAINING THE ROW, NOT BY SPLITTING
+ * THE LIST. Left to itself in a 1104px box, flex-wrap fills greedily and
+ * breaks 5+2 — a long first line and a stub. Capping the row's width so a
+ * fifth capsule cannot fit produces 4+3, which is the balance the ruling asks
+ * for, WITHOUT hard-coding which item starts line two. Add an eighth item and
+ * it rebalances on its own; a hand-split list would silently keep the old one.
+ *
+ * ⚠ THE PHONE IS UNCHANGED — one sideways-scrolling row. Seven capsules
+ * wrapped at 375px is four ragged lines that read as a paragraph of buttons.
+ *
+ * ============================================================================
+ * ⚠ THE CAPSULE: HAIRLINE AT REST, FOIL ON HOVER — AND THE MEASURED REASONS
+ * ============================================================================
+ * Outlined-at-rest rather than tinted-at-rest, because seven tinted blobs
+ * sitting under the hero read as a filter row on a shop. A hairline reads as
+ * something engraved on the page. The tint that IS there is 8% and does the
+ * job of making the capsule a shape rather than an outline floating in space.
+ *
+ * ⚠ THE TEXT COLOUR CHANGED, AND HERE IS THE HONEST VERSION OF WHY. An earlier
+ * draft of this comment claimed the capsule pushed ink/60 below AA — 4.46:1.
+ * That number came from compositing the translucent ink over the PAGE and then
+ * measuring it against the CAPSULE, which is the wrong ground: semi-transparent
+ * text composites over whatever sits directly behind it, and behind it is the
+ * capsule. Recomputed correctly, ink/60 on the capsule is 4.58:1. It does NOT
+ * fail. The capsule costs it 0.05, not 0.12, and it stays over the line.
+ *
+ * The change is still worth making, for the smaller and truer reason: 4.58:1 is
+ * the thinnest text margin on this page, and a strip that just got bigger and
+ * gained a tinted ground is the wrong place to keep the page's least headroom.
+ * ink/70 on the same capsule measures 6.38:1. What is NOT true is that anything
+ * was broken before.
+ *
+ * ⚠ THE HOVER FILL IS A TWO-STOP RAMP, NOT THE THREE-STOP RIBBON RAMP. The
+ * card ribbon runs #D9C08A → #B08D57 → #8C6A3F, and ink on that last stop is
+ * 3.75:1 — large-text only, a fail for 15px. Reusing the ribbon gradient here
+ * because it is "the established ramp" would have shipped unreadable text on
+ * every hover. Stopping at #B08D57 holds ink at 5.99:1 across the whole pill,
+ * and two stops still read as foil rather than as a flat brown hex.
+ *
+ *   rest    #F3EBDF capsule, #B08D57/55 hairline, ink/70 text   6.38:1
+ *   hover   #D9C08A → #B08D57 fill,               ink text      5.99:1 worst
+ *
+ * ⚠ THE HOVER FIGURE NEEDS NO COMPOSITING AND THAT IS WHY IT IS TRUSTWORTHY.
+ * Both gradient stops are opaque, so ink sits on a known flat colour at every
+ * point of the sweep and 5.99:1 is the floor by construction — no ground to get
+ * wrong. The rest figure is the one that had to be derived carefully, and was
+ * derived wrongly the first time.
+ *
+ * ⚠ KNOWN LIMIT — WINDOWS HIGH CONTRAST. In forced-colors mode a gradient is
+ * not painted, so the hover FILL disappears. Nothing becomes illegible: the
+ * capsule is a real `border` rather than a box-shadow, so it is re-coloured to
+ * a system colour and survives, the text takes the system foreground, and the
+ * focus `outline` is re-coloured too — so the state that MUST be perceivable
+ * still is. What is lost is hover emphasis for a pointer user who already has a
+ * cursor. This is stated rather than patched because a forced-colors rule
+ * cannot be verified from this browser, and an unverified accessibility fix is
+ * worth less than an accurate note about a known gap.
+ *
+ * ⚠ THE FOCUS RING IS STILL A SEPARATE THING. The capsule changes on
+ * focus-visible exactly as it does on hover, and an ink outline sits outside
+ * it — because a decorative fill that doubles as the focus indicator stops
+ * being an indicator the moment somebody restyles the decoration. The offset
+ * came down from 6px to 2px: 6px existed to clear an underline that no longer
+ * exists, and at 6px the ring now collides with the neighbouring capsule.
  */
 
 type Capability = { label: string; href: string };
@@ -63,66 +130,74 @@ export function CapabilityStrip() {
        * as one run-on sentence, and the whole point of the strip is that it is a
        * countable inventory of what you get.
        *
-       * ⚠ SCROLLS SIDEWAYS ON A PHONE RATHER THAN WRAPPING TO FOUR LINES.
-       * Seven items wrapped at 375px becomes a paragraph-shaped block that reads
-       * as body copy. One scrollable row keeps it reading as a strip.
+       * ⚠ THE max-w IS THE LINE-BALANCER. It is deliberately narrower than the
+       * 1104px container: four capsules measure ~654px and a fifth would take it
+       * past 860px, so a cap in between forces the break after four and leaves
+       * three on line two. Widen it and the layout silently goes back to 5+2.
+       * `mx-auto` then centres the block, which is what stops two ragged lines
+       * from reading as a left-aligned overflow.
        *
-       * ⚠ py-1 ON THE ROW EXISTS FOR THE SCALE. Without vertical room the
-       * enlarged item is clipped by the scroll container on a phone.
+       * ⚠ py-1.5 ON THE ROW EXISTS FOR THE SCALE. Without vertical room the
+       * enlarged capsule is clipped by the scroll container on a phone.
        */}
-      <ul className="-mx-6 flex snap-x gap-x-5 gap-y-2 overflow-x-auto px-6 py-1 sm:mx-0 sm:flex-wrap sm:px-0 lg:flex-nowrap [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <ul
+        className={[
+          // phone: one sideways-scrolling row, scrollbar hidden
+          // ⚠ gap-4 RATHER THAN gap-3 IS THE FOCUS RING'S CLEARANCE. A focused
+          // capsule scales 1.06, which eats ~5px of the gap on that side, and
+          // the ink ring then reaches 4px further out. At 12px that left 2px of
+          // daylight between a focused pill and its neighbour; at 16px it is 7.
+          "-mx-6 flex snap-x gap-x-4 gap-y-3 overflow-x-auto px-6 py-1.5",
+          "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+          // desktop: wrap, centred, capped so the break lands 4+3
+          "sm:mx-auto sm:max-w-[720px] sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0",
+        ].join(" ")}
+      >
         {CAPABILITIES.map((c) => (
           <li key={c.label} className="shrink-0 snap-start">
             <Link
               href={c.href}
               className={[
-                "group relative inline-flex items-center gap-1.5 whitespace-nowrap",
-                "font-mono text-[13px] uppercase tracking-[0.14em] text-ink/60",
-                "transition-[color,transform] duration-200 ease-out",
-                "hover:text-ink focus-visible:text-ink",
-                // ⚠ THE SAME RESTRAINED FAMILY AS THE CARDS — 200ms, a scale of
-                // 1.06 rather than a jump. transform-origin sits at the bottom
-                // so the item grows UP from its underline rather than drifting
-                // off it.
-                "origin-bottom motion-safe:hover:scale-[1.06] motion-safe:focus-visible:scale-[1.06]",
-                // ⚠ OUTLINE OFFSET CLEARS THE UNDERLINE. At the default offset
-                // the focus ring and the gold rule overlap into a muddy band.
-                "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[6px] focus-visible:outline-ink",
+                "group relative inline-flex items-center gap-2 whitespace-nowrap rounded-full",
+                // ⚠ ASYMMETRIC PADDING IS AN OPTICAL FIX, NOT A TYPO. Letter
+                // spacing is applied AFTER the last character too, so 0.14em of
+                // air rides along inside the capsule on the right only. Taking
+                // it back off the right padding re-centres the word in the pill.
+                "py-2 pl-4 pr-[calc(1rem_-_0.14em)]",
+                "font-mono text-[15px] uppercase tracking-[0.14em]",
+                "border border-[#B08D57]/55 bg-[#D9C08A]/[0.08] text-ink/70",
+                "transition-[color,background-color,border-color,transform,box-shadow] duration-200 ease-out",
+
+                // ── hover / focus-visible: the capsule fills with foil ───────
+                // Two stops, not the ribbon's three — ink on #8C6A3F is 3.75:1
+                // and fails at this size. See the header.
+                "hover:border-[#B08D57] hover:bg-[linear-gradient(100deg,#D9C08A_0%,#B08D57_100%)] hover:text-ink",
+                "focus-visible:border-[#B08D57] focus-visible:bg-[linear-gradient(100deg,#D9C08A_0%,#B08D57_100%)] focus-visible:text-ink",
+                "hover:shadow-[0_2px_10px_-4px_rgba(140,106,63,0.55)]",
+                "focus-visible:shadow-[0_2px_10px_-4px_rgba(140,106,63,0.55)]",
+
+                // ⚠ THE GROW IS UNCHANGED FROM THE PREVIOUS RULING — 1.06, 200ms,
+                // motion-safe. The origin moved from bottom to centre: it sat at
+                // the bottom so the item grew up out of its underline, and with
+                // the underline gone a pill should swell about its own middle.
+                "origin-center motion-safe:hover:scale-[1.06] motion-safe:focus-visible:scale-[1.06]",
+
+                // ⚠ THE RING IS NOT THE BUBBLE. Separate indicator, outside the
+                // capsule, 2px offset — 6px was sized to clear the old underline
+                // and now runs into the neighbouring pill.
+                "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink",
               ].join(" ")}
             >
               {/* The lime dot is the existing brand mark, reused rather than
-                  invented — decorative, so hidden from the accessibility tree. */}
+                  invented — decorative, so hidden from the accessibility tree.
+                  It darkens to ink on hover: #B8FF3D on gold foil is the one
+                  pairing in this palette that genuinely clashes, and the dot is
+                  4px, so it reads as a bullet either way. */}
               <span
                 aria-hidden
-                className="h-1 w-1 shrink-0 rounded-full bg-lime opacity-60 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100"
+                className="h-1 w-1 shrink-0 rounded-full bg-lime opacity-70 transition-colors duration-200 group-hover:bg-ink group-hover:opacity-100 group-focus-visible:bg-ink group-focus-visible:opacity-100"
               />
               {c.label}
-
-              {/**
-               * ⚠ THE GOLD UNDERLINE — THE SAME RAMP AS THE CARD RIBBON, not a
-               * new colour. #B08D57 at saturation 0.51 reads as metal beside the
-               * subject palette rather than as a second orange; introducing a
-               * different gold here would give the site two.
-               *
-               * ⚠ IT WIPES IN FROM THE LEFT rather than fading. scale-x on a
-               * left origin is a single compositor-friendly transform — no
-               * layout, no repaint of the text above it.
-               *
-               * ⚠ AND IT IS NOT THE FOCUS INDICATOR. The outline above is. A
-               * decorative rule that doubles as the focus ring fails the moment
-               * somebody restyles it.
-               */}
-              <span
-                aria-hidden
-                className={[
-                  "pointer-events-none absolute -bottom-1 left-0 right-0 h-[2px] origin-left rounded-full",
-                  "bg-[linear-gradient(90deg,#D9C08A_0%,#B08D57_45%,#8C6A3F_100%)]",
-                  "scale-x-0 transition-transform duration-200 ease-out",
-                  "group-hover:scale-x-100 group-focus-visible:scale-x-100",
-                  // Reduced motion keeps the gold and drops the wipe.
-                  "motion-reduce:transition-none",
-                ].join(" ")}
-              />
             </Link>
           </li>
         ))}
