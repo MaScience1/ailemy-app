@@ -1,9 +1,32 @@
 -- ============================================================================
 -- 0063_cohort_capacity.sql
 -- ----------------------------------------------------------------------------
--- ⚠ NOT YET APPLIED. Number issued by planning. Run as ONE paste — this file
--- is a single transaction plus its grants; there are no trailing sections to
--- drop.
+-- ⚠ APPLIED 2026-08-20 — VERIFIED. Number issued by planning. Run as ONE paste
+-- if rebuilding: this file is a single transaction plus its grants, with no
+-- trailing sections to drop.
+--
+-- ⚠ THIS HEADER SAID "NOT YET APPLIED" FOR A DAY AFTER IT WAS APPLIED, WHICH IS
+-- THE FAILURE THE _PROPOSED_ RULE EXISTS TO PREVENT, WEARING THE OTHER FACE.
+-- The rename off _PROPOSED_ happened; the status line did not follow it. A
+-- rebuilder reading this folder — the only rebuild path there is — would have
+-- been told the live database lacks a function it has had all along. Renaming
+-- and re-heading are ONE step, not two.
+--
+-- Verification observed on the live database (scripts/db-checks/cohort-capacity-0063.ts):
+--   (a) every public cohort returned 0                                    ✓
+--   (b1) a PAID active seat on a PUBLIC cohort counted → 1                ✓
+--   (b2) an UNPAID seat on the SAME cohort did not count → still 1        ✓
+--   (b3) a PAID but REFUNDED seat did not count → still 1                 ✓
+--   (c) anon reading cohort_enrolments REFUSED (42501, not an empty set)  ✓
+--   (d) anon CAN execute cohort_seats_taken and got the same figure       ✓
+--   (d2) an unknown slug returned 0, not an error                         ✓
+--   cleanup removed 3 of 3 probe rows; the count returned to 0            ✓
+--
+-- ⚠ (b2) AND (b3) ARE WHY (a) MEANS ANYTHING. Both probes sat on the same
+-- public cohort as (b1), so they isolate the paid filter from the is_public
+-- filter. (a) alone passes identically against a function that always returns
+-- zero — an earlier draft of (b3) DID pass vacuously, because it used a status
+-- the 0009 CHECK rejects and the insert error was destructured away.
 --
 -- ============================================================================
 -- ⚠ A COUNT, NEVER THE ROWS (§14)
