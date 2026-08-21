@@ -11,6 +11,7 @@ import { StickyCta } from "@/components/home/StickyCta";
 import { TryAilemy } from "@/components/home/TryAilemy";
 import { HomeFaq } from "@/components/home/Faq";
 import { WaitlistForm } from "@/components/tuition/WaitlistForm";
+import { InteractiveCard } from "@/components/ui/InteractiveCard";
 import { loadCapacity, type Capacity } from "@/lib/public/capacity";
 import { NextStep } from "@/components/home/NextStep";
 import { SocialProof } from "@/components/home/SocialProof";
@@ -432,26 +433,28 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         lede="Choose a subject, qualification, unit and series — then sit it question by question."
       >
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-lg border border-ink/10 bg-snow p-6">
+          <InteractiveCard
+            href="/past-papers"
+            ariaLabel="Browse past papers — sit a paper interactively, question by question"
+            cta="Browse past papers"
+          >
             <h3 className="font-display text-xl font-medium">Sit it interactively</h3>
-            <p className="mt-2 text-sm leading-relaxed text-ink/70">
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-ink/70">
               Answer question by question. Your responses are captured, marked against the
               mark scheme, and turned into topic performance you can act on.
             </p>
-            <Link href="/past-papers" className="mt-4 inline-block text-sm underline underline-offset-2">
-              Browse past papers →
-            </Link>
-          </div>
-          <div className="rounded-lg border border-ink/10 bg-snow p-6">
+          </InteractiveCard>
+          <InteractiveCard
+            href="/past-papers"
+            ariaLabel="View papers — question paper, mark scheme and examiner report as PDFs"
+            cta="View papers"
+          >
             <h3 className="font-display text-xl font-medium">Or read the PDFs</h3>
-            <p className="mt-2 text-sm leading-relaxed text-ink/70">
+            <p className="mt-2 flex-1 text-sm leading-relaxed text-ink/70">
               Question paper, mark scheme and examiner report remain one click away. Being
               better than a download repository does not mean removing the downloads.
             </p>
-            <Link href="/past-papers" className="mt-4 inline-block text-sm underline underline-offset-2">
-              View papers →
-            </Link>
-          </div>
+          </InteractiveCard>
         </div>
       </Section>
 
@@ -697,8 +700,20 @@ function CohortCard({
 }) {
   const cta = ctaFor(cohort);
   const full = capacity?.known === true && capacity.state === "full";
-  return (
-    <div className="flex flex-col rounded-lg border border-ink/10 bg-snow p-7">
+
+  /**
+   * ⚠ A FULL COHORT CANNOT BE A CLICKABLE CARD, AND THIS IS NOT A STYLE CHOICE.
+   * When it is full the card renders a WaitlistForm — a <form> with an <input>
+   * and a submit <button>. Nesting interactive controls inside an anchor is
+   * invalid HTML, and in practice the anchor swallows the click so the email
+   * field cannot be focused and the form cannot be submitted. The whole-card
+   * affordance would break the only action left on the card.
+   *
+   * So a full cohort stays a plain container. It loses the ribbon and the lift;
+   * it keeps the thing a visitor came to do.
+   */
+  const body = (
+    <>
       <h3 className="font-display text-xl font-medium tracking-tight">{cohort.title}</h3>
       <CohortPrice cohort={cohort} currency={currency} />
       <p className="mt-1 font-mono text-[11px] text-ink/55">
@@ -732,18 +747,28 @@ function CohortCard({
       {/* ⚠ §65 — A FULL COHORT OFFERS THE LIST INSTEAD OF A DEAD CTA. It does
           not promise a place, and it only appears when capacity is genuinely
           known to be full — never on an unread or empty figure. */}
-      {full ? (
+    </>
+  );
+
+  if (full) {
+    return (
+      <div className="flex flex-col rounded-lg border border-ink/10 bg-snow p-7">
+        {body}
         <WaitlistForm cohortSlug={cohort.slug} />
-      ) : (
-        <Link
-          href={cta.href}
-          data-cta="chemistry_course"
-          className="mt-6 inline-block rounded-full border border-ink/20 px-4 py-2 text-center text-sm hover:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-        >
-          {cta.label} →
-        </Link>
-      )}
-    </div>
+      </div>
+    );
+  }
+
+  return (
+    <InteractiveCard
+      href={cta.href}
+      dataCta="chemistry_course"
+      ariaLabel={`${cta.label} — ${cohort.title}`}
+      cta={cta.label}
+      className="p-7"
+    >
+      {body}
+    </InteractiveCard>
   );
 }
 
