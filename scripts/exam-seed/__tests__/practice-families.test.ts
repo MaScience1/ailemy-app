@@ -101,6 +101,27 @@ for (const file of moduleFiles) {
 
   const kinds = new Set(families.map((f) => f.kind));
   t(`${slug}: families span ≥3 kinds (§34)`, kinds.size >= 3, [...kinds].join(","));
+
+  // ⚠ §100 SABOTAGE, PER LESSON: an out-of-scope family must be refused by
+  // THIS lesson's own pack — proving each deck's boundary bites, not only the
+  // pilot's. Kinetics content appears in none of the Unit 1 Topic 1 decks.
+  const alien: Family = {
+    key: `sabotage-${slug}`,
+    lessonSlug: slug,
+    specCode: taught[0] ?? "1.1",
+    kind: "definition",
+    sourceSlides: [1],
+    groundingTerms: ["activation energy", "maxwell–boltzmann distribution"],
+    generate: () => ({
+      stem: "What does a catalyst do to the activation energy?",
+      options: ["Lowers it", "Raises it", "Removes it", "Doubles it"],
+      correctIndex: 0, explanation: "", wrongWhy: {}, reviewSlide: null,
+    }),
+  };
+  const av = familyWithinBoundary(alien, pack);
+  t(`${slug}: ⚠ an out-of-scope (kinetics) family is REFUSED by this deck's boundary (§100)`,
+    !av.servable && av.reason.includes("never shows"),
+    av.servable ? "SERVED — the boundary is not biting for this lesson" : av.reason);
 }
 
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);
