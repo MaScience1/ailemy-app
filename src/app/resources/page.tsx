@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
+import { SubjectCard } from "@/components/home/SubjectCard";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
@@ -36,23 +36,40 @@ export default async function ResourcesPage() {
           Lessons, past papers, mark schemes and practice live inside each subject, organised by
           specification. Choose a science to start.
         </p>
+        {/**
+          * ⚠ THE HOMEPAGE'S SubjectCard, NOT A SECOND CARD THAT LOOKS LIKE IT.
+          *
+          * This markup used to be a hand-rolled copy: same border, same padding,
+          * same layout — and none of the subject accent, none of the lift, and a
+          * plain underline where the homepage has an animated CTA. Two cards
+          * claiming to be the same thing while behaving differently is exactly
+          * the drift that produced the difference in the first place.
+          *
+          * ⚠ THE DESTINATION IS THE OVERRIDE, AND ONLY THE DESTINATION. From a
+          * resources index every subject goes to its own page — Biology and
+          * Physics included, even though their `exploreHref` is null, because a
+          * visitor who came here for past papers wants /biology and not an
+          * interest form. The card's behaviour is unchanged; where it points is.
+          *
+          * ⚠ `flex` ON THE <li> IS WHAT KEEPS THE CARDS EQUAL HEIGHT. On the
+          * homepage the card IS the grid item and stretches for free; here a
+          * <li> sits between them (a <ul> owes its children), so the <li>
+          * stretches and the card inside it would size to its own text. Biology
+          * and Physics share a blurb and Chemistry's is shorter, so the
+          * difference would be visible on exactly this page. A flex <li> passes
+          * the stretch down; `w-full` on the card completes it.
+          */}
         <ul className="mt-10 grid gap-4 sm:grid-cols-3">
           {SUBJECTS.map((s) => (
-            <li key={s.slug}>
-              <Link
+            <li key={s.slug} className="flex">
+              <SubjectCard
+                subject={{
+                  slug: s.slug, name: s.name, qualifications: s.qualifications,
+                  blurb: s.blurb, status: s.status, exploreHref: s.exploreHref,
+                }}
                 href={`/${s.slug}`}
-                className="flex h-full flex-col rounded-lg border border-ink/10 bg-snow p-6 transition-colors hover:border-ink/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-              >
-                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45">
-                  {s.status === "available" ? "Available" : "Register interest"}
-                </span>
-                <span className="font-display mt-3 text-2xl font-medium">{s.name}</span>
-                <span className="mt-1 font-mono text-[11px] text-ink/50">
-                  {s.qualifications.join(" · ")}
-                </span>
-                <span className="mt-4 flex-1 text-sm leading-relaxed text-ink/70">{s.blurb}</span>
-                <span className="mt-5 text-sm underline underline-offset-2">Open {s.name} →</span>
-              </Link>
+                ctaLabel={`Open ${s.name}`}
+              />
             </li>
           ))}
         </ul>

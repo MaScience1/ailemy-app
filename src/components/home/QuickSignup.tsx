@@ -54,7 +54,15 @@ const FIELD =
 
 const LABEL = "block font-mono text-[10px] uppercase tracking-[0.16em] text-ink/50";
 
-export function QuickSignup({ trigger }: { trigger: React.ReactNode }) {
+export function QuickSignup({ trigger }: {
+  /**
+   * ⚠ A SINGLE ELEMENT, NOT ReactNode. `render` needs one element to clone; a
+   * fragment, a string or an array cannot receive the trigger's props and ref.
+   * Typing it as ReactElement is what stops the previous bug being reintroduced
+   * by passing loose children.
+   */
+  trigger: React.ReactElement;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [firstName, setFirstName] = useState("");
@@ -100,7 +108,24 @@ export function QuickSignup({ trigger }: { trigger: React.ReactNode }) {
 
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
-      <Dialog.Trigger render={<span />}>{trigger}</Dialog.Trigger>
+      {/**
+        * ⚠ THE TRIGGER ELEMENT IS PASSED TO `render`, NOT NESTED AS CHILDREN.
+        *
+        * This was `render={<span />}>{trigger}`, which wrapped a real <button>
+        * inside a <span> that Base UI had already given button semantics and
+        * handlers to. Two defects in one line: an interactive control nested
+        * inside another, and a span standing in for a button — so keyboard
+        * activation and form semantics came from the wrong element.
+        *
+        * Base UI says so out loud at runtime ("expected a native <button>
+        * because the `nativeButton` prop is true"), which is what put a "1
+        * Issue" badge on the Next dev overlay. It was a genuine accessibility
+        * fault reported as a warning, not a dev-tools artefact.
+        *
+        * `render` REPLACES the trigger element, so the caller's <button> IS the
+        * trigger — one element, real button semantics, nothing nested.
+        */}
+      <Dialog.Trigger render={trigger} />
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-[9998] bg-ink/50 backdrop-blur-[2px] transition-opacity duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
         <Dialog.Popup className="fixed left-1/2 top-1/2 z-[9999] max-h-[92vh] w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-ink/10 bg-parchment p-6 shadow-[0_24px_64px_-24px_rgba(15,20,25,0.45)] transition-all duration-200 data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0 sm:p-8">

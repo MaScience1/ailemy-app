@@ -43,10 +43,35 @@ const LABEL: Record<SubjectCardData["status"], string> = {
   interest: "Register interest",
 };
 
-export function SubjectCard({ subject }: { subject: SubjectCardData }) {
+export function SubjectCard({
+  subject,
+  href: hrefOverride,
+  ctaLabel,
+}: {
+  subject: SubjectCardData;
+  /**
+   * ⚠ THE OVERRIDES EXIST SO /resources REUSES THIS CARD RATHER THAN FORKING IT.
+   *
+   * /resources sends all three subjects to `/{slug}` and says "Open Chemistry"
+   * on every one of them — including Biology and Physics, whose `exploreHref` is
+   * null, because from a resources index the destination is the subject page and
+   * not an interest form. That is a DIFFERENT DESTINATION FOR THE SAME CARD, not
+   * a different card.
+   *
+   * The alternative was a second component with the same accent rule, the same
+   * lift, the same span-not-link discipline and the same paired
+   * hover/focus-visible states — four invariants duplicated, drifting on the
+   * first change to any of them. Two optional props are cheaper than that.
+   *
+   * ⚠ BOTH DEFAULT TO TODAY'S BEHAVIOUR, so the homepage is untouched by this.
+   */
+  href?: string;
+  ctaLabel?: string;
+}) {
   const colour = subjectColour(subject.slug);
-  const href = subject.exploreHref ?? `/tuition/interest?subject=${subject.slug}`;
-  const cta = subject.exploreHref ? `Explore ${subject.name}` : "Register interest";
+  const href = hrefOverride ?? subject.exploreHref ?? `/tuition/interest?subject=${subject.slug}`;
+  const cta =
+    ctaLabel ?? (subject.exploreHref ? `Explore ${subject.name}` : "Register interest");
 
   return (
     <Link
@@ -58,7 +83,7 @@ export function SubjectCard({ subject }: { subject: SubjectCardData }) {
        */
       aria-label={`${cta} — ${subject.name}, ${subject.qualifications.join(", ")}`}
       className={[
-        "group relative flex flex-col overflow-hidden rounded-lg border border-ink/10 bg-snow p-7",
+        "group relative flex w-full flex-col overflow-hidden rounded-lg border border-ink/10 bg-snow p-7",
         "transition duration-200 ease-out",
         "hover:border-ink/25 hover:shadow-[0_6px_24px_-12px_rgba(15,20,25,0.28)]",
         "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink",
