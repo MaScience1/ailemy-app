@@ -7,6 +7,7 @@ import { SiteNav } from "@/components/site/SiteNav";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
 import { CapabilityStrip } from "@/components/home/CapabilityStrip";
 import { SubjectCard } from "@/components/home/SubjectCard";
+import { StickyCta } from "@/components/home/StickyCta";
 import { getNavSession } from "@/lib/auth/nav-session";
 import {
   SUBJECTS, ctaFor,
@@ -466,6 +467,12 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           />
         </HeroCalendarOverlay>
       )}
+
+      {/* ── persistent conversion CTA (§19, §20) ────────────────────────
+          ⚠ AFTER the footer in the DOM, so it is the last thing a screen
+          reader meets rather than an interruption between sections. It is
+          position:fixed, so DOM order costs nothing visually. */}
+      <StickyCta signedIn={session !== null} />
 
       {/* 14 */} <SiteFooter />
     </div>
