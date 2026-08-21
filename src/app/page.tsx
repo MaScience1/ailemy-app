@@ -8,6 +8,8 @@ import { AnnouncementBar } from "@/components/public/AnnouncementBar";
 import { CapabilityStrip } from "@/components/home/CapabilityStrip";
 import { SubjectCard } from "@/components/home/SubjectCard";
 import { StickyCta } from "@/components/home/StickyCta";
+import { nextSession, distanceLabel } from "@/lib/calendar/next-session";
+import { dayKeyOf } from "@/lib/calendar/grid";
 import { getNavSession } from "@/lib/auth/nav-session";
 import {
   SUBJECTS, ctaFor,
@@ -24,7 +26,7 @@ import { TimezoneSync } from "@/components/public/TimezoneSync";
 import { loadCalendarEvents } from "@/lib/calendar/readers";
 import { parseDate, rangeFor, readState } from "@/lib/calendar/grid";
 import { emptyCalendarMessage } from "@/lib/calendar/types";
-import { CANONICAL_TZ, calendarDate, formatDay } from "@/lib/schedule/timezone";
+import { CANONICAL_TZ, calendarDate, dualTime, formatDay } from "@/lib/schedule/timezone";
 import { viewerTimeZone } from "@/lib/schedule/viewer-tz";
 
 /**
@@ -141,6 +143,49 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
     type: calendarState.type,
   });
 
+  /**
+   * ⚠ §63 — THE CARD MUST NOT LOOK EMPTY, AND THE MONTH IN VIEW CANNOT ANSWER
+   * THAT. Teaching begins 15 September, so for the whole summer the grid is a
+   * blank August and the visitor concludes nothing is happening. This asks the
+   * different question — when is the next actual lesson — and it needs a window
+   * the current view does not cover.
+   *
+   * ⚠ BOUNDED AT 120 DAYS, NOT A YEAR (§35). The performance rule is that the
+   * calendar never downloads an enormous range. A term is about sixteen weeks;
+   * 120 days reaches the next teaching block from anywhere in the summer without
+   * pulling a year of sessions to render one line. If nothing falls inside it
+   * the card simply omits the banner, which is honest.
+   *
+   * ⚠ AND IT IS SKIPPED ENTIRELY WHEN THE VIEW ALREADY HAS EVENTS. The banner
+   * only renders when eventCount is 0, so fetching for a populated month would
+   * be a round-trip whose result is discarded.
+   */
+  const AHEAD_DAYS = 120;
+  const lookahead = new Date(Date.now() + AHEAD_DAYS * 86_400_000);
+  const { events: aheadEvents } = calendarEvents.length === 0
+    ? await loadCalendarEvents({
+        from: todayISO,
+        to: calendarDate(lookahead, CANONICAL_TZ),
+        mode: "public",
+        subject: calendarState.subject,
+        level: calendarState.level,
+        type: calendarState.type,
+      })
+    : { events: [] as typeof calendarEvents };
+
+  const upcomingLesson = nextSession(aheadEvents, new Date(), dayKeyOf, todayISO);
+  const nextLesson = upcomingLesson.kind === "session"
+    ? {
+        title: upcomingLesson.event.title,
+        dayLabel: formatDay(upcomingLesson.event.startsAt, CANONICAL_TZ),
+        // ⚠ DOHA, LABELLED. An unlabelled time on a site taught from Doha to
+        // students anywhere is the silent-wrong-hour failure feat/tz-validation
+        // exists for; the expanded calendar shows the viewer's zone alongside.
+        timeLabel: `${dualTime(upcomingLesson.event.startsAt, viewerTz).canonical} Doha`,
+        distance: distanceLabel(upcomingLesson.daysAway),
+      }
+    : null;
+
   return (
     <div className="bg-parchment text-ink">
       {/* 1 */} <AnnouncementBar />
@@ -219,6 +264,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
             viewerTz={viewerTz}
             openHref={openCalendarHref}
             eventCount={calendarEvents.length}
+            next={nextLesson}
           />
         </div>
         </div>

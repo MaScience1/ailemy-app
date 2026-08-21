@@ -28,7 +28,7 @@ import { CalendarOverlay } from "./CalendarOverlay";
  */
 
 export function HeroCalendarCard({
-  events, state, todayISO, viewerTz, openHref, eventCount,
+  events, state, todayISO, viewerTz, openHref, eventCount, next, jumpHref,
 }: {
   events: readonly CalendarEvent[];
   state: CalendarState;
@@ -36,6 +36,10 @@ export function HeroCalendarCard({
   viewerTz: string | null;
   openHref: string;
   eventCount: number;
+  /** The next real group lesson, from anywhere in the schedule (§63). */
+  next?: { title: string; dayLabel: string; timeLabel: string; distance: string } | null;
+  /** Where "jump to it" goes — the month that lesson falls in (§41). */
+  jumpHref?: string;
 }) {
   return (
     <div className="w-full max-w-[520px]">
@@ -68,6 +72,35 @@ export function HeroCalendarCard({
           mode="public"
           basePath="/"
         />
+        {/* ── §63: the component must not look empty ────────────────────
+            ⚠ THE MONTH IN VIEW AND THE NEXT LESSON ARE DIFFERENT QUESTIONS,
+            and answering only the first is what made August look like nothing
+            is happening. The grid still shows the current month; this line
+            answers "when does teaching actually start", which is the question
+            a visitor in the summer is really asking.
+
+            ⚠ IT IS SUPPRESSED WHEN THE LESSON IS ALREADY ON SCREEN. If the
+            month in view contains events, repeating one of them under the grid
+            is noise — the grid already said it. */}
+        {next && eventCount === 0 && (
+          <span className="mt-3 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 rounded-md bg-parchment-2/70 px-3 py-2">
+            {/* ⚠ "SESSION", NOT "LESSON". 0044's session kinds are teaching,
+                onboarding, revision, mock and clinic — and the first thing in
+                the seeded AS timetable is onboarding on Sun 13 Sept, not a
+                lesson. Labelling a mock or a clinic "next live lesson" would be
+                wrong about the one fact this line exists to state. */}
+            <span className="font-mono text-[9px] uppercase tracking-[0.14em] text-ink/45">
+              Next live session
+            </span>
+            <span className="text-[13px] font-medium">{next.dayLabel}</span>
+            <span className="text-[13px] text-ink/70">{next.title}</span>
+            <span className="font-mono text-[10px] text-ink/50">{next.timeLabel}</span>
+            <span className="ml-auto font-mono text-[9px] uppercase tracking-[0.14em] text-ink/40">
+              {next.distance}
+            </span>
+          </span>
+        )}
+
         <span className="mt-3 flex items-center justify-between border-t border-ink/10 pt-2.5">
           <span className="flex items-center gap-3">
             <span className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.14em] text-ink/45">
@@ -85,12 +118,39 @@ export function HeroCalendarCard({
         </span>
       </Link>
 
-      {/* ⚠ ONE LINE, AND IT HAS TO WORK COLD. A parent who has never heard of
-          Ailemy sees a small grid of dots; this is the sentence that turns it
-          into a timetable they can act on. */}
-      <p className="mt-3 text-sm leading-snug text-ink/60">
-        Live timetable — every group lesson and 1-to-1 slot, in Doha time and yours. Tap to explore.
-      </p>
+      {/* ── §11: the caption is a headline, not a description ───────────
+          ⚠ THE OLD LINE DESCRIBED THE COMPONENT. "Live timetable — every group
+          lesson and 1-to-1 slot" tells a visitor what they are looking at,
+          which they can already see. §11 asks for something functional: a
+          headline that says what they can DO, more prominent than the
+          supporting sentence, and the whole block clickable.
+
+          ⚠ AND IT IS A SEPARATE LINK FROM THE CARD, not a second one nested
+          inside it. Nesting anchors is invalid and makes the inner one
+          keyboard-unreachable; two siblings pointing at the same href give a
+          keyboard user two stops, which is the correct cost of two visible
+          affordances. */}
+      <Link
+        href={openHref}
+        scroll={false}
+        aria-haspopup="dialog"
+        data-cta="calendar_explore"
+        className="group/cap mt-4 block rounded-lg px-1 py-1 transition-colors duration-200 hover:bg-parchment-2/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+      >
+        <span className="font-display block text-lg font-medium tracking-tight">
+          See what&rsquo;s happening this week.
+        </span>
+        <span className="mt-1 block text-sm leading-snug text-ink/60">
+          Browse live lessons, check availability and book tuition directly from the Ailemy
+          calendar.
+        </span>
+        <span className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium">
+          <span className="underline decoration-transparent underline-offset-4 transition-colors duration-200 group-hover/cap:decoration-current">
+            Explore timetable
+          </span>
+          <span aria-hidden className="transition-transform duration-200 motion-safe:group-hover/cap:translate-x-1">→</span>
+        </span>
+      </Link>
     </div>
   );
 }
