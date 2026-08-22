@@ -1,10 +1,28 @@
 -- ============================================================================
 -- 0065_PROPOSED_lesson_practice.sql
 -- ----------------------------------------------------------------------------
--- ⚠ NUMBER ISSUED BY PLANNING (2026-08-22 sitting). _PROPOSED_ until applied —
--- rename and record observed verification results in this header in the SAME
--- step as applying. Requires 0064 applied first (nothing here references its
--- tables, but the numbering order is the apply order).
+-- ⚠ APPLIED 2026-08-22 — the founder ran the WHOLE FILE as one paste, after
+-- 0064. Number issued by planning (2026-08-22 sitting).
+--
+-- OBSERVED AT APPLY (founder-reported):
+--   Paste 5      the GUC-door DO block completed — all four quadrants
+--                (DELETE/UPDATE without the GUC refused; UPDATE refused even
+--                WITH it; DELETE with it succeeded and cleaned up)  ✓
+--   guc_after    read 'on' — ⚠ EXPECTED FOR A WHOLE-FILE RUN, NOT A LEAK.
+--                In a multi-statement paste, everything after the last
+--                explicit COMMIT runs in ONE implicit transaction that ends
+--                with the message; set_config(..., is_local := true) binds to
+--                THAT transaction, so a check inside the same paste still
+--                sees 'on'. Proven on a clean PostgreSQL 16: inside the
+--                setting transaction → 'on'; the next statement after its
+--                COMMIT, same session → NULL. 0066's FOUNDER PASTE 4 is the
+--                standing fresh-statement proof that the door reads NULL
+--                outside the erasure transaction. (This file's inline
+--                "EXPECT 'off'" comment below was written for paste-by-paste
+--                execution; for whole-file runs read it as "expect 'on' here,
+--                NULL on any fresh statement".)
+--   SESSION-RUN SR-3/SR-4/SR-5 are PENDING — run and record here before this
+--   header may claim full verification.
 --
 -- Three sections, one paste each, then verification pastes.
 --

@@ -1,10 +1,17 @@
 -- ============================================================================
 -- 0064_PROPOSED_lesson_decks_view_state_family_status.sql
 -- ----------------------------------------------------------------------------
--- ⚠ NUMBER ISSUED BY PLANNING (2026-08-22 sitting). _PROPOSED_ until applied —
--- rename to 0064_… and record the observed verification results in this header
--- in the SAME step as applying (the 0063 header said "NOT YET APPLIED" for a
--- day after it was live; renaming and re-heading are ONE act).
+-- ⚠ APPLIED 2026-08-22 — the founder ran the WHOLE FILE as one paste.
+-- Number issued by planning (2026-08-22 sitting).
+--
+-- OBSERVED AT APPLY (founder-reported):
+--   Paste 4 (d)  the column-scoped UPDATE returned exactly the four columns
+--                (deck_version, last_frame_index, slides_completed_at,
+--                slides_visited) — user_id and lesson_id absent  ✓
+--   Pastes 1-3   applied; Pastes 5-6 completed within the same run.
+--   SESSION-RUN SR-1 (student RLS quadrants) and SR-2 (status store
+--   round-trip through the table) are PENDING — run and record here before
+--   this header may claim full verification.
 --
 -- THREE TABLES, THREE SECTIONS, ONE PASTE EACH (the SQL Editor drops trailing
 -- sections of long pastes — never combine):

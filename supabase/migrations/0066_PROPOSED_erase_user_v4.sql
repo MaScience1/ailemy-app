@@ -575,6 +575,15 @@ END $$;
 -- inside also exercised every v3 path against the probe (their receipt counts
 -- print nothing here — SR-2 inspects a full receipt).
 
+-- ══ FOUNDER PASTE 4 — ⚠ THE DOOR IS SHUT OUTSIDE THE ERASURE TRANSACTION ═══
+-- Run this as its OWN paste, as a FRESH statement — that is the point of it.
+-- set_config(..., is_local := true) binds the GUC to the transaction that set
+-- it; a whole-file run reads 'on' INSIDE that same implicit transaction (the
+-- 0065 observation), and this paste proves it is gone the moment that
+-- transaction ends. EXPECT: raw_value = NULL and door_shut = t.
+SELECT current_setting('app.erasure_active', true) AS raw_value,
+       current_setting('app.erasure_active', true) IS NULL AS door_shut;
+
 -- ══ SESSION-RUN (mine, not founder pastes) ══════════════════════════════════
 -- SR-1  Create the probe user (@example.test, per-run-unique, Admin API) and
 --       hand the founder its uuid BEFORE Paste 3; delete it by captured id
