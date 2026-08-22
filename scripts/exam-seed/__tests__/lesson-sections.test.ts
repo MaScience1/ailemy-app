@@ -19,6 +19,7 @@ import {
   LESSON_SECTIONS,
   SECTION_META,
   isSectionKey,
+  mergeStates,
   summarise,
   type LessonSectionKey,
   type SectionState,
@@ -97,6 +98,34 @@ console.log("\n=== 2. the denominator is what the lesson HAS (§89) ===");
   });
   t("in_progress is NOT complete", inProgressDoesNotCount.complete === 0,
     JSON.stringify(inProgressDoesNotCount));
+}
+
+// ============================================================================
+console.log("\n=== 2b. the device/server merge rule (§26) ===");
+// ============================================================================
+{
+  // The case a returning student actually hits while the migration is parked:
+  // the server has nothing, the browser remembers a tick, and the tick must
+  // survive the reload — otherwise "completion persists" is simply false.
+  const restored = mergeStates({ slides: complete("slides") }, {});
+  t("⚠ a device tick survives when the server store has nothing to say",
+    restored.slides?.status === "complete", JSON.stringify(restored));
+
+  // And the direction that matters for correctness: a server row is the
+  // record. A browser must never resurrect a completion the record dropped.
+  const serverWins = mergeStates(
+    { slides: complete("slides") },
+    { slides: { key: "slides", status: "not_started", completedAt: null, source: null } },
+  );
+  t("⚠ THE SERVER WINS — a stale browser cannot resurrect a completion the record does not have",
+    serverWins.slides?.status === "not_started", JSON.stringify(serverWins));
+
+  const union = mergeStates({ notes: complete("notes") }, { slides: complete("slides") });
+  t("device-only and server-only sections both survive the merge",
+    union.notes?.status === "complete" && union.slides?.status === "complete",
+    Object.keys(union).join(","));
+
+  t("merging two empties is empty, not a crash", Object.keys(mergeStates({}, {})).length === 0);
 }
 
 // ============================================================================

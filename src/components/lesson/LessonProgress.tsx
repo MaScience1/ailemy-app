@@ -15,6 +15,7 @@ import { setSectionState } from "@/lib/lesson/completion";
 import type { CompletionStore } from "@/lib/lesson/completion";
 import {
   SECTION_META,
+  mergeStates,
   summarise,
   type CompletionSource,
   type LessonSectionKey,
@@ -105,7 +106,7 @@ export function LessonProgressProvider({
   useEffect(() => {
     if (initialStore === "server") return;
     const local = loadDevice(lessonId);
-    if (Object.keys(local).length > 0) setStates((s) => ({ ...local, ...s }));
+    if (Object.keys(local).length > 0) setStates((s) => mergeStates(local, s));
   }, [lessonId, initialStore]);
 
   const mark = useCallback(

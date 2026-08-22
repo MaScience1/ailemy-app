@@ -114,6 +114,27 @@ export type SectionState = {
 };
 
 /**
+ * Merge a browser's remembered ticks with whatever the server returned.
+ *
+ * ⚠ THE SERVER ALWAYS WINS, PER SECTION (§26). A device's memory of a tick is
+ * a fallback for when the record could not be reached — never an override of
+ * the record itself. Merging the other way round would let a stale browser
+ * resurrect a completion that was corrected or erased server-side, which is
+ * the one way this feature could tell a student something false about their
+ * own progress.
+ *
+ * Pure, and separated from the React provider on purpose: this is the rule
+ * that decides what a returning student sees, and a rule that important is
+ * tested directly rather than inferred from a screenshot of a page.
+ */
+export function mergeStates(
+  device: Partial<Record<LessonSectionKey, SectionState>>,
+  server: Partial<Record<LessonSectionKey, SectionState>>,
+): Partial<Record<LessonSectionKey, SectionState>> {
+  return { ...device, ...server };
+}
+
+/**
  * The lesson's completion headline.
  *
  * ⚠ THE DENOMINATOR IS THE SECTIONS THIS LESSON ACTUALLY HAS (§89, §90). A
