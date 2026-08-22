@@ -35,7 +35,7 @@ import type { MarkedAttempt, ServedQuestion } from "@/lib/practice/engine";
 type Phase =
   | { name: "idle" }
   | { name: "loading" }
-  | { name: "active"; seed: number; fingerprint: string; questions: ServedQuestion[]; avoid: string[]; focus: string[] }
+  | { name: "active"; seed: number; fingerprint: string; questions: ServedQuestion[]; avoid: string[]; focus: string[]; shortfall?: { requested: number; served: number; reason: string } }
   | { name: "marked"; marked: MarkedAttempt; avoid: string[] }
   | { name: "error"; reason: string };
 
@@ -85,6 +85,7 @@ export function LessonPractice({ lessonSlug }: { lessonSlug: string }) {
         questions: res.questions,
         avoid: opts.avoid ?? [],
         focus: opts.focus ?? [],
+        shortfall: res.shortfall,
       });
       track(opts.retried ? "lesson_mistakes_retried" : opts.regenerated ? "lesson_practice_regenerated" : "lesson_practice_started", { lesson: lessonSlug });
     },
@@ -158,8 +159,8 @@ export function LessonPractice({ lessonSlug }: { lessonSlug: string }) {
       <section id="practice" aria-label="Check your understanding" className="rounded-lg border border-ink/10 bg-snow p-6 sm:p-8">
         <h2 className="font-display text-2xl font-medium tracking-tight">Check your understanding</h2>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink/70">
-          10 questions based only on this lesson and its specification points. Complete the
-          lesson first for the best result — but you can start whenever you like.
+          Up to 10 questions based only on this lesson and its specification points. Complete
+          the lesson first for the best result — but you can start whenever you like.
         </p>
         {phase.name === "error" && (
           <p role="alert" className="mt-4 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
@@ -173,7 +174,7 @@ export function LessonPractice({ lessonSlug }: { lessonSlug: string }) {
             data-cta="lesson_practice_start"
             className="rounded-full bg-ink px-6 py-3 text-sm font-medium text-parchment transition-colors hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
-            Start 10 questions →
+            Start practice →
           </button>
           {best !== null && (
             <span className="font-mono text-xs uppercase tracking-[0.14em] text-ink/50">
@@ -207,6 +208,16 @@ export function LessonPractice({ lessonSlug }: { lessonSlug: string }) {
             Question {qIndex + 1} of {phase.questions.length} · {answered} answered
           </p>
         </div>
+
+        {/* ⚠ A SHORT SET SAYS IT IS SHORT (§62). The approved pool could not
+            fill ten distinct questions; padding with repeats or still calling
+            it "10 questions" would both be inventions. */}
+        {phase.shortfall && (
+          <p className="mt-3 rounded border border-ink/15 bg-ink/[0.03] px-3 py-2 text-xs leading-relaxed text-ink/70">
+            This set has {phase.shortfall.served} questions, not {phase.shortfall.requested} — that is
+            every distinct question the approved families for this lesson can currently ask.
+          </p>
+        )}
 
         {/* navigator (§46) — answered state is glyph + fill, not colour alone */}
         <ol className="mt-4 flex flex-wrap gap-1.5" aria-label="Question navigator">

@@ -50,6 +50,10 @@ type StartResult =
       seed: number;
       fingerprint: string;
       questions: ServedQuestion[];
+      /** Present when the approved pool could not fill ATTEMPT_SIZE distinct
+       *  questions. The UI states the REAL number it is serving (§62) — the
+       *  attempt is short and honest, never padded with repeats. */
+      shortfall?: { requested: number; served: number; reason: string };
     }
   | { ok: false; reason: string };
 
@@ -140,7 +144,13 @@ export async function startPractice(input: {
       avoidFamilies: input.avoidFamilies?.slice(0, 40),
       focusFamilies: input.focusFamilies?.slice(0, 40),
     });
-    return { ok: true, seed, fingerprint: attemptFingerprint(spec), questions: toServed(spec) };
+    return {
+      ok: true,
+      seed,
+      fingerprint: attemptFingerprint(spec),
+      questions: toServed(spec),
+      shortfall: spec.shortfall,
+    };
   } catch (e) {
     // "nothing approved yet" is the expected state before the founder's
     // admin approval pass — say so rather than erroring opaquely (§67).

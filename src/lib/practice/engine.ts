@@ -184,7 +184,23 @@ export type AttemptSpec = {
   lessonSlug: string;
   seed: number;
   questions: GeneratedQuestion[];
+  /**
+   * Set when the approved pool could not yield ATTEMPT_SIZE questions with
+   * DISTINCT stems (§99). The attempt is served SHORT and says so — it is
+   * never padded with a repeat, and it never throws. Callers must show the
+   * real number rather than the requested one (§62: no invented counts).
+   */
+  shortfall?: { requested: number; served: number; reason: string };
 };
+
+/**
+ * How many times one family is asked for a fresh variant before the engine
+ * concludes it has run out of DISTINCT questions for this attempt. Families
+ * draw from banks of a handful of cases, so a variant that has not appeared
+ * in eight draws is very unlikely to exist; the cost of being wrong is one
+ * question fewer, not a broken attempt.
+ */
+const RESAMPLE_TRIES = 8;
 
 /**
  * Build one 10-question attempt (§32, §34, §44).
@@ -247,37 +263,32 @@ export function buildAttempt(input: {
     byKind.set(k, [...fresh, ...seen]);
   }
 
-  const chosen: Family[] = [];
-  const cursors = new Map<QuestionKind, number>();
-  while (chosen.length < ATTEMPT_SIZE) {
-    let advanced = false;
-    for (const k of kindOrder) {
-      if (chosen.length >= ATTEMPT_SIZE) break;
-      const fs = byKind.get(k) ?? [];
-      const cursor = cursors.get(k) ?? 0;
-      if (cursor < fs.length) {
-        chosen.push(fs[cursor]);
-        cursors.set(k, cursor + 1);
-        advanced = true;
+  // One kind-interleaved PASS over the pool: every eligible family offered
+  // exactly once, in kind round-robin order (§34). The fill below cycles this
+  // pass, so a pool smaller than ten repeats families — with fresh rng, and
+  // only ever with a stem no earlier question in this attempt already used.
+  const pass: Family[] = [];
+  {
+    const cursors = new Map<QuestionKind, number>();
+    let advanced = true;
+    while (advanced) {
+      advanced = false;
+      for (const k of kindOrder) {
+        const fs = byKind.get(k) ?? [];
+        const cursor = cursors.get(k) ?? 0;
+        if (cursor < fs.length) {
+          pass.push(fs[cursor]);
+          cursors.set(k, cursor + 1);
+          advanced = true;
+        }
       }
-    }
-    if (!advanced) {
-      // Pool exhausted below ten — wrap and repeat families with fresh rng.
-      for (const k of kindOrder) cursors.set(k, 0);
-      if (eligible.length === 0) break;
     }
   }
 
-  const questions: GeneratedQuestion[] = chosen.map((f, qIndex) => {
+  /** Generate one variant and run its birth checks (§99, §101). */
+  const born = (f: Family, qIndex: number): GeneratedQuestion => {
     const g = f.generate(r);
-    const q: GeneratedQuestion = {
-      ...g,
-      qIndex,
-      familyKey: f.key,
-      specCode: f.specCode,
-      kind: f.kind,
-    };
-    // ── birth checks (§99, §101) ──────────────────────────────────────────
+    const q: GeneratedQuestion = { ...g, qIndex, familyKey: f.key, specCode: f.specCode, kind: f.kind };
     if (q.options.length !== 4) {
       throw new Error(`${f.key}: ${q.options.length} options, expected 4`);
     }
@@ -293,18 +304,76 @@ export function buildAttempt(input: {
       );
     }
     return q;
-  });
+  };
 
-  // No two questions in one set may share an exact stem (§99).
+  /**
+   * ⚠ RESAMPLE ON COLLISION — THE FIX FOR THE 2026-08-23 LIVE DEFECT (§35).
+   * ==========================================================================
+   * A thin approved pool must repeat families to reach ten, and a family whose
+   * variation bank is small can offer a stem this attempt already holds. That
+   * used to reach the duplicate-stem guard below, which THREW — so a lesson
+   * with two approved definition families could not start practice at all
+   * ("A chemist counts in moles…" collided with itself on the wrap).
+   *
+   * Now the engine asks the family again, up to RESAMPLE_TRIES times. A family
+   * that cannot produce a fresh stem is exhausted FOR THIS ATTEMPT and the
+   * rotation moves on; the stem set only grows, so exhaustion is permanent
+   * within an attempt and the loop always terminates. Birth-check failures are
+   * NOT swallowed — a family whose derivations disagree still throws (§101).
+   */
+  const questions: GeneratedQuestion[] = [];
   const stems = new Set<string>();
-  for (const q of questions) {
-    if (stems.has(q.stem)) {
-      throw new Error(`duplicate stem in one attempt: "${q.stem.slice(0, 60)}"`);
+  const exhausted = new Set<string>();
+  let cursor = 0;
+  while (questions.length < ATTEMPT_SIZE && exhausted.size < pass.length) {
+    const f = pass[cursor % pass.length];
+    cursor++;
+    if (exhausted.has(f.key)) continue;
+    let placed = false;
+    for (let tries = 0; tries < RESAMPLE_TRIES; tries++) {
+      const q = born(f, questions.length);
+      if (!stems.has(q.stem)) {
+        questions.push(q);
+        stems.add(q.stem);
+        placed = true;
+        break;
+      }
     }
-    stems.add(q.stem);
+    if (!placed) exhausted.add(f.key);
   }
 
-  return { lessonSlug: pack.lessonSlug, seed, questions };
+  /**
+   * ⚠ THE GUARD STAYS, AS THE LAST RESORT IT WAS MEANT TO BE (§99). The fill
+   * above cannot emit a duplicate, so reaching this throw means the fill
+   * itself is broken — which is worth failing loudly for. What it must never
+   * again do is fire because the founder has approved a thin pool.
+   */
+  const seen = new Set<string>();
+  for (const q of questions) {
+    if (seen.has(q.stem)) {
+      throw new Error(`duplicate stem in one attempt: "${q.stem.slice(0, 60)}"`);
+    }
+    seen.add(q.stem);
+  }
+
+  if (questions.length === 0) {
+    throw new Error(
+      `no servable questions for ${pack.lessonSlug} — ${eligible.length} eligible famil${eligible.length === 1 ? "y" : "ies"} produced nothing`,
+    );
+  }
+
+  const shortfall =
+    questions.length < ATTEMPT_SIZE
+      ? {
+          requested: ATTEMPT_SIZE,
+          served: questions.length,
+          reason:
+            `the approved families for this lesson can produce ${questions.length} question${questions.length === 1 ? "" : "s"} with distinct stems` +
+            ` (${eligible.length} famil${eligible.length === 1 ? "y" : "ies"} approved) — approve more families to reach ${ATTEMPT_SIZE}`,
+        }
+      : undefined;
+
+  return { lessonSlug: pack.lessonSlug, seed, questions, shortfall };
 }
 
 /** Strip an attempt to what the browser may see before submission (§103). */

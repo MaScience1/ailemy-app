@@ -26,7 +26,9 @@ import {
   buildSourcePack,
   familyWithinBoundary,
   markAttempt,
+  pick,
   rng,
+  shuffle,
   toServed,
   type Family,
   type FamilyStatus,
@@ -261,6 +263,146 @@ console.log("\n=== 7. recent-repeat avoidance (§44) ===");
   const surfaced = fresh.filter((k) => second.questions.some((q) => q.familyKey === k));
   t("every family the pool held back appears in the next attempt", surfaced.length === fresh.length,
     `fresh=${fresh.length} surfaced=${surfaced.length}`);
+}
+
+// ============================================================================
+console.log("\n=== 8. ⚠ THE 2026-08-23 LIVE DEFECT — thin pools and colliding stems (§35, §99) ===");
+// ============================================================================
+{
+  /**
+   * ⚠ THIS SECTION IS THE REGRESSION. On production the founder had approved
+   * exactly two families, both `definition`. Filling ten meant repeating them,
+   * the repeat produced a byte-identical stem, and buildAttempt THREW — so
+   * "Start 10 questions" was dead for every student on every seed. The engine
+   * now resamples for a fresh stem and serves an honestly-short set instead.
+   */
+
+  // ── (a) the exact production configuration, on many seeds ────────────────
+  const PROD_APPROVED: Record<string, FamilyStatus> = {
+    "l1-def-particle-terms": "approved",
+    "l1-def-empirical-formula": "approved",
+  };
+  let prodThrew = "";
+  let dupSeen = "";
+  let minServed = Infinity;
+  try {
+    for (let seed = 1; seed <= 200; seed++) {
+      const a = buildAttempt({ families: FAMILIES, statuses: PROD_APPROVED, pack: PACK, seed });
+      minServed = Math.min(minServed, a.questions.length);
+      const stems = a.questions.map((q) => q.stem);
+      if (new Set(stems).size !== stems.length) dupSeen = `seed ${seed}`;
+    }
+  } catch (e) {
+    prodThrew = String(e);
+  }
+  t("⚠ the two-approved-family production pool BUILDS on 200 seeds (this threw before the fix)",
+    prodThrew === "", prodThrew || `min served ${minServed}`);
+  t("⚠ …and never serves the same stem twice", dupSeen === "", dupSeen);
+  t("…serving at least 2 questions even from the thinnest real pool", minServed >= 2, minServed);
+
+  // ── (b) forced collision: a family with exactly ONE stem, forever ────────
+  let calls = 0;
+  const oneStem: Family = {
+    key: "sabotage-one-stem",
+    lessonSlug: "definitions-formulae-and-the-mole",
+    specCode: "1.1",
+    kind: "definition",
+    sourceSlides: [6],
+    groundingTerms: ["mole"],
+    generate: (r) => {
+      calls++;
+      const options = shuffle(r, ["a", "b", "c", "d"]);
+      return {
+        stem: "THE ONLY STEM THIS FAMILY WILL EVER PRODUCE.",
+        options,
+        correctIndex: options.indexOf("a"),
+        explanation: "", wrongWhy: {}, reviewSlide: null,
+      };
+    },
+  };
+  let soloThrew = "";
+  let solo: ReturnType<typeof buildAttempt> | null = null;
+  try {
+    solo = buildAttempt({ families: [oneStem], statuses: { [oneStem.key]: "approved" }, pack: PACK, seed: 5 });
+  } catch (e) { soloThrew = String(e); }
+  t("⚠ a family that can only ever emit ONE stem does not break the attempt",
+    soloThrew === "", soloThrew);
+  t("…it serves exactly 1 question", solo?.questions.length === 1, solo?.questions.length);
+  t("⚠ …and the RESAMPLE actually ran — generate was called repeatedly before the engine gave up",
+    calls > 1, `generate called ${calls}×`);
+  t("…the shortfall is REPORTED, not hidden (§62): served 1 of 10, with a reason naming approval",
+    solo?.shortfall?.served === 1 && solo?.shortfall?.requested === ATTEMPT_SIZE &&
+      solo.shortfall.reason.includes("approve more families"),
+    JSON.stringify(solo?.shortfall));
+
+  // ── (c) a family with a KNOWN small bank contributes all of it, once ─────
+  const threeStems: Family = {
+    ...oneStem,
+    key: "sabotage-three-stems",
+    generate: (r) => {
+      const which = pick(r, ["ALPHA", "BETA", "GAMMA"]);
+      const options = shuffle(r, ["a", "b", "c", "d"]);
+      return {
+        stem: `Bounded bank stem ${which}.`,
+        options, correctIndex: options.indexOf("a"),
+        explanation: "", wrongWhy: {}, reviewSlide: null,
+      };
+    },
+  };
+  const bounded = buildAttempt({
+    families: [threeStems], statuses: { [threeStems.key]: "approved" }, pack: PACK, seed: 3,
+  });
+  t("a 3-variant family serves exactly its 3 distinct variants, no repeats",
+    bounded.questions.length === 3 && new Set(bounded.questions.map((q) => q.stem)).size === 3,
+    `${bounded.questions.length} served`);
+
+  // ── (d) a colliding family beside healthy ones must not cost the ten ─────
+  const mixed = buildAttempt({
+    families: [...FAMILIES, oneStem],
+    statuses: { ...APPROVED, [oneStem.key]: "approved" },
+    pack: PACK,
+    seed: 21,
+  });
+  t("⚠ one exhausted family does not stop a healthy pool reaching ten",
+    mixed.questions.length === ATTEMPT_SIZE && mixed.shortfall === undefined,
+    `${mixed.questions.length} served, shortfall=${JSON.stringify(mixed.shortfall)}`);
+  // 14 families for 10 slots, so the sabotage family may not be drawn at all —
+  // what must NEVER happen is it appearing twice, which is the collision.
+  let everTwice = "";
+  for (let seed = 1; seed <= 120; seed++) {
+    const a = buildAttempt({
+      families: [...FAMILIES, oneStem],
+      statuses: { ...APPROVED, [oneStem.key]: "approved" },
+      pack: PACK, seed,
+    });
+    if (a.questions.filter((q) => q.familyKey === oneStem.key).length > 1) everTwice = `seed ${seed}`;
+    if (a.questions.length !== ATTEMPT_SIZE) everTwice = `seed ${seed}: only ${a.questions.length}`;
+  }
+  t("…across 120 seeds the exhausted family never appears twice, and ten is always reached",
+    everTwice === "", everTwice);
+
+  // ── (e) the guard of last resort is still in the file, and still an error ─
+  // ⚠ HONEST NOTE: the fill above cannot emit a duplicate, so this guard is now
+  // unreachable through buildAttempt's own path — a test cannot fire it without
+  // breaking the fill on purpose. What IS tested is the property it defends:
+  // across every configuration above, no attempt ever carried a repeated stem.
+  // The throw stays as the assertion that the fill itself has not regressed.
+  const guardPresent = readFileSync(
+    join(process.cwd(), "src", "lib", "practice", "engine.ts"), "utf8",
+  ).includes("duplicate stem in one attempt");
+  t("the last-resort duplicate-stem guard is still present in the engine",
+    guardPresent, guardPresent ? "" : "GUARD REMOVED — §99 has no backstop");
+
+  // ── (f) §35: the four definition families now vary their stems ───────────
+  for (const key of ["l1-def-particle-terms", "l1-def-empirical-formula", "l1-def-avogadro", "l1-def-mole-counting"]) {
+    const f = FAMILIES.find((x) => x.key === key)!;
+    const stems = new Set<string>();
+    for (let seed = 1; seed <= 120; seed++) {
+      const r = rng(seed);
+      stems.add(f.generate(r).stem);
+    }
+    t(`§35 — ${key} produces more than one distinct stem`, stems.size >= 2, `${stems.size} stems`);
+  }
 }
 
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);
