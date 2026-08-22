@@ -5,14 +5,18 @@ import Link from "next/link";
 
 import { loadLocalDeck } from "@/lib/lesson-deck/store.ts";
 import { familiesForLesson, loadStatuses } from "@/lib/practice/registry.ts";
-import { publishDeck, setFamilyStatus, stageDeck, unpublishDeck } from "./actions";
+import { publishDeckForm, setFamilyStatusForm, stageDeckForm, unpublishDeckForm } from "./actions";
+import { ActionForm } from "./ActionForm";
 
 /**
  * Admin → Lesson → Lesson Content (§11): the deck lifecycle and the practice
  * families, on the existing lesson editor page.
  *
- * Server-rendered forms — each button posts to a server action; no client
- * bundle. The founder's flow for one lesson, top to bottom:
+ * Every form posts through ActionForm (the panel's one client component) so
+ * the server action's ActionResult is RENDERED — refusals in red with their
+ * reason, success as a tick. The earlier all-server version discarded every
+ * result, which produced two live confusions in two days (see ActionForm).
+ * The founder's flow for one lesson, top to bottom:
  *
  *   1. run the ingest command the panel prints (on the machine with soffice)
  *   2. Preview slides   — every frame, from the LOCAL bundle, admin-only route
@@ -49,32 +53,6 @@ export async function LessonContentPanel({
   const families = familiesForLesson(lessonSlug);
   const statuses = await loadStatuses();
 
-  const stage = async (formData: FormData) => {
-    "use server";
-    await stageDeck({
-      lessonId: String(formData.get("lessonId")),
-      slug: String(formData.get("slug")),
-      version: Number(formData.get("version")),
-    });
-  };
-  const publish = async (formData: FormData) => {
-    "use server";
-    await publishDeck({
-      lessonId: String(formData.get("lessonId")),
-      version: Number(formData.get("version")),
-    });
-  };
-  const unpublish = async (formData: FormData) => {
-    "use server";
-    await unpublishDeck({ lessonId: String(formData.get("lessonId")) });
-  };
-  const setStatus = async (formData: FormData) => {
-    "use server";
-    const status = String(formData.get("status"));
-    if (status !== "draft" && status !== "approved" && status !== "disabled") return;
-    await setFamilyStatus({ key: String(formData.get("key")), status });
-  };
-
   return (
     <section className="mt-10 rounded-lg border border-slate-200 bg-white p-6">
       <h2 className="text-lg font-semibold text-slate-800">Lesson content</h2>
@@ -107,20 +85,18 @@ export async function LessonContentPanel({
                 lessonSlug={lessonSlug}
                 version={v}
                 isPublished={deckPath === `lessons/${lessonId}/deck/v${v}`}
-                stage={stage}
-                publish={publish}
               />
             ))}
           </ul>
         )}
 
         {deckPath && (
-          <form action={unpublish} className="mt-3">
+          <ActionForm action={unpublishDeckForm} className="mt-3 flex flex-wrap items-center gap-2">
             <input type="hidden" name="lessonId" value={lessonId} />
             <button type="submit" className="rounded border border-red-200 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50">
               Unpublish deck
             </button>
-          </form>
+          </ActionForm>
         )}
       </div>
 
@@ -172,10 +148,31 @@ export async function LessonContentPanel({
                       <td className="py-1.5 pr-3">{f.kind}</td>
                       <td className="py-1.5 pr-3">{f.sourceSlides.join(", ")}</td>
                       <td className="py-1.5">
-                        <form action={setStatus} className="flex items-center gap-2">
+                        <ActionForm action={setFamilyStatusForm} className="flex flex-wrap items-center gap-2">
+                          {/* The chip is the STORED status, rendered — the one
+                              truth on this row that no form-reset semantics
+                              can repaint wrongly. */}
+                          <span
+                            className={
+                              st === "approved"
+                                ? "rounded bg-green-100 px-1.5 py-0.5 text-xs font-medium text-green-800"
+                                : st === "disabled"
+                                  ? "rounded bg-red-50 px-1.5 py-0.5 text-xs font-medium text-red-700"
+                                  : "rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600"
+                            }
+                          >
+                            {st}
+                          </span>
                           <input type="hidden" name="key" value={f.key} />
+                          <input type="hidden" name="lessonId" value={lessonId} />
+                          {/* key={st}: React never re-applies defaultValue to a
+                              mounted select, and the post-action reset restores
+                              the SSR-time default — the select showed the OLD
+                              status until a manual reload (the visible half of
+                              the 2026-08-23 defect). Remount on fresh status. */}
                           <select
                             name="status"
+                            key={st}
                             defaultValue={st}
                             className="rounded border border-slate-300 px-1.5 py-0.5 text-xs"
                           >
@@ -186,7 +183,7 @@ export async function LessonContentPanel({
                           <button type="submit" className="rounded border border-slate-300 px-2 py-0.5 text-xs hover:bg-slate-50">
                             Set
                           </button>
-                        </form>
+                        </ActionForm>
                       </td>
                     </tr>
                   );
@@ -201,14 +198,12 @@ export async function LessonContentPanel({
 }
 
 async function LocalVersionRow({
-  lessonId, lessonSlug, version, isPublished, stage, publish,
+  lessonId, lessonSlug, version, isPublished,
 }: {
   lessonId: string;
   lessonSlug: string;
   version: number;
   isPublished: boolean;
-  stage: (fd: FormData) => Promise<void>;
-  publish: (fd: FormData) => Promise<void>;
 }) {
   const local = await loadLocalDeck(lessonSlug, version);
   return (
@@ -230,21 +225,21 @@ async function LocalVersionRow({
         >
           Preview slides
         </Link>
-        <form action={stage}>
+        <ActionForm action={stageDeckForm} className="flex flex-wrap items-center gap-2">
           <input type="hidden" name="lessonId" value={lessonId} />
           <input type="hidden" name="slug" value={lessonSlug} />
           <input type="hidden" name="version" value={version} />
           <button type="submit" className="rounded border border-slate-300 px-2.5 py-1 text-xs hover:bg-slate-50">
             Stage to bucket
           </button>
-        </form>
-        <form action={publish}>
+        </ActionForm>
+        <ActionForm action={publishDeckForm} className="flex flex-wrap items-center gap-2">
           <input type="hidden" name="lessonId" value={lessonId} />
           <input type="hidden" name="version" value={version} />
           <button type="submit" className="rounded bg-slate-800 px-2.5 py-1 text-xs text-white hover:bg-slate-700">
             Publish v{version}
           </button>
-        </form>
+        </ActionForm>
       </span>
     </li>
   );
