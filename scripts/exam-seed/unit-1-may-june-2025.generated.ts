@@ -1,4 +1,4 @@
-// mark_scheme_items for unit-1-may-june-2025, reviewed and approved 2026-08-19T04:16:09.969Z
+// mark_scheme_items for unit-1-may-june-2025, reviewed and approved 2026-08-19T04:01:56.815Z
 //
 // Emitted by the mark-scheme review surface from extractor proposals. Every
 // question below carries approved_at AND approved_by; anything unruled or
@@ -11,7 +11,7 @@
 import type { FixtureQuestion } from "../../src/lib/exam/markscheme-proposals.ts";
 
 export const UNIT_1_MAY_JUNE_2025_PAPER = {
-  paperCode: "WCH11/01",
+  paperCode: "WPH11/01",
   session: "May-June",
   year: 2025,
   totalMarks: 80,
