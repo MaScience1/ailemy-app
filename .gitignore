@@ -53,3 +53,10 @@ next-env.d.ts
 # "accept" and "reject" are the same length, so the source size never changed.
 __pycache__/
 *.pyc
+
+# Lesson deck bundles — regenerable derivatives of the founder's source PPTXs
+# (scripts/lesson-ingest/ingest.py). Sources live outside the repo; rendered
+# frames are megabytes of PNG; neither belongs in git. Tests that need a bundle
+# use the skip channel (exit 2) when this directory is absent, same as
+# schema-probe does for .env.local.
+content/

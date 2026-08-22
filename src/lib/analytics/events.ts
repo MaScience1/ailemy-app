@@ -55,6 +55,20 @@ export const EVENTS = [
   "physics_interest_submitted",
   "waitlist_joined",
   "cta_clicked",
+  // ── the lesson player + practice funnel (§91). No answers, no scores tied
+  //    to identity — the academic record lives in the database, not PostHog.
+  "lesson_opened",
+  "lesson_slide_viewed",
+  "lesson_build_advanced",
+  "lesson_slides_completed",
+  "lesson_fullscreen_entered",
+  "lesson_resume_offered",
+  "lesson_resume_accepted",
+  "lesson_practice_started",
+  "lesson_practice_submitted",
+  "lesson_practice_regenerated",
+  "lesson_mistakes_retried",
+  "lesson_review_slide_clicked",
 ] as const;
 export type EventName = (typeof EVENTS)[number];
 
@@ -75,4 +89,9 @@ export type EventProps = {
   score?: number;
   outOf?: number;
   signedIn?: boolean;
+  /** Lesson-player context (§91): slugs and ordinals only — never answer text. */
+  lesson?: string;
+  slide?: number;
+  frame?: number;
+  attemptNo?: number;
 };

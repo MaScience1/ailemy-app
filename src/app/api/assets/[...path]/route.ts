@@ -7,6 +7,22 @@ const ASSETS_BUCKET = "assets";
 const SIGNED_URL_TTL_SECONDS = 60;
 
 /**
+ * ⚠ SERVABLE EXTENSIONS ARE AN ALLOWLIST, AND .pptx IS THE REASON IT EXISTS.
+ *
+ * This route signs ANY path under lessons/ once access passes — which was fine
+ * while the bucket held only rendered derivatives, and stops being fine the
+ * moment an original PowerPoint lands anywhere under a lesson prefix: a
+ * signed-in student could then mint a 60-second URL to the founder's source
+ * file (§70). Sources are stored under the `lesson-sources/` prefix, which
+ * this route already refuses — this allowlist is the SECOND fence, so both a
+ * misplaced upload AND a route regression have to happen before a source
+ * leaks. Derivatives are images, PDFs and nothing else; JSON is deliberately
+ * absent so a deck's manifest (and anything else structural) stays
+ * server-side.
+ */
+const SERVABLE_EXTENSIONS = /\.(png|webp|jpe?g|svg|pdf)$/i;
+
+/**
  * GET /api/assets/<path...>
  *
  * Serves a private-bucket asset by:
@@ -34,6 +50,11 @@ export async function GET(
 
   if (parts[0] !== "lessons" || parts.length < 3) {
     return NextResponse.json({ error: "unsupported asset path" }, { status: 403 });
+  }
+  if (!SERVABLE_EXTENSIONS.test(parts[parts.length - 1])) {
+    // ⚠ 403 BY EXTENSION BEFORE ANY LOOKUP — see SERVABLE_EXTENSIONS. A
+    // .pptx under a lesson path must be unreachable even if it exists.
+    return NextResponse.json({ error: "unsupported asset type" }, { status: 403 });
   }
   const lessonId = parts[1];
 

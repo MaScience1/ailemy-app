@@ -311,6 +311,14 @@ export async function listLessonsForCourse(
       `,
     )
     .eq("course_id", courseId)
+    // ⚠ ARCHIVED ROWS ARE OUT OF THE SEQUENCE, NOT AT ITS END. The 2026-08-22
+    // catalogue reflow retired two coming_soon rows by archiving them (their
+    // content was merged into, or already taught by, other lessons); an
+    // archived row rendering in the list would put the "merged away" lesson
+    // right back into the teaching order. Direct URLs still resolve — only
+    // the LISTING excludes them, the same demote-don't-delete stance as the
+    // nav's /intensive precedent.
+    .neq("status", "archived")
     .order("lesson_number", { ascending: true, nullsFirst: false });
 
   if (error) throw new CatalogueUnavailableError("listLessonsForCourse", error);
@@ -372,7 +380,7 @@ export async function getLessonByCourseAndSlug(
       `
       id, course_id, unit_id, slug, title, description, lesson_number,
       is_core_practical, status, sort_order, estimated_duration_minutes, summary_md,
-      voice_video_mux_id,
+      voice_video_mux_id, deck_path,
       course:courses!inner(slug),
       lesson_spec_points(spec_points(id, topic_id, code, title, description, command_terms, status, sort_order))
       `,
@@ -408,6 +416,7 @@ export async function getLessonByCourseAndSlug(
     estimated_duration_minutes: number | null;
     summary_md: string | null;
     voice_video_mux_id: string | null;
+    deck_path: string | null;
     lesson_spec_points: { spec_points: SpecPointRow | null }[] | null;
   };
 
@@ -431,6 +440,7 @@ export async function getLessonByCourseAndSlug(
     estimated_duration_minutes: row.estimated_duration_minutes,
     summary_md: row.summary_md,
     voice_video_mux_id: row.voice_video_mux_id,
+    deck_path: row.deck_path,
     spec_points: specPoints,
   };
 }
@@ -513,7 +523,9 @@ export async function getCourseChoiceData(
   const supabase = await createClient();
 
   const [lessonsRes, unitsRes, papersRes] = await Promise.all([
-    supabase.from("lessons").select("status").eq("course_id", course.id),
+    // Archived lessons are excluded so the hub's "N lessons" claim counts the
+    // teachable sequence, not rows retired by the catalogue reflow.
+    supabase.from("lessons").select("status").eq("course_id", course.id).neq("status", "archived"),
     supabase
       .from("units")
       .select("id", { count: "exact", head: true })
