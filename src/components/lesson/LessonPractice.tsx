@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { track } from "@/lib/analytics/posthog";
 import { startPractice, submitPractice } from "@/lib/practice/actions";
 import type { MarkedAttempt, ServedQuestion } from "@/lib/practice/engine";
+import { useLessonProgress } from "./LessonProgress";
 
 /**
  * Check Your Understanding — the 10-MCQ practice surface (§31, §46–§56, §80).
@@ -36,7 +37,7 @@ type Phase =
   | { name: "idle" }
   | { name: "loading" }
   | { name: "active"; seed: number; fingerprint: string; questions: ServedQuestion[]; avoid: string[]; focus: string[]; shortfall?: { requested: number; served: number; reason: string } }
-  | { name: "marked"; marked: MarkedAttempt; avoid: string[] }
+  | { name: "marked"; marked: MarkedAttempt; avoid: string[]; recorded: "saved" | "replay" | "device-only"; shortfall?: { requested: number; served: number; reason: string } }
   | { name: "error"; reason: string };
 
 type HistoryEntry = { seed: number; score: number; outOf: number; percent: number; at: string; families: string[] };
@@ -55,6 +56,7 @@ function loadHistory(slug: string): HistoryEntry[] {
 }
 
 export function LessonPractice({ lessonSlug }: { lessonSlug: string }) {
+  const { mark: markComplete } = useLessonProgress();
   const [phase, setPhase] = useState<Phase>({ name: "idle" });
   const [selections, setSelections] = useState<(number | null)[]>([]);
   const [qIndex, setQIndex] = useState(0);
@@ -142,9 +144,22 @@ export function LessonPractice({ lessonSlug }: { lessonSlug: string }) {
     try { localStorage.setItem(historyKey(lessonSlug), JSON.stringify(next)); } catch { /* full */ }
     try { sessionStorage.removeItem(draftKey(lessonSlug, phase.seed)); } catch { /* ignore */ }
     setHistory(next);
-    setPhase({ name: "marked", marked: m, avoid: entry.families });
+    setPhase({
+      name: "marked",
+      marked: m,
+      avoid: entry.families,
+      // ⚠ CARRIED, NOT DROPPED. This discriminator was computed by the server
+      // and thrown away here, while the history footer told every student
+      // "every submitted attempt is saved to your record" — including the ones
+      // that were not. The marked view now states which of the three happened.
+      recorded: res.recorded,
+      shortfall: phase.shortfall,
+    });
+    // §18 — ATTEMPTED, not passed. A submitted attempt completes the section
+    // whatever the score; performance is a separate fact, kept separately.
+    markComplete("practice", "auto", { score: m.score, out_of: m.outOf });
     track("lesson_practice_submitted", { lesson: lessonSlug, score: m.score, outOf: m.outOf });
-  }, [phase, selections, confirmSubmit, lessonSlug]);
+  }, [phase, selections, confirmSubmit, lessonSlug, markComplete]);
 
   const best = useMemo(() => (history.length ? Math.max(...history.map((h) => h.percent)) : null), [history]);
 
@@ -156,8 +171,7 @@ export function LessonPractice({ lessonSlug }: { lessonSlug: string }) {
   // ────────────────────────────────────────────────────────────────────────
   if (phase.name === "idle" || phase.name === "error") {
     return (
-      <section id="practice" aria-label="Check your understanding" className="rounded-lg border border-ink/10 bg-snow p-6 sm:p-8">
-        <h2 className="font-display text-2xl font-medium tracking-tight">Check your understanding</h2>
+      <div className="rounded-lg border border-ink/10 bg-snow p-6 sm:p-8">
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink/70">
           Up to 10 questions based only on this lesson and its specification points. Complete
           the lesson first for the best result — but you can start whenever you like.
@@ -183,17 +197,17 @@ export function LessonPractice({ lessonSlug }: { lessonSlug: string }) {
           )}
         </div>
         <AttemptHistory history={history} />
-      </section>
+      </div>
     );
   }
 
   if (phase.name === "loading") {
     return (
-      <section id="practice" className="rounded-lg border border-ink/10 bg-snow p-8">
+      <div className="rounded-lg border border-ink/10 bg-snow p-8">
         <p aria-live="polite" className="font-mono text-xs uppercase tracking-[0.16em] text-ink/50">
           Preparing questions…
         </p>
-      </section>
+      </div>
     );
   }
 
@@ -201,9 +215,8 @@ export function LessonPractice({ lessonSlug }: { lessonSlug: string }) {
     const q = phase.questions[qIndex];
     const answered = selections.filter((s) => s !== null).length;
     return (
-      <section id="practice" aria-label="Practice in progress" className="rounded-lg border border-ink/10 bg-snow p-6 sm:p-8">
+      <div className="rounded-lg border border-ink/10 bg-snow p-6 sm:p-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-display text-2xl font-medium tracking-tight">Check your understanding</h2>
           <p className="font-mono text-xs uppercase tracking-[0.14em] text-ink/55" aria-live="polite">
             Question {qIndex + 1} of {phase.questions.length} · {answered} answered
           </p>
@@ -301,7 +314,7 @@ export function LessonPractice({ lessonSlug }: { lessonSlug: string }) {
             Submit answers
           </button>
         </div>
-      </section>
+      </div>
     );
   }
 
@@ -313,15 +326,36 @@ export function LessonPractice({ lessonSlug }: { lessonSlug: string }) {
     : null;
 
   return (
-    <section id="practice" aria-label="Practice results" className="rounded-lg border border-ink/10 bg-snow p-6 sm:p-8">
-      <h2 className="font-display text-2xl font-medium tracking-tight">
+    <div className="rounded-lg border border-ink/10 bg-snow p-6 sm:p-8">
+      <p className="font-display text-2xl font-medium tracking-tight">
         {marked.score} / {marked.outOf}
         <span className="ml-3 text-ink/60">{marked.percent}%</span>
-      </h2>
+      </p>
       <p className="mt-1 font-mono text-xs uppercase tracking-[0.14em] text-ink/50">
         Correct: {marked.score} · Incorrect: {marked.outOf - marked.score}
         {priorBest !== null && ` · Previous best: ${priorBest}%`}
         {priorBest !== null && marked.percent > priorBest && " · New best"}
+      </p>
+
+      {/* ⚠ A SHORT SET STAYS SHORT AFTER MARKING. The notice used to render
+          only while answering, so a 7/7 was displayed — and filed in the
+          history as "best" — beside a 9/10, with nothing saying the two were
+          not the same test. */}
+      {phase.shortfall && (
+        <p className="mt-3 rounded border border-ink/15 bg-ink/[0.03] px-3 py-2 text-xs leading-relaxed text-ink/70">
+          This set had {phase.shortfall.served} questions rather than {phase.shortfall.requested} —
+          every distinct question this lesson&rsquo;s approved families can currently ask. Compare it
+          with other {phase.shortfall.served}-question sets, not with full ones.
+        </p>
+      )}
+
+      {/* ⚠ WHERE THIS ATTEMPT WENT — the server's own answer, not an assumption. */}
+      <p className="mt-2 text-xs text-ink/55">
+        {phase.recorded === "saved"
+          ? "Saved to your academic record."
+          : phase.recorded === "replay"
+            ? "Already in your record — this seed was submitted before, so it was not recorded twice."
+            : "Kept on this device only — sign in to save attempts to your academic record."}
       </p>
 
       <ol className="mt-6 grid gap-4">
@@ -386,7 +420,7 @@ export function LessonPractice({ lessonSlug }: { lessonSlug: string }) {
       </div>
 
       <AttemptHistory history={history} />
-    </section>
+    </div>
   );
 }
 
@@ -405,13 +439,15 @@ function AttemptHistory({ history }: { history: HistoryEntry[] }) {
           </li>
         ))}
       </ol>
-      {/* ⚠ HONEST SCOPE, STATED (§56/§57): signed-in submissions reach the
-          academic record server-side (0065); THIS list renders the device's
-          own copy. The full server-backed history view arrives with
-          Progress v2 — the /welcome rule forbids claiming it early. */}
+      {/* ⚠ THIS SENTENCE USED TO BE UNCONDITIONAL, AND THAT MADE IT A CLAIM
+          THE PAGE COULD NOT BACK. It said "every submitted attempt is saved to
+          your record" to everyone — including signed-out students, replays,
+          and attempts whose server write was refused. It now describes only
+          what this list IS; whether a given attempt reached the record is
+          stated on that attempt, by the marked view, from the server's own
+          answer. */}
       <p className="mt-3 text-xs text-ink/45">
-        Signed in, every submitted attempt is saved to your record; this list shows
-        this device&rsquo;s attempts.
+        This list is this device&rsquo;s own record of your attempts.
       </p>
     </div>
   );

@@ -82,6 +82,20 @@ export function LessonPlayer({
   const [fullscreen, setFullscreen] = useState(false);
   const shellRef = useRef<HTMLDivElement | null>(null);
   const completedFired = useRef(false);
+  /**
+   * ⚠ THE STUDENT HAS DONE SOMETHING — AND UNTIL THEY HAVE, WE WRITE NOTHING.
+   * ==========================================================================
+   * This flag exists because the persist effect below used to destroy the very
+   * record the resume banner reads. On mount the restore effect set `visited`
+   * from storage while `index` was still 0; the persist effect then fired in
+   * the same commit and wrote `{ index: 0 }` over a real saved position. The
+   * banner appeared once and never again, because the next load read index 0.
+   * Nothing server-side may be wired to this component until that ordering is
+   * safe — a mirrored server writer would have written last_frame_index = 0
+   * over a good row on every single page load.
+   */
+  const touched = useRef(false);
+  const [frameFailed, setFrameFailed] = useState(false);
 
   const current = frames[index];
   const slidesVisited = visited.size;
@@ -101,6 +115,9 @@ export function LessonPlayer({
   // ── persist position + visited set on every move ────────────────────────
   useEffect(() => {
     if (!current) return;
+    // ⚠ See `touched` above: writing before the student has moved overwrites
+    // the saved position with 0 and kills the resume offer permanently.
+    if (!touched.current) return;
     try {
       localStorage.setItem(
         key,
@@ -124,6 +141,7 @@ export function LessonPlayer({
     (next: number) => {
       const clamped = Math.max(0, Math.min(frames.length - 1, next));
       if (clamped === index) return;
+      touched.current = true; // the student moved — persistence is now safe
       const f = frames[clamped];
       setIndex(clamped);
       setVisited((v) => (v.has(f.slideN) ? v : new Set(v).add(f.slideN)));
@@ -253,7 +271,13 @@ export function LessonPlayer({
             <button
               type="button"
               className="rounded-full border border-parchment/40 px-3 py-1 text-xs text-parchment hover:border-parchment focus-visible:outline focus-visible:outline-2 focus-visible:outline-parchment"
-              onClick={() => setResumeAt(null)}
+              onClick={() => {
+                // A deliberate choice to begin again — now index 0 IS the
+                // student's position, so persisting it is correct.
+                touched.current = true;
+                setResumeAt(null);
+                setVisited(new Set([frames[0]?.slideN ?? 1]));
+              }}
             >
               Start over
             </button>
@@ -269,23 +293,46 @@ export function LessonPlayer({
           key={current.url}
           src={current.url}
           alt={`Slide ${current.slideN}${current.step > 0 ? `, build step ${current.step} of ${current.stepCount - 1}` : ""}${current.buildLabel ? ` — ${current.buildLabel}` : ""}`}
-          className="block aspect-video w-full select-none object-contain motion-safe:animate-[fadeIn_150ms_ease-out]"
+          // ⚠ ailemy-fade-in is the keyframe globals.css actually defines. This
+          // named [fadeIn] for months — a keyframe no stylesheet declares, so
+          // the advertised cross-fade never once ran.
+          className="block aspect-video w-full select-none object-contain motion-safe:animate-[ailemy-fade-in_150ms_ease-out]"
           draggable={false}
+          onLoad={() => setFrameFailed(false)}
+          onError={() => setFrameFailed(true)}
         />
+        {/* ⚠ A FRAME THAT WILL NOT LOAD SAYS SO. The asset route 401s an
+            anonymous request for a paid lesson; without this the student got a
+            broken-image glyph and no way to understand or recover from it. */}
+        {frameFailed && (
+          <div
+            role="alert"
+            className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-ink px-6 text-center"
+          >
+            <p className="text-sm text-parchment">This slide could not be loaded.</p>
+            <p className="max-w-sm text-xs leading-relaxed text-parchment/60">
+              You may need to sign in to view this lesson, or the connection dropped.
+              Reloading the page usually fixes it.
+            </p>
+          </div>
+        )}
         {neighbours.map((f) => (
           // hidden preloads — the next click paints from cache (§93)
           // eslint-disable-next-line @next/next/no-img-element
           <img key={f.url} src={f.url} alt="" aria-hidden className="hidden" />
         ))}
 
-        {watermark && (
-          <span
-            aria-hidden
-            className="pointer-events-none absolute bottom-2 right-3 z-10 font-mono text-[10px] tracking-[0.14em] text-parchment/50"
-          >
-            Ailemy · {watermark}
-          </span>
-        )}
+        {/* ⚠ THE MARK IS ALWAYS THERE; THE IDENTIFIER IS WHAT VARIES. The old
+            guard was `watermark && …`, and the caller passes "" for anonymous
+            viewers — an empty string is falsy, so the anonymous case rendered
+            NO watermark at all while the comment above promised "the plain
+            Ailemy mark". The promise is now the behaviour. */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute bottom-2 right-3 z-10 font-mono text-[10px] tracking-[0.14em] text-parchment/50"
+        >
+          Ailemy{watermark ? ` · ${watermark}` : ""}
+        </span>
       </div>
 
       {/* controls — minimal in fullscreen, same buttons (§29) */}

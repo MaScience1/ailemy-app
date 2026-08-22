@@ -27,6 +27,12 @@ export const CTA_SOURCES = [
   "hero_live_tuition",
   "floating_start_learning",
   "floating_continue_studying",
+  // ⚠ THE TWO STATES OF TuitionCta ARE SEPARATE SOURCES, NOT ONE. A click on
+  // the collapsed pill came from somebody who had already dismissed the full
+  // bar and came back anyway; folding it into floating_tuition would hide the
+  // only evidence that the collapsed state earns its place.
+  "floating_tuition",
+  "floating_tuition_collapsed",
   "calendar_explore",
   "chemistry_course",
   "final_cta",
@@ -69,6 +75,20 @@ export const EVENTS = [
   "lesson_practice_regenerated",
   "lesson_mistakes_retried",
   "lesson_review_slide_clicked",
+  // ── the six-section lesson journey (§96). Section KEYS and ordinals only:
+  //    what a student answered stays in the academic record, never here.
+  "lesson_section_viewed",
+  "lesson_section_completed",
+  "lesson_progress_opened",
+  "lesson_completed",
+  "notes_opened",
+  "worked_example_opened",
+  "exam_question_started",
+  "review_resource_clicked",
+  "homepage_subject_clicked",
+  "homepage_capability_clicked",
+  "tuition_sticky_cta_clicked",
+  "account_menu_opened",
 ] as const;
 export type EventName = (typeof EVENTS)[number];
 
@@ -94,4 +114,12 @@ export type EventProps = {
   slide?: number;
   frame?: number;
   attemptNo?: number;
+  /** A lesson section key — one of the six in src/lib/lesson/sections.ts. */
+  section?: string;
+  /** How a completion happened: the student said so, or we observed it. */
+  source?: "manual" | "auto";
+  /** Which teaching resource a review link pointed at. */
+  resource?: "slide" | "notes" | "worked_example";
+  /** A homepage capability label — public navigation, not personal. */
+  capability?: string;
 };
