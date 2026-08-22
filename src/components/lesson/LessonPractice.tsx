@@ -394,11 +394,13 @@ function AttemptHistory({ history }: { history: HistoryEntry[] }) {
           </li>
         ))}
       </ol>
-      {/* ⚠ HONEST LIMITATION, STATED (§56/§57): history is this-device-only
-          until the practice schema lands. Never claim a synced record that
-          does not exist — the /welcome rule. */}
+      {/* ⚠ HONEST SCOPE, STATED (§56/§57): signed-in submissions reach the
+          academic record server-side (0065); THIS list renders the device's
+          own copy. The full server-backed history view arrives with
+          Progress v2 — the /welcome rule forbids claiming it early. */}
       <p className="mt-3 text-xs text-ink/45">
-        Attempt history is stored on this device for now.
+        Signed in, every submitted attempt is saved to your record; this list shows
+        this device&rsquo;s attempts.
       </p>
     </div>
   );

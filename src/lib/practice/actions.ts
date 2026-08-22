@@ -54,7 +54,15 @@ type StartResult =
   | { ok: false; reason: string };
 
 type SubmitResult =
-  | { ok: true; marked: MarkedAttempt }
+  | {
+      ok: true;
+      marked: MarkedAttempt;
+      /** Whether the attempt reached the academic record — "saved" | "replay"
+       *  (already recorded, not duplicated) | "device-only" (no session or a
+       *  write refusal; the marking is still real, the UI says where history
+       *  lives). Honesty over silence — the /welcome rule. */
+      recorded: "saved" | "replay" | "device-only";
+    }
   | { ok: false; reason: string };
 
 /** The row shape PostgREST actually returns for the nested select — supabase-js
@@ -180,26 +188,90 @@ export async function submitPractice(input: {
   }
 
   const marked = markAttempt(spec, input.selections);
-  await recordPracticeEvidence(marked, user?.id ?? null, lesson.id);
-  return { ok: true, marked };
+  const recorded = await recordPracticeEvidence(marked, user?.id ?? null, lesson.id);
+  return { ok: true, marked, recorded };
 }
 
 /**
- * §57 WIRING POINT — the academic record write.
+ * §57 — THE ACADEMIC RECORD WRITE, live since 0064/0065 applied (2026-08-22).
  *
- * ⚠ DELIBERATELY A NO-OP TODAY, AND LOUD ABOUT IT IN CODE RATHER THAN QUIET.
- * The parked _PROPOSED_ schema defines lesson_practice_attempts and
- * lesson_practice_answers as the lesson-practice arm of the ONE academic
- * record (same student key, spec codes, marks awarded/available, attempted_at
- * as exam_attempts' criterion rows). When planning numbers the batch, this
- * function gains two inserts and nothing else in this file moves. Until then
- * attempt history is device-local and the UI says so — an honest limitation
- * beats a silent one (the /welcome rule).
+ * ⚠ WRITTEN WITH THE STUDENT'S OWN SESSION CLIENT, NOT THE SERVICE KEY. The
+ * 0065 policies exist for exactly this shape — lpa_insert_own / lpans_insert_own
+ * WITH CHECK student_id = auth.uid() — so RLS is the boundary and a bug here
+ * cannot write another student's record. Anonymous practice on a free lesson
+ * marks fine and records nothing ("device-only"): there is no student to
+ * attribute it to, and inventing one would poison the record.
+ *
+ * ⚠ REPLAY-SAFE AT THE ATTEMPT LEVEL. Refresh-and-resubmit sends the same
+ * (student, lesson, seed); one row set is enough and 0065's append-only
+ * triggers forbid repair-by-overwrite, so the existing attempt WINS and the
+ * duplicate is not inserted ("replay"). The seed is a uint32 drawn per start —
+ * a same-seed collision across genuinely different attempts is a ~1/4bn event
+ * paid with one missing history row, never a wrong mark.
+ *
+ * ⚠ A WRITE FAILURE NEVER EATS THE MARKING. The student's review renders from
+ * the marked object regardless; `recorded` says plainly where history went.
  */
 async function recordPracticeEvidence(
-  _marked: MarkedAttempt,
-  _studentId: string | null,
-  _lessonId: string,
-): Promise<void> {
-  // no-op until the practice schema is applied — see the header above.
+  marked: MarkedAttempt,
+  studentId: string | null,
+  lessonId: string,
+): Promise<"saved" | "replay" | "device-only"> {
+  if (!studentId) return "device-only";
+  const db = await createClient();
+
+  const { data: existing, error: exErr } = await db
+    .from("lesson_practice_attempts")
+    .select("id")
+    .eq("student_id", studentId)
+    .eq("lesson_id", lessonId)
+    .eq("seed", marked.seed)
+    .maybeSingle();
+  if (exErr) {
+    console.error("[practice] evidence lookup failed:", exErr.message);
+    return "device-only";
+  }
+  if (existing) return "replay";
+
+  const { data: attempt, error: aErr } = await db
+    .from("lesson_practice_attempts")
+    .insert({
+      student_id: studentId,
+      lesson_id: lessonId,
+      seed: marked.seed,
+      question_count: marked.outOf,
+      score: marked.score,
+      percent: marked.percent,
+      // §88 immutability: the marked questions as served, reconstructable
+      // after families change.
+      snapshot: marked.questions,
+    })
+    .select("id")
+    .single();
+  if (aErr || !attempt) {
+    console.error("[practice] attempt write failed:", aErr?.message);
+    return "device-only";
+  }
+
+  const { error: ansErr } = await db.from("lesson_practice_answers").insert(
+    marked.questions.map((q) => ({
+      attempt_id: attempt.id,
+      q_index: q.qIndex,
+      family_key: q.familyKey,
+      spec_code: q.specCode,
+      kind: q.kind,
+      selected_index: q.selectedIndex,
+      correct_index: q.correctIndex,
+      correct: q.correct,
+      mark_awarded: q.correct ? 1 : 0,
+      mark_available: 1,
+    })),
+  );
+  if (ansErr) {
+    // The attempt row stands (append-only forbids removing it) and carries the
+    // full snapshot — the per-question rows are the aggregation surface, and a
+    // partial write is logged loudly rather than papered over.
+    console.error("[practice] answer rows write failed:", ansErr.message);
+  }
+  return "saved";
 }
