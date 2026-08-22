@@ -70,6 +70,32 @@ export function parseSci(s: string): number | null {
 
 const sf3 = (x: number) => Number(x.toPrecision(3));
 
+/** "an atom", "a molecular formula" — the indefinite article by first letter. */
+const article = (term: string) => (/^[aeiou]/i.test(term) ? "an" : "a");
+
+/**
+ * ⚠ §35 VARIATION FOR DEFINITION FAMILIES — WHY THESE BANKS EXIST.
+ * ============================================================================
+ * A calculation family varies by its numbers; a definition family has one
+ * fact and would otherwise emit ONE stem forever. On 2026-08-23 that broke
+ * practice on production: with two approved definition families, a ten-
+ * question attempt had to repeat them, the repeat produced a byte-identical
+ * stem, and the duplicate-stem guard threw before a student ever saw a
+ * question. The engine now resamples and degrades honestly — and these
+ * families now actually HAVE something to resample into.
+ *
+ * Two kinds of variation, both grounded in the deck:
+ *   DIRECTION — ask for the definition of a term, or for the term a
+ *     definition describes. Structurally different questions from one fact.
+ *   PROBE     — the deck teaches the same fact through more than one framing
+ *     (slide 11 gives the pair/dozen/mole ladder); each framing is a stem.
+ * Nothing here invents chemistry: every framing is on the cited slide.
+ *
+ * ⚠ A DEFINITION FAMILY'S CEILING IS LOW AND THAT IS HONEST. Six variants,
+ * not sixty. The route to a full varied ten is approving families across
+ * kinds (§34), not squeezing more phrasings out of one definition.
+ */
+
 /** Draw until the four option strings are distinct — bounded and
  *  deterministic; ranges below make collisions rare, this makes them
  *  impossible to serve. */
@@ -147,18 +173,42 @@ export const FAMILIES: Family[] = [
     groundingTerms: ["exam definition", "chemical identity", "proton", "loss or gain of electrons"],
     generate: (r) => {
       const target = pick(r, DEFS.slice(0, 3)); // atom / element / ion — slide 6
+      // DIRECTION (§35): definition-asked, or term-asked. 3 terms × 2 = 6 stems.
+      const askForDefinition = r() < 0.5;
       const others = shuffle(r, DEFS.filter((d) => d.term !== target.term)).slice(0, 3);
-      const options = shuffle(r, [target.def, ...others.map((d) => d.def)]);
+
+      if (askForDefinition) {
+        const options = shuffle(r, [target.def, ...others.map((d) => d.def)]);
+        return {
+          stem: `Which of these is the exam definition of ${article(target.term)} ${target.term}?`,
+          options,
+          correctIndex: options.indexOf(target.def),
+          explanation: `Slide 6's exam definition: "${target.def}" The deck's exam rule applies — define the particle the question asks for, not a similar-sounding particle.`,
+          wrongWhy: Object.fromEntries(
+            options.flatMap((o, i) => {
+              const owner = DEFS.find((d) => d.def === o);
+              return o !== target.def && owner
+                ? [[i, `This is the definition of ${article(owner.term)} ${owner.term} — a similar-sounding particle, which is exactly the trap slide 6 warns about.`]]
+                : [];
+            }),
+          ),
+          reviewSlide: 6,
+        };
+      }
+
+      const options = shuffle(r, [target.term, ...others.map((d) => d.term)]);
       return {
-        stem: `Which of these is the exam definition of an ${target.term === "atom" ? "atom" : target.term}?`,
+        stem: `"${target.def}" Which term does the specification define this way?`,
         options,
-        correctIndex: options.indexOf(target.def),
-        explanation: `Slide 6's exam definition: "${target.def}" The deck's exam rule applies — define the particle the question asks for, not a similar-sounding particle.`,
+        correctIndex: options.indexOf(target.term),
+        explanation: `Slide 6: that is the exam definition of ${article(target.term)} ${target.term}. Reading a definition and naming the particle is the same exam skill in reverse — the wording is the mark.`,
         wrongWhy: Object.fromEntries(
-          options.map((o, i) => {
-            const owner = DEFS.find((d) => d.def === o);
-            return o !== target.def && owner ? [i, `This is the definition of ${owner.term === "atom" ? "an" : owner.term === "ion" || owner.term === "element" || owner.term === "empirical formula" ? "an" : "a"} ${owner.term} — a similar-sounding particle, which is exactly the trap slide 6 warns about.`] : [i, undefined];
-          }).filter(([, v]) => v !== undefined),
+          options.flatMap((o, i) => {
+            const owner = DEFS.find((d) => d.term === o);
+            return o !== target.term && owner
+              ? [[i, `${owner.term[0].toUpperCase()}${owner.term.slice(1)} is defined as: "${owner.def}"`]]
+              : [];
+          }),
         ),
         reviewSlide: 6,
       };
@@ -172,21 +222,61 @@ export const FAMILIES: Family[] = [
     sourceSlides: [9, 20],
     groundingTerms: ["simplest whole-number ratio", "empirical", "molecular formula"],
     generate: (r) => {
-      const correct = "Simplest whole-number ratio of atoms of each element.";
+      const EMP = "Simplest whole-number ratio of atoms of each element.";
+      const MOL = "Actual number of atoms of each element in one molecule.";
+      // §35: slide 9 defines BOTH formulae and contrasts them on glucose —
+      // three stems from the one comparison the deck actually draws.
+      const probe = r();
+
+      if (probe < 0.66) {
+        // DIRECTION: whichever half of slide 9's comparison is asked for.
+        const wantEmpirical = probe < 0.33;
+        const correct = wantEmpirical ? EMP : MOL;
+        const other = wantEmpirical ? MOL : EMP;
+        const options = shuffle(r, [
+          correct,
+          other,
+          "The total number of atoms in one mole of the compound.",
+          "The mass of one mole of the compound in grams.",
+        ]);
+        return {
+          stem: `What is the exam definition of ${wantEmpirical ? "an empirical" : "a molecular"} formula?`,
+          options,
+          correctIndex: options.indexOf(correct),
+          explanation: wantEmpirical
+            ? `Slide 9's exam phrase: always say "simplest whole-number ratio" — the mark is for the wording.`
+            : `Slide 9: the molecular formula is the ACTUAL number of atoms in one molecule — glucose is C₆H₁₂O₆, not CH₂O.`,
+          wrongWhy: {
+            [options.indexOf(other)]: wantEmpirical
+              ? "This is the molecular formula — the other half of slide 9's comparison."
+              : "This is the empirical formula — the other half of slide 9's comparison.",
+          },
+          reviewSlide: 9,
+        };
+      }
+
+      // PROBE: the contrast itself, on the deck's own glucose example (s9).
+      const correct =
+        "The empirical formula gives the simplest whole-number ratio; the molecular formula gives the actual number of atoms in one molecule.";
+      const flip =
+        "The empirical formula gives the actual number of atoms; the molecular formula gives the simplest whole-number ratio.";
       const options = shuffle(r, [
         correct,
-        "Actual number of atoms of each element in one molecule.",
-        "The total number of atoms in one mole of the compound.",
-        "The mass of one mole of the compound in grams.",
+        flip,
+        "For a compound the empirical and molecular formulae are always the same.",
+        "The molecular formula gives the mass of one mole of the compound in grams.",
       ]);
       return {
-        stem: "What is the exam definition of an empirical formula?",
+        stem: "Glucose has the molecular formula C₆H₁₂O₆ and the empirical formula CH₂O. Which statement explains the difference?",
         options,
         correctIndex: options.indexOf(correct),
-        explanation: `Slide 9's exam phrase: always say "simplest whole-number ratio" — the mark is for the wording.`,
+        explanation:
+          "Slide 9: divide C₆H₁₂O₆ through by 6 and you get CH₂O — the simplest whole-number ratio. The molecular formula keeps the actual count of atoms in one molecule.",
         wrongWhy: {
-          [options.indexOf("Actual number of atoms of each element in one molecule.")]:
-            "This is the molecular formula — the other half of slide 9's comparison.",
+          [options.indexOf(flip)]:
+            "The two definitions are the right way round on slide 9 — it is the empirical formula that is the simplest ratio.",
+          [options.indexOf("For a compound the empirical and molecular formulae are always the same.")]:
+            "Slide 9's own example disproves this: glucose is C₆H₁₂O₆ but CH₂O.",
         },
         reviewSlide: 9,
       };
@@ -200,20 +290,38 @@ export const FAMILIES: Family[] = [
     sourceSlides: [12],
     groundingTerms: ["avogadro", "specified particles", "mol⁻¹"],
     generate: (r) => {
-      const correct = "The number of specified particles in one mole of any substance.";
-      const options = shuffle(r, [
-        correct,
-        "The number of atoms in one gram of any substance.",
-        "The mass of one mole of a substance in grams.",
-        "The number of molecules in one dm³ of a gas.",
-      ]);
+      // DIRECTION (§35): name the meaning, or name the constant.
+      if (r() < 0.5) {
+        const correct = "The number of specified particles in one mole of any substance.";
+        const options = shuffle(r, [
+          correct,
+          "The number of atoms in one gram of any substance.",
+          "The mass of one mole of a substance in grams.",
+          "The number of molecules in one dm³ of a gas.",
+        ]);
+        return {
+          stem: `Avogadro's constant, L = ${L_STR} mol⁻¹. What does it represent?`,
+          options,
+          correctIndex: options.indexOf(correct),
+          explanation:
+            "Slide 12: L is the number of specified particles in one mole — and it works for atoms, ions, molecules, electrons or formula units, whichever particle is specified.",
+          wrongWhy: {},
+          reviewSlide: 12,
+        };
+      }
+      const correct = "Avogadro's constant";
+      const options = shuffle(r, [correct, "the molar mass", "the relative atomic mass", "the mole"]);
       return {
-        stem: `Avogadro's constant, L = ${L_STR} mol⁻¹. What does it represent?`,
+        stem: `One mole of any substance contains ${L_STR} specified particles. What is that number called?`,
         options,
         correctIndex: options.indexOf(correct),
-        explanation:
-          "Slide 12: L is the number of specified particles in one mole — and it works for atoms, ions, molecules, electrons or formula units, whichever particle is specified.",
-        wrongWhy: {},
+        explanation: `Slide 12: the number itself is Avogadro's constant, L = ${L_STR} mol⁻¹. The mole is the UNIT of amount; L is how many particles are in it.`,
+        wrongWhy: {
+          [options.indexOf("the mole")]:
+            "The mole is the unit of amount of substance — Avogadro's constant is the number of particles it contains.",
+          [options.indexOf("the molar mass")]:
+            "Molar mass is a mass per mole in g mol⁻¹, not a number of particles.",
+        },
         reviewSlide: 12,
       };
     },
@@ -233,8 +341,15 @@ export const FAMILIES: Family[] = [
         "1 mole contains 12 specified particles",
         `1 mole contains 6.02 × 10²¹ specified particles`,
       ]);
+      // PROBE (§35): slide 11 gives the ladder twice — as the baker analogy
+      // and as pair → dozen → mole. Each framing is one stem; the fact is one.
+      // ⚠ THIS IS THE STEM THAT COLLIDED WITH ITSELF ON PRODUCTION.
+      const stem =
+        r() < 0.5
+          ? "A chemist counts in moles the way a baker counts in dozens. Which statement is correct?"
+          : "A pair is 2 items and a dozen is 12 items. Which statement completes the same counting ladder?";
       return {
-        stem: "A chemist counts in moles the way a baker counts in dozens. Which statement is correct?",
+        stem,
         options,
         correctIndex: options.indexOf(correct),
         explanation:
