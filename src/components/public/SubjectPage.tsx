@@ -33,10 +33,18 @@ import { viewerTimeZone } from "@/lib/schedule/viewer-tz";
  * that IS real — registering interest — rather than showing empty shelves or
  * pretending the shelves are full.
  *
- * ⚠ QUALIFICATIONS ARE LISTED, NOT LINKED, until the routes behind them exist.
- * GCSE and International GCSE are shown as distinct entries (§22): they share
- * teaching, they are not the same qualification, and collapsing them in the UI
- * is how they end up collapsed in the data.
+ * ⚠ THE "Qualifications" CARD GRID IS GONE (founder's call, 2026-08-23). Four
+ * cards reading GCSE / International GCSE / IAL AS / IAL A2, each captioned
+ * "Resources available" or "Register interest", sat between the hero and the
+ * only section that actually routes anywhere. They were listed, never linked —
+ * so the first screenful of the subject hub was four dead cards, and the real
+ * entry point to the catalogue was pushed below them.
+ *
+ * Resources now sits directly under the hero, which is where course discovery
+ * belongs: every tile in it resolves today. The qualification list itself is
+ * NOT lost — subject.qualifications still feeds subjectMetadata() below, so the
+ * page still describes its own coverage to a search engine. Nothing was removed
+ * from the catalogue; one non-functional grid was removed from the page.
  */
 export type SubjectSearch = {
   view?: string; date?: string; level?: string; type?: string; day?: string;
@@ -106,14 +114,19 @@ export async function SubjectPage({ slug, params }: { slug: string; params?: Sub
             ⚠ THE LEARN CTA IS GATED ON exploreHref. Biology and Physics have
             no course catalogue, so they get Past papers and Register interest
             and NO "Start learning" — a button into an empty catalogue is the
-            dead CTA §32 forbids. */}
+            dead CTA §32 forbids.
+
+            ⚠ AND IT NAMES THE SUBJECT. With the qualifications grid gone this
+            is the first and most prominent thing under the blurb, and it is
+            also the accessible name a screen-reader user hears in a link list
+            — "Start learning →" told them nothing about where it went. */}
         <div className="mt-8 flex flex-wrap items-center gap-3">
           {subject.exploreHref && (
             <Link
               href={subject.exploreHref}
               className="rounded-full bg-ink px-6 py-3 text-sm font-medium text-parchment transition-colors hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
             >
-              Start learning →
+              Start learning {subject.name} →
             </Link>
           )}
           <Link
@@ -132,23 +145,6 @@ export async function SubjectPage({ slug, params }: { slug: string; params?: Sub
           )}
         </div>
       </header>
-
-      {/* ── qualifications ─────────────────────────────────────────────── */}
-      <section className="border-t border-ink/10 py-12">
-        <div className="mx-auto max-w-6xl px-6">
-          <h2 className="font-display text-2xl font-medium tracking-tight">Qualifications</h2>
-          <ul className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {subject.qualifications.map((q) => (
-              <li key={q} className="rounded-lg border border-ink/10 bg-snow p-5">
-                <p className="font-display text-lg font-medium">{q}</p>
-                <p className="mt-1 font-mono text-[11px] text-ink/50">
-                  {hasResources ? "Resources available" : "Register interest"}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
 
       {/* ── resources, or an honest absence ────────────────────────────── */}
       <section className="border-t border-ink/10 py-12">

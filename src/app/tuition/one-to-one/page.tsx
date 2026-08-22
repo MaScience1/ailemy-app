@@ -83,8 +83,14 @@ export default async function OneToOnePage() {
       <TimezoneSync known={viewerTz !== null} />
 
       <main className="mx-auto max-w-4xl px-6 py-14 sm:py-20">
+        {/* ⚠ ONE NAME FOR ONE THING. This page called the product "Private
+            tuition" in the eyebrow, "1-to-1 Chemistry tuition" in the H1 one
+            line below it, and "Private tuition" again in the empty state — three
+            labels on one screen for a single offer. "1-to-1" is the form the
+            rest of the site uses (nav, /calendar, the hero legend, DayPanel),
+            so it is the one that survives here. */}
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink/50">
-          Private tuition
+          1-to-1 tuition
         </p>
         <h1 className="font-display mt-4 text-3xl font-medium tracking-tight sm:text-4xl">
           1-to-1 Chemistry tuition
@@ -132,10 +138,24 @@ export default async function OneToOnePage() {
 
           {showTimes ? (
             <>
+              {/* ⚠ THE HOLD-WHILE-YOU-PAY SENTENCE DESCRIBED A MECHANISM THAT
+                  CANNOT ENGAGE. booking_holds exists and readers.ts does count
+                  a live hold as busy — but nothing in src/ ever INSERTS one. A
+                  hold is created by checkout, checkout is gated on
+                  CHECKOUT_BUILT, and that is false, so canBuy above is false in
+                  every deployment. The only way to reach this list is
+                  redeem.ok: a student spending a credit, with nothing to pay
+                  and so nothing to hold a slot against.
+
+                  It also described the wrong risk. The real one is staleness —
+                  see _book.tsx: the slot key is re-resolved server-side because
+                  this list was already out of date when it rendered. That is
+                  the sentence a student can act on. */}
               <p className="mt-3 text-sm text-ink/60">
                 Times in {CANONICAL_TZ === "Asia/Qatar" ? "Doha" : CANONICAL_TZ}
-                {viewerTz && viewerTz !== CANONICAL_TZ ? ", with your own beside them" : ""}. A slot
-                is held for you while you pay, and is only confirmed once payment succeeds.
+                {viewerTz && viewerTz !== CANONICAL_TZ ? ", with your own beside them" : ""}.
+                Availability is re-checked the moment you book, so a time can be taken while
+                this list is open.
               </p>
               <ul className="mt-6 divide-y divide-ink/10 border-y border-ink/10">
                 {slots.slice(0, 40).map((s) => {
@@ -179,7 +199,7 @@ export default async function OneToOnePage() {
                different and untrue claim. */
             <div className="mt-4 rounded-lg border border-ink/15 bg-snow p-6">
               <p className="font-display text-lg font-medium">
-                Private tuition booking opens soon
+                1-to-1 booking opens soon
               </p>
               <p className="mt-3 text-sm leading-relaxed text-ink/70">
                 {!hasAvailability || slots.length === 0

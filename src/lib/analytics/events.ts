@@ -39,6 +39,17 @@ export const CTA_SOURCES = [
   "quick_signup_continue",
   "try_mark_answer",
   "try_create_account",
+  // ⚠ THESE FOUR EXISTED AS data-cta ATTRIBUTES AND NOWHERE ELSE, WHICH MEANT
+  // THEY EMITTED NOTHING. Analytics.tsx filters every data-cta against this
+  // list and silently drops anything absent — so four instrumented-looking
+  // buttons in the lesson practice surface had been reporting no clicks at
+  // all. The file header claims "the markup and the analytics cannot drift";
+  // they had, precisely because nothing tested the claim. lesson-cta.test.ts
+  // now does.
+  "lesson_practice_start",
+  "lesson_practice_submit",
+  "lesson_practice_regenerate",
+  "lesson_practice_retry_mistakes",
 ] as const;
 export type CtaSource = (typeof CTA_SOURCES)[number];
 

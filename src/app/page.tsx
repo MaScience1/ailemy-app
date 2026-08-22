@@ -5,7 +5,7 @@ import Link from "next/link";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
-import { CapabilityStrip } from "@/components/home/CapabilityStrip";
+import { CapabilityStrip, CAPABILITY_COUNT } from "@/components/home/CapabilityStrip";
 import { SubjectCard } from "@/components/home/SubjectCard";
 import { StickyCta } from "@/components/home/StickyCta";
 import { TryAilemy } from "@/components/home/TryAilemy";
@@ -305,41 +305,24 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         </div>
       </header>
 
-      {/* ── 3b. capability strip (§2) ────────────────────────────────────
-          ⚠ IMMEDIATELY AFTER THE HERO, ABOVE EVERYTHING ELSE. Its job is the
-          three-second read: this is a platform, not a tutor. A visitor who has
-          to scroll to learn that has already formed the other impression. */}
-      <CapabilityStrip />
+      {/* ── 4. subject selector ──────────────────────────────────────────
+          ============================================================
+          ⚠ THE SCIENCES COME FIRST NOW. THIS SUPERSEDES §2 AND §27.
+          ============================================================
+          §2 put the capability strip immediately under the hero; §27 put the
+          marking demonstration third, above the sciences. Both were arguing
+          about which FEATURE deserved to lead, and neither answered the
+          question a visitor actually arrives with, which is not "what can this
+          do" but "do you teach my subject?"
 
-      {/* ── 3c. product demonstration (§25, §27 position 3) ──────────────
-          ⚠ BEFORE THE SUBJECT CARDS, AND THAT IS THE FUNNEL. §27 puts the
-          demonstration third, above the sciences: a visitor who has just been
-          told Ailemy marks answers should be able to see it happen before
-          being asked to choose a subject. Describing marking and then showing
-          it two screens later is the order that loses people. */}
-      <Section
-        id="try"
-        title="Try it. Write an answer and see it marked."
-        lede="This is how Ailemy marks — against the points a real mark scheme awards, with the reason for each one."
-      >
-        <TryAilemy />
-      </Section>
+          A parent looking for Biology met a feature list first and had to
+          scroll to find out that Biology is demand-triggered. Answering the
+          subject question at the top costs the feature list one screen and
+          costs a visitor in the wrong place nothing at all.
 
-      {/* ── 3d. your next step (§31) ─────────────────────────────────────
-          ⚠ ABSENT ENTIRELY FOR A STRANGER. A header with nothing under it is
-          worse than nothing at all. */}
-      {firstCourse && (
-        <div className="mx-auto max-w-6xl px-6 pb-10 sm:pb-14">
-          <NextStep
-            courseName={[firstCourse.curriculum, firstCourse.subject, firstCourse.level]
-              .filter(Boolean).join(" ") || firstCourse.courseName}
-            subject={firstCourse.subject}
-            courseSlug={firstCourse.courseSlug}
-          />
-        </div>
-      )}
-
-      {/* ── 4. subject selector ───────────────────────────────────────── */}
+          ⚠ NOTHING WAS DELETED TO DO THIS. The strip and the demonstration are
+          both still here, in the two bands directly below, in the order the
+          sequence 4 → 4b → 4c spells out. */}
       <Section id="subjects" title="Three sciences, one platform">
         <div className="grid gap-4 sm:grid-cols-3">
           {SUBJECTS.map((s) => (
@@ -353,6 +336,71 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           ))}
         </div>
       </Section>
+
+      {/* ── 4b. capability strip (§2, restated) ──────────────────────────
+          ⚠ IT HAS A HEADING NOW, AND THAT IS THE HALF OF §2 THAT WAS MISSING.
+          The strip was an unlabelled row of chips between the hero and the
+          first band: nothing on the page said what it was, so it read as
+          metadata and got scanned past. An h2 turns the same seven items into
+          the answer to a question the reader can see being asked.
+
+          ⚠ THE HEADING id IS WIRED TO THE nav's aria-labelledby, so the
+          landmark and the visible title cannot drift apart. Section derives
+          `${id}-title` for every band; this is the one that consumes it.
+
+          ⚠ AND THE STRIP KNOWS WHETHER ANYONE IS SIGNED IN, for exactly one
+          item. "Progress tracking" points at /profile for a student and at the
+          sign-in route for a stranger — see the note in CapabilityStrip.
+
+          ⚠ THE LEDE COUNTS THE PILLS, SO THE COUNT COMES FROM THE PILLS. It
+          read "Seven things Ailemy does" as a typed word, which was true on the
+          day it was written and is exactly the shape that goes quietly wrong:
+          CapabilityStrip's own header invites an eighth capability, and adding
+          one would have left this sentence claiming a number the page no longer
+          shows, with nothing failing. CAPABILITY_COUNT is derived from the list
+          itself. */}
+      <Section
+        id="capabilities"
+        title="What you can do on Ailemy"
+        lede={`${CAPABILITY_COUNT} things Ailemy does, in the order a student uses them — and every one of them is a link, not a label.`}
+      >
+        <CapabilityStrip signedIn={session !== null} labelledBy="capabilities-title" />
+      </Section>
+
+      {/* ── 4c. product demonstration (§25) ──────────────────────────────
+          ⚠ IT FOLLOWS THE STRIP RATHER THAN PRECEDING THE SCIENCES, AND THE
+          FUNNEL ARGUMENT SURVIVES THE MOVE INTACT. §27's point was that a
+          visitor told Ailemy marks answers should see it happen rather than
+          read about it two screens later. "Online marking" in the strip
+          directly above links to #try — this section — so the demonstration is
+          now one click AND one scroll from the claim, instead of sitting above
+          the claim it illustrates. */}
+      <Section
+        id="try"
+        title="Try it. Write an answer and see it marked."
+        lede="This is how Ailemy marks — against the points a real mark scheme awards, with the reason for each one."
+      >
+        <TryAilemy />
+      </Section>
+
+      {/* ── 4d. your next step (§31) ─────────────────────────────────────
+          ⚠ ABSENT ENTIRELY FOR A STRANGER. A header with nothing under it is
+          worse than nothing at all.
+
+          ⚠ STILL DIRECTLY BELOW THE DEMONSTRATION, which is where it has always
+          been. The reorder above moved the sciences and the strip past it; it
+          did not move this. A signed-in student meets the same panel at the
+          same point in the page. */}
+      {firstCourse && (
+        <div className="mx-auto max-w-6xl px-6 pb-10 sm:pb-14">
+          <NextStep
+            courseName={[firstCourse.curriculum, firstCourse.subject, firstCourse.level]
+              .filter(Boolean).join(" ") || firstCourse.courseName}
+            subject={firstCourse.subject}
+            courseSlug={firstCourse.courseSlug}
+          />
+        </div>
+      )}
 
       {/* ── 5. the learning system ────────────────────────────────────── */}
       <Section
@@ -663,14 +711,32 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
   );
 }
 
-/** One rhythm for every band, so the page reads as one document. */
+/**
+ * One rhythm for every band, so the page reads as one document.
+ *
+ * ⚠ THE h2 CARRIES A DERIVED id SO A CHILD CAN POINT AT IT. `#capabilities`
+ * wraps a <nav>, and a landmark needs an accessible name; naming it by
+ * re-typing the heading in the other file is a copy waiting to disagree with
+ * this one. `${id}-title` is stable, and deriving it for every band means the
+ * next component that needs one does not have to change this signature.
+ *
+ * ⚠ DELIBERATELY NOT aria-labelledby ON THE <section> ITSELF. A named section
+ * is exposed as a `region` landmark, and doing it here would add one for every
+ * band on the longest page on the site — thirteen new landmarks to page past,
+ * to solve a problem nobody has.
+ */
 function Section({
   id, title, lede, children,
 }: { id: string; title: string; lede?: string; children: React.ReactNode }) {
   return (
     <section id={id} className="border-t border-ink/10 py-14 sm:py-20">
       <div className="mx-auto max-w-6xl px-6">
-        <h2 className="font-display max-w-3xl text-2xl font-medium tracking-tight sm:text-3xl">{title}</h2>
+        <h2
+          id={`${id}-title`}
+          className="font-display max-w-3xl text-2xl font-medium tracking-tight sm:text-3xl"
+        >
+          {title}
+        </h2>
         {lede && <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink/65 sm:text-base">{lede}</p>}
         <div className="mt-8">{children}</div>
       </div>

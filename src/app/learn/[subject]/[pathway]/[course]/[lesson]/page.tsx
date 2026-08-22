@@ -31,6 +31,7 @@ import { LessonSlides } from "@/components/lesson/LessonSlides";
 import { LessonWorkedExamples } from "@/components/lesson/LessonWorkedExamples";
 import { LessonVideo } from "@/components/lesson/LessonVideo";
 import type { PlayerFrame } from "@/components/lesson/LessonPlayer";
+import { TuitionCta } from "@/components/tuition/TuitionCta";
 import { flattenFrames } from "@/lib/lesson-deck/manifest.ts";
 import { frameUrl, loadPublishedDeck } from "@/lib/lesson-deck/store.ts";
 import { readCompletion } from "@/lib/lesson/completion";
@@ -599,6 +600,14 @@ async function LiveLesson({
             next={next}
           />
         </div>
+
+        {/* ⚠ §42, §71 — ONE STICKY THING AT THE BOTTOM, NOT TWO. The lesson
+            already has a bottom-anchored element on mobile: the journey strip
+            is sticky at the TOP, deliberately, so these two never fight for
+            the same edge. targetId is left at its default and this page has no
+            #tuition section, so the CTA navigates rather than scrolling to
+            nothing. */}
+        <TuitionCta subject={subject.slug} revealAfter={400} />
       </main>
     </div>
   );
