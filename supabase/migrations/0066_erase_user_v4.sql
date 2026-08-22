@@ -1,11 +1,22 @@
 -- ============================================================================
 -- 0066_PROPOSED_erase_user_v4.sql
 -- ----------------------------------------------------------------------------
--- ⚠ NUMBER ISSUED BY PLANNING (2026-08-22 sitting). _PROPOSED_ until applied —
--- rename and record observed verification results in this header in the SAME
--- step as applying. Requires 0064 AND 0065 applied first: the function body
--- names their tables, and CREATE OR REPLACE would otherwise fail at runtime on
--- the first call, not at definition time.
+-- ⚠ APPLIED 2026-08-22 (P1+P2 as pastes; P3's mechanism proofs all passed:
+-- fixture non-empty, three receipt counts >= 1, GATE email_columns_scanned=8,
+-- door shut). Number issued by planning (2026-08-22 sitting).
+--
+-- ⚠⚠ INCIDENT, RECORDED WHERE THE REBUILD PATH CANNOT MISS IT: P3 was run
+-- BEFORE its probe user existed, and its "newest user" default targeted the
+-- ADMIN account (mascience15@gmail.com). The auth row was deleted, the admin
+-- role CASCADE-deleted, its test-residue app data erased, and every
+-- created_by/approved_by attribution NULLed. The two real public signups
+-- were untouched. The account was recreated (new uuid 19f089b9-…) and the
+-- role re-granted the same day. TWO STRUCTURAL FIXES followed: 0067 adds the
+-- staff-refusal pre-check to erase_user (v5), and no verification block in
+-- this repo may ever again choose its own destructive target — probes are
+-- created in-block with captured ids, or the target is passed explicitly.
+-- The mechanism proofs above STAND (founder ruling): the counts, the GATE
+-- and the door were all proven — against the wrong target.
 --
 -- ⚠ DERIVED FROM 0061'S TEXT, NOT RETYPED. The v3 body was extracted from
 -- 0061_erase_user_v3.sql and FIVE surgical edits applied (the repo rule: a
