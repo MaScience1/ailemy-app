@@ -8,19 +8,26 @@
 --   Paste 5      the GUC-door DO block completed — all four quadrants
 --                (DELETE/UPDATE without the GUC refused; UPDATE refused even
 --                WITH it; DELETE with it succeeded and cleaned up)  ✓
---   guc_after    read 'on' — ⚠ EXPECTED FOR A WHOLE-FILE RUN, NOT A LEAK.
---                In a multi-statement paste, everything after the last
---                explicit COMMIT runs in ONE implicit transaction that ends
---                with the message; set_config(..., is_local := true) binds to
---                THAT transaction, so a check inside the same paste still
---                sees 'on'. Proven on a clean PostgreSQL 16: inside the
---                setting transaction → 'on'; the next statement after its
---                COMMIT, same session → NULL. 0066's FOUNDER PASTE 4 is the
---                standing fresh-statement proof that the door reads NULL
---                outside the erasure transaction. (This file's inline
---                "EXPECT 'off'" comment below was written for paste-by-paste
---                execution; for whole-file runs read it as "expect 'on' here,
---                NULL on any fresh statement".)
+--   guc_after    read 'on' in-paste, AND STILL 'on' ON A LATER FRESH RUN —
+--                ⚠ CORRECTED ACCOUNT (2026-08-22, second sitting). Every
+--                set_config in this file is transaction-local (is_local :=
+--                true); none is a session-level set. The carrier was the SQL
+--                editor's backend holding ONE transaction open ACROSS runs:
+--                "transaction-local" then spans runs until something commits
+--                or rolls back. Reproduced on a clean PostgreSQL 16: an
+--                outer BEGIN left open is the ONLY shape in which a later
+--                statement reads 'on' — a bare local set and a DO-block set
+--                both die at their statement, leaving at most the ''
+--                residue. The founder's RESET cleared it. Pastes 5/6 below
+--                now end their own transaction and RESET+prove the door shut
+--                behind them; 0066 Paste 4 is the standing fresh-statement
+--                check, with SHUT defined as "anything but 'on'" (a touched
+--                session legitimately reads '' rather than NULL — testing
+--                IS NULL there is a false alarm).
+--   my earlier "expected, not a leak" note claimed the mechanism confidently
+--                and got it half wrong: the value WAS still transaction-local,
+--                but the transaction outlived the paste. Recorded rather than
+--                erased.
 --   SESSION-RUN SR-3/SR-4/SR-5 are PENDING — run and record here before this
 --   header may claim full verification.
 --
@@ -253,6 +260,7 @@ SELECT tgname, tgenabled
 --   3. UPDATE WITH the GUC    → STILL REFUSED (the door is DELETE-only)
 --   4. DELETE WITH the GUC    → SUCCEEDS (the erasure path), cleanup by
 --      captured id inside the same transaction
+BEGIN;
 DO $$
 DECLARE
   student uuid;
@@ -303,13 +311,21 @@ BEGIN
   DELETE FROM public.lesson_practice_attempts WHERE id = probe;
   RAISE NOTICE 'PASS 4/4 — DELETE with the GUC succeeded (the erasure door, and the cleanup)';
 END $$;
--- EXPECT four PASS notices. The GUC was set with is_local=true inside the DO
--- block's transaction, so it is already gone. Post-checks — EXPECT 'off' (or
--- empty) and then ZERO rows:
-SELECT coalesce(current_setting('app.erasure_active', true), 'off') AS guc_after;
+COMMIT;
+RESET app.erasure_active;
+-- EXPECT four PASS notices, then door_state = 'shut', then ZERO rows. The
+-- COMMIT ends the transaction THIS paste owns (an editor-held open
+-- transaction was how 'on' once outlived a run) and the RESET clears any
+-- residue; '' and NULL both read as shut — only 'on' opens 0065's door.
+SELECT CASE
+         WHEN coalesce(nullif(current_setting('app.erasure_active', true), ''), 'off') = 'on'
+         THEN 'OPEN — investigate before continuing'
+         ELSE 'shut'
+       END AS door_state;
 SELECT id FROM public.lesson_practice_attempts WHERE seed = 424242;
 
 -- ══ FOUNDER PASTE 6 — the data CHECKs bite, with controls ═══════════════════
+BEGIN;
 DO $$
 DECLARE
   student uuid; l1 uuid; probe uuid; a1 uuid;
@@ -359,7 +375,14 @@ BEGIN
   DELETE FROM public.lesson_practice_attempts WHERE id = probe;
   RAISE NOTICE 'cleanup: probe answer and attempt removed via the GUC door';
 END $$;
--- EXPECT four notices. Post-check — EXPECT ZERO rows:
+COMMIT;
+RESET app.erasure_active;
+-- EXPECT four notices, then door_state = 'shut', then ZERO rows:
+SELECT CASE
+         WHEN coalesce(nullif(current_setting('app.erasure_active', true), ''), 'off') = 'on'
+         THEN 'OPEN — investigate before continuing'
+         ELSE 'shut'
+       END AS door_state;
 SELECT id FROM public.lesson_practice_attempts WHERE seed = 434343;
 
 -- ══ FOUNDER PASTE 7 — PostgREST cache + anon posture ════════════════════════

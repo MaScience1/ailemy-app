@@ -509,6 +509,15 @@ GRANT EXECUTE ON FUNCTION public.erase_user(uuid) TO service_role;
 -- first (SESSION-RUN SR-1 does exactly that and hands you the uuid), then
 -- replace the SELECT below only if you want a specific target; by default it
 -- picks the NEWEST user, which after SR-1 is the probe.
+--
+-- ⚠ EXPLICIT BEGIN/COMMIT + TERMINAL RESET, BECAUSE THE EDITOR CAN HOLD A
+-- TRANSACTION OPEN ACROSS RUNS. Every set_config here is transaction-local,
+-- but a backend whose transaction never closes carries "this transaction"
+-- into your next run — that is exactly how the door-shut check once read 'on'
+-- on a fresh statement. The COMMIT below ends the transaction THIS paste
+-- owns, and the RESET clears any residue regardless of what the editor did
+-- with earlier ones. The trailing SELECT prints the proof.
+BEGIN;
 DO $$
 DECLARE
   probe_user uuid;
@@ -571,18 +580,38 @@ BEGIN
   END IF;
   RAISE NOTICE 'PASS — zero practice/view-state rows remain for the erased user';
 END $$;
--- EXPECT: target notice, fixture ✓, three PASS notices. The erase_user call
--- inside also exercised every v3 path against the probe (their receipt counts
--- print nothing here — SR-2 inspects a full receipt).
+COMMIT;
+RESET app.erasure_active;
+-- The proof that THIS paste leaves the door shut behind it — EXPECT
+-- door_state = 'shut':
+SELECT CASE
+         WHEN coalesce(nullif(current_setting('app.erasure_active', true), ''), 'off') = 'on'
+         THEN 'OPEN — investigate before continuing'
+         ELSE 'shut'
+       END AS door_state;
+-- EXPECT above the proof: target notice, fixture ✓, three PASS notices. The
+-- erase_user call inside also exercised every v3 path against the probe
+-- (their receipt counts print nothing here — SR-2 inspects a full receipt).
 
 -- ══ FOUNDER PASTE 4 — ⚠ THE DOOR IS SHUT OUTSIDE THE ERASURE TRANSACTION ═══
 -- Run this as its OWN paste, as a FRESH statement — that is the point of it.
--- set_config(..., is_local := true) binds the GUC to the transaction that set
--- it; a whole-file run reads 'on' INSIDE that same implicit transaction (the
--- 0065 observation), and this paste proves it is gone the moment that
--- transaction ends. EXPECT: raw_value = NULL and door_shut = t.
+--
+-- ⚠ SHUT MEANS "ANYTHING BUT 'on'", AND THAT IS A MEASURED DEFINITION. On a
+-- genuinely fresh backend the raw value is NULL; on a session that ever
+-- touched the GUC (including after your own RESET) PostgreSQL reports the
+-- EMPTY STRING, not NULL — both mean the trigger's door does not open,
+-- because 0065's check is `= 'on'` and nothing else. An earlier version of
+-- this paste tested IS NULL and would have called a safe '' a failure.
+-- The RESET first line also clears any residue an editor-held open
+-- transaction carried this far — belt, braces, then the reading.
+-- EXPECT: door_state = 'shut' (raw_value column shows NULL or empty).
+RESET app.erasure_active;
 SELECT current_setting('app.erasure_active', true) AS raw_value,
-       current_setting('app.erasure_active', true) IS NULL AS door_shut;
+       CASE
+         WHEN coalesce(nullif(current_setting('app.erasure_active', true), ''), 'off') = 'on'
+         THEN 'OPEN — a transaction carrying the GUC is still alive; run ROLLBACK; then re-run this paste'
+         ELSE 'shut'
+       END AS door_state;
 
 -- ══ SESSION-RUN (mine, not founder pastes) ══════════════════════════════════
 -- SR-1  Create the probe user (@example.test, per-run-unique, Admin API) and
