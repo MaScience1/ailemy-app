@@ -1,8 +1,20 @@
 -- ============================================================================
--- 0067_PROPOSED_erase_user_v5.sql
+-- 0067_erase_user_v5.sql
 -- ----------------------------------------------------------------------------
--- ⚠ NUMBER ISSUED BY THE FOUNDER (2026-08-22 incident response). _PROPOSED_
--- until applied — rename and record observed results in the SAME act.
+-- ⚠ NUMBER ISSUED BY THE FOUNDER (2026-08-22 incident response).
+-- ⚠ APPLIED 2026-08-22 by the founder (SQL Editor, one section per paste).
+--   Founder's report: ALL PASTES CLEAN — A (admin re-grant), 0067×3, C, E.
+--   Paste 3 is self-asserting: it cannot reach COMMIT unless PASS 1/3 (staff
+--   erasure REFUSED), 2/3 (refusal atomic) and 3/3 (non-staff control erased,
+--   GATE email_columns_scanned = 8) all held — "clean" IS those observations.
+--   Same sitting: PASTE E ran 0055(e) — the sweep sabotage, BOTH halves —
+--   against THIS v5, so (e) is proven on v5 by the founder's own run.
+--   SR-A (same day, app channel): 0055 (a)-(g) + 0061 (h)(i)(j) + SR-3 re-run
+--   against live v5 — 41/41 ALL PASS — including the new (k) v5-LIVENESS
+--   check: a probe holding the admin role was REFUSED with the role named,
+--   which simultaneously proves Paste 1 landed WHOLE (a truncated paste would
+--   have left v4 live and erased that probe — the SQL-Editor-drops-trailing-
+--   sections hazard). Runner: scripts/db-checks/sr2-sr3-2026-08-22.ts.
 -- Requires 0066 applied (it was: its P3 proofs passed on 2026-08-22).
 --
 -- ⚠ BORN OF AN INCIDENT, AND THE INCIDENT IS THE SPEC. 0066's verification
@@ -602,3 +614,5 @@ SELECT id, email FROM auth.users WHERE email LIKE 'probe-0067-%';
 -- ══ SESSION-RUN (mine) ══════════════════════════════════════════════════════
 -- SR-A  Full 0055 (a)-(g) + 0061 (h)(i)(j) re-run against v5 after this file
 --       applies — the standing planning gate for every erase_user REPLACE.
+--       ✓ RUN 2026-08-22, same day as apply: 41/41 ALL PASS, zero probe
+--       residue. Details in the APPLIED header above.

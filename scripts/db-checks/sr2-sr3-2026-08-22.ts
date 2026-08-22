@@ -3,6 +3,14 @@
  * SR-3: 0065's append-only trigger refuses a no-GUC DELETE (the door is a
  *       door, not a hole).
  *
+ * SR-A (2026-08-22, later the same day): the SAME suite re-run after 0067
+ * applied — CREATE OR REPLACE unproves every prior pass — plus (k), the
+ * v5-LIVENESS check: a probe holding the admin role must be REFUSED with the
+ * staff-role message. v4 would erase that probe, so (k) is simultaneously the
+ * proof that Paste 1 landed whole (the SQL-Editor-drops-trailing-sections
+ * hazard) and that the staff refusal is live from this channel. (e) is
+ * satisfied by the founder's PASTE E run against v5 — both halves clean.
+ *
  *   node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON \
  *     scripts/db-checks/sr2-sr3-2026-08-22.ts
  *
@@ -211,8 +219,8 @@ try {
   // an email arm. The sweep's bite therefore cannot be triggered without DDL.
   // HONEST VERDICT: (e) requires the SQL editor. Reported below as
   // FOUNDER-CHANNEL REQUIRED rather than silently skipped.
-  t("(e) sweep sabotage requires DDL (sabotage_probe table) — NOT runnable over PostgREST; founder paste supplied in the report",
-    true, "explicitly deferred to the founder channel, not skipped silently");
+  t("(e) sweep sabotage requires DDL (sabotage_probe table) — NOT runnable over PostgREST; founder's PASTE E ran BOTH HALVES against v5 on 2026-08-22, clean",
+    true, "satisfied via the founder channel (refusal observed, then success after the drop), not skipped");
   await erase(E.id); users.splice(users.indexOf(E.id), 1);
 
   // ── (f) teacher refusal + its control ────────────────────────────────────
@@ -258,6 +266,26 @@ try {
   await svc.from("submissions").delete().eq("id", subId!);
   if (weekCreated) await svc.from("cohort_weeks").delete().eq("id", weekId!);
   await erase(W.id); users.splice(users.indexOf(W.id), 1);
+
+  // ── (k) v5-LIVENESS: the staff refusal is live on THIS database ──────────
+  // v4 would ERASE this probe; only v5 refuses, naming the role. This doubles
+  // as the Paste-1 truncation check: a truncated paste leaves v4 live and this
+  // goes red. Probe created here, id captured, no default target.
+  const K = await newUser("k");
+  const { error: kSeedErr } = await svc.from("user_roles").insert({ user_id: K.id, role: "admin" });
+  if (kSeedErr) throw new Error(`fixture user_roles: ${err(kSeedErr)}`);
+  const { error: kErr } = await erase(K.id);
+  t("⚠ (k) STAFF probe (admin role) erasure REFUSED — v5 is LIVE (the expected red)",
+    Boolean(kErr && /staff role/.test(kErr.message) && /admin/.test(kErr.message)), err(kErr));
+  const { data: kAlive } = await svc.auth.admin.getUserById(K.id);
+  t("(k) …refusal atomic — the probe still exists", Boolean(kAlive?.user), kAlive?.user?.id?.slice(0, 8));
+  const { data: kRole } = await svc.from("user_roles").select("role").eq("user_id", K.id).eq("role", "admin").maybeSingle();
+  t("(k) …and its role row survived the refusal", Boolean(kRole), kRole?.role);
+  await svc.from("user_roles").delete().eq("user_id", K.id).eq("role", "admin");
+  const { error: kErr2 } = await erase(K.id);
+  t("(k) CONTROL — role REVOKED first, the same erase SUCCEEDS (revoke-then-erase, the documented path)",
+    !kErr2, err(kErr2));
+  if (!kErr2) users.splice(users.indexOf(K.id), 1);
 
   // ── (g) EXECUTE triple, behaviourally: anon f · authenticated f · service t
   const { error: gAnon } = await anon.rpc("erase_user", { target: "00000000-0000-4000-8000-000000000000" });
