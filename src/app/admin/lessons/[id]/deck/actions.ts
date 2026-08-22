@@ -38,7 +38,7 @@ import { familyByKey, saveStatus } from "@/lib/practice/registry.ts";
  * reversed by exact path — the cleanup-deletes-only-what-it-created rule.
  */
 
-type ActionResult = { ok: true; detail: string } | { ok: false; reason: string };
+export type ActionResult = { ok: true; detail: string } | { ok: false; reason: string };
 
 const BUNDLE_ROOT = join(process.cwd(), "content", "decks");
 
@@ -136,11 +136,83 @@ export async function unpublishDeck(input: { lessonId: string }): Promise<Action
 }
 
 export async function setFamilyStatus(input: {
+  lessonId: string;
   key: string;
   status: "draft" | "approved" | "disabled";
 }): Promise<ActionResult> {
   await assertAdmin();
+  if (!/^[0-9a-f-]{36}$/.test(input.lessonId)) return { ok: false, reason: "malformed lesson id" };
   if (!familyByKey(input.key)) return { ok: false, reason: `unknown family ${input.key}` };
   await saveStatus(input.key, input.status);
+  // ⚠ THE LINE WHOSE ABSENCE WAS THE 2026-08-23 LIVE DEFECT. Without it the
+  // client router keeps the stale RSC payload and React 19's post-action form
+  // reset snaps the dropdown back to the old status — a write that LANDED
+  // renders as a revert. publishDeck/unpublishDeck always had this line; this
+  // action was the one that didn't.
+  revalidatePath("/admin/lessons/" + input.lessonId);
   return { ok: true, detail: `${input.key} → ${input.status}` };
+}
+
+/**
+ * FormData adapters (useActionState signature) for the panel's forms.
+ * ============================================================================
+ * ⚠ BORN OF TWO LIVE CONFUSIONS IN TWO DAYS. The panel used to wrap these
+ * actions in `async (fd) => { await action(...) }` — void, result discarded.
+ * A refused publish and a successful one looked identical (2026-08-22), and a
+ * family approval that LANDED looked like a revert (2026-08-23). Every form
+ * now posts through an adapter that RETURNS the ActionResult so the panel can
+ * render it; thrown errors become red reasons instead of an opaque error
+ * page; Next control-flow throws (redirect/notFound) pass through untouched.
+ */
+function isNextControlFlow(e: unknown): boolean {
+  const digest = (e as { digest?: unknown } | null)?.digest;
+  return typeof digest === "string" && digest.startsWith("NEXT_");
+}
+
+async function asResult(run: () => Promise<ActionResult>): Promise<ActionResult> {
+  try {
+    return await run();
+  } catch (e) {
+    if (isNextControlFlow(e)) throw e;
+    return { ok: false, reason: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+export async function stageDeckForm(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
+  return asResult(() =>
+    stageDeck({
+      lessonId: String(fd.get("lessonId")),
+      slug: String(fd.get("slug")),
+      version: Number(fd.get("version")),
+    }),
+  );
+}
+
+export async function publishDeckForm(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
+  return asResult(() =>
+    publishDeck({
+      lessonId: String(fd.get("lessonId")),
+      version: Number(fd.get("version")),
+    }),
+  );
+}
+
+export async function unpublishDeckForm(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
+  return asResult(() => unpublishDeck({ lessonId: String(fd.get("lessonId")) }));
+}
+
+export async function setFamilyStatusForm(_prev: ActionResult | null, fd: FormData): Promise<ActionResult> {
+  const status = String(fd.get("status"));
+  if (status !== "draft" && status !== "approved" && status !== "disabled") {
+    // The old wrapper returned void here — a silent no-op. A malformed post
+    // is a red, not a shrug.
+    return { ok: false, reason: `invalid status "${status}"` };
+  }
+  return asResult(() =>
+    setFamilyStatus({
+      lessonId: String(fd.get("lessonId")),
+      key: String(fd.get("key")),
+      status,
+    }),
+  );
 }
