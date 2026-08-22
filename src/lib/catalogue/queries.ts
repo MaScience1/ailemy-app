@@ -311,6 +311,14 @@ export async function listLessonsForCourse(
       `,
     )
     .eq("course_id", courseId)
+    // ⚠ ARCHIVED ROWS ARE OUT OF THE SEQUENCE, NOT AT ITS END. The 2026-08-22
+    // catalogue reflow retired two coming_soon rows by archiving them (their
+    // content was merged into, or already taught by, other lessons); an
+    // archived row rendering in the list would put the "merged away" lesson
+    // right back into the teaching order. Direct URLs still resolve — only
+    // the LISTING excludes them, the same demote-don't-delete stance as the
+    // nav's /intensive precedent.
+    .neq("status", "archived")
     .order("lesson_number", { ascending: true, nullsFirst: false });
 
   if (error) throw new CatalogueUnavailableError("listLessonsForCourse", error);
@@ -515,7 +523,9 @@ export async function getCourseChoiceData(
   const supabase = await createClient();
 
   const [lessonsRes, unitsRes, papersRes] = await Promise.all([
-    supabase.from("lessons").select("status").eq("course_id", course.id),
+    // Archived lessons are excluded so the hub's "N lessons" claim counts the
+    // teachable sequence, not rows retired by the catalogue reflow.
+    supabase.from("lessons").select("status").eq("course_id", course.id).neq("status", "archived"),
     supabase
       .from("units")
       .select("id", { count: "exact", head: true })
