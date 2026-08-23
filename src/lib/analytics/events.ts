@@ -24,6 +24,19 @@
 
 export const CTA_SOURCES = [
   /**
+   * ⚠ COURSE ROADMAP (§35). The claim behind the feature is that a planned
+   * academic year converts better than a price and a schedule dump — checkable
+   * only if opening a roadmap and expanding a week report separately.
+   *
+   * No PII: control names only. The course is already in the URL these fire
+   * from; duplicating it into the event would add nothing and widen what the
+   * analytics store holds.
+   */
+  "course_roadmap_opened",
+  "course_roadmap_week_expanded",
+  "course_roadmap_resource_clicked",
+  "course_roadmap_register_clicked",
+  /**
    * ⚠ ONLINE TUITION (§57). The whole argument for the two-mode selector is
    * that a visitor picks a product and everything after is relevant to it —
    * which is only checkable if the mode choice and each commitment report

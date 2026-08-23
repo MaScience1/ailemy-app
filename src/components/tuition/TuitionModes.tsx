@@ -243,7 +243,7 @@ function GroupProgramme({
         </p>
       )}
 
-      <p className="mt-5">
+      <div className="mt-5 flex flex-wrap items-center gap-2.5">
         <Link
           href={canReserve ? cohort.enrolmentUrl! : `/tuition/interest?cohort=${cohort.slug}`}
           data-cta="tuition_group_programme_selected"
@@ -252,7 +252,23 @@ function GroupProgramme({
           {canReserve ? "Reserve your place" : "Register interest"}
           <span aria-hidden className="transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">→</span>
         </Link>
-      </p>
+
+        {/* ⚠ §1 — SECONDARY, AND IT MUST STAY SECONDARY. The gold is a tinted
+            border and warm text on the cream ground, not a filled button: a
+            second solid pill beside the dark one would give a reader two equal
+            primary actions and slow the decision the card exists to speed up.
+            ONE_TO_ONE is the platform gold already in use for 1-to-1
+            availability, reused rather than a second warm hue (§31, §47). */}
+        <Link
+          href={`/tuition/${cohort.slug}/roadmap`}
+          data-cta="course_roadmap_opened"
+          style={subjectVars(ONE_TO_ONE)}
+          className="group/r inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-[var(--subject-accent)] bg-[var(--subject-tint)] px-4 py-2 text-sm font-medium text-[var(--subject-text)] transition-all duration-200 ease-out hover:border-ink/40 motion-safe:hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+        >
+          See course roadmap
+          <span aria-hidden className="transition-transform duration-200 motion-safe:group-hover/r:translate-x-0.5">→</span>
+        </Link>
+      </div>
     </article>
   );
 }
