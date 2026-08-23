@@ -313,12 +313,20 @@ export function CourseSelector({
                 <button
                   type="button"
                   onClick={t.onClick}
-                  /* ⚠ py-2.5 IS A TOUCH TARGET, NOT SPACING (§36). The trail
+                  /* ⚠ py-3.5 IS A TOUCH TARGET, NOT SPACING (§36). The trail
                      is deliberately small type (§17 — "context, not the
                      primary interface"), which left a 16px-tall tappable
-                     control on a phone. The padding grows the hit area while
-                     the type stays exactly as quiet as it was. */
-                  className="-my-2.5 cursor-pointer py-2.5 underline underline-offset-2 transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                     control on a phone. 16 + 14 + 14 = 44 exactly; the
+                     negative margin cancels the layout effect, so the type
+                     stays exactly as quiet as it was.
+
+                     ⚠ IT WAS py-2.5 FIRST, WHICH REACHES 36px, NOT 44. The
+                     local check that passed it had measured a page where the
+                     trail was not rendered at all — an empty result read as a
+                     clean one. Production measured 36. The arithmetic is
+                     written out above so the next change to this line has to
+                     do it deliberately. */
+                  className="-my-3.5 cursor-pointer py-3.5 underline underline-offset-2 transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                 >
                   {t.label}
                 </button>
