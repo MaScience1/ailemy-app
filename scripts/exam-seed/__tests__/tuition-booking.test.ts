@@ -300,6 +300,59 @@ console.log("\n=== 6. §78 — nothing that worked was broken ===");
 }
 
 // ============================================================================
+console.log("\n=== 6b. 0069 — the repair, parked and honest about it ===");
+// ============================================================================
+{
+  const R = readdirSync("supabase/migrations")
+    .filter((f) => /fix_book_slot_with_credit/.test(f));
+  t("0069 — exactly one repair file exists", R.length === 1, R.join(", "));
+  const RP = join("supabase/migrations", R[0] ?? "__missing__");
+  const FIX = R.length === 1 ? readFileSync(RP, "utf8") : "";
+  const FIX_C = code(FIX);
+  t("⚠ it is PARKED — a plain number would be replayed by a rebuild",
+    /_PROPOSED_/.test(RP) && /NOT APPLIED/.test(FIX));
+  /**
+   * ⚠ THE DROP IS THE REASON THIS IS A SEPARATE MIGRATION. Renaming the
+   * colliding OUT parameters changes the return type, and CREATE OR REPLACE
+   * refuses: "cannot change return type of existing function". Order matters —
+   * the DROP must precede the CREATE.
+   */
+  t("§0 — it DROPs before it CREATEs",
+    FIX_C.indexOf("DROP FUNCTION") >= 0
+      && FIX_C.indexOf("DROP FUNCTION") < FIX_C.indexOf("CREATE OR REPLACE FUNCTION"));
+  t("⚠ defect 1 — no locking clause survives in the CODE",
+    !/FOR UPDATE/.test(FIX_C) && /FOR UPDATE/.test(FIX),
+    "the phrase must appear in the prose that explains it, never in a statement");
+  t("§27 — and a lock that actually serialises replaces it",
+    /pg_advisory_xact_lock\(/.test(FIX_C));
+  t("⚠ defect 2 — the OUT parameters no longer collide with a column",
+    /out_booking_ref/.test(FIX_C) && !/RETURNS TABLE \(booking_id/.test(FIX_C));
+  t("⚠ DROP takes the ACL with it, so the grants are re-issued",
+    /GRANT EXECUTE[\s\S]{0,140}TO authenticated/.test(FIX_C)
+      && /REVOKE ALL ON FUNCTION/.test(FIX_C));
+  t("§1 — the repair creates no table either", !/CREATE TABLE/.test(FIX_C) && FIX.length > 0);
+  t("(e) — it states no erase_user extension is owed, and why",
+    /ERASE_USER/.test(FIX) && /0067/.test(FIX) && !/DELETE FROM public\.private_bookings/.test(FIX_C));
+  t("(f) — it forbids wiring the app before step 7 passes",
+    /MUST NOT BE SWITCHED TO THIS RPC/.test(FIX) && /STEP 7 PASSES/.test(FIX));
+  /**
+   * ⚠ EVERY STEP RETURNS A COUNT, WHICH IS THE POINT OF THE REWRITE. 0068's
+   * list said "expect 23P01" — a banner a person nods at. A count is a number
+   * that is either right or wrong.
+   */
+  t("(c) — every verification step expects a count",
+    (FIX.match(/EXPECT [01]\b/g) ?? []).length >= 8
+      && /SELECT count\(\*\)/.test(FIX));
+  t("(d) — step 7 is first-class and carries pg_get_functiondef",
+    /STEP 7 · THE LIVE BODY MATCHES THIS FILE/.test(FIX)
+      && /pg_get_functiondef/.test(FIX));
+  t("(b) — the replica evidence records the race BOTH ways",
+    /WITH the advisory lock/.test(FIX) && /WITHOUT it/.test(FIX) && /-1/.test(FIX));
+  t("⚠ and it says a replica result is not a production result",
+    /NOT EVIDENCE ABOUT THAT DATABASE|NOT ABOUT THAT DATABASE/.test(FIX));
+}
+
+// ============================================================================
 console.log("\n=== 7. ⏳ WHAT THIS SUITE STILL CANNOT PROVE ===");
 // ============================================================================
 {
@@ -364,6 +417,24 @@ console.log("\n=== 7. ⏳ WHAT THIS SUITE STILL CANNOT PROVE ===");
    */
   t("⚠ §28 — the RPC and the compensating saga are never both live",
     !(WIRED && SAGA), `wired=[${RPC_CALLERS.join(", ")}] saga=${SAGA}`);
+  /**
+   * ⚠ 0069's CENTRAL WARNING, MADE EXECUTABLE.
+   * 0068's function raises before it reaches its first INSERT. Wiring the app
+   * to it while the repair is still PARKED would fail every 1-to-1 booking —
+   * so the header says the application must not be switched over until 0069 is
+   * applied and step 7 passes. A sentence in a header cannot enforce that;
+   * this can. While a _PROPOSED_ repair sits in the folder, nothing in src/
+   * may call the RPC.
+   *
+   * When 0069 is applied and renamed off _PROPOSED_, this assertion stops
+   * constraining anything of its own accord — which is the correct behaviour,
+   * not a gap: at that point the invariant above takes over.
+   */
+  const REPAIR_PARKED = readdirSync("supabase/migrations")
+    .filter((f) => /_PROPOSED_.*book_slot_with_credit/.test(f));
+  t("⚠ the app is not wired to the RPC while its repair is still parked",
+    !(REPAIR_PARKED.length > 0 && WIRED),
+    `parked=[${REPAIR_PARKED.join(", ")}] wired=[${RPC_CALLERS.join(", ")}]`);
   t("§28 — and some credit-spending path exists at all",
     WIRED || SAGA, "neither an RPC call nor compensate() found in src/");
   t("⚠ §28 — and 0068 records that the saga, not the RPC, is the live path",
