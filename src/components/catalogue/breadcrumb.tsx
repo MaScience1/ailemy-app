@@ -8,6 +8,14 @@ type Crumb = {
 /**
  * Editorial breadcrumb — JetBrains Mono, low-contrast separators. The final
  * crumb is rendered as plain text (current page) without a link.
+ *
+ * ⚠ THE CRUMB LINK CARRIES A HIT AREA AND A FOCUS RING, AND HAD NEITHER.
+ * At text-xs it rendered a 16px-tall tap target on a phone, and it was the
+ * only interactive element on these pages with no visible focus state — so a
+ * keyboard user tabbing through could not see where they were. Both are fixed
+ * here rather than at the fifteen call sites, which is the point of the
+ * component. py-3.5 makes 16 + 14 + 14 = 44; -my-3.5 cancels it in layout, so
+ * every existing page renders identically.
  */
 export function Breadcrumb({ crumbs }: { crumbs: Crumb[] }) {
   return (
@@ -20,7 +28,7 @@ export function Breadcrumb({ crumbs }: { crumbs: Crumb[] }) {
               {crumb.href && !isLast ? (
                 <Link
                   href={crumb.href}
-                  className="uppercase tracking-[0.18em] transition-colors hover:text-ink"
+                  className="-my-3.5 py-3.5 uppercase tracking-[0.18em] transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                 >
                   {crumb.label}
                 </Link>

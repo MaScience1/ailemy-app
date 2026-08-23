@@ -390,7 +390,13 @@ console.log("\n=== 10. ⚠ §36 — accessible by construction ===");
   // and the IB/AP chips 42px — both below the 44px §36 asks for, and both
   // invisible to every other check in this file.
   t("§36 — the secondary chips clear 44px", /min-h-\[44px\]/.test(SELECTOR));
-  t("§36 — the trail button has a real hit area", /-my-2\.5 cursor-pointer py-2\.5/.test(SELECTOR));
+  t("§36 — the trail button has a real hit area (16 + 14 + 14 = 44)",
+    /-my-3\.5 cursor-pointer py-3\.5/.test(SELECTOR));
+  // ⚠ THE SHARED CRUMB TOO — it was 16px and had no focus ring at all.
+  const CRUMB = readFileSync("src/components/catalogue/breadcrumb.tsx", "utf8");
+  t("§36 — the shared breadcrumb crumb has a 44px hit area", /-my-3\.5 py-3\.5/.test(CRUMB));
+  t("⚠ §36 — and a visible focus state, which it never had",
+    /focus-visible:outline/.test(CRUMB));
 
   // ⚠ STATUS IS NEVER COLOUR ALONE. The chip must render the WORD.
   t("⚠ §36 — the status chip prints its label, not just a tint",
