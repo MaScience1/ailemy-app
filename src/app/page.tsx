@@ -20,6 +20,7 @@ import { SocialProof } from "@/components/home/SocialProof";
 import { loadIdentity } from "@/lib/account/identity";
 import { loadProfileCourses } from "@/lib/account/profile-reader";
 import { nextSession, distanceLabel } from "@/lib/calendar/next-session";
+import { nextAvailableSlot } from "@/lib/booking/next-available";
 import { nextOf } from "@/lib/calendar/upcoming";
 import { dayKeyOf } from "@/lib/calendar/grid";
 import { getNavSession } from "@/lib/auth/nav-session";
@@ -1069,7 +1070,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
               ? { event: upcomingLesson.event, dateISO: upcomingLesson.dateISO }
               : null}
             /* §66 — real slots only; there are none today. */
-            nextPrivateAhead={nextOf(aheadEvents, "private_open", new Date())}
+            nextPrivateAhead={nextAvailableSlot(aheadEvents, { now: new Date() })}
           />
         </HeroCalendarOverlay>
       )}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import type { CalendarEvent } from "@/lib/calendar/types";
+import { nextAvailableSlot } from "@/lib/booking/next-available";
 import { nextOf } from "@/lib/calendar/upcoming";
 import { levelLabel } from "@/lib/calendar/types";
 import { ONE_TO_ONE, subjectColour, subjectVars } from "@/lib/design/subject-colours";
@@ -84,7 +85,7 @@ export function HeroAvailability({
   hrefFor: (m: HeroMode) => string;
 }) {
   const nextGroup = nextOf(events, "group", now);
-  const nextPrivate = nextOf(events, "private_open", now);
+  const nextPrivate = nextAvailableSlot(events, { now });
 
   const when = (e: CalendarEvent) => {
     const t = dualTime(e.startsAt, viewerTz);

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { levelLabel, type CalendarEvent } from "@/lib/calendar/types";
+import { nextAvailableSlot } from "@/lib/booking/next-available";
 import { nextOf } from "@/lib/calendar/upcoming";
 import { ONE_TO_ONE, subjectColour, subjectVars } from "@/lib/design/subject-colours";
 import { dualTime } from "@/lib/schedule/timezone";
@@ -83,7 +84,7 @@ export function CalendarShortcuts({
   oneToOneHref: string;
 }) {
   const nextGroup = nextOf(events, "group", now);
-  const nextPrivate = nextOf(events, "private_open", now);
+  const nextPrivate = nextAvailableSlot(events, { now });
 
   const when = (e: CalendarEvent) => {
     const t = dualTime(e.startsAt, viewerTz);
