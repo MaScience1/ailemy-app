@@ -144,7 +144,21 @@ import Link from "next/link";
  * strip was ~38px tall and cleared only the first of those.
  */
 
-type Capability = { label: string; href: string };
+export type Capability = {
+  label: string;
+  href: string;
+  /**
+   * One line saying what the capability actually does (§8).
+   *
+   * ⚠ IT LIVES ON THE CAPABILITY, NOT IN A MAP KEYED BY LABEL. A parallel
+   * `Record<label, string>` beside this list is a second representation that
+   * drifts the moment a label is reworded — the same shape this codebase has
+   * removed twice, and the strip's own count is already exported rather than
+   * typed for exactly that reason. Adding an eighth capability now forces its
+   * description to be written at the same moment, in the same place.
+   */
+  blurb: string;
+};
 
 /**
  * ⚠ ORDER IS THE STUDENT'S JOURNEY, NOT ALPHABETICAL AND NOT BY IMPORTANCE.
@@ -168,15 +182,29 @@ type Capability = { label: string; href: string };
  * is the honest version of the same journey, and `next=` still lands them on
  * their own progress the moment they are in.
  */
-function capabilitiesFor(signedIn: boolean): Capability[] {
+/**
+ * ⚠ EXPORTED SO THE EXPLORE PANEL REUSES IT RATHER THAN RETYPING SEVEN HREFS.
+ * §3 of the relocation brief is explicit: destinations come from the existing
+ * source, unchanged. Two copies of this list would mean two answers to "where
+ * does Progress tracking go for a signed-out visitor", and only one of them
+ * would keep the `next=` behaviour the note above argues for.
+ */
+export function capabilitiesFor(signedIn: boolean): Capability[] {
   return [
-    { label: "Lessons", href: "/learn" },
-    { label: "Revision", href: "/resources" },
-    { label: "Past papers", href: "/past-papers" },
-    { label: "Exam questions", href: "/past-papers" },
-    { label: "Online marking", href: "/#try" },
-    { label: "Progress tracking", href: signedIn ? "/profile" : "/login?next=/profile" },
-    { label: "Live tuition", href: "/tuition" },
+    { label: "Lessons", href: "/learn",
+      blurb: "Learn each specification point, step by step." },
+    { label: "Revision", href: "/resources",
+      blurb: "Review the key ideas with notes, flashcards and worked examples." },
+    { label: "Past papers", href: "/past-papers",
+      blurb: "Sit complete exam papers and have them marked." },
+    { label: "Exam questions", href: "/past-papers",
+      blurb: "Practise the question styles the exam actually uses." },
+    { label: "Online marking", href: "/#try",
+      blurb: "Write an answer and see it marked against the real scheme." },
+    { label: "Progress tracking", href: signedIn ? "/profile" : "/login?next=/profile",
+      blurb: "See what you have covered and where the marks are going." },
+    { label: "Live tuition", href: "/tuition",
+      blurb: "Small-group teaching and 1-to-1 time with a specialist." },
   ];
 }
 

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
-import { CapabilityStrip, CAPABILITY_COUNT } from "@/components/home/CapabilityStrip";
+import { ExplorePanel } from "@/components/home/ExplorePanel";
 import { SubjectCard } from "@/components/home/SubjectCard";
 import { StickyCta } from "@/components/home/StickyCta";
 import { TryAilemy } from "@/components/home/TryAilemy";
@@ -283,7 +283,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           breakpoints and still clears the header by a full step of the spacing
           scale — the hero is moved up, not jammed against the nav. */}
       <header className="mx-auto max-w-6xl px-6 pt-10 pb-10 sm:pt-16 sm:pb-12">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_480px] lg:items-start lg:gap-10">
+        <div className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_480px] lg:grid-rows-[auto_auto] lg:items-start lg:gap-x-10 lg:gap-y-0">
         <div>
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink/50">
           Pearson Edexcel · GCSE · International GCSE · IAL
@@ -333,12 +333,13 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
             <span aria-hidden className="inline-block transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">→</span>
           </Link>
         </div>
+
         </div>
 
         {/* ⚠ SECOND COLUMN ON DESKTOP, BELOW THE CTAs ON A PHONE. The order in
             the DOM is copy → CTAs → card, which is the reading order a phone
             gets for free and the one a screen reader gets everywhere. */}
-        <div id="hero-calendar" className="lg:justify-self-end">
+        <div id="hero-calendar" className="lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:justify-self-end">
           {/* ── §7/§38 — WHAT THE CALENDAR IS FOR, SAID BEFORE IT ────────────
               ⚠ THIS LIVES HERE, NOT INSIDE HeroCalendar. §14 forbids a second
               calendar, and the surest way to grow one is to start editing the
@@ -387,6 +388,24 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
             eventCount={calendarEvents.length}
             next={nextLesson}
           />
+        </div>
+
+        {/* ── THE RELOCATED CAPABILITIES (§1, §13, §14) ───────────────────
+            ⚠ AFTER THE CALENDAR IN THE DOM, BESIDE IT ON DESKTOP.
+            §14 wants the phone to read calendar → explore, and DOM order is
+            what a stacked flex column follows — so the panel is written after
+            the card and needs no `order` class to get there. On desktop the
+            explicit placement puts it back in column one, row two, with the
+            calendar spanning both rows so it sits alongside rather than
+            beneath. One DOM order, correct at both breakpoints.
+
+            ⚠ AND IT FILLS THE SPACE THAT IS ACTUALLY EMPTY. The brief
+            describes filling space to the calendar's right; measured at
+            1920px there is none — the card ends 24px from the container edge.
+            The gap is here: the copy column ran 419px against the calendar's
+            735px. */}
+        <div className="lg:col-start-1 lg:row-start-2 lg:pt-10">
+          <ExplorePanel signedIn={session !== null} />
         </div>
         </div>
       </header>
@@ -610,35 +629,18 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         </div>
       </section>
 
-      {/* ── 4b. capability strip (§2, restated) ──────────────────────────
-          ⚠ IT HAS A HEADING NOW, AND THAT IS THE HALF OF §2 THAT WAS MISSING.
-          The strip was an unlabelled row of chips between the hero and the
-          first band: nothing on the page said what it was, so it read as
-          metadata and got scanned past. An h2 turns the same seven items into
-          the answer to a question the reader can see being asked.
+      {/* ⚠ THE "WHAT YOU CAN DO ON AILEMY" BAND STOOD HERE, AND ITS SEVEN
+          PILLS NOW SIT IN THE HERO (§13). Only the presentation went: the
+          seven destinations are unchanged and still come from
+          capabilitiesFor(), which ExplorePanel imports rather than copies.
+          CapabilityStrip itself is retained — it had exactly one caller, this
+          band, but it carries the focus-ring and scroll-clearance arithmetic
+          that took real measurement to get right, and deleting a component
+          because its only caller moved is how that work gets redone later.
 
-          ⚠ THE HEADING id IS WIRED TO THE nav's aria-labelledby, so the
-          landmark and the visible title cannot drift apart. Section derives
-          `${id}-title` for every band; this is the one that consumes it.
-
-          ⚠ AND THE STRIP KNOWS WHETHER ANYONE IS SIGNED IN, for exactly one
-          item. "Progress tracking" points at /profile for a student and at the
-          sign-in route for a stranger — see the note in CapabilityStrip.
-
-          ⚠ THE LEDE COUNTS THE PILLS, SO THE COUNT COMES FROM THE PILLS. It
-          read "Seven things Ailemy does" as a typed word, which was true on the
-          day it was written and is exactly the shape that goes quietly wrong:
-          CapabilityStrip's own header invites an eighth capability, and adding
-          one would have left this sentence claiming a number the page no longer
-          shows, with nothing failing. CAPABILITY_COUNT is derived from the list
-          itself. */}
-      <Section
-        id="capabilities"
-        title="What you can do on Ailemy"
-        lede={`${CAPABILITY_COUNT} things Ailemy does, in the order a student uses them — and every one of them is a link, not a label.`}
-      >
-        <CapabilityStrip signedIn={session !== null} labelledBy="capabilities-title" />
-      </Section>
+          ⚠ THE FOUR PRODUCT PILLARS ARE A DIFFERENT SECTION AND ARE UNTOUCHED.
+          They are `id="products"`, "Four ways to use Ailemy", added by the
+          homepage-conversion build and still directly below the hero. */}
 
       {/* ── 4c. product demonstration (§25) ──────────────────────────────
           ⚠ IT FOLLOWS THE STRIP RATHER THAN PRECEDING THE SCIENCES, AND THE

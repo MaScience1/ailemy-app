@@ -24,6 +24,12 @@
 
 export const CTA_SOURCES = [
   /**
+   * The relocated capability pills. One value for all seven: the destination
+   * is already in the href the click resolves to, and seven near-identical
+   * source names would say less than one plus the page's own referrer data.
+   */
+  "home_explore_capability",
+  /**
    * ⚠ COURSE ROADMAP (§35). The claim behind the feature is that a planned
    * academic year converts better than a price and a schedule dump — checkable
    * only if opening a roadmap and expanding a week report separately.
