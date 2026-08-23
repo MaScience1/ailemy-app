@@ -337,6 +337,68 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         </div>
       </Section>
 
+      {/* ── 4a. the four products (§25, §48) ─────────────────────────────
+          ============================================================
+          ⚠ ADDED BESIDE THE SUBJECT CARDS, NOT INSTEAD OF THEM (§58)
+          ============================================================
+          The header now offers four things, and a visitor who has just been
+          told "do you teach my subject?" needs the second answer: what is
+          here once the answer is yes. These four are the same four as the
+          nav, in the same order, so the homepage and the header cannot tell
+          different stories about what this product is.
+
+          ⚠ EXAM BUILDER SAYS "IN DEVELOPMENT" HERE FOR THE SAME REASON ITS
+          PAGE DOES. A pillar that reads like the other three would be the
+          fourth working product this site does not have. */}
+      <Section id="products" title="Four ways to use Ailemy">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              href: "/resources", cta: "home_pillar_resources", label: "Resources",
+              eyebrow: "Study library",
+              body: "Lessons, revision notes cards, flashcards and worked practice, organised by course and topic.",
+              state: null,
+            },
+            {
+              href: "/past-papers", cta: "home_pillar_past_papers", label: "Past Papers",
+              eyebrow: "Real exams",
+              body: "Sit a real paper, get it marked against the mark scheme, and see exactly where the marks went.",
+              state: null,
+            },
+            {
+              href: "/exam-builder", cta: "home_pillar_exam_builder", label: "Exam Builder",
+              eyebrow: "In development",
+              body: "Assemble a paper around the topics you are weakest on. Not built yet — the page explains what it will do.",
+              state: "In development",
+            },
+            {
+              href: "/tuition", cta: "home_pillar_tuition", label: "Online Tuition",
+              eyebrow: "Taught live",
+              body: "Small-group and one-to-one teaching, with the platform, marking and progress tracking included.",
+              state: null,
+            },
+          ].map((p) => (
+            <Link
+              key={p.href}
+              href={p.href}
+              data-cta={p.cta}
+              className="flex h-full flex-col justify-between gap-4 rounded-xl border border-ink/10 bg-snow p-5 transition-all duration-300 hover:border-ink/30 motion-safe:hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            >
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45">
+                  {p.eyebrow}
+                </p>
+                <h3 className="font-display mt-2 text-xl font-medium tracking-tight">{p.label}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-ink/70">{p.body}</p>
+              </div>
+              <p className="text-sm font-medium text-ink">
+                {p.state ? `${p.state} \u2192` : "Open \u2192"}
+              </p>
+            </Link>
+          ))}
+        </div>
+      </Section>
+
       {/* ── 4b. capability strip (§2, restated) ──────────────────────────
           ⚠ IT HAS A HEADING NOW, AND THAT IS THE HALF OF §2 THAT WAS MISSING.
           The strip was an unlabelled row of chips between the hero and the

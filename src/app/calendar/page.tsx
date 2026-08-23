@@ -133,8 +133,20 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
 
       <main className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
         <header className="mb-8">
+          {/* ⚠ §47 — CALENDAR IS PART OF ONLINE TUITION, AND NOW SAYS SO. It
+              lost its permanent header slot because it is a tuition feature,
+              not a fifth product; without a way back it would read as
+              orphaned instead of relocated. The route itself is unchanged —
+              bookmarks, deep links and every existing CTA still land here. */}
           <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink/50">
-            Ailemy
+            <Link
+              href="/tuition"
+              className="underline-offset-4 transition-colors hover:text-ink hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            >
+              Online Tuition
+            </Link>
+            <span aria-hidden> / </span>
+            <span className="text-ink/70">Calendar</span>
           </p>
           <h1 className="font-display mt-3 text-3xl font-medium tracking-tight sm:text-4xl">
             Calendar

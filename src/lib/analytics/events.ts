@@ -23,6 +23,28 @@
  */
 
 export const CTA_SOURCES = [
+  /**
+   * ⚠ NAVIGATION AND THE HOMEPAGE PILLARS (§39, §25). The header was
+   * simplified from six destinations to four on the argument that the four
+   * are what students actually use — an argument that can only be checked
+   * against click data, so every one of them reports.
+   *
+   * Nav and pillar are SEPARATE VALUES for the same destination on purpose: a
+   * student who clicked Resources in the header was navigating, one who
+   * clicked the homepage pillar was still deciding what Ailemy is. Folding
+   * them together would answer neither question.
+   */
+  "nav_resources",
+  "nav_past_papers",
+  "nav_exam_builder",
+  "nav_tuition",
+  "nav_subject_chemistry",
+  "nav_subject_biology",
+  "nav_subject_physics",
+  "home_pillar_resources",
+  "home_pillar_past_papers",
+  "home_pillar_exam_builder",
+  "home_pillar_tuition",
   "hero_start_practising",
   "hero_live_tuition",
   "floating_start_learning",

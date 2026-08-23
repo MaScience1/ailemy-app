@@ -7,6 +7,7 @@ import { AnnouncementBar } from "@/components/public/AnnouncementBar";
 import { getNavSession } from "@/lib/auth/nav-session";
 import { ctaFor } from "@/lib/public/catalogue";
 import { loadCohorts } from "@/lib/public/readers";
+import { availabilityFor, availabilityLabel } from "@/lib/tuition/availability";
 import { offersCurrencyChoice } from "@/lib/public/currency";
 import { currentCurrency } from "@/lib/public/currency-server";
 import { CohortPrice } from "@/components/public/CohortPrice";
@@ -146,6 +147,45 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
               See the current intensive →
             </Link>
           </p>
+        </section>
+
+        {/* ── §30 — TUITION BY SUBJECT, DERIVED ─────────────────────────
+            ⚠ NOTHING HERE IS TYPED. Each row asks availabilityFor() against
+            the cohorts this page already loaded, so a subject's line changes
+            when the data changes and not when someone remembers to edit it.
+            Today that yields "Register interest" for Chemistry — three real,
+            dated cohorts with no payment link yet — and "Not running yet" for
+            Biology and Physics, which have no cohort at all. */}
+        <section className="mt-14 border-t border-ink/10 pt-10" aria-labelledby="by-subject">
+          <h2 id="by-subject" className="font-display text-xl font-medium">
+            Tuition by subject
+          </h2>
+          <ul className="mt-5 grid gap-2 sm:grid-cols-3">
+            {["chemistry", "biology", "physics"].map((slug) => {
+              const a = availabilityFor(slug, cohorts);
+              return (
+                <li
+                  key={slug}
+                  className="rounded-lg border border-ink/10 bg-snow px-4 py-3.5"
+                >
+                  <p className="text-sm font-medium capitalize text-ink">{slug}</p>
+                  <p className="mt-1 text-xs text-ink/65">{availabilityLabel(a)}</p>
+                  <p className="font-mono mt-1.5 text-[10px] uppercase tracking-[0.14em] text-ink/40">
+                    {a.cohorts > 0
+                      ? `${a.cohorts} cohort${a.cohorts === 1 ? "" : "s"} listed`
+                      : "no cohort listed"}
+                  </p>
+                  {a.state !== "enrolling" && (
+                    <p className="mt-2 text-xs">
+                      <Link href="/tuition/interest" className="underline underline-offset-2">
+                        Register interest →
+                      </Link>
+                    </p>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
         </section>
 
         {/* ⚠ OFF-MENU, AND BELOW THE COHORTS (§24) — present, but not priced
