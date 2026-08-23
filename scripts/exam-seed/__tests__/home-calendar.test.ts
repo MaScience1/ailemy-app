@@ -250,16 +250,29 @@ console.log("\n── PLACEMENT — hierarchy stays intact ──");
    */
   const cta = (name: string) => code.indexOf(`data-cta="${name}"`);
   t("both hero CTAs are present and named for the funnel",
-    cta("hero_start_practising") > 0 && cta("hero_live_tuition") > 0);
+    cta("hero_start_free_clicked") > 0 && cta("hero_book_tuition_clicked") > 0);
   t("…and the copy and CTAs precede it in the DOM",
-    cta("hero_start_practising") < at("hero-calendar")
-    && cta("hero_live_tuition") < at("hero-calendar"));
+    cta("hero_start_free_clicked") < at("hero-calendar")
+    && cta("hero_book_tuition_clicked") < at("hero-calendar"));
   t("…so the hero still leads, and subjects follow it",
     at("hero-calendar") < at("subjects") && at("subjects") < at("tuition"));
   t("the two-column split is at lg (1024px), stacking below it",
     /lg:grid-cols-\[minmax\(0,1fr\)_480px\]/.test(code));
-  t("…and the card is vertically centred against the copy",
-    /lg:items-center/.test(code));
+  /**
+   * ⚠ THIS ASSERTION INVERTED, AND THE REASON MATTERS MORE THAN THE VALUE.
+   * It used to require lg:items-center, because the calendar card was the
+   * SHORTER column and centring stopped it hanging off the top of the copy.
+   * The conversion build added a tuition heading and two actions above the
+   * card, which made the right column the TALLER one — and centring then
+   * answered by pushing the h1 84px down the page, opening an empty top-left
+   * corner on the first screen. Measured, not guessed.
+   *
+   * So the invariant was never "centre it"; it was "neither column hangs".
+   * With the right column taller, top alignment is what satisfies it, and it
+   * also puts the headline and "Learn live with an expert" on the same line.
+   */
+  t("…and the two columns start together, so neither hangs below the other",
+    /lg:items-start/.test(code) && !/lg:items-center/.test(code));
 }
 
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);

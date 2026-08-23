@@ -187,7 +187,7 @@ export function Calendar(props: CalendarProps) {
               {props.jumpToISO && (
                 <Link
                   href={href({ date: props.jumpToISO, view: state.view })}
-                  data-cta="calendar_explore"
+                  data-cta="hero_calendar_clicked"
                   className="text-sm font-medium underline underline-offset-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                 >
                   {props.jumpToLabel ?? "Jump to the first teaching week"} →

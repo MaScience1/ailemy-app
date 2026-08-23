@@ -25,6 +25,8 @@ import {
   type Cohort, type Subject,
 } from "@/lib/public/catalogue";
 import { loadCohorts } from "@/lib/public/readers";
+import { groupOffer, oneToOneOffer, heroTuitionOffer } from "@/lib/tuition/availability";
+import { CHECKOUT_BUILT, stripeConfig } from "@/lib/booking/config";
 import { offersCurrencyChoice, type Currency } from "@/lib/public/currency";
 import { currentCurrency } from "@/lib/public/currency-server";
 import { CohortPrice } from "@/components/public/CohortPrice";
@@ -74,6 +76,32 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
   const session = await getNavSession();
   const params = await searchParams;
   const { data: cohorts } = await loadCohorts();
+
+  /**
+   * ⚠ §2 — EVERY TUITION WORD ON THIS PAGE IS DERIVED, NOT TYPED.
+   * The brief asked for "Book tuition" and "Book 1-to-1". Neither is true
+   * today: CHECKOUT_BUILT is false, Stripe holds no keys, and every cohort is
+   * `interest` with no payment link. These three calls decide the wording, so
+   * the day a link lands the homepage changes with no code edit — and so the
+   * hero cannot contradict the calendar component, which already says out loud
+   * that it takes no bookings.
+   *
+   * ⚠ sellableTimes IS 0 HERE ON PURPOSE, NOT AS A GUESS. Loading the 1-to-1
+   * package list into the hero to compute a label would put a query on the
+   * critical path (§47) to answer a question `canBuy` already gates on
+   * CHECKOUT_BUILT — false — so the product of the AND is 0 either way. If
+   * checkout ever ships, this is the named place that has to start counting.
+   */
+  const group = groupOffer(cohorts);
+  const oneToOne = oneToOneOffer({
+    checkoutBuilt: CHECKOUT_BUILT,
+    stripeConfigured: stripeConfig().configured,
+    sellableTimes: 0,
+    // The homepage does not read a credit balance; a student who holds one
+    // sees the true offer on /tuition/one-to-one, which does.
+    viewerCanRedeem: false,
+  });
+  const tuition = heroTuitionOffer(group, oneToOne);
   const chemistryCohorts = cohorts.filter((c) => c.subject === "chemistry");
   const { currency } = await currentCurrency();
   const showToggle = offersCurrencyChoice(chemistryCohorts);
@@ -237,10 +265,24 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           headline, because requirement 7 is that the copy must not reflow
           awkwardly and a third line of 60px type is exactly that.
 
-          ⚠ items-center, so the card is vertically centred against the copy
-          rather than hanging off the top of a taller column. */}
-      <header className="mx-auto max-w-6xl px-6 pt-16 pb-14 sm:pt-24 sm:pb-20">
-        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_480px] lg:items-center lg:gap-10">
+          ⚠ items-START, NOT items-center, AND THAT CHANGED IN THIS BUILD.
+          Centring was right while the right column was the shorter one — the
+          card hung level with the middle of the copy. §7 then added the
+          "Learn live with an expert" heading and two actions ABOVE the card,
+          making the right column the taller one, and centring answered by
+          pushing the headline 84px DOWN the page. That is the opposite of §2,
+          which exists to move the hero up, and it opened exactly the empty
+          top-left corner §2 was written to close.
+
+          Aligned to the top, the headline and the tuition heading start on the
+          same line, which is also the balance §12 asks for. */}
+      {/* ⚠ §2 — 24px OFF THE PHONE, 32px OFF THE DESKTOP. pt-16/sm:pt-24 left the
+          headline sitting low enough that the first screen read as mostly empty
+          above it. pt-10/sm:pt-16 is inside the brief's 20–35px range at both
+          breakpoints and still clears the header by a full step of the spacing
+          scale — the hero is moved up, not jammed against the nav. */}
+      <header className="mx-auto max-w-6xl px-6 pt-10 pb-10 sm:pt-16 sm:pb-12">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_480px] lg:items-start lg:gap-10">
         <div>
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink/50">
           Pearson Edexcel · GCSE · International GCSE · IAL
@@ -271,18 +313,22 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         <div className="mt-9 flex flex-wrap gap-3">
           <Link
             href={session ? "/profile" : "/past-papers"}
-            data-cta="hero_start_practising"
+            data-cta="hero_start_free_clicked"
             className="group rounded-full bg-ink px-6 py-3 text-sm font-medium text-parchment transition-colors duration-200 hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
             {session ? "Continue studying" : "Start practising free"}{" "}
             <span aria-hidden className="inline-block transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">→</span>
           </Link>
+          {/* ⚠ §5 — THE LABEL COMES FROM heroTuitionOffer, NOT FROM THE BRIEF.
+              §5 prefers "Book tuition →" "if the booking experience is
+              sufficiently functional". It is not, so this reads what is true
+              and becomes "Book tuition" by itself the day that changes. */}
           <Link
-            href="/tuition"
-            data-cta="hero_live_tuition"
+            href={tuition.href}
+            data-cta="hero_book_tuition_clicked"
             className="group rounded-full border border-ink/20 px-6 py-3 text-sm font-medium transition-colors duration-200 hover:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
-            View live tuition{" "}
+            {tuition.label}{" "}
             <span aria-hidden className="inline-block transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">→</span>
           </Link>
         </div>
@@ -292,6 +338,45 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
             the DOM is copy → CTAs → card, which is the reading order a phone
             gets for free and the one a screen reader gets everywhere. */}
         <div id="hero-calendar" className="lg:justify-self-end">
+          {/* ── §7/§38 — WHAT THE CALENDAR IS FOR, SAID BEFORE IT ────────────
+              ⚠ THIS LIVES HERE, NOT INSIDE HeroCalendar. §14 forbids a second
+              calendar, and the surest way to grow one is to start editing the
+              shared component for one caller's needs. The card keeps rendering
+              the same schedule /calendar and /tuition render; the homepage adds
+              its own framing above it.
+
+              ⚠ BOTH LABELS ARE DERIVED (§2). "Book a 1-to-1 session or reserve
+              your place" was the requested copy; reserving a place is not
+              something this product can do today, so the sentence says what the
+              two links actually lead to and the links name their own state. */}
+          <div className="mb-4">
+            <h2 className="font-display text-xl font-medium tracking-tight">
+              Learn live with an expert.
+            </h2>
+            <p className="mt-1.5 text-sm leading-snug text-ink/65">
+              {tuition.bookable
+                ? "Book a 1-to-1 session, or take a place in an upcoming group lesson."
+                : "See real 1-to-1 availability and the group lessons running now."}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link
+                href={oneToOne.href}
+                data-cta="hero_book_one_to_one_clicked"
+                className="group/o inline-flex items-center gap-1 rounded-full border border-ink/20 px-3.5 py-2 text-[13px] font-medium transition-colors duration-200 hover:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                {oneToOne.label}
+                <span aria-hidden className="transition-transform duration-200 motion-safe:group-hover/o:translate-x-0.5">→</span>
+              </Link>
+              <Link
+                href={group.href}
+                data-cta="hero_group_tuition_clicked"
+                className="group/g inline-flex items-center gap-1 rounded-full border border-ink/20 px-3.5 py-2 text-[13px] font-medium transition-colors duration-200 hover:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                {group.label}
+                <span aria-hidden className="transition-transform duration-200 motion-safe:group-hover/g:translate-x-0.5">→</span>
+              </Link>
+            </div>
+          </div>
           <HeroCalendarCard
             events={calendarEvents}
             state={calendarState}
@@ -304,6 +389,125 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         </div>
         </div>
       </header>
+
+      {/* ── 4a. the four products (§16, §17) ─────────────────────────────
+          ============================================================
+          ⚠ MOVED DIRECTLY BELOW THE HERO, AHEAD OF THE SUBJECT CARDS
+          ============================================================
+          §16 asks for the product explanation immediately after the hero, and
+          §18's five-second test is why: a visitor who has just read "Learn it.
+          Practise it. Get it marked." needs to know WHAT those four things are
+          before they are asked which science they study. The subject cards did
+          that job when subjects were the first question; they are now the
+          second, and they still sit directly underneath.
+
+          These four are the same four as the nav, in the same order, so the
+          homepage and the header cannot tell different stories.
+
+          ⚠ NEUTRAL, NOT COLOURED (§17). Subject colours mean subjects. Giving
+          Resources a hue of its own would make four products look like four
+          more subjects.
+
+          ⚠ EXAM BUILDER SAYS "IN DEVELOPMENT" HERE FOR THE SAME REASON ITS
+          PAGE DOES. A pillar that reads like the other three would be the
+          fourth working product this site does not have. */}
+      <Section id="products" title="Four ways to use Ailemy">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              href: "/resources", cta: "pillar_resources_clicked", label: "Resources",
+              eyebrow: "Learn and revise",
+              body: "Lessons, revision notes, flashcards, definitions, formulae and worked examples.",
+              action: "Explore Resources",
+            },
+            {
+              href: "/past-papers", cta: "pillar_past_papers_clicked", label: "Past Papers",
+              eyebrow: "Prepare with real exams",
+              body: "Work through real papers, practise exam technique, and have your answers marked against the mark scheme.",
+              action: "Explore Past Papers",
+            },
+            {
+              href: "/exam-builder", cta: "pillar_exam_builder_clicked", label: "Exam Builder",
+              eyebrow: "Practise exactly what you need",
+              body: "Choose topics, difficulty, question styles, maths demand and paper length.",
+              /* ⚠ NOT "Build an Exam →" (§16). The engine does not exist; the
+                 page it opens says so in its first sentence. A pillar promising
+                 the verb would be the fake product /exam-builder was written to
+                 avoid, three sections higher up the same page. */
+              action: "In development",
+            },
+            {
+              href: "/tuition", cta: "pillar_online_tuition_clicked", label: "Online Tuition",
+              eyebrow: "Learn live",
+              /* ⚠ §2 — "or book available 1-to-1 tuition" was the requested
+                 copy; booking is not live, so the sentence tracks the offer. */
+              body: tuition.bookable
+                ? "Join a group lesson or book available 1-to-1 tuition."
+                : "Small-group lessons and 1-to-1 teaching, with real times you can see before you commit.",
+              action: "View Online Tuition",
+            },
+          ].map((p) => (
+            <Link
+              key={p.href}
+              href={p.href}
+              data-cta={p.cta}
+              className="flex h-full flex-col justify-between gap-4 rounded-xl border border-ink/10 bg-snow p-5 transition-all duration-300 hover:border-ink/30 motion-safe:hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            >
+              <div>
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45">
+                  {p.eyebrow}
+                </p>
+                <h3 className="font-display mt-2 text-xl font-medium tracking-tight">{p.label}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-ink/70">{p.body}</p>
+              </div>
+              <p className="text-sm font-medium text-ink">
+                {p.action} <span aria-hidden>{"\u2192"}</span>
+              </p>
+            </Link>
+          ))}
+        </div>
+      </Section>
+
+      {/* ── 4a-ii. trust strip (§29) ──────────────────────────────────────
+          ============================================================
+          ⚠ FIVE CLAIMS, EVERY ONE OF THEM CHECKABLE TODAY
+          ============================================================
+          §29 lists what is NOT allowed here — student counts, pass rates,
+          grade improvements, testimonials — and this codebase has no data for
+          any of them. What is left is what Ailemy actually is, and each line
+          below can be pointed at something in the repository:
+
+            · specification-mapped — courses carry units, topics and spec
+              points, and the Resources pages count them
+            · mark-scheme-informed — marking runs against the real scheme; the
+              reconcile suite exists to keep it honest
+            · every answer marked — the demo two sections down does it live
+            · progress tracked — attempts and marks persist per student
+            · built by subject specialists — the teachers section below
+
+          ⚠ IT IS A ROW OF WORDS, NOT A ROW OF BADGES. Parents read this strip;
+          a line of award-shaped graphics with nothing behind them is exactly
+          the advertising clutter §29 warns against. */}
+      <section aria-label="What Ailemy is" className="border-t border-ink/10">
+        <div className="mx-auto max-w-6xl px-6 py-6">
+          <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 sm:gap-x-10">
+            {[
+              "Specification-mapped",
+              "Mark-scheme-informed",
+              "Every answer marked",
+              "Progress tracked",
+              "Built by subject specialists",
+            ].map((claim) => (
+              <li
+                key={claim}
+                className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink/45"
+              >
+                {claim}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
 
       {/* ── 4. subject selector ──────────────────────────────────────────
           ============================================================
@@ -337,67 +541,73 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         </div>
       </Section>
 
-      {/* ── 4a. the four products (§25, §48) ─────────────────────────────
+      {/* ── 4d. audience pathways (§20, §21, §22, §23) ────────────────────
           ============================================================
-          ⚠ ADDED BESIDE THE SUBJECT CARDS, NOT INSTEAD OF THEM (§58)
+          ⚠ BELOW THE SUBJECTS, NOT BESIDE THE HERO — AND THAT IS §20
           ============================================================
-          The header now offers four things, and a visitor who has just been
-          told "do you teach my subject?" needs the second answer: what is
-          here once the answer is yes. These four are the same four as the
-          nav, in the same order, so the homepage and the header cannot tell
-          different stories about what this product is.
+          §20 puts this after the product pillars and says it "should not
+          compete with the main hero"; §24 forbids stacking audience cards into
+          the first viewport. So it sits here, after a visitor has seen what
+          Ailemy does and which sciences it covers, at the point a parent or a
+          teacher is deciding whether this is for them (§19, §37).
 
-          ⚠ EXAM BUILDER SAYS "IN DEVELOPMENT" HERE FOR THE SAME REASON ITS
-          PAGE DOES. A pillar that reads like the other three would be the
-          fourth working product this site does not have. */}
-      <Section id="products" title="Four ways to use Ailemy">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {[
-            {
-              href: "/resources", cta: "home_pillar_resources", label: "Resources",
-              eyebrow: "Study library",
-              body: "Lessons, revision notes cards, flashcards and worked practice, organised by course and topic.",
-              state: null,
-            },
-            {
-              href: "/past-papers", cta: "home_pillar_past_papers", label: "Past Papers",
-              eyebrow: "Real exams",
-              body: "Sit a real paper, get it marked against the mark scheme, and see exactly where the marks went.",
-              state: null,
-            },
-            {
-              href: "/exam-builder", cta: "home_pillar_exam_builder", label: "Exam Builder",
-              eyebrow: "In development",
-              body: "Assemble a paper around the topics you are weakest on. Not built yet — the page explains what it will do.",
-              state: "In development",
-            },
-            {
-              href: "/tuition", cta: "home_pillar_tuition", label: "Online Tuition",
-              eyebrow: "Taught live",
-              body: "Small-group and one-to-one teaching, with the platform, marking and progress tracking included.",
-              state: null,
-            },
-          ].map((p) => (
-            <Link
-              key={p.href}
-              href={p.href}
-              data-cta={p.cta}
-              className="flex h-full flex-col justify-between gap-4 rounded-xl border border-ink/10 bg-snow p-5 transition-all duration-300 hover:border-ink/30 motion-safe:hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-            >
-              <div>
-                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45">
-                  {p.eyebrow}
-                </p>
-                <h3 className="font-display mt-2 text-xl font-medium tracking-tight">{p.label}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-ink/70">{p.body}</p>
-              </div>
-              <p className="text-sm font-medium text-ink">
-                {p.state ? `${p.state} \u2192` : "Open \u2192"}
-              </p>
-            </Link>
-          ))}
+          ⚠ THE TEACHER CARD PROMISES NO TEACHER TOOLS, BECAUSE THERE ARE NONE.
+          §23 offers "Explore teacher tools →" — conditionally, "if such
+          functionality exists". There is no teacher dashboard, no class list,
+          no assignment flow and no analytics surface in this codebase. What a
+          teacher CAN use today is exactly what a student uses: the
+          specification-mapped resources and the real papers. That is what it
+          says, and it is why the link goes to /resources rather than to a
+          page that would have to be invented to receive it. */}
+      <section aria-labelledby="audience-heading" className="border-t border-ink/10">
+        <div className="mx-auto max-w-6xl px-6 py-12 sm:py-14">
+          <h2 id="audience-heading" className="font-mono text-xs uppercase tracking-[0.2em] text-ink/55">
+            Using Ailemy as a…
+          </h2>
+          <ul className="mt-5 grid gap-3 sm:grid-cols-3">
+            {[
+              {
+                who: "Student",
+                cta: "audience_student_clicked",
+                href: "/resources",
+                body: "Learn a topic, revise it with notes and flashcards, practise it, and get every answer marked.",
+                action: "Start learning free",
+              },
+              {
+                who: "Parent",
+                cta: "audience_parent_clicked",
+                href: "/tuition",
+                body: "Qualified teaching to a published timetable, with the specification, the marking and the progress all visible.",
+                action: "See how tuition works",
+              },
+              {
+                who: "Teacher",
+                cta: "audience_teacher_clicked",
+                href: "/resources",
+                /* ⚠ NO CLASS LISTS, NO ASSIGNMENTS, NO ANALYTICS — none exist. */
+                body: "Specification-mapped lessons, real past papers and mark-scheme-informed marking you can point a class at. Teacher tools are not built yet.",
+                action: "Browse the resources",
+              },
+            ].map((a) => (
+              <li key={a.who}>
+                <Link
+                  href={a.href}
+                  data-cta={a.cta}
+                  className="group flex h-full flex-col justify-between gap-4 rounded-xl border border-ink/10 bg-snow p-5 transition-all duration-200 ease-out hover:border-ink/30 motion-safe:hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                >
+                  <div>
+                    <h3 className="font-display text-lg font-medium tracking-tight">{a.who}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-ink/70">{a.body}</p>
+                  </div>
+                  <p className="text-sm font-medium text-ink">
+                    {a.action} <span aria-hidden className="inline-block transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">{"\u2192"}</span>
+                  </p>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
-      </Section>
+      </section>
 
       {/* ── 4b. capability strip (§2, restated) ──────────────────────────
           ⚠ IT HAS A HEADING NOW, AND THAT IS THE HALF OF §2 THAT WAS MISSING.
@@ -720,14 +930,40 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         <HomeFaq />
       </Section>
 
-      {/* ── 13. final CTA ─────────────────────────────────────────────── */}
+      {/* ── 13. final CTA ───────────────────────────────────────────────
+          ⚠ THE TWO PATHS SWAPPED, AND §33 IS WHY. Tuition held the filled
+          button while the free platform took the outline — the reverse of the
+          hero, on the same page, and the reverse of what the funnel wants: the
+          platform is free, needs no card, and is what most readers who got
+          this far can act on tonight. The hero made this argument already; the
+          last ask was still arguing the other way.
+
+          ⚠ NEITHER BUTTON WAS TRACKED. Both were plain <Link>s with no
+          data-cta, so the final ask on the page — the one whose whole job is
+          conversion — reported nothing. That is the same defect as the four
+          lesson CTAs that emitted no clicks for weeks, at the bottom of the
+          funnel rather than the middle.
+
+          ⚠ AND "Join live tuition" IS NOT A THING A READER CAN DO (§2). It
+          reads as a booking; there is none. The label is derived, like every
+          other tuition word on this page. */}
       <Section id="start" title="Ready to improve your grade?">
         <div className="flex flex-wrap gap-3">
-          <Link href="/tuition" className="rounded-full bg-ink px-6 py-3 text-sm font-medium text-parchment hover:bg-ink/90">
-            Join live tuition →
+          <Link
+            href={session ? "/profile" : "/signup"}
+            data-cta="final_cta"
+            className="group rounded-full bg-ink px-6 py-3 text-sm font-medium text-parchment transition-colors duration-200 hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+          >
+            {session ? "Continue studying" : "Start learning free"}{" "}
+            <span aria-hidden className="inline-block transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">→</span>
           </Link>
-          <Link href="/past-papers" className="rounded-full border border-ink/20 px-6 py-3 text-sm font-medium hover:border-ink/40">
-            Explore free resources →
+          <Link
+            href={tuition.href}
+            data-cta="hero_book_tuition_clicked"
+            className="group rounded-full border border-ink/20 px-6 py-3 text-sm font-medium transition-colors duration-200 hover:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+          >
+            {tuition.label}{" "}
+            <span aria-hidden className="inline-block transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">→</span>
           </Link>
         </div>
       </Section>
