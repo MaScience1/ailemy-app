@@ -24,6 +24,15 @@
 
 export const CTA_SOURCES = [
   /**
+   * The merged proof section. Three sections became one, so the three links
+   * out of it are named separately — otherwise a click on "browse past
+   * papers" and one on "find something to study" would be indistinguishable
+   * and the section could not be judged.
+   */
+  "proof_past_papers",
+  "proof_try_marking",
+  "proof_resources",
+  /**
    * §61 — the hero's availability toggle. Two values so we can tell which
    * product a visitor was looking at when they left the hero; the booking
    * click itself reuses tuition_booking_clicked below.

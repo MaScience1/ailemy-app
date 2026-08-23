@@ -623,30 +623,126 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         </p>
       </Section>
 
-      {/* ── 9. progress ───────────────────────────────────────────────── */}
+      {/* ── PROOF: ONE SECTION WHERE THERE WERE THREE (§28, §30) ─────────
+          ============================================================
+          ⚠ MARKING, PROGRESS AND PAST PAPERS WERE THREE EXPLANATIONS OF ONE
+          IDEA, AND THE PAGE MADE A READER SCROLL THROUGH ALL THREE
+          ============================================================
+          "Understand the mark scheme", "Know exactly what you know" and
+          "Don't just download a past paper" each opened with a heading, a
+          lede and a bordered panel — 1,439px of page at 1440 and 1,690px on a
+          phone to say: sit a paper, see where the marks went, know what to do
+          next. That is one argument in three acts, and §30 is explicit that it
+          should not occupy three sections.
+
+          ⚠ THE PROGRESS BAR CHART IS GONE, DELIBERATELY, AND THAT IS §29.
+          It rendered "Atomic Structure 100% · Bonding 82% · Energetics 56% ·
+          Kinetics 31%" under an "Example view" label. Nobody has progress: the
+          completion tables are parked and unapplied, so those four numbers
+          were invented and the label was the only thing standing between them
+          and a claim. A dashboard captioned "sample data" is weaker than no
+          dashboard — it asks the reader to trust a picture of something that
+          does not exist yet. What progress DOES is said in words instead, and
+          the picture arrives when there is one to draw.
+
+          ⚠ NOTHING ELSE WAS DROPPED. Both past-paper routes, all four marking
+          steps and the progress claim are all still here, in a third of the
+          height. */}
       <Section
+        /* The one anchor of the three most likely to have been shared. */
         id="progress"
-        title="Know exactly what you know — and what still needs work."
-        lede="Specification-level progress, built from the questions you have actually attempted."
+        title="Know exactly where you stand."
+        lede="Ailemy does not just return a score. It shows the marks you earned, the ones you missed, and what to do about them."
       >
-        {/* ⚠ CLEARLY LABELLED AS AN EXAMPLE. These are not anyone's results. */}
-        <div className="rounded-lg border border-ink/10 bg-snow p-6 sm:p-8">
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink/40">
-            Example view · IAL Chemistry AS
-          </p>
-          <ul className="mt-5 space-y-3">
-            {[["Atomic Structure", 100], ["Bonding", 82], ["Energetics", 56], ["Kinetics", 31]].map(
-              ([topic, pct]) => (
-                <li key={topic as string} className="flex items-center gap-4">
-                  <span className="w-40 shrink-0 text-sm">{topic}</span>
-                  <span className="h-1.5 flex-1 rounded-full bg-ink/10">
-                    <span className="block h-full rounded-full bg-lime" style={{ width: `${pct}%` }} />
-                  </span>
-                  <span className="w-12 shrink-0 text-right font-mono text-xs text-ink/60">{pct}%</span>
-                </li>
-              ),
-            )}
-          </ul>
+        <div className="grid gap-4 lg:grid-cols-3">
+          {/* ── 1. sit the paper ─────────────────────────────────────── */}
+          <div className="rounded-lg border border-ink/10 bg-snow p-5">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/40">
+              Sit the paper
+            </p>
+            <h3 className="font-display mt-2 text-lg font-medium tracking-tight">
+              Don&rsquo;t just download it.
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-ink/70">
+              Answer question by question and have it marked against the mark scheme — or
+              open the original question paper, mark scheme and examiner report as PDFs.
+              Being better than a download repository does not mean removing the downloads.
+            </p>
+            <p className="mt-3 text-sm font-medium">
+              <Link
+                href="/past-papers"
+                data-cta="proof_past_papers"
+                /* ⚠ py-3.5 IS A TOUCH TARGET, NOT SPACING. Measured at 375px
+                   these rendered 17px tall; 17 + 14 + 14 = 45, and the
+                   cancelling negative margin means the type and the layout are
+                   unchanged. Same fix as the calendar's selection trail. */
+                className="-my-3.5 inline-block py-3.5 underline underline-offset-4 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                Browse past papers →
+              </Link>
+            </p>
+          </div>
+
+          {/* ── 2. where the marks went ──────────────────────────────── */}
+          <div className="rounded-lg border border-ink/10 bg-snow p-5">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/40">
+              See the marks
+            </p>
+            <h3 className="font-display mt-2 text-lg font-medium tracking-tight">
+              The mark scheme, not just the topic.
+            </h3>
+            {/* All four steps kept — this is the substance of the claim. */}
+            <ol className="mt-2 space-y-1.5 text-sm leading-relaxed text-ink/70">
+              <li><span className="font-mono text-[10px] text-ink/40">01</span>&nbsp; Your answer, as you wrote it.</li>
+              <li><span className="font-mono text-[10px] text-ink/40">02</span>&nbsp; The phrase that earned the mark, highlighted.</li>
+              <li><span className="font-mono text-[10px] text-ink/40">03</span>&nbsp; The criterion it satisfied — or did not.</li>
+              <li><span className="font-mono text-[10px] text-ink/40">04</span>&nbsp; What would have earned the mark you missed.</li>
+            </ol>
+            <p className="mt-3 text-sm font-medium">
+              <Link
+                href="/#try"
+                data-cta="proof_try_marking"
+                /* ⚠ py-3.5 IS A TOUCH TARGET, NOT SPACING. Measured at 375px
+                   these rendered 17px tall; 17 + 14 + 14 = 45, and the
+                   cancelling negative margin means the type and the layout are
+                   unchanged. Same fix as the calendar's selection trail. */
+                className="-my-3.5 inline-block py-3.5 underline underline-offset-4 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                See it mark an answer →
+              </Link>
+            </p>
+          </div>
+
+          {/* ── 3. what to do next ───────────────────────────────────── */}
+          <div className="rounded-lg border border-ink/10 bg-snow p-5">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/40">
+              Know what is next
+            </p>
+            <h3 className="font-display mt-2 text-lg font-medium tracking-tight">
+              Progress at specification level.
+            </h3>
+            {/* ⚠ WORDS, NOT A CHART. See the header — nobody has progress yet,
+                so a bar chart here would be four invented percentages behind a
+                caption. This describes what the feature does, which is true. */}
+            <p className="mt-2 text-sm leading-relaxed text-ink/70">
+              Every marked answer is recorded against the specification point it tested, so
+              your topic strength is built from questions you actually attempted — not from
+              lessons you clicked through. It appears as you work.
+            </p>
+            <p className="mt-3 text-sm font-medium">
+              <Link
+                href="/resources"
+                data-cta="proof_resources"
+                /* ⚠ py-3.5 IS A TOUCH TARGET, NOT SPACING. Measured at 375px
+                   these rendered 17px tall; 17 + 14 + 14 = 45, and the
+                   cancelling negative margin means the type and the layout are
+                   unchanged. Same fix as the calendar's selection trail. */
+                className="-my-3.5 inline-block py-3.5 underline underline-offset-4 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                Find something to study →
+              </Link>
+            </p>
+          </div>
         </div>
       </Section>
 
@@ -669,54 +765,6 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
 
           ⚠ NO ROUTE WAS REMOVED. /chemistry, /biology, /physics and
           /tuition/interest all still resolve, and the guard checks them. */}
-
-      {/* ── 8. the mark scheme ────────────────────────────────────────── */}
-      <Section
-        id="marks"
-        title="Understand the mark scheme, not just the topic."
-        lede="Submit an answer. See where the marks were won and lost."
-      >
-        <div className="rounded-lg border border-ink/10 bg-snow p-6 sm:p-8">
-          <ol className="space-y-3 text-sm leading-relaxed text-ink/75">
-            <li><span className="font-mono text-[11px] text-ink/40">01</span>  Your answer, as you wrote it.</li>
-            <li><span className="font-mono text-[11px] text-ink/40">02</span>  The phrase that earned the mark, highlighted.</li>
-            <li><span className="font-mono text-[11px] text-ink/40">03</span>  The mark-scheme criterion it satisfied — or did not.</li>
-            <li><span className="font-mono text-[11px] text-ink/40">04</span>  What would have earned the mark you missed.</li>
-          </ol>
-        </div>
-      </Section>
-
-      {/* ── 7. interactive past papers ────────────────────────────────── */}
-      <Section
-        id="papers"
-        title="Don't just download a past paper. Do it."
-        lede="Choose a subject, qualification, unit and series — then sit it question by question."
-      >
-        <div className="grid gap-4 sm:grid-cols-2">
-          <InteractiveCard
-            href="/past-papers"
-            ariaLabel="Browse past papers — sit a paper interactively, question by question"
-            cta="Browse past papers"
-          >
-            <h3 className="font-display text-xl font-medium">Sit it interactively</h3>
-            <p className="mt-2 flex-1 text-sm leading-relaxed text-ink/70">
-              Answer question by question. Your responses are captured, marked against the
-              mark scheme, and turned into topic performance you can act on.
-            </p>
-          </InteractiveCard>
-          <InteractiveCard
-            href="/past-papers"
-            ariaLabel="View papers — question paper, mark scheme and examiner report as PDFs"
-            cta="View papers"
-          >
-            <h3 className="font-display text-xl font-medium">Or read the PDFs</h3>
-            <p className="mt-2 flex-1 text-sm leading-relaxed text-ink/70">
-              Question paper, mark scheme and examiner report remain one click away. Being
-              better than a download repository does not mean removing the downloads.
-            </p>
-          </InteractiveCard>
-        </div>
-      </Section>
 
       {/* ── 4. subject selector ──────────────────────────────────────────
           ============================================================
