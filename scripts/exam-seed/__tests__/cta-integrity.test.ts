@@ -50,7 +50,16 @@ t("the scan found source files at all (an empty sweep must not pass)", files.len
 const found = new Map<string, string[]>(); // value -> files
 for (const f of files) {
   const text = readFileSync(f, "utf8");
-  for (const m of text.matchAll(/data-cta=["'{`]?["']([a-z0-9_]+)["']/g)) {
+  /**
+   * ⚠ A data-cta CAN BE A FIELD RATHER THAN AN ATTRIBUTE, AND THE ORIGINAL
+   * SCAN COULD NOT SEE THOSE. The nav renders `data-cta={link.cta}` from a
+   * NAV_LINKS table, so the only literal in the file is `cta: "nav_resources"`.
+   * Matching attributes alone left eleven values declared-but-unscanned, which
+   * meant a TYPO in the table — `nav_resorces` — was invisible to this suite
+   * and silently discarded by Analytics.tsx at runtime. That is precisely the
+   * failure this file exists to prevent, reappearing one indirection later.
+   */
+  for (const m of text.matchAll(/(?:data-cta=["'{`]?["']|\bcta:\s*")([a-z0-9_]+)["']/g)) {
     const v = m[1];
     found.set(v, [...(found.get(v) ?? []), f.replace(process.cwd() + "/", "")]);
   }

@@ -32,14 +32,32 @@ const FOOTER_GROUPS: { heading: string; links: FooterLink[] }[] = [
       { label: "Physics", href: "/physics" },
     ],
   },
+  /**
+   * ⚠ SPLIT ALONG THE FOUR PRODUCTS THE HEADER NOW USES (§33, §50). The footer
+   * carries the detail the header sheds — Calendar and 1-to-1 left the primary
+   * row and land here, under the product they belong to. "Live Tuition"
+   * becomes "Online Tuition" so the product has ONE name everywhere; the page
+   * it points at keeps its own marketing voice.
+   *
+   * ⚠ EVERY LINK HERE RESOLVES TO A PAGE THAT EXISTS. route-integrity.test.ts
+   * fails the build on any that does not, which is why nothing aspirational
+   * is listed.
+   */
   {
     heading: "Study",
     links: [
       { label: "Resources", href: "/resources" },
       { label: "Past Papers", href: "/past-papers" },
-      { label: "Live Tuition", href: "/tuition" },
-      { label: "Calendar", href: "/calendar" },
+      { label: "Exam Builder", href: "/exam-builder" },
+    ],
+  },
+  {
+    heading: "Online Tuition",
+    links: [
+      { label: "Overview", href: "/tuition" },
       { label: "1-to-1 Tuition", href: "/tuition/one-to-one" },
+      { label: "Timetable & Calendar", href: "/calendar" },
+      { label: "Intensive courses", href: "/intensive" },
     ],
   },
   {

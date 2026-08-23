@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { Menu, Search as SearchIcon, X } from "lucide-react";
 
 import { navToneVars, type NavToneKey } from "@/lib/design/subject-colours";
 import { AccountMenu, AccountPanel } from "@/components/site/AccountMenu";
@@ -52,7 +52,28 @@ import type { NavSession } from "@/lib/auth/nav-session";
  * in AccountMenu.tsx now, alongside the only two places that render it.
  */
 
-type NavLink = { label: string; href: string; tone: NavToneKey };
+type NavLink = {
+  label: string;
+  href: string;
+  tone: NavToneKey;
+  /**
+   * Which route prefixes count as "inside" this product (§34). A student on
+   * /calendar must see Online Tuition lit — the whole point of moving Calendar
+   * under Tuition is that it stops feeling like a separate product.
+   */
+  activePrefixes: string[];
+  /** A restrained honesty marker. See EXAM BUILDER below. */
+  marker?: string;
+  /**
+   * ⚠ §39 — EVERY PRIMARY DESTINATION IS INSTRUMENTED, AND EVERY VALUE HERE
+   * MUST BE DECLARED IN CTA_SOURCES. Analytics.tsx filters each data-cta
+   * against that list and SILENTLY DROPS anything absent, so an undeclared
+   * value is a link that looks instrumented and reports nothing — which is
+   * how four lesson-practice CTAs emitted no clicks for weeks.
+   * cta-integrity.test.ts is what stops it happening a second time.
+   */
+  cta: string;
+};
 
 /**
  * ============================================================================
@@ -131,33 +152,74 @@ const TAB_MOBILE = [
  * until they are complete, loses every visitor who came looking for them.
  */
 const NAV_LINKS: NavLink[] = [
-  { label: "Chemistry", href: "/chemistry", tone: "chemistry" },
-  { label: "Biology", href: "/biology", tone: "biology" },
-  { label: "Physics", href: "/physics", tone: "physics" },
-  // ⚠ GOLD, NOT A FOURTH SUBJECT HUE. These are cross-subject platform
-  // features, and the homepage capability strip already renders the words
-  // "Past papers" and "Live tuition" as gold capsules — the same label gets
-  // the same treatment in both places. See NAV_TONES for the full reasoning.
-  { label: "Past Papers", href: "/past-papers", tone: "gold" },
-  { label: "Live Tuition", href: "/tuition", tone: "gold" },
-  // ⚠ §3 — Calendar is a permanent top-level entry, not a link buried in the
-  // tuition page. It is where a student checks when a class actually is.
-  { label: "Calendar", href: "/calendar", tone: "gold" },
-  // ⚠ REVERSED 2026-08-23, DELIBERATELY, AND THE OLD REASONING IS WORTH
-  // KEEPING. This list previously excluded "Resources" on the argument that
-  // resources are discovered THROUGH a subject, and that a second flatter
-  // route to the same material leaves two navigation models half-maintained.
-  // That argument was sound when /resources was a three-card chooser.
-  //
-  // It stopped being true when Resources became a library with its own
-  // search, course pages, topic browsing and resource categories. A student
-  // revising does not think "Chemistry, then resources"; they think "where is
-  // everything for my course". The Resources brief calls it a first-class
-  // destination and says not to bury it, so it is here — and the subject path
-  // still works exactly as before, which is what keeps this from being two
-  // models rather than two doors onto one.
-  { label: "Resources", href: "/resources", tone: "gold" },
+  {
+    cta: "nav_resources",
+    label: "Resources",
+    href: "/resources",
+    tone: "gold",
+    // Lessons live under /learn and are reached THROUGH Resources — a student
+    // reading a lesson is inside "learn and revise", so Resources stays lit.
+    activePrefixes: ["/resources", "/learn"],
+  },
+  { cta: "nav_past_papers", label: "Past Papers", href: "/past-papers", tone: "gold", activePrefixes: ["/past-papers"] },
+  {
+    /**
+     * ⚠ EXAM BUILDER IS HERE AT FULL WEIGHT, WITH A "SOON" MARKER, AND THAT
+     * COMBINATION IS A DELIBERATE JUDGEMENT.
+     * ========================================================================
+     * The engine does not exist. The brief asks for a flagship top-level slot;
+     * the standing rule is that Ailemy does not ship dead CTAs. Both are
+     * satisfiable: the slot is full-size and never hidden behind a "More"
+     * menu, /exam-builder is a real page that explains the idea and hands the
+     * student two things that work TODAY, and the marker means nobody clicks
+     * it expecting a finished product.
+     *
+     * The alternative — a disabled item — was rejected: an unclickable entry
+     * in a four-item header is clutter in a brief whose entire purpose is
+     * removing clutter, and it would deny a student the working alternatives
+     * the page offers.
+     */
+    cta: "nav_exam_builder",
+    label: "Exam Builder",
+    href: "/exam-builder",
+    tone: "gold",
+    activePrefixes: ["/exam-builder"],
+    marker: "Soon",
+  },
+  {
+    /**
+     * ⚠ ONE TUITION ENTRY WHERE THERE WERE THREE (§36). "Live Tuition" and
+     * "Calendar" were separate permanent slots alongside three subjects;
+     * Calendar is a tuition feature and subjects are a dimension of every
+     * product, not products themselves. Nothing was deleted — /calendar,
+     * /intensive and every subject page still resolve, and all three light
+     * this tab or are reached from the homepage, Resources and the footer.
+     */
+    cta: "nav_tuition",
+    label: "Online Tuition",
+    href: "/tuition",
+    tone: "gold",
+    activePrefixes: ["/tuition", "/calendar", "/intensive", "/my-tuition"],
+  },
 ];
+
+/**
+ * Subjects, kept one tap away on mobile and in the footer (§2, §19, §53).
+ * They are NOT primary navigation: Chemistry is not a product beside Past
+ * Papers, it is a dimension of every product Ailemy has.
+ */
+const SUBJECT_LINKS: { label: string; href: string; tone: NavToneKey; cta: string }[] = [
+  { cta: "nav_subject_chemistry", label: "Chemistry", href: "/chemistry", tone: "chemistry" },
+  { cta: "nav_subject_biology", label: "Biology", href: "/biology", tone: "biology" },
+  { cta: "nav_subject_physics", label: "Physics", href: "/physics", tone: "physics" },
+];
+
+/** Is the current path inside this product area? (§34) */
+function isActive(pathname: string, link: NavLink): boolean {
+  return link.activePrefixes.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`),
+  );
+}
 
 /**
  * ⚠ RE-EXPORTED, NOT RE-DECLARED. This file used to carry its own
@@ -200,17 +262,46 @@ export function SiteNav({ session = null }: { session?: NavSession }) {
             border. Without it the group is 26px wider and the nav's balance
             against the logo shifts. */}
         <ul className="-mx-[13px] hidden items-center gap-[14px] text-sm font-medium text-ink/70 md:flex">
-          {NAV_LINKS.map((link) => (
-            <li key={link.href}>
-              <Link href={link.href} style={navToneVars(link.tone)} className={TAB}>
-                {link.label}
-              </Link>
-            </li>
-          ))}
+          {NAV_LINKS.map((link) => {
+            const active = isActive(pathname, link);
+            return (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  data-cta={link.cta}
+                  style={navToneVars(link.tone)}
+                  /* ⚠ aria-current CARRIES THE STATE, not the colour (§42).
+                     A student using a screen reader is told which product they
+                     are in; the underline reinforces it for everyone else. */
+                  aria-current={active ? "page" : undefined}
+                  className={`${TAB} ${active ? "text-ink underline decoration-2 underline-offset-[6px]" : ""}`}
+                >
+                  {link.label}
+                  {link.marker && (
+                    <span className="font-mono ml-1.5 align-[1px] text-[9px] uppercase tracking-[0.14em] text-ink/40">
+                      {link.marker}
+                    </span>
+                  )}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
 
         {/* Desktop right side: account menu when signed in, Login when not. */}
-        <div className="hidden items-center gap-5 md:flex">
+        <div className="hidden items-center gap-3 md:flex">
+          {/* ⚠ SEARCH POINTS AT THE SEARCH THAT EXISTS (§16). Resources owns
+              the only real search in the product; a header field that queried
+              nothing, or a second search index, would both be worse than a
+              short walk to the one that works. */}
+          <Link
+            href="/resources"
+            aria-label="Search resources"
+            style={navToneVars("neutral")}
+            className={`${TAB} text-ink/70`}
+          >
+            <SearchIcon className="h-4 w-4" aria-hidden="true" />
+          </Link>
           {session ? (
             /* ⚠ TAB IS PASSED IN, NOT IMPORTED BACK OUT. AccountMenu occupies
                the same slot as Login and must wear the same capsule, but this
@@ -219,13 +310,24 @@ export function SiteNav({ session = null }: { session?: NavSession }) {
                the drift TAB's own comment exists to prevent. */
             <AccountMenu session={session} capsuleClassName={TAB} />
           ) : (
-            <Link
-              href="/login"
-              style={navToneVars("neutral")}
-              className={`${TAB} text-sm font-medium text-ink/75`}
-            >
-              Login
-            </Link>
+            <>
+              <Link
+                href="/login"
+                style={navToneVars("neutral")}
+                className={`${TAB} text-sm font-medium text-ink/75`}
+              >
+                Login
+              </Link>
+              {/* ⚠ §18 — SHOWN ONLY WHEN SIGNED OUT. Offering "Start free" to
+                  somebody who already has an account is the small rudeness
+                  that tells them the product is not paying attention. */}
+              <Link
+                href="/signup"
+                className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-parchment transition-colors hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                Start free
+              </Link>
+            </>
           )}
         </div>
 
@@ -254,10 +356,43 @@ export function SiteNav({ session = null }: { session?: NavSession }) {
         >
           <div className="mx-auto w-full max-w-7xl px-6 py-6">
             <ul className="-mx-[13px] space-y-1 text-base font-medium text-ink">
-              {NAV_LINKS.map((link) => (
+              {NAV_LINKS.map((link) => {
+                const active = isActive(pathname, link);
+                return (
+                  <li key={link.href}>
+                    <Link
+                      href={link.href}
+                      data-cta={link.cta}
+                      onClick={closeMenu}
+                      style={navToneVars(link.tone)}
+                      aria-current={active ? "page" : undefined}
+                      className={`${TAB_MOBILE} ${active ? "text-ink underline decoration-2 underline-offset-[6px]" : ""}`}
+                    >
+                      {link.label}
+                      {link.marker && (
+                        <span className="font-mono ml-1.5 text-[9px] uppercase tracking-[0.14em] text-ink/40">
+                          {link.marker}
+                        </span>
+                      )}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {/* ⚠ SUBJECTS AS A SECONDARY GROUP, NOT A FIFTH PRODUCT (§19, §28).
+                They left the primary row because they are a dimension of every
+                product; they stay one tap away because "I want Chemistry" is
+                still how a lot of students think. */}
+            <p className="font-mono mt-5 px-[13px] text-[10px] uppercase tracking-[0.2em] text-ink/45">
+              Subjects
+            </p>
+            <ul className="-mx-[13px] mt-1 space-y-1 text-base font-medium text-ink">
+              {SUBJECT_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
+                    data-cta={link.cta}
                     onClick={closeMenu}
                     style={navToneVars(link.tone)}
                     className={TAB_MOBILE}
@@ -271,13 +406,22 @@ export function SiteNav({ session = null }: { session?: NavSession }) {
               {session ? (
                 <AccountPanel session={session} onNavigate={closeMenu} />
               ) : (
-                <Link
-                  href="/login"
-                  onClick={closeMenu}
-                  className="rounded-md border border-ink/15 px-4 py-2.5 text-center text-sm font-medium text-ink hover:bg-ink/[0.04]"
-                >
-                  Login
-                </Link>
+                <>
+                  <Link
+                    href="/login"
+                    onClick={closeMenu}
+                    className="rounded-md border border-ink/15 px-4 py-2.5 text-center text-sm font-medium text-ink hover:bg-ink/[0.04]"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/signup"
+                    onClick={closeMenu}
+                    className="rounded-md bg-ink px-4 py-2.5 text-center text-sm font-medium text-parchment hover:bg-ink/90"
+                  >
+                    Start free
+                  </Link>
+                </>
               )}
             </div>
           </div>
