@@ -108,6 +108,18 @@ export const EVENTS = [
   "exam_board_selected",
   "exam_board_unsure",
   "flagship_pathway_opened",
+  // ── flashcard notes (§51). Deck and card ORDINALS only — never card text,
+  //    never what a student saved, never anything identifying.
+  "notes_deck_opened",
+  "notes_card_viewed",
+  "notes_card_flipped",
+  "notes_next",
+  "notes_previous",
+  "notes_card_saved",
+  "notes_deck_completed",
+  "notes_fullscreen_opened",
+  "notes_fullscreen_closed",
+  "notes_practice_clicked",
 ] as const;
 export type EventName = (typeof EVENTS)[number];
 
@@ -147,4 +159,8 @@ export type EventProps = {
    *  two meanings is how a funnel quietly splits in half. */
   scope?: string;
   board?: string;
+  /** A deck id — catalogue vocabulary, not personal (§51). */
+  deck?: string;
+  /** Ordinal position in a deck. Never the card's content. */
+  cardIndex?: number;
 };

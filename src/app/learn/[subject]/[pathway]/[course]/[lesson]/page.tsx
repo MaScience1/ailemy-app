@@ -40,6 +40,8 @@ import {
   loadLessonNotes,
   loadWorkedExamples,
 } from "@/lib/lesson/content";
+import { loadDeckForLesson } from "@/lib/flashcards/store";
+import { DeckPreview } from "@/components/flashcards/DeckPreview";
 import type { LessonSectionKey } from "@/lib/lesson/sections.ts";
 import { createClient } from "@/lib/supabase/server";
 
@@ -230,12 +232,13 @@ async function LiveLesson({
    * The four loads run together — they are independent reads and the page
    * already makes more round-trips than it should.
    */
-  const [deck, notes, examples, examQuestions, completion] = await Promise.all([
+  const [deck, notes, examples, examQuestions, completion, cardDeck] = await Promise.all([
     loadPublishedDeck(lesson.deck_path),
     loadLessonNotes(lesson.id),
     loadWorkedExamples(lesson.id),
     loadLessonExamQuestions(lesson.id),
     readCompletion(lesson.id),
+    loadDeckForLesson(lesson.id, lesson.slug),
   ]);
 
   const watermark = await deckWatermark();
@@ -271,7 +274,7 @@ async function LiveLesson({
   const present: LessonSectionKey[] = [];
   if (lesson.voice_video_mux_id) present.push("video");
   if (deck.available) present.push("slides");
-  if (notes.available) present.push("notes");
+  if (cardDeck.available || notes.available) present.push("notes");
   if (examples.available) present.push("worked_examples");
   if (deck.available) present.push("practice");
   if (examQuestions.available) present.push("exam_questions");
@@ -440,8 +443,35 @@ async function LiveLesson({
 
                 {/* ── 3 + 4 · CONSOLIDATE and UNDERSTAND, side by side (§10, §74) */}
                 <div className="grid gap-10 xl:grid-cols-2">
-                  <LessonSection section="notes" completable={notes.available}>
-                    {notes.available ? (
+                  <LessonSection
+                    section="notes"
+                    meta={
+                      cardDeck.available
+                        ? `${cardDeck.deck.cards.length} cards`
+                        : undefined
+                    }
+                    completable={cardDeck.available || notes.available}
+                  >
+                    {/* ⚠ CARDS FIRST WHERE THEY EXIST, PROSE OTHERWISE, AND
+                        NEITHER REPLACES THE OTHER SILENTLY. A lesson may have
+                        written notes, a card deck, or both; the deck is the
+                        richer format so it leads, and prose notes still render
+                        beneath it rather than being dropped. */}
+                    {cardDeck.available ? (
+                      <div className="grid gap-5">
+                        <DeckPreview deck={cardDeck.deck} />
+                        {/* ⚠ A SAMPLE DECK SAYS IT IS ONE (§30, §55). */}
+                        {cardDeck.source === "sample" && (
+                          <p className="text-xs leading-relaxed text-ink/50">
+                            Sample deck — these cards demonstrate the format while the
+                            written notes for this lesson are prepared.
+                          </p>
+                        )}
+                        {notes.available && (
+                          <LessonNotes body={notes.body} lessonSlug={lesson.slug} />
+                        )}
+                      </div>
+                    ) : notes.available ? (
                       <LessonNotes body={notes.body} lessonSlug={lesson.slug} />
                     ) : (
                       <SectionUnavailable what={notes.reason} />
