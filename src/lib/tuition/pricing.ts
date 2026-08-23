@@ -51,12 +51,12 @@ export const QAR_PER_GBP = 4.7;
 /** §19 — the one place a commitment discount is defined. */
 export const DISCOUNTS = {
   monthly: 0,
-  three_month: 0.10,
+  three_month: 0.05,
   /**
    * ⚠ CHANGE THIS ONE NUMBER TO MOVE THE LAUNCH OFFER TO 15%. Nothing else
    * needs editing: every price, saving and per-month equivalent recomputes.
    */
-  academic_year: 0.20,
+  academic_year: 0.10,
 } as const;
 
 export type Commitment = keyof typeof DISCOUNTS;
@@ -283,12 +283,15 @@ export function displayAmount(gbpMinor: number, currency: "GBP" | "QAR"): string
  *
  * ⚠ THIS EXISTS BECAUSE GBP IS WHAT STRIPE CHARGES (§7). currency.ts states
  * the rule already — "whenever QAR is shown, the sterling price is too" — and
- * dropping it here would have let a parent read 1,175 QAR, be charged £250,
- * and find the two do not match at their bank's rate. The QAR figure is a
- * label; this is the price.
+ * dropping it would let a parent read 1,250 QAR, be charged £266, and find the
+ * two do not match at their bank's rate. The QAR figure is a label; this is
+ * the price.
  *
- * Returns null in GBP, where the amount on screen is already the billed one.
+ * ⚠ AND IT RETURNS NULL IN GBP, DELIBERATELY. When sterling is the headline it
+ * is already the charged amount, so a second line would either repeat it or
+ * introduce a riyal figure nobody is paying. The rule is one-directional:
+ * sterling accompanies riyals, never the other way round.
  */
 export function billingNote(m: Money, currency: "GBP" | "QAR"): string | null {
-  return currency === "QAR" ? `Billed as ${show(m, "GBP")}` : null;
+  return currency === "QAR" ? `charged as ${show(m, "GBP")}` : null;
 }
