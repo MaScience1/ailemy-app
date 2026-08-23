@@ -76,21 +76,21 @@ export const COMMITMENT_MONTHS: Record<Commitment, number | "programme"> = {
 };
 
 /**
- * The academic programme's real teaching window (§7 of the header, §18, §47).
+ * ⚠ THERE IS NO PROGRAMME_WINDOW CONSTANT, AND THERE MUST NEVER BE ONE AGAIN.
+ * ============================================================================
+ * This module used to hold a slug→{first,last} map, on the belief that the
+ * cohorts table carried no end date. It does: `cohorts.ends_on` is `date not
+ * null` and has been since 0009. The reader simply never selected it, and the
+ * belief came from reading a SELECT list rather than the schema.
  *
- * ⚠ THIS IS COMMERCIAL CONFIGURATION, NOT SCHEDULE DATA, AND THE DISTINCTION
- * IS WHY IT LIVES HERE. `cohorts` carries onboarding_on and starts_on but no
- * end date, and the academic PROGRAMME — which months a family is billed for —
- * is a different fact from which evenings are taught. When an end date is
- * added to the cohort row this becomes a read; until then it is stated once,
- * here, rather than assumed as "12 months" anywhere.
+ * The cost was not theoretical. The map had one entry, so Year 11 and Year 10
+ * — which have real windows — rendered "the academic programme dates for this
+ * cohort are not published yet" on a live page, and the config quietly became
+ * a second, less complete copy of a column.
  *
- * ⚠ AND NOTHING HARDCODES NINE. billableMonths() counts the calendar months
- * the window actually touches. Move the end date and the price follows.
+ * So the window is now a PARAMETER. quote() takes the cohort's own dates and
+ * cannot be given a slug to look up, because there is nothing to look up in.
  */
-export const PROGRAMME_WINDOW: Record<string, { firstTeachingISO: string; lastTeachingISO: string }> = {
-  "ial-chemistry-as-sep-2026": { firstTeachingISO: "2026-09-15", lastTeachingISO: "2027-05-21" },
-};
 
 // ── derivations ─────────────────────────────────────────────────────────────
 
@@ -112,14 +112,22 @@ export function billableMonths(firstISO: string, lastISO: string): number {
   return n > 0 ? n : 0;
 }
 
-/** The months a commitment covers, resolving "programme" against the window. */
-export function monthsFor(commitment: Commitment, cohortSlug: string): number {
+/**
+ * The months a commitment covers, resolving "programme" against the cohort's
+ * own teaching window.
+ *
+ * ⚠ NO WINDOW, NO ACADEMIC OPTION. A cohort whose dates cannot be read gets
+ * zero months and therefore no academic price — never a default. Pricing a
+ * year-long commitment against a programme with no defined end is the guess
+ * this returns zero to avoid.
+ */
+export type TeachingWindow = { firstClassOn: string | null; lastClassOn: string | null };
+
+export function monthsFor(commitment: Commitment, window: TeachingWindow): number {
   const spec = COMMITMENT_MONTHS[commitment];
   if (spec !== "programme") return spec;
-  const w = PROGRAMME_WINDOW[cohortSlug];
-  // ⚠ NO WINDOW, NO ACADEMIC OPTION. Returning a guess here would price a
-  // year-long commitment against a programme nobody has defined the end of.
-  return w ? billableMonths(w.firstTeachingISO, w.lastTeachingISO) : 0;
+  if (!window.firstClassOn || !window.lastClassOn) return 0;
+  return billableMonths(window.firstClassOn, window.lastClassOn);
 }
 
 export type Quote = {
@@ -142,8 +150,8 @@ export type Quote = {
  * and the saving line would not equal base minus final. One rounding, and the
  * three figures always reconcile.
  */
-export function quote(monthlyMinor: number, commitment: Commitment, cohortSlug: string): Quote | null {
-  const months = monthsFor(commitment, cohortSlug);
+export function quote(monthlyMinor: number, commitment: Commitment, window: TeachingWindow): Quote | null {
+  const months = monthsFor(commitment, window);
   if (months <= 0) return null;
   const discount = DISCOUNTS[commitment];
   const baseMinor = monthlyMinor * months;

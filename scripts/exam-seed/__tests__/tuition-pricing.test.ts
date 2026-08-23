@@ -17,12 +17,13 @@ import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import {
-  DISCOUNTS, QAR_PER_GBP, PROGRAMME_WINDOW, COMMITMENT_MONTHS,
+  DISCOUNTS, QAR_PER_GBP, COMMITMENT_MONTHS,
   billableMonths, monthsFor, quote, oneToOneQuote, displayAmount, billingNote,
   fromGbp, fromQar, show, ONE_TO_ONE_QAR,
   type Commitment,
 } from "../../../src/lib/tuition/pricing.ts";
 import { availabilityFor } from "../../../src/lib/tuition/availability.ts";
+import { FALLBACK_COHORTS } from "../../../src/lib/public/catalogue.ts";
 
 let pass = 0, fail = 0;
 const t = (n: string, c: boolean, got?: unknown) => {
@@ -86,7 +87,8 @@ console.log("\n=== 1. ⚠ §2/§19/§44 — pricing is configuration, not code =
    * its own 0.9, this would still pass — which is why the component scan below
    * exists as well.
    */
-  const yr = quote(16900, "academic_year", "ial-chemistry-as-sep-2026")!;
+  // The IAL cohort's real window, as the row holds it.
+  const yr = quote(16900, "academic_year", { firstClassOn: "2026-09-15", lastClassOn: "2027-05-21" })!;
   t("⚠ §19 — the academic price is the base less WHATEVER the config says",
     yr.finalMinor === Math.round(yr.baseMinor * (1 - DISCOUNTS.academic_year)),
     `${yr.baseMinor} × (1 − ${DISCOUNTS.academic_year}) → ${yr.finalMinor}`);
@@ -191,29 +193,72 @@ console.log("\n=== 3. ⚠ §7 of the header — nine months is DERIVED ===");
 {
   t("⚠ §20 — the academic commitment is not a hardcoded number",
     COMMITMENT_MONTHS.academic_year === "programme");
-  t("§7 — the real window is 15 Sep 2026 → 21 May 2027",
-    PROGRAMME_WINDOW["ial-chemistry-as-sep-2026"].firstTeachingISO === "2026-09-15"
-      && PROGRAMME_WINDOW["ial-chemistry-as-sep-2026"].lastTeachingISO === "2027-05-21");
-  t("⚠ §7 — and it derives to 9 billable months",
-    monthsFor("academic_year", "ial-chemistry-as-sep-2026") === 9,
-    monthsFor("academic_year", "ial-chemistry-as-sep-2026"));
+  /**
+   * ============================================================================
+   * ⚠ THE WINDOW COMES FROM THE ROW. A CONFIG COPY OF A COLUMN CANNOT RETURN.
+   * ============================================================================
+   * pricing.ts held a slug→window map, written on the belief that `cohorts`
+   * had no end date. `cohorts.ends_on` is `date not null` and has been since
+   * 0009 — the reader just never selected it, and the belief came from reading
+   * a SELECT list instead of the schema.
+   *
+   * It shipped: the map had ONE entry, so Year 11 and Year 10 told live
+   * visitors their programme dates were unpublished while the rows held them.
+   *
+   * These checks make the copy structurally impossible to reintroduce.
+   */
+  const READERS = readFileSync("src/lib/public/readers.ts", "utf8");
+  const CATALOGUE = readFileSync("src/lib/public/catalogue.ts", "utf8");
+
+  t("⚠ the reader SELECTS ends_on", /ends_on/.test(READERS),
+    READERS.match(/\.select\([\s\S]{0,300}?\)/)?.[0]?.slice(0, 120));
+  t("⚠ and the row mapper carries it", /lastClassOn: str\(row\.ends_on\)/.test(CATALOGUE));
+  /**
+   * ⚠ code(), NOT THE RAW FILE — THE FOURTH TIME THIS HAS BITTEN.
+   * pricing.ts's own header says "THERE IS NO PROGRAMME_WINDOW CONSTANT", so a
+   * raw scan finds the words and fails on correct code. Every content check in
+   * these guards must strip comments first; a guard that cannot tell code from
+   * prose pressures the next person to delete the documentation to go green.
+   */
+  t("⚠ NO slug→window map exists in pricing", !/PROGRAMME_WINDOW/.test(code(PRICING)));
+  t("⚠ and quote() cannot be handed a slug to look one up with",
+    /export function quote\(monthlyMinor: number, commitment: Commitment, window: TeachingWindow\)/.test(PRICING));
 
   /**
-   * ⚠ MONTHS TOUCHED, NOT ELAPSED. The window is 8.2 months long; a family is
-   * taught in September and in May, so it is billed for nine. Dividing the
-   * span would undercharge by a month.
+   * ⚠ THE GENERAL RULE, NOT JUST THIS COLUMN. Any date-shaped constant keyed
+   * by cohort slug in the pricing config is the same mistake wearing a
+   * different name, so the shape itself is refused.
    */
-  t("§7 — a shorter window prices fewer months",
-    billableMonths("2026-09-15", "2027-01-10") === 5, billableMonths("2026-09-15", "2027-01-10"));
-  t("§7 — one month inside a single month is 1",
-    billableMonths("2026-09-01", "2026-09-30") === 1);
-  t("⚠ §7 — moving the end date moves the price, with no code change",
-    billableMonths("2026-09-15", "2027-06-21") === 10);
-  t("⚠ §20 — a cohort with no window gets NO academic price, not a guess",
-    monthsFor("academic_year", "unknown-cohort") === 0
-      && quote(16900, "academic_year", "unknown-cohort") === null);
+  const slugKeyedDates = /["'][a-z0-9-]*(?:cohort|chemistry|igcse|ial)[a-z0-9-]*["']\s*:\s*\{[^}]*\d{4}-\d{2}-\d{2}/;
+  t("⚠ no cohort-slug-keyed date map anywhere in the pricing config",
+    !slugKeyedDates.test(code(PRICING)), code(PRICING).match(slugKeyedDates)?.[0]);
+  t("⚠ pricing holds no ISO date literal at all — dates belong to the row",
+    !/\d{4}-\d{2}-\d{2}/.test(code(PRICING)), code(PRICING).match(/\d{4}-\d{2}-\d{2}/)?.[0]);
+
+  // The derivation itself, against the real windows.
+  const IAL = { firstClassOn: "2026-09-15", lastClassOn: "2027-05-21" };
+  const IGCSE = { firstClassOn: "2026-09-01", lastClassOn: "2027-06-30" };
+  t("⚠ §7 — the IAL window derives to 9 months",
+    monthsFor("academic_year", IAL) === 9, monthsFor("academic_year", IAL));
+  t("⚠ the IGCSE window derives to 10 — its OWN dates, not the IAL's",
+    monthsFor("academic_year", IGCSE) === 10, monthsFor("academic_year", IGCSE));
+  t("⚠ two cohorts with different windows price differently",
+    quote(14900, "academic_year", IGCSE)!.months !== quote(14900, "academic_year", IAL)!.months);
+
+  /**
+   * ⚠ AND EVERY COHORT THE PRODUCT SHIPS MUST HAVE A WINDOW. This is the check
+   * that would have caught the original defect: it walks the real cohort list
+   * rather than a slug someone remembered to add.
+   */
+  for (const c of FALLBACK_COHORTS) {
+    t(`⚠ ${c.slug} has a teaching window, so it can be priced`,
+      !!c.firstClassOn && !!c.lastClassOn, `${c.firstClassOn} → ${c.lastClassOn}`);
+    t(`   …and it derives to a positive month count`,
+      monthsFor("academic_year", { firstClassOn: c.firstClassOn, lastClassOn: c.lastClassOn }) > 0);
+  }
+
   t("§18/§47 — the card prints the real dates, never '12 months'",
-    /Covers teaching from \{fmt\(window\.firstTeachingISO\)\}/.test(MODES)
+    /Covers teaching from \{fmt\(window\.firstClassOn\)\}/.test(MODES)
       && !/12 months/.test(code(MODES)));
 }
 
