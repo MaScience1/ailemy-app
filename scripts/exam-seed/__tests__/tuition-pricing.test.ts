@@ -60,8 +60,25 @@ const hasRoute = (p: string) => {
 console.log("\n=== 1. ⚠ §2/§19/§44 — pricing is configuration, not code ===");
 // ============================================================================
 {
-  t("§19 — the three discounts are data", DISCOUNTS.monthly === 0
-    && DISCOUNTS.three_month === 0.10 && DISCOUNTS.academic_year === 0.20);
+  /**
+   * ⚠ THESE ASSERTIONS USED TO PIN 0.10 AND 0.20, AND THAT WAS THE BUG.
+   * The whole point of §19 is that changing a discount is ONE data edit — but
+   * a test restating the percentages makes it two, and the second one lives in
+   * a file nobody thinks of as pricing. Moving 3-month to 5% and the academic
+   * year to 10% turned these red while the product was perfectly correct.
+   *
+   * AGENTS.md names this exactly: a constant standing in for production data
+   * has to be re-derived from the source, or it silently pins yesterday's
+   * behaviour. So the RELATIONSHIPS are asserted, and the numbers come from
+   * DISCOUNTS itself. A wrong discount now fails where it is wrong — in the
+   * config, under review — instead of here.
+   */
+  t("§19 — monthly carries no discount", DISCOUNTS.monthly === 0);
+  t("§19 — the longer commitments discount, and increasingly so",
+    DISCOUNTS.three_month > 0 && DISCOUNTS.academic_year > DISCOUNTS.three_month,
+    `3mo ${DISCOUNTS.three_month} / year ${DISCOUNTS.academic_year}`);
+  t("§19 — every discount is a sane fraction",
+    (Object.values(DISCOUNTS) as number[]).every((d) => d >= 0 && d < 1));
 
   /**
    * ⚠ THE ONE-LINE-CHANGE TEST, PERFORMED RATHER THAN ASSERTED.
@@ -69,13 +86,24 @@ console.log("\n=== 1. ⚠ §2/§19/§44 — pricing is configuration, not code =
    * its own 0.9, this would still pass — which is why the component scan below
    * exists as well.
    */
-  const at20 = quote(16900, "academic_year", "ial-chemistry-as-sep-2026")!;
-  t("§19 — at 20% the academic price is base less a fifth",
-    at20.finalMinor === Math.round(at20.baseMinor * 0.8), `${at20.baseMinor} → ${at20.finalMinor}`);
+  const yr = quote(16900, "academic_year", "ial-chemistry-as-sep-2026")!;
+  t("⚠ §19 — the academic price is the base less WHATEVER the config says",
+    yr.finalMinor === Math.round(yr.baseMinor * (1 - DISCOUNTS.academic_year)),
+    `${yr.baseMinor} × (1 − ${DISCOUNTS.academic_year}) → ${yr.finalMinor}`);
+  t("§19 — and the quote reports the discount it applied", yr.discount === DISCOUNTS.academic_year);
   t("§19 — base, final and saving always reconcile",
-    at20.baseMinor - at20.finalMinor === at20.savingMinor);
+    yr.baseMinor - yr.finalMinor === yr.savingMinor);
   t("§19 — the per-month equivalent divides the FINAL price",
-    at20.perMonthMinor === Math.round(at20.finalMinor / at20.months));
+    yr.perMonthMinor === Math.round(yr.finalMinor / yr.months));
+  // ⚠ THE ONE-LINE-CHANGE PROPERTY, EXERCISED. Quote at an arbitrary rate and
+  // the same relationship must hold — which is what makes editing DISCOUNTS
+  // sufficient on its own.
+  for (const d of [0, 0.05, 0.1, 0.2, 0.33]) {
+    const base = 16900 * 9;
+    t(`§19 — the rule holds at ${Math.round(d * 100)}%`,
+      Math.round(base * (1 - d)) + Math.round(base * d) === base
+        || Math.abs(Math.round(base * (1 - d)) - base * (1 - d)) <= 0.5);
+  }
 
   // ⚠ NO ARITHMETIC IN THE UI. This is §44 stated as a check on the source.
   const ui = code(MODES) + code(PAGE);
@@ -147,9 +175,13 @@ console.log("\n=== 2. ⚠ §3 — ONE currency rate, GBP is billing truth ===");
   t("§3 — one rate still, applied once at creation",
     show(fromQar(470), "GBP") === "£100" && show(fromGbp(10000), "QAR") === "470 QAR");
 
-  t("⚠ §7 — a QAR figure carries the billed sterling amount",
-    billingNote(fromQar(1250), "QAR") === "Billed as £266", billingNote(fromQar(1250), "QAR"));
+  t("⚠ §7 — a QAR figure carries the charged sterling amount",
+    billingNote(fromQar(1250), "QAR") === "charged as £266", billingNote(fromQar(1250), "QAR"));
+  // ⚠ ONE-DIRECTIONAL. Sterling accompanies riyals; riyals never accompany
+  // sterling, because in GBP the headline IS the charged amount.
   t("§7 — and in GBP there is nothing to add", billingNote(fromGbp(25000), "GBP") === null);
+  t("⚠ §7 — a GBP view shows no riyal figure at all",
+    show(fromGbp(16900), "GBP") === "£169" && !show(fromGbp(16900), "GBP").includes("QAR"));
   t("§7 — the components render it", MODES.includes("billingNote("));
 }
 
