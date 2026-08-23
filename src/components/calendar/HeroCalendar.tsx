@@ -134,11 +134,13 @@ export function HeroCalendarCard({
         href={openHref}
         scroll={false}
         aria-haspopup="dialog"
-        data-cta="calendar_explore"
+        data-cta="hero_calendar_clicked"
         className="group/cap mt-4 block rounded-lg px-1 py-1 transition-colors duration-200 hover:bg-parchment-2/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
       >
+        {/* §11 — "happening" describes weather; "available" describes an
+            offer the reader can act on. */}
         <span className="font-display block text-lg font-medium tracking-tight">
-          See what&rsquo;s happening this week.
+          See what&rsquo;s available this week.
         </span>
         {/* ⚠ THIS LINE PROMISED A BOOKING THE CALENDAR CANNOT TAKE. It said
             "book tuition directly from the Ailemy calendar". There is no
@@ -162,13 +164,18 @@ export function HeroCalendarCard({
             shut is the same class of falsehood as the sentence this replaced,
             pointed the other way. What is true for every reader is that the
             CALENDAR takes no bookings, so that is what it says. */}
+        {/* ⚠ §11 ASKED FOR THIS TO BE SHORTER, NOT FOR THE CAVEAT TO GO.
+            "Avoid long explanatory paragraphs beneath the calendar" — so the
+            sentence is tightened. What it must keep is the fact that this
+            surface takes no booking, which is the one thing a reader could
+            otherwise get wrong from a heading that says "available". */}
         <span className="mt-1 block text-sm leading-snug text-ink/60">
-          Browse live lessons and check real 1-to-1 availability. You cannot book from the
-          calendar yet — open a day to register your interest in a time.
+          Browse group lessons and real 1-to-1 availability. Open a day to register interest
+          in a time — the calendar does not take bookings yet.
         </span>
         <span className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium">
           <span className="underline decoration-transparent underline-offset-4 transition-colors duration-200 group-hover/cap:decoration-current">
-            Explore timetable
+            Open full timetable
           </span>
           <span aria-hidden className="transition-transform duration-200 motion-safe:group-hover/cap:translate-x-1">→</span>
         </span>

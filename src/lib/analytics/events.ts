@@ -24,6 +24,23 @@
 
 export const CTA_SOURCES = [
   /**
+   * ⚠ THE HERO AND TUITION FUNNEL (§45 of the conversion brief).
+   * These names come from the brief verbatim so the events it asks to be
+   * tracked are the events that exist. Four homepage values were RENAMED to
+   * match — home_pillar_* became pillar_*_clicked, hero_start_practising
+   * became hero_start_free_clicked, hero_live_tuition became
+   * hero_book_tuition_clicked, calendar_explore became hero_calendar_clicked.
+   * They had shipped one day earlier, so the discontinuity is a day of data
+   * against a namespace that now matches its specification.
+   *
+   * No PII: every value names a control, never a course, level or person.
+   */
+  "hero_book_one_to_one_clicked",
+  "hero_group_tuition_clicked",
+  "audience_student_clicked",
+  "audience_parent_clicked",
+  "audience_teacher_clicked",
+  /**
    * ⚠ THE COURSE SELECTOR, STEP BY STEP (§38). The whole argument for
    * progressive disclosure is that students abandon a fourteen-card wall —
    * which is only checkable if each step reports separately. A single
@@ -56,12 +73,12 @@ export const CTA_SOURCES = [
   "nav_subject_chemistry",
   "nav_subject_biology",
   "nav_subject_physics",
-  "home_pillar_resources",
-  "home_pillar_past_papers",
-  "home_pillar_exam_builder",
-  "home_pillar_tuition",
-  "hero_start_practising",
-  "hero_live_tuition",
+  "pillar_resources_clicked",
+  "pillar_past_papers_clicked",
+  "pillar_exam_builder_clicked",
+  "pillar_online_tuition_clicked",
+  "hero_start_free_clicked",
+  "hero_book_tuition_clicked",
   "floating_start_learning",
   "floating_continue_studying",
   // ⚠ THE TWO STATES OF TuitionCta ARE SEPARATE SOURCES, NOT ONE. A click on
@@ -70,7 +87,7 @@ export const CTA_SOURCES = [
   // only evidence that the collapsed state earns its place.
   "floating_tuition",
   "floating_tuition_collapsed",
-  "calendar_explore",
+  "hero_calendar_clicked",
   "chemistry_course",
   "final_cta",
   "quick_signup_continue",
