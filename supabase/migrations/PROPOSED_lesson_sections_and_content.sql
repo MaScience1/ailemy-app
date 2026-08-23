@@ -227,6 +227,133 @@ REVOKE TRUNCATE, TRIGGER, REFERENCES ON public.lesson_paper_questions FROM anon,
 
 COMMIT;
 
+-- ══ SECTION 4b — flashcard note decks (added 2026-08-23) ═══════════════════
+-- ⚠ EXTENDED IN PLACE, NOT WRITTEN AS A THIRD FILE. lesson_notes above is
+-- prose notes; this is the CARD format of the same section. Two files both
+-- defining "how a lesson stores its notes" is how a rebuild ends up with
+-- whichever one happened to run last.
+BEGIN;
+
+CREATE TABLE IF NOT EXISTS public.lesson_card_decks (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  lesson_id   uuid NOT NULL UNIQUE REFERENCES public.lessons(id) ON DELETE CASCADE,
+  subject     text NOT NULL,
+  title       text NOT NULL,
+  topic       text,
+  description text,
+  spec_codes  text[] NOT NULL DEFAULT '{}',
+  -- ⚠ CARDS AS jsonb, AND THE REASON IS THE CONTENT MODEL, NOT LAZINESS.
+  -- A card is an ordered list of typed blocks — definition, formula with its
+  -- symbol table, callout, comparison — which relational columns model badly
+  -- and a join table models worse. The application type (src/lib/flashcards/
+  -- types.ts) is already plain JSON precisely so a deck can be fetched,
+  -- cached and stored offline unchanged. Card IDENTITY is not lost: every
+  -- card carries its own id inside the array, and saved cards reference it.
+  cards       jsonb NOT NULL DEFAULT '[]'::jsonb,
+  status      text NOT NULL DEFAULT 'draft',
+  created_by  uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT lcd_status_check CHECK (status IN ('draft','published','unavailable')),
+  CONSTRAINT lcd_subject_check CHECK (subject IN ('chemistry','biology','physics')),
+  CONSTRAINT lcd_cards_is_array CHECK (jsonb_typeof(cards) = 'array')
+);
+
+DROP TRIGGER IF EXISTS touch_lesson_card_decks ON public.lesson_card_decks;
+CREATE TRIGGER touch_lesson_card_decks
+  BEFORE UPDATE ON public.lesson_card_decks
+  FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+ALTER TABLE public.lesson_card_decks ENABLE ROW LEVEL SECURITY;
+
+-- No client grants — same stance as lesson_notes and lesson_decks. Decks are
+-- teaching material: the server reads them and renders them, so a student's
+-- browser never needs the privilege to ask for one.
+REVOKE TRUNCATE, TRIGGER, REFERENCES ON public.lesson_card_decks FROM anon, authenticated;
+
+COMMIT;
+
+-- ══ SECTION 4c — where a student is in a deck, and which cards they kept ════
+BEGIN;
+
+-- ⚠ A BOOKMARK, NOT EVIDENCE (§13). This says which card a student stopped
+-- on. It is not progress, not performance, and nothing derives a completion
+-- from it — lesson_section_state('notes') above is where "notes reviewed"
+-- lives, and reaching the last card does NOT set it (§40).
+CREATE TABLE IF NOT EXISTS public.student_deck_progress (
+  user_id      uuid NOT NULL REFERENCES auth.users(id)             ON DELETE CASCADE,
+  deck_id      uuid NOT NULL REFERENCES public.lesson_card_decks(id) ON DELETE CASCADE,
+  last_card    integer NOT NULL DEFAULT 0,
+  cards_viewed integer NOT NULL DEFAULT 0,
+  updated_at   timestamptz NOT NULL DEFAULT now(),
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT sdp_pk PRIMARY KEY (user_id, deck_id),
+  CONSTRAINT sdp_last_card_sane CHECK (last_card >= 0),
+  CONSTRAINT sdp_viewed_sane CHECK (cards_viewed >= 0)
+);
+
+-- ⚠ SAVED CARDS ARE RELATIONAL, THOUGH THE CARDS THEMSELVES ARE jsonb — and
+-- that asymmetry is deliberate. §24 wants "revise my weak cards" to be
+-- possible later, which means saved cards must be QUERYABLE across decks and
+-- joinable against spec points. A jsonb array of saved ids on the profile
+-- would have made that a full-table scan forever.
+CREATE TABLE IF NOT EXISTS public.student_saved_cards (
+  user_id    uuid NOT NULL REFERENCES auth.users(id)               ON DELETE CASCADE,
+  deck_id    uuid NOT NULL REFERENCES public.lesson_card_decks(id) ON DELETE CASCADE,
+  -- The card's id WITHIN its deck's jsonb array. Not an FK, because the card
+  -- is not a row; the deck FK above is what keeps this from outliving it.
+  card_id    text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT ssc_pk PRIMARY KEY (user_id, deck_id, card_id),
+  CONSTRAINT ssc_card_id_shape CHECK (card_id ~ '^[A-Za-z0-9_-]{1,64}$')
+);
+
+CREATE INDEX IF NOT EXISTS ssc_user_idx ON public.student_saved_cards (user_id);
+
+DROP TRIGGER IF EXISTS touch_student_deck_progress ON public.student_deck_progress;
+CREATE TRIGGER touch_student_deck_progress
+  BEFORE UPDATE ON public.student_deck_progress
+  FOR EACH ROW EXECUTE FUNCTION public.touch_updated_at();
+
+ALTER TABLE public.student_deck_progress ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.student_saved_cards   ENABLE ROW LEVEL SECURITY;
+
+-- Predicate in BOTH USING and WITH CHECK — USING alone filters what a student
+-- SEES while still letting them write a row carrying somebody else's user_id.
+CREATE POLICY sdp_own_read   ON public.student_deck_progress
+  FOR SELECT TO authenticated USING (user_id = auth.uid());
+CREATE POLICY sdp_own_insert ON public.student_deck_progress
+  FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
+CREATE POLICY sdp_own_update ON public.student_deck_progress
+  FOR UPDATE TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY ssc_own_read   ON public.student_saved_cards
+  FOR SELECT TO authenticated USING (user_id = auth.uid());
+CREATE POLICY ssc_own_insert ON public.student_saved_cards
+  FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
+CREATE POLICY ssc_own_delete ON public.student_saved_cards
+  FOR DELETE TO authenticated USING (user_id = auth.uid());
+
+-- Column-scoped, key columns absent from UPDATE — so the writer must be
+-- UPDATE-then-INSERT, never .upsert() (PostgREST compiles upsert to
+-- ON CONFLICT DO UPDATE SET including the keys, which this grant refuses).
+GRANT SELECT ON public.student_deck_progress TO authenticated;
+GRANT INSERT (user_id, deck_id, last_card, cards_viewed)
+  ON public.student_deck_progress TO authenticated;
+GRANT UPDATE (last_card, cards_viewed)
+  ON public.student_deck_progress TO authenticated;
+
+-- Unstarring must work, so DELETE is granted here where student_deck_progress
+-- deliberately has none: a saved card is a choice, a bookmark is a position.
+GRANT SELECT, DELETE ON public.student_saved_cards TO authenticated;
+GRANT INSERT (user_id, deck_id, card_id) ON public.student_saved_cards TO authenticated;
+
+REVOKE TRUNCATE, TRIGGER, REFERENCES ON public.student_deck_progress FROM anon, authenticated;
+REVOKE TRUNCATE, TRIGGER, REFERENCES ON public.student_saved_cards   FROM anon, authenticated;
+
+COMMIT;
+
+
 -- ══ SECTION 5 — ⚠ ERASURE IS PART OF THE MIGRATION, NOT A FOLLOW-UP ════════
 -- erase_user v5 (0067) does not know these tables exist. Applying sections 1–4
 -- without extending it means an erasure silently leaves a student's completion
@@ -238,9 +365,15 @@ COMMIT;
 --
 --     DELETE FROM public.lesson_section_state WHERE user_id = target;
 --     GET DIAGNOSTICS section_state_removed = ROW_COUNT;
+--     DELETE FROM public.student_deck_progress WHERE user_id = target;
+--     GET DIAGNOSTICS deck_progress_removed = ROW_COUNT;
+--     DELETE FROM public.student_saved_cards WHERE user_id = target;
+--     GET DIAGNOSTICS saved_cards_removed = ROW_COUNT;
 --
--- and 'section_state_removed' added to the returned jsonb. lesson_notes,
--- lesson_worked_examples and lesson_paper_questions hold NO student data —
+-- and 'section_state_removed', 'deck_progress_removed' and
+-- 'saved_cards_removed' added to the returned jsonb. lesson_notes,
+-- lesson_worked_examples, lesson_card_decks and lesson_paper_questions hold
+-- NO student data —
 -- their only user reference is created_by/updated_by, already ON DELETE SET
 -- NULL — so they need no delete, only the confirmation that this was checked
 -- rather than forgotten.
