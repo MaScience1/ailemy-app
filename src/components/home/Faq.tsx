@@ -42,8 +42,11 @@ const FAQS: Faq[] = [
     q: "Which exam boards does Ailemy support?",
     a: (
       <>
-        Pearson Edexcel, across GCSE, International GCSE and International A Level. Ailemy is
-        not affiliated with or endorsed by any examination board.
+        Pearson Edexcel today, across GCSE, International GCSE and International A-Level —
+        International A-Level is the deepest. AQA, OCR and Cambridge are in the catalogue so
+        you can find your qualification and see exactly what each one has, but board-specific
+        content for them is not published yet. Ailemy is not affiliated with or endorsed by
+        any examination board.
       </>
     ),
   },
