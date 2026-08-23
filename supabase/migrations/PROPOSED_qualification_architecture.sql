@@ -3,10 +3,16 @@
 -- ----------------------------------------------------------------------------
 -- ⚠ NOT APPLIED. NOT NUMBERED. DO NOT RUN AS IT STANDS.
 --
--- The number comes from the planning chat and nowhere else. 0068+ is already
--- queued by the lesson-experience batch (PROPOSED_lesson_sections_and_content
--- .sql), so this file must NOT assume the next free integer — a folder
--- listing cannot show a reservation, and this folder is the only rebuild path.
+-- The number comes from the planning chat and nowhere else. This file must NOT
+-- assume the next free integer — a folder listing cannot show a reservation,
+-- and this folder is the only rebuild path.
+--
+-- ⚠ CORRECTION, 2026-08-23. This note used to read "0068+ is already queued by
+-- the lesson-experience batch (PROPOSED_lesson_sections_and_content.sql)".
+-- 0068 is NO LONGER free: the founder issued it to the 1-to-1 booking work and
+-- it is applied and live as 0068_tuition_booking.sql. Whether 0069+ is still
+-- spoken for by the lesson-experience batch is NOT established here — only the
+-- founder can say, which is the whole point of the rule. Ask; do not count.
 --
 -- ⚠ HOW LITTLE THIS NEEDS TO BE, AND WHY
 -- ----------------------------------------------------------------------------
