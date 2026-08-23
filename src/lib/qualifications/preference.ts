@@ -31,6 +31,15 @@ export type QualificationPreference = {
   scope: QualificationScope;
   /** Curriculum slug, or null when the student answered "I'm not sure" (§19). */
   curriculum: string | null;
+  /**
+   * ⚠ THE COURSE, ADDED AS A FIELD RATHER THAN A SECOND RECORD (§27).
+   * A curriculum is not always enough to resume into: Edexcel IAL is TWO
+   * courses (AS and A2), so "continue studying" against a curriculum alone
+   * could only guess which one the student meant. This is optional and
+   * validated, so preferences written before it existed still parse — a new
+   * preference store would have orphaned every one of them.
+   */
+  course?: string | null;
   savedAt: string;
 };
 
@@ -53,6 +62,7 @@ export function parsePreferences(raw: string | null): Record<string, Qualificati
         level: p.level,
         scope: p.scope,
         curriculum: typeof p.curriculum === "string" ? p.curriculum : null,
+        course: typeof p.course === "string" ? p.course : null,
         savedAt: typeof p.savedAt === "string" ? p.savedAt : "",
       };
     }

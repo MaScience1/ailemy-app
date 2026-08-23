@@ -24,6 +24,21 @@
 
 export const CTA_SOURCES = [
   /**
+   * ⚠ THE COURSE SELECTOR, STEP BY STEP (§38). The whole argument for
+   * progressive disclosure is that students abandon a fourteen-card wall —
+   * which is only checkable if each step reports separately. A single
+   * "selector_used" event would tell us it was touched and nothing about
+   * WHERE people stop.
+   *
+   * No PII: every value is a step name, never the course or level chosen.
+   */
+  "resources_subject_opened",
+  "resources_level_selected",
+  "resources_qualification_selected",
+  "resources_board_selected",
+  "resources_course_selected",
+  "resources_course_changed",
+  /**
    * ⚠ NAVIGATION AND THE HOMEPAGE PILLARS (§39, §25). The header was
    * simplified from six destinations to four on the argument that the four
    * are what students actually use — an argument that can only be checked

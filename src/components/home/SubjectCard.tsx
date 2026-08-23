@@ -47,6 +47,9 @@ export function SubjectCard({
   subject,
   href: hrefOverride,
   ctaLabel,
+  eyebrow,
+  blurb,
+  dataCta,
 }: {
   subject: SubjectCardData;
   /**
@@ -67,6 +70,26 @@ export function SubjectCard({
    */
   href?: string;
   ctaLabel?: string;
+  /**
+   * ⚠ THE EYEBROW, OVERRIDABLE — AND THE DEFECT THAT MADE IT SO.
+   * LABEL below maps the subject's TUITION status, so `interest` renders
+   * "Register interest". /resources overrode `href` and `ctaLabel` but not
+   * this, and shipped Biology and Physics cards labelled "Register interest"
+   * that opened a resources listing — a label promising an action the card
+   * does not perform. A study library passes what it HOLDS instead.
+   * Omitted, the homepage behaviour is exactly what it was.
+   */
+  eyebrow?: string;
+  /**
+   * ⚠ THE BLURB, FOR THE SAME REASON AS THE EYEBROW. SUBJECTS[].blurb is
+   * written for the homepage and sells tuition — Chemistry's ends "and live
+   * tuition", Biology's and Physics's end "register interest for priority
+   * access". Correct there; forbidden inside /resources, where §40 bans
+   * tuition of any kind. A study library describes its shelves.
+   */
+  blurb?: string;
+  /** §38 — lets a call site name its own analytics source. */
+  dataCta?: string;
 }) {
   const colour = subjectColour(subject.slug);
   const href = hrefOverride ?? subject.exploreHref ?? `/tuition/interest?subject=${subject.slug}`;
@@ -82,6 +105,7 @@ export function SubjectCard({
        * announces the whole card body as the link text, which is a paragraph.
        */
       aria-label={`${cta} — ${subject.name}, ${subject.qualifications.join(", ")}`}
+      data-cta={dataCta}
       className={[
         "group relative flex w-full flex-col overflow-hidden rounded-lg border border-ink/10 bg-snow p-7",
         "transition duration-200 ease-out",
@@ -103,7 +127,7 @@ export function SubjectCard({
       )}
 
       <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45">
-        {LABEL[subject.status]}
+        {eyebrow ?? LABEL[subject.status]}
       </span>
 
       <h3 className="font-display mt-3 text-2xl font-medium tracking-tight">
@@ -124,7 +148,7 @@ export function SubjectCard({
         {subject.qualifications.join(" · ")}
       </p>
 
-      <p className="mt-4 flex-1 text-sm leading-relaxed text-ink/70">{subject.blurb}</p>
+      <p className="mt-4 flex-1 text-sm leading-relaxed text-ink/70">{blurb ?? subject.blurb}</p>
 
       {/* ⚠ A SPAN, NOT A LINK. The card is the anchor; a nested one would be
           invalid and keyboard-unreachable. aria-hidden on the arrow keeps the

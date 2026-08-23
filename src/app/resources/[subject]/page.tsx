@@ -8,11 +8,28 @@ import { getNavSession } from "@/lib/auth/nav-session";
 import { Breadcrumb } from "@/components/catalogue/breadcrumb";
 import { getSubjectBySlug } from "@/lib/catalogue/queries";
 import { subjectColour, subjectVars } from "@/lib/design/subject-colours";
-import { listCoursesForSubject } from "@/lib/resources/taxonomy";
-import { PATHWAY_COPY, isPathway } from "@/lib/catalogue/pathways";
+import { loadSubjectTree } from "@/lib/qualifications/tree";
+import { CourseSelector } from "@/components/resources/CourseSelector";
 
 /**
- * Resources → subject: which course, from the courses that really exist.
+ * Resources → subject: which course, asked one decision at a time.
+ *
+ * ============================================================================
+ * ⚠ THIS PAGE USED TO BE A FLAT GRID OF EVERY COURSE IN THE SUBJECT
+ * ============================================================================
+ * Fourteen Chemistry cards — GCSE, IGCSE, UK A-Level, IAL AS, IAL A2, IB SL,
+ * IB HL, AP — all the same size, in one alphabetical wall. It mixed academic
+ * level, UK vs international, exam board and course stage into a single
+ * choice, and required the student to know Ailemy's catalogue to find their
+ * own course in it.
+ *
+ * CourseSelector asks Level → Qualification → Board → Course instead, skipping
+ * any step that has only one answer. The catalogue keeps its complexity; the
+ * student is asked one question at a time.
+ *
+ * ⚠ EVERY COURSE URL IS UNCHANGED (§37). This is a discovery-layer change:
+ * /resources/<subject>/<course> is still where a course lives, still linked,
+ * still deep-linkable. Nothing moved, so nothing needed a redirect.
  *
  * ⚠ NO TUITION COMPONENT MOUNTS HERE (§40). See the landing page header.
  */
@@ -45,15 +62,9 @@ export default async function SubjectResourcesPage({ params }: { params: Params 
   const subject = await getSubjectBySlug(slug);
   if (!subject) notFound();
 
-  const courses = await listCoursesForSubject(slug);
+  const tree = await loadSubjectTree(slug);
   const colour = subjectColour(slug);
-
-  // ⚠ ORDERED BY WHAT A STUDENT CAN ACTUALLY USE. A course with published
-  // lessons is more useful than one without, and saying so with order is
-  // honest where a "recommended" badge would be a claim.
-  const sorted = [...courses].sort(
-    (a, b) => b.liveLessons - a.liveLessons || a.name.localeCompare(b.name),
-  );
+  const hasCourses = tree.levels.length > 0 || tree.other.length > 0;
 
   return (
     <div style={subjectVars(colour)}>
@@ -75,12 +86,18 @@ export default async function SubjectResourcesPage({ params }: { params: Params 
             <h1 className="font-display mt-4 text-4xl font-medium leading-[1.05] tracking-tight md:text-5xl">
               {subject.name} resources.
             </h1>
-            <p className="font-mono mt-5 text-xs uppercase tracking-[0.2em] text-ink/55">
-              Choose your course
-            </p>
           </header>
 
-          {sorted.length === 0 ? (
+          {/* ⚠ A FAILED READ IS SAID OUT LOUD, NEVER RENDERED AS "no courses".
+              An empty catalogue and an unreadable one look identical in a
+              grid, and this codebase has shipped that confusion before. */}
+          {tree.error && (
+            <p role="alert" className="mt-8 rounded-lg border border-ink/15 bg-snow px-4 py-3 text-sm text-ink/75">
+              Some course information could not be loaded — {tree.error}
+            </p>
+          )}
+
+          {!hasCourses && !tree.error ? (
             /* §50 — useful, not blank. */
             <div className="mt-8 rounded-lg border border-dashed border-ink/15 bg-ink/[0.02] px-5 py-4">
               <p className="text-sm text-ink/70">
@@ -93,30 +110,9 @@ export default async function SubjectResourcesPage({ params }: { params: Params 
               </p>
             </div>
           ) : (
-            <ul className="mt-8 grid gap-3 sm:grid-cols-2">
-              {sorted.map((c) => (
-                <li key={c.slug}>
-                  <Link
-                    href={`/resources/${slug}/${c.slug}`}
-                    className="flex h-full flex-col justify-between gap-4 rounded-xl border border-ink/10 bg-snow p-5 transition-all duration-300 hover:border-[var(--subject-accent)] motion-safe:hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-                  >
-                    <div>
-                      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45">
-                        {c.curriculumName}
-                        {c.pathway && isPathway(c.pathway) ? ` · ${PATHWAY_COPY[c.pathway].name}` : ""}
-                      </p>
-                      <h2 className="font-display mt-2 text-xl font-medium tracking-tight">{c.name}</h2>
-                    </div>
-                    {/* §49 — a real count, or nothing. */}
-                    <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink/45">
-                      {c.liveLessons > 0
-                        ? `${c.liveLessons} published lesson${c.liveLessons === 1 ? "" : "s"}`
-                        : "Curriculum mapped · lessons in preparation"}
-                    </p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <div className="mt-9">
+              <CourseSelector subject={slug} subjectName={subject.name} tree={tree} />
+            </div>
           )}
         </div>
       </main>
