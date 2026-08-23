@@ -85,6 +85,8 @@ export type CalendarQuery = {
   /** Qualification or year-group slug — see LEVELS. */
   level?: string | null;
   type?: "all" | "group" | "private";
+  /** §11 — hide anything the student cannot act on. */
+  availableOnly?: boolean;
 };
 
 /**
@@ -142,12 +144,35 @@ export function levelForYearGroup(yearGroup: string | null | undefined): LevelSl
 /** Does this event match the active filters? Pure, so it is testable. */
 export function matchesFilters(
   ev: CalendarEvent,
-  f: { subject?: string | null; level?: string | null; type?: "all" | "group" | "private" },
+  f: {
+    subject?: string | null;
+    level?: string | null;
+    type?: "all" | "group" | "private";
+    /** §11 — only what the student can act on right now. */
+    availableOnly?: boolean;
+  },
 ): boolean {
   if (f.subject && ev.subject !== f.subject) return false;
   if (f.level && ev.qualification !== f.level && ev.yearGroup !== f.level) return false;
   if (f.type === "group" && ev.type !== "group") return false;
   if (f.type === "private" && ev.type === "group") return false;
+
+  /**
+   * ⚠ §11 — AND "AVAILABLE" MEANS ACTIONABLE, NOT "EXISTS".
+   * A cancelled lesson is not available. A full cohort is not available. A
+   * 1-to-1 slot nobody can pay for is not available either — `bookable` is
+   * already the reader's AND of Stripe keys, a real price and an open slot,
+   * so this reuses that judgement rather than forming a second opinion.
+   *
+   * ⚠ THE VIEWER'S OWN BOOKING SURVIVES THE FILTER. It is not something to
+   * book, but hiding a student's own confirmed lesson from a calendar they
+   * filtered to "available" would read as a cancellation.
+   */
+  if (f.availableOnly) {
+    if (ev.status === "cancelled") return false;
+    if (ev.type === "group" && ev.cohort && ev.cohort.status === "full") return false;
+    if (ev.type === "private_open" && ev.bookable === false) return false;
+  }
   return true;
 }
 

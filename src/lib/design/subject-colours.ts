@@ -57,6 +57,9 @@ export type SubjectColour = {
   border: string;
 };
 
+/** The four values any chip needs to paint itself — subject or not. */
+export type ColourTokens = Pick<SubjectColour, "accent" | "text" | "tint" | "border">;
+
 /**
  * ⚠ THE ACCENTS ARE THE EXISTING VALUES, UNCHANGED. chemistry #F97316,
  * biology #4A9D5C, physics #3B7CB8 already live in subject-theme.ts and in
@@ -129,7 +132,14 @@ export function subjectColour(slugOrName: string | null | undefined): SubjectCol
  * time, and the alternative is a lookup object of class strings that drifts
  * from this file the first time somebody adds a subject.
  */
-export function subjectVars(c: SubjectColour | null): React.CSSProperties {
+/**
+ * ⚠ THE PARAMETER IS THE STYLE SUBSET, NOT SubjectColour, SO A NON-SUBJECT
+ * TOKEN CAN USE IT HONESTLY. ONE_TO_ONE is not a science; typing it as a
+ * SubjectColour forced it to carry `key: "chemistry"`, which is false data
+ * sitting in the palette waiting for something to read it. This function only
+ * ever touched the four style values, so that is what it now asks for.
+ */
+export function subjectVars(c: ColourTokens | null): React.CSSProperties {
   if (!c) return {};
   return {
     "--subject-accent": c.accent,
@@ -224,6 +234,36 @@ export function overParchment(hex: string, alpha: number): string {
   });
   return `#${out.map((v) => v.toString(16).padStart(2, "0")).join("")}`.toUpperCase();
 }
+
+/**
+ * 1-to-1 availability — the one non-subject thing the calendar colours (§4, §46).
+ *
+ * ============================================================================
+ * ⚠ ONE TOKEN, BUILT FROM THE EXISTING GOLD RAMP, NOT A NEW COLOUR
+ * ============================================================================
+ * §4 asks for "premium gold / champagne" and explicitly not bright yellow;
+ * §46 asks for a single central token and §47 forbids inventing a second
+ * palette. GOLD above is already Ailemy's cross-subject platform accent — the
+ * capsule behind "Past papers" and "Live tuition" in the nav — so 1-to-1 reuses
+ * it rather than introducing a fifth hue that would have to be kept in step.
+ *
+ * ⚠ IT DELIBERATELY SHARES THE SubjectColour SHAPE. Every calendar surface
+ * already styles a chip from {accent, text, tint, border} through subjectVars;
+ * matching the shape means a gold chip is the same code path as an orange one,
+ * so the two cannot drift apart in padding, contrast or focus treatment.
+ *
+ * ⚠ `text` IS GOLD.text (6.62:1 on parchment), NOT GOLD.body. §53 asks for
+ * adequate contrast on the gold, and body gold is decorative — it fails on
+ * small type. accent is decorative only, exactly as the subject tokens say.
+ */
+export const ONE_TO_ONE: ColourTokens & { name: string; code: string } = {
+  name: "1-to-1",
+  code: "1:1",
+  accent: GOLD.body,
+  text: GOLD.text,
+  tint: overParchment(GOLD.sheen, 0.22),
+  border: overParchment(GOLD.body, 0.55),
+};
 
 export type NavToneKey = SubjectKey | "gold" | "neutral";
 export type NavTone = { tint: string; border: string };

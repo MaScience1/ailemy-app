@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import {
-  MONTH_LONG, WEEKDAY_SHORT, addDays, bucketByDay, cellEvents, monthGrid,
+  MONTH_LONG, WEEKDAY_SHORT, addDays, bucketByDay, cellEvents, dayKeyOf, monthGrid,
   parseDate, periodLabel, stateToQuery, step, weekGrid,
   type CalendarState, type CalendarView, type GridDay,
   hourWindow, hourRows, hourLabel,
@@ -11,6 +11,7 @@ import type { Capacity } from "@/lib/public/capacity-rules";
 import { LEVELS } from "@/lib/calendar/types";
 import { SUBJECTS } from "@/lib/public/catalogue";
 import { CANONICAL_LABEL, CANONICAL_TZ, hourIn } from "@/lib/schedule/timezone";
+import { groupUpcoming, nextOf } from "@/lib/calendar/upcoming";
 
 import { DayPanel } from "./DayPanel";
 import { EventChip, TypeMarker, describeEvent } from "./EventChip";
@@ -159,7 +160,7 @@ export function Calendar(props: CalendarProps) {
         )}
         {state.view === "upcoming" && (
           <UpcomingView events={events} viewerTz={viewerTz} href={href}
-            emptyMessage={props.emptyMessage} />
+            emptyMessage={props.emptyMessage} todayISO={todayISO} />
         )}
 
         {/*
@@ -341,6 +342,11 @@ function Filters({
           state.subject, (k) => ({ subject: k }))}
       {row("Level", [{ key: null, label: "All" }, ...LEVELS.map((l) => ({ key: l.slug, label: l.label }))],
         state.level, (k) => ({ level: k }))}
+      {/* §11 — the one filter that answers "show me what I can actually do". */}
+      {row("Show", [
+        { key: null, label: "Everything" },
+        { key: "1", label: "Available only" },
+      ], state.availableOnly ? "1" : null, (k) => ({ availableOnly: k === "1" }))}
       {row("Type", [
         { key: "all", label: "All" }, { key: "group", label: "Group" }, { key: "private", label: "1-to-1" },
       ], state.type, (k) => ({ type: (k ?? "all") as CalendarState["type"] }))}
@@ -672,45 +678,78 @@ function WeekView({ days, ...p }: ViewProps & { days: GridDay[] }) {
 // ── upcoming ────────────────────────────────────────────────────────────────
 
 function UpcomingView({
-  events, viewerTz, href, emptyMessage,
+  events, viewerTz, href, emptyMessage, todayISO,
 }: {
   events: readonly CalendarEvent[];
   viewerTz: string | null;
   href: (p: Partial<CalendarState> & { day?: string | null }) => string;
   emptyMessage?: string;
+  todayISO: string;
 }) {
+  /**
+   * ⚠ THIS WAS A SIXTY-ROW LIST UNDER THE HEADING "NEXT 60 DAYS" (§24, §25).
+   * Every row carried the same weight: a date column, a time, a course, and
+   * the word GROUP in small monospace. It was a query result with a
+   * stylesheet — the reader had to scan all of it to find the two sessions
+   * that were actually near.
+   *
+   * It is now banded by nearness, because that is the question being asked.
+   * "Next 60 days" describes the FETCH; "This week" describes what a student
+   * can go to. The window is unchanged — only the label and the hierarchy.
+   */
   if (events.length === 0) {
     return (
       <p className="text-sm leading-relaxed text-ink/60">
-        {emptyMessage ?? "No lessons are scheduled in this period."}
+        {emptyMessage ?? "No tuition is scheduled in this period."}
       </p>
     );
   }
 
-  const byDay = bucketByDay(events);
-  const days = [...byDay.keys()].sort();
+  const sections = groupUpcoming(events, todayISO, (e) => dayKeyOf(e.startsAt));
 
   return (
-    <ol className="divide-y divide-ink/10 border-y border-ink/10">
-      {days.map((dayISO) => {
-        const d = parseDate(dayISO)!;
-        return (
-          <li key={dayISO} className="flex flex-wrap gap-x-6 gap-y-2 py-4 sm:flex-nowrap">
-            <Link
-              href={href({ day: dayISO })}
-              className="w-28 shrink-0 font-mono text-[11px] uppercase tracking-[0.15em] text-ink/50 transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-            >
-              {WEEKDAY_SHORT[((d.getUTCDay() === 0 ? 7 : d.getUTCDay()) as 1)]} {d.getUTCDate()}{" "}
-              {MONTH_LONG[d.getUTCMonth()].slice(0, 3)}
-            </Link>
-            <ul className="min-w-0 flex-1 space-y-1.5">
-              {byDay.get(dayISO)!.map((ev) => (
-                <li key={ev.key}><EventChip event={ev} viewerTz={viewerTz} /></li>
-              ))}
-            </ul>
-          </li>
-        );
-      })}
-    </ol>
+    <div className="grid gap-9">
+      {sections.map((section) => (
+        <section key={section.band} aria-labelledby={`band-${section.band}`}>
+          <div className="flex items-baseline justify-between gap-4 border-b border-ink/10 pb-2">
+            <h3 id={`band-${section.band}`} className="font-display text-lg font-medium tracking-tight">
+              {section.label}
+            </h3>
+            {/* §35 — a count of what is really there, never a claim about it. */}
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink/45">
+              {section.count} session{section.count === 1 ? "" : "s"}
+            </span>
+          </div>
+
+          <ol className="mt-3 grid gap-5">
+            {section.days.map((day) => (
+              <li key={day.dayISO}>
+                {/* ⚠ §29 — THE FRIENDLY WORD AND THE EXACT DATE, BOTH.
+                    "Tomorrow" alone is ambiguous the moment a tab is left open
+                    overnight; a bare "Tue 15 Sep" is colder than it needs to
+                    be for something happening in a few hours. */}
+                <Link
+                  href={href({ day: day.dayISO })}
+                  data-cta="calendar_day_selected"
+                  className="group/day inline-flex items-baseline gap-2 rounded px-1 py-1 -mx-1 transition-colors hover:bg-parchment-2/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                >
+                  <span className="text-sm font-medium text-ink">{day.lead}</span>
+                  {day.lead !== day.exact && (
+                    <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink/45">
+                      {day.exact}
+                    </span>
+                  )}
+                </Link>
+                <ul className="mt-2 grid gap-1.5">
+                  {day.events.map((ev) => (
+                    <li key={ev.key}><EventChip event={ev} viewerTz={viewerTz} /></li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))}
+    </div>
   );
 }

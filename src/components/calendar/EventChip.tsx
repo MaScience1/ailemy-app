@@ -1,5 +1,5 @@
 import { dualTime } from "@/lib/schedule/timezone";
-import { subjectColour, subjectVars } from "@/lib/design/subject-colours";
+import { ONE_TO_ONE, subjectColour, subjectVars } from "@/lib/design/subject-colours";
 import type { CalendarEvent } from "@/lib/calendar/types";
 
 /**
@@ -61,7 +61,22 @@ export function EventChip({
    * text says "this is happening, in Chemistry"; the strike-through and the
    * grey have to agree with each other.
    */
-  const colour = event.type === "group" && !cancelled ? subjectColour(event.subject) : null;
+  /**
+   * ⚠ 1-TO-1 IS GOLD NOW (§4, §46), WHERE IT USED TO BE NEUTRAL OUTLINE.
+   * The old treatment made it "a different KIND of thing", which was right —
+   * but neutral also made it the QUIETEST thing on a calendar whose whole
+   * purpose is now to surface bookable time. §4 asks for a premium gold that
+   * is distinct from the three subjects and readable on cream; ONE_TO_ONE is
+   * built from the existing platform gold ramp so there is exactly one of it.
+   *
+   * Colour is never the only signal — the chip still prints "1-to-1" in words
+   * beside a shape marker (§5, §38, §53).
+   */
+  const colour = cancelled
+    ? null
+    : event.type === "group"
+      ? subjectColour(event.subject)
+      : ONE_TO_ONE;
 
   return (
     <span
