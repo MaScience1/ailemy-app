@@ -168,3 +168,46 @@ export function nextOf<E extends { type: string; startsAt: Date }>(
   }
   return best;
 }
+
+/**
+ * What a student can actually do with one event (§3 of the header, §57).
+ *
+ * ============================================================================
+ * ⚠ §57 ASKS FOR "Reserve your place →" AND "Book this slot →". BOTH ARE
+ * CONDITIONAL, AND THE CONDITION IS THE DATA.
+ * ============================================================================
+ * A group lesson can be reserved only if its cohort is enrolling AND has
+ * somewhere to enrol — the same AND `groupOffer` applies on the homepage, for
+ * the same reason: a cohort marked enrolling with no payment link cannot be
+ * joined, and a button saying otherwise leads nowhere. A 1-to-1 slot can be
+ * booked only if the reader already computed `bookable`, which folds in Stripe
+ * keys, a real price and an open time.
+ *
+ * Everything else gets a truthful verb — "View lesson", "See details" — rather
+ * than a booking verb the product cannot honour. When checkout ships, these
+ * labels change on their own.
+ *
+ * ⚠ THE VIEWER'S OWN BOOKING IS NOT AN OFFER. It is a fact about their
+ * timetable, so it says so rather than inviting them to book what they hold.
+ */
+export type EventAction = { label: string; bookable: boolean };
+
+export function actionFor(ev: {
+  type: string;
+  status?: string;
+  bookable?: boolean;
+  cohort?: { status?: string; enrolmentUrl?: string | null } | null;
+}): EventAction {
+  if (ev.status === "cancelled") return { label: "Cancelled", bookable: false };
+  if (ev.type === "private_booked") return { label: "Your booking", bookable: false };
+  if (ev.type === "private_open") {
+    return ev.bookable
+      ? { label: "Book this slot", bookable: true }
+      : { label: "See details", bookable: false };
+  }
+  const c = ev.cohort;
+  const canEnrol = c?.status === "enrolling" && !!c.enrolmentUrl;
+  return canEnrol
+    ? { label: "Reserve your place", bookable: true }
+    : { label: "View lesson", bookable: false };
+}

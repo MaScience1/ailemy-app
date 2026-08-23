@@ -17,8 +17,9 @@ import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import {
-  bandFor, dayLabel, daysBetween, groupUpcoming, nextOf, BAND_LABEL,
+  actionFor, bandFor, dayLabel, daysBetween, groupUpcoming, nextOf, BAND_LABEL,
 } from "../../../src/lib/calendar/upcoming.ts";
+import { hourWindow } from "../../../src/lib/calendar/grid.ts";
 import { matchesFilters } from "../../../src/lib/calendar/types.ts";
 import { readState, stateToQuery } from "../../../src/lib/calendar/grid.ts";
 
@@ -295,6 +296,99 @@ console.log("\n=== 8. §53/§54 — accessible, and calm ===");
   t("§53 — every shortcut has a visible focus state",
     (SHORTCUTS.match(/focus-visible:outline\b/g) ?? []).length >= 2);
   t("§54 — motion is guarded", /motion-safe:/.test(SHORTCUTS));
+}
+
+// ============================================================================
+console.log("\n=== 9. ⚠ §20 — the week's hours come from the data ===");
+// ============================================================================
+{
+  const at = (h: number, dur = 1) => ({
+    startsAt: new Date(Date.UTC(2026, 8, 15, h - 3, 0)),   // Doha = UTC+3
+    endsAt: new Date(Date.UTC(2026, 8, 15, h - 3 + dur, 0)),
+  });
+  const hourOf = (d: Date) => (d.getUTCHours() + 3) % 24;
+
+  /**
+   * ⚠ NOT A HARDCODED 5–10 PM WINDOW. The brief's own illustration is an
+   * evening grid, and evenings are what the catalogue holds today — so a fixed
+   * window would have looked correct and been a coincidence. It is derived, so
+   * the grid expands on its own the day a morning slot lands.
+   */
+  const evening = hourWindow([at(19), at(20)], hourOf);
+  t("⚠ §20 — the window is derived from the events, not fixed",
+    evening.from <= 19 && evening.to >= 21, JSON.stringify(evening));
+  const morning = hourWindow([at(9)], hourOf);
+  t("⚠ §20 — a morning session moves the window to the morning",
+    morning.from <= 9 && morning.from < evening.from, JSON.stringify(morning));
+  const wide = hourWindow([at(9), at(21)], hourOf);
+  t("§20 — a spread-out day widens rather than clipping",
+    wide.from <= 9 && wide.to >= 22, JSON.stringify(wide));
+  // ⚠ 3 AM EMPTY ROWS ARE THE THING §20 FORBIDS.
+  t("⚠ §20 — an evening-only week does not render the small hours",
+    evening.from >= 12, JSON.stringify(evening));
+  // A lesson ending at :30 still owns the row it ends inside.
+  const half = hourWindow([{ startsAt: new Date(Date.UTC(2026, 8, 15, 16, 0)),
+                             endsAt: new Date(Date.UTC(2026, 8, 15, 17, 30)) }], hourOf);
+  t("§20 — a lesson ending on the half hour is not clipped", half.to >= 21, JSON.stringify(half));
+}
+
+// ============================================================================
+console.log("\n=== 10. ⚠ §23 — the phone gets a date selector, not a shrunk grid ===");
+// ============================================================================
+{
+  const mobile = CALENDAR.slice(CALENDAR.indexOf("phone: a date selector"),
+                                CALENDAR.indexOf("tablet and up: the hour grid"));
+  t("§23 — the seven-day stack is gone", !/phone: the list, unchanged/.test(CALENDAR));
+  t("§23 — the dates scroll horizontally", /overflow-x-auto/.test(mobile));
+  t("⚠ §23 — the page body does not scroll sideways to do it",
+    /min-w-max/.test(mobile) && /-mx-1 overflow-x-auto/.test(mobile));
+  t("§23 — the selected date is announced", /aria-current=\{selected \? "date" : undefined\}/.test(mobile));
+  t("§53 — the date chips clear 44px", /min-h-\[56px\]/.test(mobile));
+  t("§48 — each session row is a full-width target with a visible action",
+    /min-h-\[44px\]/.test(mobile) && /\{action\.label\}/.test(mobile));
+  t("§38 — the row says the type in words", /Group tuition" : "1-to-1"/.test(mobile));
+
+  /**
+   * ⚠ THE SELECTOR REUSES `date`, WHICH IS WHY IT CANNOT DISAGREE WITH THE
+   * WEEK. Every day in a week shares a startOfWeek, so the anchor doubles as
+   * the cursor; a separate parameter would be a second source of truth for
+   * "which day", and the two could drift.
+   */
+  t("⚠ §23 — the selector moves the existing anchor, not a new parameter",
+    /p\.href\(\{ date: day\.date, day: null \}\)/.test(mobile));
+  t("§23 — and it does not open the day panel instead", !/href=\{p\.href\(\{ day: day\.date \}\)\}/.test(mobile));
+
+  // §49 — an empty day is never a dead end.
+  t("§49 — an empty day says so and offers a way on",
+    /No tuition on this day/.test(mobile) && /See what is coming up/.test(mobile));
+
+  // ⚠ §66 AGAIN, ON THE NEW SURFACE. The mobile list renders whatever the
+  // reader returns; nothing in it may name a time or a type that has no row.
+  t("⚠ §66 — the mobile list invents no slot",
+    !/1-to-1 available[\s\S]{0,40}\d{1,2}:\d{2}/.test(mobile));
+  t("§66 — its rows come from the bucket, not a literal",
+    /p\.buckets\.get\(selectedISO\)/.test(mobile));
+}
+
+// ============================================================================
+console.log("\n=== 11. ⚠ §57 — the action verb is derived per event ===");
+// ============================================================================
+{
+  t("⚠ §57 — a cohort with no payment link cannot be reserved",
+    actionFor({ type: "group", cohort: { status: "interest", enrolmentUrl: null } }).label === "View lesson");
+  t("⚠ §57 — nor one marked enrolling with a null link",
+    actionFor({ type: "group", cohort: { status: "enrolling", enrolmentUrl: null } }).bookable === false);
+  t("§57 — an enrolling cohort WITH a link can be reserved",
+    actionFor({ type: "group", cohort: { status: "enrolling", enrolmentUrl: "https://pay" } }).label
+      === "Reserve your place");
+  t("§57 — an unbookable slot says See details",
+    actionFor({ type: "private_open", bookable: false }).label === "See details");
+  t("§57 — a bookable slot says Book this slot",
+    actionFor({ type: "private_open", bookable: true }).label === "Book this slot");
+  t("⚠ §57 — the viewer's own booking is not offered back to them",
+    actionFor({ type: "private_booked" }).label === "Your booking");
+  t("§57 — a cancelled lesson offers nothing",
+    actionFor({ type: "group", status: "cancelled" }).bookable === false);
 }
 
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);
