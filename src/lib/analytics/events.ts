@@ -35,6 +35,10 @@ export const CTA_SOURCES = [
    * No PII: every value names a control, never a student, slot or teacher.
    */
   "calendar_day_selected",
+  // §50 — the way out of an empty month. Worth knowing how often it is the
+  // control a student reaches for, since the month they land on is empty for
+  // the whole of the summer.
+  "calendar_jump_to_month",
   "next_group_lesson_clicked",
   "next_one_to_one_clicked",
   "one_to_one_slot_opened",

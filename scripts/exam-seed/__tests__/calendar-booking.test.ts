@@ -403,5 +403,53 @@ console.log("\n=== 11. ⚠ §57 — the action verb is derived per event ===");
     actionFor({ type: "group", status: "cancelled" }).bookable === false);
 }
 
+// ============================================================================
+console.log("\n=== 12. ⚠ §50 — an empty month explains itself, ABOVE the grid ===");
+// ============================================================================
+{
+  const EMPTY = readFileSync("src/components/calendar/MonthEmptyState.tsx", "utf8");
+  const HOME = readFileSync("src/app/page.tsx", "utf8");
+
+  t("§50 — it says what is true of the month", /No tuition this month\./.test(EMPTY));
+  t("§50 — it names the next real lesson's date", /monthNameOf\(nextGroup\.dateISO\)/.test(EMPTY));
+  t("⚠ §50 — and its TIME, not just the date", /\{when\(nextGroup\.event\)\}/.test(EMPTY));
+  t("§50 — it offers a jump to that month", /Jump to \{monthNameOf\(nextGroup\.dateISO\)\}/.test(EMPTY));
+
+  /**
+   * ⚠ POSITION WAS THE ENTIRE DEFECT. The same sentence and jump link already
+   * existed BELOW the grid, where a six-row August fills a 900px laptop and
+   * pushes them off-screen. The page therefore read as an unexplained blank —
+   * §50's exact complaint — while every string §50 asks for was present in
+   * the HTML. A guard that only grepped for the words would have passed.
+   */
+  const emptyAt = CALENDAR.indexOf("<MonthEmptyState");
+  const viewsAt = CALENDAR.indexOf('state.view === "month" &&');
+  t("⚠ §50 — the empty state renders BEFORE the grid, not after it",
+    emptyAt > 0 && emptyAt < viewsAt, `empty@${emptyAt} views@${viewsAt}`);
+  t("§50 — and only when the period is genuinely empty",
+    /events\.length === 0 && state\.view !== "upcoming"/.test(CALENDAR));
+  t("⚠ §50 — the old below-the-grid duplicate is gone",
+    !/Try another month, or see what is opening[\s\S]{0,200}Jump to the first teaching week/.test(CALENDAR));
+
+  // ⚠ ONE COMPONENT, BOTH DOORS. The modal previously passed emptyMessage and
+  // no jump, so /calendar offered a way forward and the homepage did not.
+  t("⚠ §50 — /calendar feeds it the real next lesson",
+    /nextGroupAhead=\{jump\.kind === "session"/.test(PAGE));
+  t("⚠ §50 — and so does the homepage modal, which had no jump at all",
+    /nextGroupAhead=\{upcomingLesson\.kind === "session"/.test(HOME));
+  t("§2 — both use the same component, not two empty states",
+    !existsSync("src/components/home/HomeEmptyMonth.tsx"));
+
+  // §66 on this surface too.
+  t("⚠ §66 — the 1-to-1 line renders only when a real slot exists",
+    /\{nextPrivate && \(/.test(EMPTY));
+  t("⚠ §66 — with none, it asks rather than promising to find one",
+    /nextPrivate \? "Find next 1-to-1" : "Ask about 1-to-1 times"/.test(EMPTY));
+  const TIME_LIT = /["'>]\s*\d{1,2}[:.]\d{2}\s*(?:AM|PM|am|pm)?\s*["'<]/;
+  t("⚠ §66 — no hardcoded time in the empty state", !TIME_LIT.test(code(EMPTY)),
+    code(EMPTY).match(TIME_LIT)?.[0]);
+  t("§53 — its controls clear 44px", (EMPTY.match(/min-h-\[44px\]/g) ?? []).length >= 3);
+}
+
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);
 process.exit(fail === 0 ? 0 : 1);

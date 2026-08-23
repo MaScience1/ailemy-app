@@ -14,6 +14,7 @@ import { CANONICAL_LABEL, CANONICAL_TZ, hourIn } from "@/lib/schedule/timezone";
 import { actionFor, dayLabel, groupUpcoming, nextOf } from "@/lib/calendar/upcoming";
 
 import { DayPanel } from "./DayPanel";
+import { MonthEmptyState } from "./MonthEmptyState";
 import { EventChip, TypeMarker, describeEvent } from "./EventChip";
 import { ONE_TO_ONE, subjectColour, subjectVars } from "@/lib/design/subject-colours";
 import { dualTime } from "@/lib/schedule/timezone";
@@ -82,6 +83,14 @@ export type CalendarProps = {
   jumpToISO?: string | null;
   jumpToLabel?: string | null;
   /**
+   * §50 — the next REAL group lesson, from the caller's forward read. When
+   * present and the visible period is empty, the month explains itself above
+   * the grid instead of below it. Null means the caller found none.
+   */
+  nextGroupAhead?: { event: CalendarEvent; dateISO: string } | null;
+  /** §66 — a real open 1-to-1, or null. Never a placeholder. */
+  nextPrivateAhead?: CalendarEvent | null;
+  /**
    * ⚠ FOR AN EMBED PART-WAY DOWN A LONG PAGE. Every link here is a real
    * navigation, so the browser lands at the top of the destination — fine at
    * /calendar, where the calendar IS the page, and wrong on the homepage, where
@@ -149,6 +158,25 @@ export function Calendar(props: CalendarProps) {
 
       {showFilters && <Filters state={state} href={href} lockedSubject={lockedSubject} />}
 
+      {/* ── §50 — AN EMPTY MONTH EXPLAINS ITSELF BEFORE THE GRID ──────────
+          ⚠ IT USED TO BE BELOW. The same sentence and jump link existed under
+          the grid, where a six-row August fills a laptop viewport and pushes
+          them off-screen — so the page read as an unexplained blank, which is
+          precisely the failure §50 names. Position was the whole defect. */}
+      {events.length === 0 && state.view !== "upcoming" && (
+        <div className="mt-6">
+          <MonthEmptyState
+            nextGroup={props.nextGroupAhead ?? null}
+            nextPrivate={props.nextPrivateAhead ?? null}
+            viewerTz={viewerTz}
+            jumpHref={(dateISO) => href({ date: dateISO, view: state.view, day: null })}
+            upcomingHref={href({ view: "upcoming" })}
+            oneToOneHref="/tuition/one-to-one"
+            note={props.emptyMessage}
+          />
+        </div>
+      )}
+
       <div className="mt-6">
         {state.view === "month" && (
           <MonthView weeks={monthGrid(state.date)} buckets={buckets} state={state}
@@ -163,53 +191,6 @@ export function Calendar(props: CalendarProps) {
         {state.view === "upcoming" && (
           <UpcomingView events={events} viewerTz={viewerTz} href={href}
             emptyMessage={props.emptyMessage} todayISO={todayISO} />
-        )}
-
-        {/*
-          ⚠ AN EMPTY GRID DOES NOT EXPLAIN ITSELF (§12, §57). An empty LIST
-          reads as "nothing here"; a month of blank cells with a Year 11 filter
-          applied reads as "the calendar is broken". The note says which filter
-          emptied it, so the fix is one tap away rather than a guess.
-        */}
-        {events.length > 0 || state.view === "upcoming" ? null : (
-          <div className="mt-5 rounded-lg border border-ink/10 bg-parchment-2/40 px-4 py-4">
-            <p className="text-sm leading-relaxed text-ink/70">
-              {props.emptyMessage ?? "No lessons are scheduled in this period."}
-            </p>
-            {/* ⚠ §40 — A BLANK CALENDAR MUST OFFER SOMETHING TO DO. "Nothing in
-                this period" with no way forward is the passive empty state the
-                brief calls out: the visitor's only options are to guess a month
-                or leave.
-
-                ⚠ AND THE JUMP LINK ONLY APPEARS WHEN THERE IS SOMEWHERE TO
-                JUMP TO. `jumpToISO` is resolved by the server from real
-                sessions; absent means no future teaching is known, and a
-                "jump to the first teaching week" button that lands on another
-                empty month is worse than no button. */}
-            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
-              {props.jumpToISO && (
-                <Link
-                  href={href({ date: props.jumpToISO, view: state.view })}
-                  data-cta="hero_calendar_clicked"
-                  className="text-sm font-medium underline underline-offset-2 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-                >
-                  {props.jumpToLabel ?? "Jump to the first teaching week"} →
-                </Link>
-              )}
-              <Link
-                href={href({ view: "upcoming" })}
-                className="text-sm underline underline-offset-2 text-ink/70 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-              >
-                View upcoming sessions →
-              </Link>
-              <Link
-                href="/tuition/one-to-one"
-                className="text-sm underline underline-offset-2 text-ink/70 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-              >
-                One-to-one tuition →
-              </Link>
-            </div>
-          </div>
         )}
       </div>
 

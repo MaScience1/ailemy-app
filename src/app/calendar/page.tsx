@@ -12,6 +12,7 @@ import { getNavSession } from "@/lib/auth/nav-session";
 import { dayKeyOf, parseDate, rangeFor, readState } from "@/lib/calendar/grid";
 import { loadCalendarEvents } from "@/lib/calendar/readers";
 import { CalendarShortcuts } from "@/components/calendar/CalendarShortcuts";
+import { nextOf } from "@/lib/calendar/upcoming";
 import { levelLabel } from "@/lib/calendar/types";
 import { nextSession } from "@/lib/calendar/next-session";
 import { SUBJECTS } from "@/lib/public/catalogue";
@@ -230,6 +231,10 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
           openDay={openDay}
           emptyMessage={emptyFor(subjectName, level)}
           capacityBySlug={capacityBySlug}
+          /* §50 — the real next lesson, so an empty month can name it. */
+          nextGroupAhead={jump.kind === "session" ? { event: jump.event, dateISO: jump.dateISO } : null}
+          /* ⚠ §66 — a real open slot or null; aheadEvents holds none today. */
+          nextPrivateAhead={nextOf(aheadEvents.length > 0 ? aheadEvents : events, "private_open", new Date())}
           jumpToISO={jump.kind === "session" ? jump.dateISO : null}
           jumpToLabel={jump.kind === "session" ? `Jump to ${jumpLabel}` : null}
         />

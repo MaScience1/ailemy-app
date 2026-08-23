@@ -18,6 +18,7 @@ import { SocialProof } from "@/components/home/SocialProof";
 import { loadIdentity } from "@/lib/account/identity";
 import { loadProfileCourses } from "@/lib/account/profile-reader";
 import { nextSession, distanceLabel } from "@/lib/calendar/next-session";
+import { nextOf } from "@/lib/calendar/upcoming";
 import { dayKeyOf } from "@/lib/calendar/grid";
 import { getNavSession } from "@/lib/auth/nav-session";
 import {
@@ -994,6 +995,17 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
             emptyMessage={emptyCalendarMessage(
               cohorts, todayISO, (iso) => formatDay(new Date(`${iso}T12:00:00Z`), CANONICAL_TZ),
             )}
+            /* ⚠ §50 — THE MODAL HAD NO JUMP CONTROL AT ALL. It passed an
+               emptyMessage and nothing else, so the two doors into the same
+               calendar disagreed about what an empty month offers: /calendar
+               had a way forward, the homepage overlay had a blank grid and a
+               sentence. `upcomingLesson` is the forward read this page already
+               performs for the hero card, so it costs no extra query. */
+            nextGroupAhead={upcomingLesson.kind === "session"
+              ? { event: upcomingLesson.event, dateISO: upcomingLesson.dateISO }
+              : null}
+            /* §66 — real slots only; there are none today. */
+            nextPrivateAhead={nextOf(aheadEvents, "private_open", new Date())}
           />
         </HeroCalendarOverlay>
       )}
