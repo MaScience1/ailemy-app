@@ -143,12 +143,20 @@ const NAV_LINKS: NavLink[] = [
   // ⚠ §3 — Calendar is a permanent top-level entry, not a link buried in the
   // tuition page. It is where a student checks when a class actually is.
   { label: "Calendar", href: "/calendar", tone: "gold" },
-  // ⚠ "Resources" IS NOT HERE ON PURPOSE. Resources are discovered THROUGH a
-  // subject — that is the canonical path, and a parallel top-level entry
-  // offered a second, flatter route to the same material, which is how two
-  // navigation models end up half-maintained. /resources still exists and is
-  // still linked from the footer; it is a chooser that sends you back into a
-  // subject.
+  // ⚠ REVERSED 2026-08-23, DELIBERATELY, AND THE OLD REASONING IS WORTH
+  // KEEPING. This list previously excluded "Resources" on the argument that
+  // resources are discovered THROUGH a subject, and that a second flatter
+  // route to the same material leaves two navigation models half-maintained.
+  // That argument was sound when /resources was a three-card chooser.
+  //
+  // It stopped being true when Resources became a library with its own
+  // search, course pages, topic browsing and resource categories. A student
+  // revising does not think "Chemistry, then resources"; they think "where is
+  // everything for my course". The Resources brief calls it a first-class
+  // destination and says not to bury it, so it is here — and the subject path
+  // still works exactly as before, which is what keeps this from being two
+  // models rather than two doors onto one.
+  { label: "Resources", href: "/resources", tone: "gold" },
 ];
 
 /**

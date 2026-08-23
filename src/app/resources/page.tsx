@@ -1,80 +1,167 @@
 import type { Metadata } from "next";
-
-import { SubjectCard } from "@/components/home/SubjectCard";
+import Link from "next/link";
+import { Suspense } from "react";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
-import { AnnouncementBar } from "@/components/public/AnnouncementBar";
 import { getNavSession } from "@/lib/auth/nav-session";
+
+import { SubjectCard } from "@/components/home/SubjectCard";
+import { ResourceSearch } from "@/components/resources/ResourceSearch";
+import { searchResources } from "@/lib/resources/search";
 import { SUBJECTS } from "@/lib/public/catalogue";
+import { subjectColour, subjectVars } from "@/lib/design/subject-colours";
 
 /**
- * A subject chooser, and nothing more.
+ * The Resources landing page (§4, §17).
  *
- * ⚠ IT EXISTS BECAUSE THE URL DID, AND IT WAS BROKEN. /resources was returning
- * 500 — falling through to the (site)/[...slug] catch-all, which threw a
- * ReferenceError. A 500 is worse than a 404: it tells a visitor the site is
- * faulty rather than that the page moved. This route now answers for itself.
- *
- * ⚠ IT SENDS YOU BACK INTO A SUBJECT rather than listing material directly.
- * Resources are discovered THROUGH a subject; a second, flatter index of the
- * same material is how two navigation models end up half-maintained.
+ * ============================================================================
+ * ⚠ NO TUITION COMPONENT MOUNTS ANYWHERE UNDER /resources (§1, §40)
+ * ============================================================================
+ * This is a study environment, not a sales surface. There is no TuitionCta, no
+ * interstitial card between resources, no floating "need help?" bar — and a
+ * test fails the build if one appears on any /resources route, because the
+ * rule is easy to break by accident six months from now when somebody mounts
+ * a global CTA in a layout. Live Tuition stays reachable from the site nav,
+ * which is enough.
  */
+
 export const metadata: Metadata = {
   title: "Resources — Ailemy",
-  description: "Lessons, past papers, mark schemes and practice, organised by subject and specification.",
+  description:
+    "Lessons, revision notes, flashcards, exam questions and past papers, organised around what you actually study.",
 };
 
-export default async function ResourcesPage() {
+/**
+ * ⚠ THE SHARED SiteNav IS PERMITTED HERE; A TUITION CTA IS NOT (§40).
+ * §40 draws the line itself: "If a student deliberately clicks Live Tuition in
+ * navigation, take them there. A subtle footer/navigation link is sufficient."
+ * So the site's own nav — identical on every page, carrying one Live Tuition
+ * link among seven — stays. What is banned is Resources ADVERTISING tuition:
+ * a floating CTA, an interstitial card, a banner between resources. The guard
+ * in resources-hub.test.ts enforces exactly that distinction by reading each
+ * page's own markup rather than what the shared nav renders.
+ */
+export default async function ResourcesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
   const session = await getNavSession();
+  const { q } = await searchParams;
+  const query = (q ?? "").trim();
+  const results = query.length >= 2 ? await searchResources(query) : null;
+
   return (
-    <div className="bg-parchment text-ink">
-      <AnnouncementBar />
+    <>
       <SiteNav session={session} />
-      <main className="mx-auto max-w-6xl px-6 py-14 sm:py-20">
-        <h1 className="font-display text-3xl font-medium tracking-tight sm:text-4xl">Resources</h1>
-        <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink/70">
-          Lessons, past papers, mark schemes and practice live inside each subject, organised by
-          specification. Choose a science to start.
-        </p>
-        {/**
-          * ⚠ THE HOMEPAGE'S SubjectCard, NOT A SECOND CARD THAT LOOKS LIKE IT.
-          *
-          * This markup used to be a hand-rolled copy: same border, same padding,
-          * same layout — and none of the subject accent, none of the lift, and a
-          * plain underline where the homepage has an animated CTA. Two cards
-          * claiming to be the same thing while behaving differently is exactly
-          * the drift that produced the difference in the first place.
-          *
-          * ⚠ THE DESTINATION IS THE OVERRIDE, AND ONLY THE DESTINATION. From a
-          * resources index every subject goes to its own page — Biology and
-          * Physics included, even though their `exploreHref` is null, because a
-          * visitor who came here for past papers wants /biology and not an
-          * interest form. The card's behaviour is unchanged; where it points is.
-          *
-          * ⚠ `flex` ON THE <li> IS WHAT KEEPS THE CARDS EQUAL HEIGHT. On the
-          * homepage the card IS the grid item and stretches for free; here a
-          * <li> sits between them (a <ul> owes its children), so the <li>
-          * stretches and the card inside it would size to its own text. Biology
-          * and Physics share a blurb and Chemistry's is shorter, so the
-          * difference would be visible on exactly this page. A flex <li> passes
-          * the stretch down; `w-full` on the card completes it.
-          */}
-        <ul className="mt-10 grid gap-4 sm:grid-cols-3">
-          {SUBJECTS.map((s) => (
-            <li key={s.slug} className="flex">
-              <SubjectCard
-                subject={{
-                  slug: s.slug, name: s.name, qualifications: s.qualifications,
-                  blurb: s.blurb, status: s.status, exploreHref: s.exploreHref,
-                }}
-                href={`/${s.slug}`}
-                ctaLabel={`Open ${s.name}`}
-              />
-            </li>
-          ))}
-        </ul>
-      </main>
+      <main className="min-h-screen bg-parchment text-ink">
+      <div className="mx-auto w-full max-w-6xl px-6 py-12 sm:px-10 sm:py-16">
+        <header className="max-w-3xl">
+          <p className="font-mono text-xs uppercase tracking-[0.25em] text-ink/50">Resources</p>
+          <h1 className="font-display mt-4 text-4xl font-medium leading-[1.05] tracking-tight md:text-5xl">
+            Everything you need to study science.
+          </h1>
+          <p className="mt-5 text-lg leading-relaxed text-ink/70">
+            Lessons, revision notes, flashcards, exam questions and past papers — organised
+            around what you actually study.
+          </p>
+        </header>
+
+        <div className="mt-8 max-w-2xl">
+          <Suspense fallback={<div className="h-[52px] rounded-full border border-ink/10 bg-snow" />}>
+            <ResourceSearch />
+          </Suspense>
+        </div>
+
+        {results ? (
+          <SearchResults results={results} />
+        ) : (
+          <section className="mt-12" aria-labelledby="subjects-heading">
+            <h2 id="subjects-heading" className="font-mono text-xs uppercase tracking-[0.2em] text-ink/55">
+              Choose your subject
+            </h2>
+            <div className="mt-5 grid gap-4 sm:grid-cols-3">
+              {SUBJECTS.map((s) => (
+                <SubjectCard
+                  key={s.slug}
+                  subject={s}
+                  href={`/resources/${s.slug}`}
+                  ctaLabel="Browse resources"
+                />
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+    </main>
       <SiteFooter />
-    </div>
+    </>
+  );
+}
+
+function SearchResults({ results }: { results: Awaited<ReturnType<typeof searchResources>> }) {
+  if (results.error) {
+    return (
+      <p role="alert" className="mt-10 rounded-lg border border-ink/15 bg-snow px-4 py-3 text-sm text-ink/75">
+        Search could not run just now — {results.error}
+      </p>
+    );
+  }
+
+  return (
+    <section className="mt-10" aria-live="polite">
+      <h2 className="font-mono text-xs uppercase tracking-[0.2em] text-ink/55">
+        {results.hits.length} result{results.hits.length === 1 ? "" : "s"} for &ldquo;{results.query}&rdquo;
+      </h2>
+
+      {results.hits.length === 0 ? (
+        /* §50 — an empty result says what to do next, not just "nothing". */
+        <div className="mt-5 rounded-lg border border-dashed border-ink/15 bg-ink/[0.02] px-5 py-4">
+          <p className="text-sm text-ink/70">
+            Nothing matched &ldquo;{results.query}&rdquo;.
+          </p>
+          <p className="mt-2 text-sm text-ink/60">
+            Try a topic name — &ldquo;bonding&rdquo;, &ldquo;energetics&rdquo;, &ldquo;moles&rdquo; — or{" "}
+            <Link href="/resources" className="underline underline-offset-4 hover:text-ink">
+              browse by subject
+            </Link>
+            .
+          </p>
+        </div>
+      ) : (
+        <ul className="mt-5 grid gap-2">
+          {results.hits.map((hit, i) => {
+            const colour = subjectColour(hit.subjectSlug);
+            return (
+              <li key={`${hit.kind}-${i}`} style={subjectVars(colour)}>
+                <Link
+                  href={hit.href}
+                  className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 rounded-lg border border-ink/10 bg-snow px-4 py-3 transition-colors hover:border-[var(--subject-accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                >
+                  <span className="min-w-0">
+                    {/* ⚠ SUBJECT IS NAMED, NOT ONLY COLOURED (§57). */}
+                    <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--subject-text)]">
+                      {hit.subjectSlug}
+                    </span>
+                    <span className="ml-2 text-sm text-ink">{hit.title}</span>
+                  </span>
+                  <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink/45">
+                    {hit.meta}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {/* ⚠ WHAT SEARCH DOES NOT COVER, SAID PLAINLY (§60). Exam question text
+          is admin-gated, so a student must not conclude Ailemy has no
+          questions on a topic because search found none. */}
+      <p className="mt-5 text-xs leading-relaxed text-ink/50">
+        Search covers lessons, topics, units and past papers. It does not search{" "}
+        {results.notSearched.join(" or ")} — open a course to reach those.
+      </p>
+    </section>
   );
 }

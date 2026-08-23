@@ -120,6 +120,17 @@ export const EVENTS = [
   "notes_fullscreen_opened",
   "notes_fullscreen_closed",
   "notes_practice_clicked",
+  // ── the Resources Hub (§55, §56). Taxonomy slugs and counts only; search
+  //    terms are recorded WITHOUT any identifier, which is what makes
+  //    "students keep searching electrolysis" usable and not surveillance.
+  "resources_opened",
+  "resource_subject_selected",
+  "resource_course_selected",
+  "topic_opened",
+  "resource_search",
+  "resource_filter_used",
+  "resource_opened",
+  "past_paper_opened",
 ] as const;
 export type EventName = (typeof EVENTS)[number];
 
