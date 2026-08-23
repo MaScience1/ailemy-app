@@ -24,6 +24,7 @@ import { loadCalendarEvents } from "@/lib/calendar/readers";
 import { loadCapacity } from "@/lib/public/capacity";
 import { nextSession } from "@/lib/calendar/next-session";
 import { dayKeyOf } from "@/lib/calendar/grid";
+import { nextAvailableSlot } from "@/lib/booking/next-available";
 import { nextOf } from "@/lib/calendar/upcoming";
 import type { Capacity } from "@/lib/public/capacity-rules";
 import { TimezoneSync } from "@/components/public/TimezoneSync";
@@ -239,7 +240,7 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
                 ? "No 1-to-1 times are published for this period yet. Register for the next available slot and we will contact you with times."
                 : "No timetable has been published for this period. The programmes above show what is opening; register interest and we will tell you the dates as soon as they are set."}
               nextGroupAhead={ahead.kind === "session" ? { event: ahead.event, dateISO: ahead.dateISO } : null}
-              nextPrivateAhead={nextOf(aheadEvents.length > 0 ? aheadEvents : events, "private_open", new Date())}
+              nextPrivateAhead={nextAvailableSlot(aheadEvents.length > 0 ? aheadEvents : events, { now: new Date() })}
             />
           </div>
           <Link href="/calendar" className="mt-6 inline-block text-sm underline underline-offset-2 hover:text-ink">
