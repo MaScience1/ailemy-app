@@ -345,5 +345,42 @@ console.log("\n=== 8. §3 of the tuition brief — URL state, and nothing broken
     !/redirect\(|permanentRedirect/.test(code(PAGE)));
 }
 
+// ============================================================================
+console.log("\n=== 9. ⚠ a fallback render is visible, not silent ===");
+// ============================================================================
+{
+  /**
+   * ⚠ THE PAGE USED TO THROW THIS AWAY, AND IT COST A DAY OF GUESSING.
+   * `const { data: cohorts } = await loadCohorts()` discarded source, reason
+   * and refusals — so when two cards said their programme dates were
+   * unpublished, nothing in the response could say whether the request had
+   * read the database or fallen back to the in-code catalogue. The symptom
+   * had two causes and no way to separate them.
+   */
+  t("⚠ the page keeps source and reason", /source: cohortSource, reason: cohortReason/.test(PAGE));
+  t("⚠ and refusals", /refusals: cohortRefusals/.test(PAGE));
+  t("⚠ it no longer discards them", !/const \{ data: cohorts \} = await loadCohorts\(\)/.test(code(PAGE)));
+
+  /**
+   * ⚠ RENDERED IN PRODUCTION, NOT ONLY IN DEV. /calendar gates its equivalent
+   * on NODE_ENV, which leaves it dark in the one environment where the
+   * question was actually asked. An attribute is invisible on screen and
+   * present in the response, which is what an operator needs.
+   */
+  t("⚠ the marker is an attribute, so it survives production",
+    /data-cohort-source=\{cohortSource\}/.test(PAGE));
+  const attrBlock = PAGE.slice(PAGE.indexOf("data-cohort-source"), PAGE.indexOf("data-cohort-source") + 400);
+  t("⚠ and it is NOT gated on NODE_ENV",
+    !/NODE_ENV/.test(attrBlock), attrBlock.match(/NODE_ENV/)?.[0]);
+  t("the reason rides along when there is one", /data-cohort-reason=/.test(PAGE));
+
+  // ⚠ NO VISITOR-FACING DISCLOSURE. The readable line stays dev-only, exactly
+  // as /calendar has it: a reader is never told which source served them.
+  t("the human-readable line remains dev-only",
+    /NODE_ENV !== "production"[\s\S]{0,120}cohortSource !== "database"/.test(PAGE));
+  t("⚠ no credential or row detail is ever surfaced",
+    !/service_role|SUPABASE_|password|token/i.test(code(PAGE)));
+}
+
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);
 process.exit(fail === 0 ? 0 : 1);
