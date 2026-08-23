@@ -7,12 +7,17 @@
 -- assume the next free integer — a folder listing cannot show a reservation,
 -- and this folder is the only rebuild path.
 --
--- ⚠ CORRECTION, 2026-08-23. This note used to read "0068+ is already queued by
--- the lesson-experience batch (PROPOSED_lesson_sections_and_content.sql)".
--- 0068 is NO LONGER free: the founder issued it to the 1-to-1 booking work and
--- it is applied and live as 0068_tuition_booking.sql. Whether 0069+ is still
--- spoken for by the lesson-experience batch is NOT established here — only the
--- founder can say, which is the whole point of the rule. Ask; do not count.
+-- ⚠ ALLOCATION AS OF 2026-08-23. This note used to read "0068+ is already
+-- queued by the lesson-experience batch (PROPOSED_lesson_sections_and_content
+-- .sql)". That is no longer the position:
+--
+--     0068 .... TAKEN — tuition booking RPC, applied and live.
+--     0069 .... TAKEN — repair of 0068, written and PARKED, not yet applied.
+--     0070+ ... UNISSUED.
+--
+-- Unissued is not the same as free. It means no number above 0069 has been
+-- allocated to anything, including to this file — so this file still must NOT
+-- assume 0070. Ask for a number; do not count to one.
 --
 -- ⚠ HOW LITTLE THIS NEEDS TO BE, AND WHY
 -- ----------------------------------------------------------------------------
