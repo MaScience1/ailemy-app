@@ -26,7 +26,7 @@ export function BookWithCredit({ slotKey, label }: { slotKey: string; label: str
       <button
         type="submit"
         disabled={pending || state?.ok === true}
-        className="rounded-full border border-ink/20 px-4 py-1.5 text-sm transition-colors hover:border-ink/40 disabled:opacity-40"
+        className="rounded-full border border-ink/20 px-4 py-1.5 text-base md:text-sm transition-colors hover:border-ink/40 disabled:opacity-40"
         aria-label={`Use one lesson credit for ${label}`}
       >
         {pending ? "Booking…" : state?.ok ? "Booked" : "Use a credit"}

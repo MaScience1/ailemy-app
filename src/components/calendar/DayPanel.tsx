@@ -72,7 +72,8 @@ export function DayPanel({
 
       <aside
         aria-label={`Lessons on ${heading}`}
-        className="fixed inset-x-0 bottom-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-2xl border-t border-ink/15 bg-parchment p-5 shadow-[0_-8px_32px_-12px_rgba(15,20,25,0.35)]
+        style={{ paddingBottom: "max(1.25rem, env(safe-area-inset-bottom, 0px))" }}
+          className="fixed inset-x-0 bottom-0 z-50 max-h-[80dvh] overflow-y-auto rounded-t-2xl border-t border-ink/15 bg-parchment p-5 shadow-[0_-8px_32px_-12px_rgba(15,20,25,0.35)]
           sm:inset-y-0 sm:left-auto sm:right-0 sm:max-h-none sm:w-[26rem] sm:rounded-t-none sm:rounded-l-2xl sm:border-l sm:border-t-0
           sm:shadow-[-8px_0_32px_-12px_rgba(15,20,25,0.35)]"
       >

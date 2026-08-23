@@ -217,7 +217,8 @@ export function HeroCalendarOverlay({
         className="ailemy-calendar-expand fixed inset-0 z-50 flex flex-col overflow-y-auto border-ink/15 bg-parchment
           sm:inset-x-6 sm:inset-y-8 sm:mx-auto sm:max-w-5xl sm:rounded-2xl sm:border sm:shadow-[0_24px_64px_-24px_rgba(15,20,25,0.45)]"
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-ink/10 bg-parchment/95 px-5 py-3.5 backdrop-blur-sm sm:px-6">
+        <div style={{ paddingTop: "max(0.875rem, env(safe-area-inset-top, 0px))" }}
+          className="sticky top-0 z-10 flex items-center justify-between gap-4 border-b border-ink/10 bg-parchment/95 px-5 pb-3.5 backdrop-blur-sm sm:px-6">
           <h2 className="font-display text-lg font-medium tracking-tight">The Ailemy Calendar</h2>
           <div className="flex items-center gap-4">
             {/* ⚠ THE SHAREABLE URL LIVES HERE. A dialog cannot be sent to

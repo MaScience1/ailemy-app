@@ -48,7 +48,12 @@ const YEARS = [
 const BOARDS = ["Pearson Edexcel", "AQA", "OCR", "Cambridge", "Other", "Not sure"];
 
 const FIELD =
-  "mt-1.5 h-10 w-full rounded-md border border-ink/15 bg-snow px-3 text-sm text-ink " +
+  /* ⚠ text-base BELOW md, NOT text-sm. Safari zooms the page when a focused
+     control is under 16px and never zooms back, leaving somebody panned
+     sideways in the middle of signing up. ui/input.tsx and login-form.tsx
+     both already use `md:text-sm` for exactly this; this field constant was
+     the one that did not. */
+  "mt-1.5 h-10 w-full rounded-md border border-ink/15 bg-snow px-3 text-base md:text-sm text-ink " +
   "placeholder:text-ink/35 focus-visible:border-ink/40 focus-visible:outline focus-visible:outline-2 " +
   "focus-visible:outline-offset-1 focus-visible:outline-ink";
 
