@@ -56,7 +56,18 @@ type Search = Promise<{
 export default async function TuitionPage({ searchParams }: { searchParams: Search }) {
   const params = await searchParams;
   const session = await getNavSession();
-  const { data: cohorts } = await loadCohorts();
+  /**
+   * ⚠ source AND reason ARE KEPT, NOT DISCARDED — THAT DISCARD COST A DAY.
+   * This line read `const { data: cohorts } = await loadCohorts()`, throwing
+   * away the only record of whether the page had read the database or fallen
+   * back to the in-code catalogue. When Year 11 and Year 10 rendered "the
+   * academic programme dates for this cohort are not published yet", nothing
+   * on the page, in the HTML or in any header could say which path produced
+   * it — so the same symptom had two possible causes and no way to separate
+   * them.
+   */
+  const { data: cohorts, source: cohortSource, reason: cohortReason, refusals: cohortRefusals }
+    = await loadCohorts();
   const { currency } = await currentCurrency();
   const viewerTz = await viewerTimeZone();
 
@@ -144,7 +155,27 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
       <AnnouncementBar />
       <SiteNav session={session} />
       <TimezoneSync known={viewerTz !== null} />
-      <main className="mx-auto max-w-6xl px-6 py-14 sm:py-20">
+      {/*
+        ⚠ A DATA ATTRIBUTE, RENDERED IN PRODUCTION — AND THAT IS THE POINT.
+        /calendar has the same diagnostic but gates it on NODE_ENV !==
+        "production", so it is dark in the one environment where this question
+        actually got asked. A visitor must never be shown internal plumbing,
+        but "invisible to a reader" and "absent from the response" are not the
+        same thing: an attribute is silent on screen and one grep away for an
+        operator.
+
+          curl -s https://…/tuition | grep -o 'data-cohort-source="[a-z]*"'
+
+        ⚠ IT CARRIES NO DETAIL A VISITOR COULD NOT ALREADY SEE. The reason
+        string is a class of failure — "supabase env vars absent", a PostgREST
+        code — never a credential, a row or a person.
+      */}
+      <main
+        className="mx-auto max-w-6xl px-6 py-14 sm:py-20"
+        data-cohort-source={cohortSource}
+        data-cohort-reason={cohortReason ?? undefined}
+        data-cohort-refusals={cohortRefusals.length > 0 ? String(cohortRefusals.length) : undefined}
+      >
         <h1 className="font-display text-3xl font-medium tracking-tight sm:text-4xl">
           Learn live with Ailemy
         </h1>
@@ -286,6 +317,20 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
             </Link>
           </p>
         </section>
+        {/* The human-readable version, for whoever is looking at the page
+            rather than at the response. Same rule as /calendar: a visitor is
+            never told which source a page used. */}
+        {process.env.NODE_ENV !== "production"
+          && (cohortSource !== "database" || cohortRefusals.length > 0) && (
+          <p className="mt-10 font-mono text-[11px] text-ink/40">
+            {cohortSource !== "database" && (
+              <>cohort source: {cohortSource}{cohortReason ? ` (${cohortReason})` : ""}. </>
+            )}
+            {cohortRefusals.length > 0 && (
+              <>{cohortRefusals.length} row(s) refused: {cohortRefusals.slice(0, 2).join("; ")}</>
+            )}
+          </p>
+        )}
       </main>
       <SiteFooter />
     </div>
