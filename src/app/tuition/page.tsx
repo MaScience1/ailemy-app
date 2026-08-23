@@ -5,9 +5,15 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
 import { getNavSession } from "@/lib/auth/nav-session";
-import { ctaFor } from "@/lib/public/catalogue";
 import { loadCohorts } from "@/lib/public/readers";
 import { availabilityFor, availabilityLabel } from "@/lib/tuition/availability";
+import { TuitionModes, isTuitionMode, type TuitionMode } from "@/components/tuition/TuitionModes";
+import { DISCOUNTS, type Commitment } from "@/lib/tuition/pricing";
+
+/** Pure so the suite can check it: an unknown commitment falls back, never throws. */
+function isCommitment(v: string | undefined): v is Commitment {
+  return !!v && Object.prototype.hasOwnProperty.call(DISCOUNTS, v);
+}
 import { offersCurrencyChoice } from "@/lib/public/currency";
 import { currentCurrency } from "@/lib/public/currency-server";
 import { CohortPrice } from "@/components/public/CohortPrice";
@@ -15,6 +21,11 @@ import { CurrencyToggle } from "@/components/public/CurrencyToggle";
 import { Calendar } from "@/components/calendar/Calendar";
 import { parseDate, rangeFor, readState } from "@/lib/calendar/grid";
 import { loadCalendarEvents } from "@/lib/calendar/readers";
+import { loadCapacity } from "@/lib/public/capacity";
+import { nextSession } from "@/lib/calendar/next-session";
+import { dayKeyOf } from "@/lib/calendar/grid";
+import { nextOf } from "@/lib/calendar/upcoming";
+import type { Capacity } from "@/lib/public/capacity-rules";
 import { TimezoneSync } from "@/components/public/TimezoneSync";
 
 import { viewerTimeZone } from "@/lib/schedule/viewer-tz";
@@ -39,6 +50,7 @@ export const metadata: Metadata = {
 
 type Search = Promise<{
   view?: string; date?: string; subject?: string; level?: string; type?: string; day?: string;
+  mode?: string; commitment?: string;
 }>;
 
 export default async function TuitionPage({ searchParams }: { searchParams: Search }) {
@@ -58,10 +70,75 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
   const state = readState(params, todayISO, "upcoming");
   const openDay = params.day && parseDate(params.day) ? params.day : null;
   const range = rangeFor(state.view, state.date);
+  /**
+   * ⚠ §34 — THE PRODUCT CHOSEN AT THE TOP DRIVES THE CALENDAR BELOW IT.
+   * A visitor who picked 1-to-1 should not have to scan group lessons to find
+   * a time, and vice versa. The mode maps onto the calendar's EXISTING type
+   * filter — the same one /calendar's chips set — so this is one calendar
+   * being asked a narrower question, not a second instance (§9, §27).
+   *
+   * ⚠ AND IT IS AN INITIAL VALUE, NOT A LOCK. An explicit ?type= in the URL
+   * still wins, so the student can widen the filter from inside the calendar
+   * exactly as §34 asks.
+   */
+  const mode: TuitionMode = isTuitionMode(params.mode) ? params.mode : "group";
+  const commitment: Commitment = isCommitment(params.commitment) ? params.commitment : "monthly";
+  const calendarType = params.type
+    ? state.type
+    : mode === "one-to-one" ? "private" as const : "group" as const;
+
+  /**
+   * ⚠ §25/§10 — CAPACITY COMES FROM cohort_seats_taken AND NOWHERE ELSE.
+   * loadCapacity calls the SECURITY DEFINER RPC (0063); cohort_enrolments is
+   * PII that no client may SELECT, so a row count here would need a grant that
+   * must not exist. When the RPC is absent it returns known:false and the card
+   * shows the seat cap alone — silence rather than an invented number.
+   */
+  const capacityBySlug = new Map<string, Capacity>();
+  await Promise.all(
+    cohorts.map(async (c) => {
+      capacityBySlug.set(c.slug, await loadCapacity(c.slug, c.seatCap));
+    }),
+  );
+
+  /**
+   * Every link on this page keeps the reader where they are. Mode, commitment,
+   * currency and the calendar's own filters all live in the query string, so a
+   * control that dropped the others would silently reset the page around it.
+   */
+  const qs = (patch: Record<string, string | null>) => {
+    const q = new URLSearchParams();
+    for (const [k, v] of Object.entries({ ...params, ...patch })) {
+      if (typeof v === "string" && v) q.set(k, v);
+    }
+    const str = q.toString();
+    return str ? `/tuition?${str}` : "/tuition";
+  };
+
   const { events } = await loadCalendarEvents({
     from: range.from, to: range.to, mode: "public",
-    subject: state.subject, level: state.level, type: state.type,
+    subject: state.subject, level: state.level, type: calendarType,
+    availableOnly: state.availableOnly,
   });
+
+  /**
+   * ⚠ §9 OF THE HEADER — THE §50 EMPTY-MONTH PANEL MUST SURVIVE HERE TOO.
+   * /calendar and the homepage modal both feed the calendar a real next
+   * lesson so an empty month can name it and offer a jump. This page did not,
+   * so switching to Month in August would have shown the panel with no way
+   * forward — the third door disagreeing with the other two.
+   *
+   * ⚠ ONLY WHEN THE WINDOW IS EMPTY, so a populated period costs nothing.
+   */
+  const { events: aheadEvents } = events.length === 0
+    ? await loadCalendarEvents({
+        from: todayISO,
+        to: calendarDate(new Date(Date.now() + 120 * 86_400_000), CANONICAL_TZ),
+        mode: "public", subject: state.subject, level: state.level, type: calendarType,
+      })
+    : { events: [] as typeof events };
+  const ahead = nextSession(aheadEvents, new Date(), dayKeyOf, todayISO);
+
   return (
     <div className="bg-parchment text-ink">
       <AnnouncementBar />
@@ -81,40 +158,38 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
           <div className="mt-8"><CurrencyToggle current={currency} /></div>
         )}
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-3">
-          {cohorts.map((c) => {
-            const cta = ctaFor(c);
-            return (
-              <div key={c.slug} className="flex flex-col rounded-lg border border-ink/10 bg-snow p-7">
-                <h2 className="font-display text-xl font-medium tracking-tight">{c.title}</h2>
-                <CohortPrice cohort={c} currency={currency} />
-                <p className="mt-1 font-mono text-[11px] text-ink/55">
-                  {c.hoursPerWeek} live hrs/week · {c.sessionsPerWeek} sessions · cap {c.seatCap}
-                </p>
-                {c.scheduleSummary && (
-                  <p className="mt-3 text-sm leading-relaxed text-ink/70">{c.scheduleSummary}</p>
-                )}
-                <p className="mt-4 text-sm leading-relaxed text-ink/70">{c.summary}</p>
-                <ul className="mt-4 flex-1 space-y-1 text-sm text-ink/65">
-                  {c.features.map((f) => <li key={f}>· {f}</li>)}
-                </ul>
-                <Link
-                  href={cta.href}
-                  className="mt-6 rounded-full border border-ink/20 px-4 py-2 text-center text-sm hover:border-ink/40"
-                >
-                  {cta.label} →
-                </Link>
-              </div>
-            );
-          })}
+        {/* ── §1/§37 — ONE PRODUCT AT A TIME ──────────────────────────────
+            The three cohort cards that used to open this page are now inside
+            Group mode, priced by commitment. Nothing was removed: every cohort
+            still renders, with the same schedule, hours and capacity. */}
+        <div className="mt-8">
+          <TuitionModes
+            mode={mode}
+            commitment={commitment}
+            currency={currency}
+            cohorts={cohorts}
+            capacityBySlug={capacityBySlug}
+            hrefForMode={(m) => qs({ mode: m })}
+            hrefForCommitment={(c) => qs({ mode, commitment: c })}
+          />
         </div>
 
-        {/* ── the schedule (§19) ──────────────────────────────────────── */}
+        {/* ⚠ THE THREE COHORT CARDS THAT USED TO SIT HERE ARE NOW INSIDE
+            GROUP MODE ABOVE (§1, §22, §37). Nothing was dropped: every cohort
+            still renders with its schedule, hours and capacity — but priced by
+            the commitment the reader chose, instead of three cards each
+            repeating a monthly figure with no way to compare terms. */}
+
         <section className="mt-14 border-t border-ink/10 pt-10">
-          <h2 className="font-display text-xl font-medium">Upcoming lessons</h2>
+          {/* §27/§34 — the heading follows the chosen product, and the
+              calendar below it is already filtered to match. */}
+          <h2 className="font-display text-xl font-medium">
+            {mode === "one-to-one" ? "Choose your time" : "See upcoming lessons"}
+          </h2>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink/70">
-            Every scheduled session across the live cohorts, for the next eight weeks. Times in
-            Doha, and in your own timezone where we know it.
+            {mode === "one-to-one"
+              ? "Published 1-to-1 availability. Times in Doha, and in your own timezone where we know it."
+              : "Every scheduled session across the live cohorts. Times in Doha, and in your own timezone where we know it."}
           </p>
           <div className="mt-6">
             <Calendar
@@ -125,7 +200,15 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
               mode="public"
               basePath="/tuition"
               openDay={openDay}
-              emptyMessage="No timetable has been published for this period. The cards above show what is opening; register interest and we will tell you the dates as soon as they are set."
+              /* §59 — the 1-to-1 empty state says what is absent, and offers
+                 the interest route rather than an empty grid with no note.
+                 §66: there are no rows in teacher_availability, so this is
+                 what a visitor in 1-to-1 mode sees today. */
+              emptyMessage={mode === "one-to-one"
+                ? "No 1-to-1 times are published for this period yet. Register for the next available slot and we will contact you with times."
+                : "No timetable has been published for this period. The programmes above show what is opening; register interest and we will tell you the dates as soon as they are set."}
+              nextGroupAhead={ahead.kind === "session" ? { event: ahead.event, dateISO: ahead.dateISO } : null}
+              nextPrivateAhead={nextOf(aheadEvents.length > 0 ? aheadEvents : events, "private_open", new Date())}
             />
           </div>
           <Link href="/calendar" className="mt-6 inline-block text-sm underline underline-offset-2 hover:text-ink">
