@@ -19,6 +19,7 @@ import { join } from "node:path";
 import {
   DISCOUNTS, QAR_PER_GBP, PROGRAMME_WINDOW, COMMITMENT_MONTHS,
   billableMonths, monthsFor, quote, oneToOneQuote, displayAmount, billingNote,
+  fromGbp, fromQar, show, ONE_TO_ONE_QAR,
   type Commitment,
 } from "../../../src/lib/tuition/pricing.ts";
 import { availabilityFor } from "../../../src/lib/tuition/availability.ts";
@@ -106,20 +107,49 @@ console.log("\n=== 2. ⚠ §3 — ONE currency rate, GBP is billing truth ===");
    * survives, and this records which figures move as a result so the shift is
    * a decision on the record rather than a surprise in a screenshot.
    */
-  t("§3 — the live group trio implies ~4.70, not 5.0",
-    Math.abs(800 / 169 - 4.73) < 0.02 && Math.abs(700 / 149 - 4.70) < 0.02);
-  t("§3 — Year 11 £149 still displays 700 QAR exactly",
-    displayAmount(14900, "QAR") === "700 QAR", displayAmount(14900, "QAR"));
-  t("§3 — IAL AS £169 now displays 794 QAR (was a stored 800)",
-    displayAmount(16900, "QAR") === "794 QAR", displayAmount(16900, "QAR"));
-  t("§3 — 1-to-1 £60 displays 282 QAR (the brief's 300 implied 5.0)",
-    displayAmount(6000, "QAR") === "282 QAR", displayAmount(6000, "QAR"));
+  /**
+   * ⚠ TWO ANCHORS, ONE RATE — AND THE ANCHOR MUST SURVIVE DISPLAY.
+   * Group programmes are priced in sterling and quoted to Stripe in it, so QAR
+   * is derived. 1-to-1 is quoted to Doha families in riyals, so those figures
+   * are exact and sterling is derived. Deriving £64 from 300 QAR and then
+   * re-deriving QAR from £64 gives 301: the rounding is not reversible, which
+   * is the whole reason a price carries both sides rather than one.
+   */
+  t("§3 — group is GBP-anchored: £149 → 700 QAR", displayAmount(14900, "QAR") === "700 QAR");
+  t("§3 — £169 → 794 QAR", displayAmount(16900, "QAR") === "794 QAR", displayAmount(16900, "QAR"));
+  t("§3 — £139 → 653 QAR", displayAmount(13900, "QAR") === "653 QAR", displayAmount(13900, "QAR"));
 
-  // ⚠ GBP IS ALWAYS ON SCREEN WHEN QAR IS. currency.ts already required this;
-  // dropping it would let a parent read riyals and be charged sterling.
-  t("⚠ §7 — a QAR figure is accompanied by the billed sterling amount",
-    billingNote(25000, "QAR") === "Billed as £250", billingNote(25000, "QAR"));
-  t("§7 — and in GBP there is nothing to add", billingNote(25000, "GBP") === null);
+  const asHour = oneToOneQuote("as_a_level", 1), asPack = oneToOneQuote("as_a_level", 5);
+  const gcHour = oneToOneQuote("gcse", 1), gcPack = oneToOneQuote("gcse", 5);
+  t("⚠ §3 — 1-to-1 AS shows EXACTLY 300 QAR, the quoted figure",
+    show(asHour.total, "QAR") === "300 QAR", show(asHour.total, "QAR"));
+  t("§3 — …with sterling derived to £64", show(asHour.total, "GBP") === "£64", show(asHour.total, "GBP"));
+  t("⚠ §3 — the 5-hour package shows EXACTLY 1,250 QAR",
+    show(asPack.total, "QAR") === "1,250 QAR", show(asPack.total, "QAR"));
+  t("§3 — …derived to £266", show(asPack.total, "GBP") === "£266", show(asPack.total, "GBP"));
+  t("⚠ §3 — GCSE shows EXACTLY 250 QAR and 1,000 QAR",
+    show(gcHour.total, "QAR") === "250 QAR" && show(gcPack.total, "QAR") === "1,000 QAR");
+  t("§3 — …derived to £53 and £213",
+    show(gcHour.total, "GBP") === "£53" && show(gcPack.total, "GBP") === "£213");
+
+  // ⚠ THE ROUND-TRIP THAT WOULD HAVE BROKEN IT. £64 re-derived gives 301.
+  t("⚠ §3 — a QAR anchor is NOT re-derived through its rounded GBP",
+    show(fromGbp(6400), "QAR") === "301 QAR" && show(asHour.total, "QAR") === "300 QAR",
+    `${show(fromGbp(6400), "QAR")} vs ${show(asHour.total, "QAR")}`);
+
+  // Per-currency arithmetic: each side is the real figure in that currency.
+  t("§5 — the package's per-hour rate is 250 QAR", show(asPack.perHour, "QAR") === "250 QAR");
+  t("§5 — and its saving is 250 QAR", show(asPack.saving, "QAR") === "250 QAR");
+  t("§6 — GCSE's per-hour rate is 200 QAR", show(gcPack.perHour, "QAR") === "200 QAR");
+  t("§3 — the price list is four numbers, in riyals",
+    ONE_TO_ONE_QAR.as_a_level.hour === 300 && ONE_TO_ONE_QAR.as_a_level.fiveHour === 1250
+      && ONE_TO_ONE_QAR.gcse.hour === 250 && ONE_TO_ONE_QAR.gcse.fiveHour === 1000);
+  t("§3 — one rate still, applied once at creation",
+    show(fromQar(470), "GBP") === "£100" && show(fromGbp(10000), "QAR") === "470 QAR");
+
+  t("⚠ §7 — a QAR figure carries the billed sterling amount",
+    billingNote(fromQar(1250), "QAR") === "Billed as £266", billingNote(fromQar(1250), "QAR"));
+  t("§7 — and in GBP there is nothing to add", billingNote(fromGbp(25000), "GBP") === null);
   t("§7 — the components render it", MODES.includes("billingNote("));
 }
 

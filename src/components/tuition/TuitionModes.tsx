@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import {
   COMMITMENT_LABEL, DISCOUNTS, ONE_TO_ONE_LEVEL_LABEL, PROGRAMME_WINDOW,
-  billingNote, displayAmount, oneToOneQuote, quote,
+  billingNote, displayAmount, fromGbp, oneToOneQuote, quote, show,
   type Commitment, type OneToOneLevel,
 } from "@/lib/tuition/pricing";
 import { ONE_TO_ONE, subjectColour, subjectVars } from "@/lib/design/subject-colours";
@@ -88,30 +88,30 @@ function OneToOnePricing({ currency }: { currency: Currency }) {
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="text-sm text-ink/70">Single lesson</span>
                   <span className="font-display text-lg font-medium">
-                    {displayAmount(single.totalMinor, currency)}
+                    {show(single.total, currency)}
                   </span>
                 </div>
                 <p className="font-mono mt-1 text-[10px] uppercase tracking-[0.16em] text-ink/45">
                   One hour
                 </p>
-                {billingNote(single.totalMinor, currency) && (
-                  <p className="mt-1 text-[11px] text-ink/50">{billingNote(single.totalMinor, currency)}</p>
+                {billingNote(single.total, currency) && (
+                  <p className="mt-1 text-[11px] text-ink/50">{billingNote(single.total, currency)}</p>
                 )}
               </li>
               <li className="rounded-xl border border-[var(--subject-accent)] bg-[var(--subject-tint)] px-4 py-3">
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="text-sm text-ink/70">5-hour package</span>
                   <span className="font-display text-lg font-medium">
-                    {displayAmount(pack.totalMinor, currency)}
+                    {show(pack.total, currency)}
                   </span>
                 </div>
                 {/* §5 — restrained, and the saving is computed, never typed. */}
                 <p className="font-mono mt-1 text-[10px] uppercase tracking-[0.16em] text-[var(--subject-text)]">
-                  {displayAmount(pack.perHourMinor, currency)} per hour · saves{" "}
-                  {displayAmount(pack.savingMinor, currency)}
+                  {show(pack.perHour, currency)} per hour · saves{" "}
+                  {show(pack.saving, currency)}
                 </p>
-                {billingNote(pack.totalMinor, currency) && (
-                  <p className="mt-1 text-[11px] text-ink/50">{billingNote(pack.totalMinor, currency)}</p>
+                {billingNote(pack.total, currency) && (
+                  <p className="mt-1 text-[11px] text-ink/50">{billingNote(pack.total, currency)}</p>
                 )}
               </li>
             </ul>
@@ -217,8 +217,8 @@ function GroupProgramme({
               </>
             )}
           </p>
-          {billingNote(q.finalMinor, currency) && (
-            <p className="mt-1 text-[11px] text-ink/50">{billingNote(q.finalMinor, currency)}</p>
+          {billingNote(fromGbp(q.finalMinor), currency) && (
+            <p className="mt-1 text-[11px] text-ink/50">{billingNote(fromGbp(q.finalMinor), currency)}</p>
           )}
           <p className="mt-1 text-sm text-ink/65">
             {q.months === 1
