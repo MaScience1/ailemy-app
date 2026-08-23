@@ -105,8 +105,13 @@ export function groupOffer(cohorts: readonly CohortFacts[]): TuitionOffer {
   const bookable = cohorts.some((c) => c.status === "enrolling" && !!c.enrolmentUrl);
   return {
     bookable,
-    // §39 — "group tuition", one phrase, not four competing ones.
-    label: bookable ? "Book group tuition" : "See group tuition",
+    /**
+     * §39 — one phrase, not four competing ones. §11 of the homepage-v3 brief
+     * asks for "Reserve your place" where a place can actually be reserved,
+     * which is precisely what `bookable` means, so the word lives here rather
+     * than in a ternary inside a component. One place decides it.
+     */
+    label: bookable ? "Reserve your place" : "See group tuition",
     href: "/tuition",
     cta: "hero_group_tuition_clicked",
   };

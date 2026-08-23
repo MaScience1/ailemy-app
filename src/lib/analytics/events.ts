@@ -24,6 +24,15 @@
 
 export const CTA_SOURCES = [
   /**
+   * §61 — the hero's availability toggle. Two values so we can tell which
+   * product a visitor was looking at when they left the hero; the booking
+   * click itself reuses tuition_booking_clicked below.
+   */
+  // §61 — which science a visitor picks from the homepage.
+  "subject_selected",
+  "hero_availability_one_to_one",
+  "hero_availability_group",
+  /**
    * The relocated capability pills. One value for all seven: the destination
    * is already in the href the click resolves to, and seven near-identical
    * source names would say less than one plus the page's own referrer data.

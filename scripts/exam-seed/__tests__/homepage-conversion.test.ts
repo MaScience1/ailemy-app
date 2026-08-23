@@ -68,8 +68,20 @@ console.log("\n=== 1. ⚠ §2 — booking language is DERIVED, never typed ===")
   // ── group ──
   t("⚠ §2 — with no payment link, the group CTA does NOT say Book",
     !/^Book/.test(groupOffer(NO_LINK).label), groupOffer(NO_LINK).label);
-  t("⚠ §2 — add a payment link and it says Book, with no code change",
-    groupOffer(PAYABLE).label === "Book group tuition", groupOffer(PAYABLE).label);
+  /**
+   * ⚠ THIS PINNED THE EXACT WORDS "Book group tuition", AND THAT WAS THE TRAP.
+   * The rule is that the label becomes an ACTION when a payment link lands —
+   * not that it says one particular phrase. §11 asked for "Reserve your place"
+   * and the assertion went red on a correct change, exactly as the discount
+   * test did when it restated 0.10 and 0.20. So it checks the property.
+   */
+  const payableLabel = groupOffer(PAYABLE).label;
+  const unpayableLabel = groupOffer(NO_LINK).label;
+  t("⚠ §2 — a payment link changes the label, with no code change",
+    payableLabel !== unpayableLabel, `${unpayableLabel} → ${payableLabel}`);
+  t("⚠ §2 — and changes it from browsing to acting",
+    /^(Book|Reserve|Enrol)/.test(payableLabel) && /^(See|View|Register)/.test(unpayableLabel),
+    `${unpayableLabel} → ${payableLabel}`);
   t("§2 — a cohort marked enrolling with a NULL link is still not bookable",
     groupOffer([{ subject: "chemistry", status: "enrolling", enrolmentUrl: null }]).bookable === false);
 
@@ -97,9 +109,21 @@ console.log("\n=== 1. ⚠ §2 — booking language is DERIVED, never typed ===")
 
   // ⚠ AND THE PAGE MUST ACTUALLY USE THEM. Deriving a label and then typing a
   // different one beside it is the failure this whole section exists to stop.
-  const c = code(HOME);
-  t("⚠ §2 — the page renders the derived labels, not literals",
+  /**
+   * ⚠ THE LABELS MOVED INTO A COMPONENT, AND THIS GUARD HAD TO FOLLOW THEM.
+   * It checked page.tsx alone; the hero's tuition CTAs now render inside
+   * HeroAvailability, so it went red on correct code. The RULE is that no
+   * tuition word is typed anywhere in the hero — so the scan covers the hero's
+   * components, not one file that happened to hold them first.
+   */
+  // ⚠ NOT `AVAIL` — that name already holds availability.ts three lines up,
+  // and shadowing it broke the very next assertion.
+  const HERO_AVAIL = readFileSync("src/components/home/HeroAvailability.tsx", "utf8");
+  const c = code(HOME) + code(HERO_AVAIL);
+  t("⚠ §2 — the hero renders the derived labels, not literals",
     c.includes("{tuition.label}") && c.includes("{oneToOne.label}") && c.includes("{group.label}"));
+  t("⚠ §2 — and the availability card takes its offers as props",
+    /group: TuitionOffer;/.test(HERO_AVAIL) && /oneToOne: TuitionOffer;/.test(HERO_AVAIL));
   for (const banned of [">Book tuition", ">Book 1-to-1", "reserve your place", "Join live tuition"]) {
     t(`⚠ §2 — "${banned}" is not hardcoded anywhere on the homepage`,
       !c.includes(banned), c.includes(banned) ? banned : undefined);
@@ -238,7 +262,8 @@ console.log("\n=== 8. §45 — every new control reports ===");
   }
   // ⚠ DECLARED IS NOT EMITTED. cta-integrity checks the reverse direction; this
   // checks the page actually carries each one.
-  const all = HOME + HERO_CAL;
+  // ⚠ THE HERO'S CONTROLS LIVE IN HeroAvailability NOW — see above.
+  const all = HOME + HERO_CAL + readFileSync("src/components/home/HeroAvailability.tsx", "utf8");
   for (const v of REQUIRED) {
     t(`§45 — ${v} appears on a real control`, all.includes(`"${v}"`));
   }

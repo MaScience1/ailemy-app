@@ -34,6 +34,14 @@ const SHORTCUTS = readFileSync("src/components/calendar/CalendarShortcuts.tsx", 
 const CALENDAR = readFileSync("src/components/calendar/Calendar.tsx", "utf8");
 const CHIP = readFileSync("src/components/calendar/EventChip.tsx", "utf8");
 const PAGE = readFileSync("src/app/calendar/page.tsx", "utf8");
+/**
+ * ⚠ THE HERO'S AVAILABILITY CARD IS A THIRD SURFACE THAT NAMES TIMES, and it
+ * was not covered until a sabotage run walked straight past this guard:
+ * writing "Tue 15 Sep · 8:00–9:00 PM" into its empty state changed nothing
+ * red. §66 is about fabricated availability wherever it is rendered, not about
+ * one directory, so the scan follows the feature rather than the folder.
+ */
+const HERO_AVAIL = readFileSync("src/components/home/HeroAvailability.tsx", "utf8");
 const READERS = readFileSync("src/lib/calendar/readers.ts", "utf8");
 const COLOURS = readFileSync("src/lib/design/subject-colours.ts", "utf8");
 
@@ -71,7 +79,7 @@ const ev = (over: Partial<{ key: string; type: string; startsAt: Date; status: s
 console.log("\n=== 1. ⚠ §66 — no fabricated 1-to-1 availability ===");
 // ============================================================================
 {
-  const c = code(SHORTCUTS) + code(CALENDAR) + code(PAGE);
+  const c = code(SHORTCUTS) + code(CALENDAR) + code(PAGE) + code(HERO_AVAIL);
 
   /**
    * ⚠ THE CORE CHECK. A time-of-day literal anywhere in these components means
