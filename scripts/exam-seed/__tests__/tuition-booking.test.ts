@@ -30,8 +30,30 @@ const todo = (n: string, why: string) => {
 
 const APP = "src/app";
 const SERVICE = readFileSync("src/lib/booking/next-available.ts", "utf8");
-const MIGRATION = existsSync("supabase/migrations/PROPOSED_tuition_booking.sql")
-  ? readFileSync("supabase/migrations/PROPOSED_tuition_booking.sql", "utf8") : "";
+/**
+ * ⚠ READ BY ITS REAL NUMBER, AND AN EMPTY READ IS NOW FATAL.
+ *
+ * This was `existsSync(PROPOSED_…) ? readFileSync(…) : ""`. When the file was
+ * renamed to 0068 the fallback did what fallbacks do: MIGRATION became "", ten
+ * assertions went red — AND TWO WENT GREEN. `!/CREATE TABLE/` and
+ * `!/ADD CONSTRAINT private_bookings_no_overlap/` are both satisfied by the
+ * empty string, so the rename would have "proved" that no table is created by
+ * reading no file at all. That was demonstrated, not reasoned about.
+ *
+ * There is no fallback now: a missing migration stops the suite before any
+ * assertion runs. The two negatives below are also anchored to a positive so
+ * they cannot pass on absent input again.
+ */
+const MIGRATION_PATH = "supabase/migrations/0068_tuition_booking.sql";
+if (!existsSync(MIGRATION_PATH)) {
+  console.error(
+    `  ✗ FATAL — ${MIGRATION_PATH} is missing.\n` +
+    "      This suite's subject is that file. Passing without it is not an\n" +
+    "      option; a green run here would be a green run against nothing.",
+  );
+  process.exit(1);
+}
+const MIGRATION = readFileSync(MIGRATION_PATH, "utf8");
 const ACTIONS = readFileSync("src/lib/booking/actions.ts", "utf8");
 
 const code = (s: string) => s
@@ -136,12 +158,48 @@ console.log("\n=== 2. ⚠ §79 — no fabricated availability, on THIS feature =
 }
 
 // ============================================================================
-console.log("\n=== 3. §2/§4 — the parked migration says what it is ===");
+console.log("\n=== 3. §2/§4 — the APPLIED migration says what it is ===");
 // ============================================================================
 {
-  t("the parked file exists", MIGRATION.length > 0);
-  t("⚠ it is named PROPOSED and states it is unapplied",
-    /NOT APPLIED/.test(MIGRATION) && /UNVERIFIED/.test(MIGRATION));
+  t("0068 — the migration carries its allocated number, not a PROPOSED prefix",
+    /\/0068_tuition_booking\.sql$/.test(MIGRATION_PATH) && MIGRATION.length > 0);
+  t("⚠ and no PROPOSED_tuition_booking.sql is left behind to be replayed twice",
+    !existsSync("supabase/migrations/PROPOSED_tuition_booking.sql"));
+  /**
+   * ⚠ THIS IS A DOCUMENTATION-CONSISTENCY CHECK, NOT A CLAIM ABOUT THE
+   * DATABASE. Matching the string "APPLIED" proves a person typed it. What it
+   * genuinely enforces is that the FILENAME and the HEADER cannot disagree:
+   * a file carrying a plain number must not read as parked. The negative is
+   * anchored to the path, which cannot lie about itself, rather than to the
+   * prose — `!/NOT APPLIED/` would have reddened on any future honest sentence
+   * containing those two words.
+   */
+  t("⚠ the header does not contradict the filename",
+    /⚠ APPLIED 20\d\d-\d\d-\d\d/.test(MIGRATION) && !/_PROPOSED_/.test(MIGRATION_PATH));
+  /**
+   * ⚠ THE HONESTY ASSERTION, AND THE POINT OF THIS WHOLE SECTION.
+   * A header that says APPLIED must not be readable as "and therefore
+   * verified". 0035 set the precedent: it records which checks were SKIPPED
+   * and why. 0068 ran two of its six steps, so it must say two, and it must
+   * name the four it did not run. If someone later quietly upgrades the header
+   * to claim all six, this goes red.
+   */
+  t("⚠ it says how many steps actually ran, and names the ones that did not",
+    /TWO OF SEVEN STEPS RAN/.test(MIGRATION) && /NOT RUN/.test(MIGRATION));
+  /**
+   * ⚠ THE DEFECT STAYS ON THE RECORD. The applied function raises on every
+   * call — FOR UPDATE on an aggregate, and an ambiguous booking_ref — both
+   * reproduced by execution. A later reader must not find a tidy header that
+   * has quietly dropped it, so the two error strings are pinned here.
+   */
+  t("⚠ it records that the applied function does not work",
+    /DOES NOT WORK/.test(MIGRATION)
+      && /FOR UPDATE is not allowed with aggregate functions/.test(MIGRATION)
+      && /column reference "booking_ref" is ambiguous/.test(MIGRATION));
+  t("⚠ and it says the body is left exactly as applied, defects included",
+    /LEFT EXACTLY AS APPLIED/.test(MIGRATION));
+  t("⚠ and it does not claim the atomicity guarantee it cannot demonstrate",
+    /§28 ATOMICITY IS NOT PROVEN/.test(MIGRATION));
   t("§28 — it carries the transactional RPC",
     /CREATE OR REPLACE FUNCTION public\.book_slot_with_credit/.test(MIGRATION));
   t("⚠ §28 — booking and debit are in ONE function body",
@@ -161,8 +219,11 @@ console.log("\n=== 3. §2/§4 — the parked migration says what it is ===");
   const M0046 = readFileSync("supabase/migrations/0046_private_bookings.sql", "utf8");
   t("§29 — the overlap constraint exists and is APPLIED in 0046",
     /private_bookings_no_overlap/.test(M0046) && /EXCLUDE USING gist/.test(M0046));
-  t("⚠ §29 — and the parked file does NOT redefine it",
-    !/ADD CONSTRAINT private_bookings_no_overlap/.test(MIGRATION_C));
+  // ⚠ ANCHORED. The bare negative passed against an empty file; the positive
+  // conjunct means an absent or truncated migration can no longer satisfy it.
+  t("⚠ §29 — and 0068 names the constraint without redefining it",
+    /private_bookings_no_overlap/.test(MIGRATION)
+      && !/ADD CONSTRAINT private_bookings_no_overlap|EXCLUDE USING gist/.test(MIGRATION_C));
 
   // erase_user coupling — nothing new is owed, and the file says why.
   // ⚠ NO _PROPOSED_ PREFIX — v5 is applied and live, which is what makes the
@@ -172,7 +233,9 @@ console.log("\n=== 3. §2/§4 — the parked migration says what it is ===");
     /private_bookings/.test(V5) && /lesson_credit_transactions/.test(V5));
   t("⚠ and the parked file states that rather than duplicating the deletes",
     /ERASE_USER COUPLING/.test(MIGRATION) && !/DELETE FROM public\.private_bookings/.test(MIGRATION_C));
-  t("§1 — no new table is created", !/CREATE TABLE/.test(MIGRATION_C));
+  // ⚠ ANCHORED, for the same reason: the empty string creates no table either.
+  t("§1 — no new table is created",
+    /CREATE OR REPLACE FUNCTION/.test(MIGRATION_C) && !/CREATE TABLE/.test(MIGRATION_C));
 }
 
 // ============================================================================
@@ -237,30 +300,125 @@ console.log("\n=== 6. §78 — nothing that worked was broken ===");
 }
 
 // ============================================================================
-console.log("\n=== 7. ⏳ WHAT THIS SUITE CANNOT PROVE ===");
+console.log("\n=== 7. ⏳ WHAT THIS SUITE STILL CANNOT PROVE ===");
 // ============================================================================
 {
   /**
-   * ⚠ EACH OF THESE NEEDS THE MIGRATION APPLIED. Asserting them from the file
-   * text would be asserting that SQL was TYPED, not that a database behaves —
-   * exactly the false green this codebase has removed elsewhere.
+   * ⚠ THE MIGRATION IS APPLIED, AND THAT SETTLED FEWER OF THESE THAN IT LOOKS.
+   *
+   * "Needs the RPC applied" was the reason for three of the five. 0068 is live,
+   * so that reason is gone — and the honest replacement is NOT a pass. Two
+   * things still stand between these and green, and neither is fixed by SQL
+   * having been run:
+   *
+   *   1. This suite is a bare-node program: no network, no database, no
+   *      session. It reads files and imports pure modules. How a database
+   *      behaves under concurrent writes cannot be asserted from here at all.
+   *   2. auth.uid() is NULL for the postgres role, so the SQL Editor cannot
+   *      settle them either — it answers 28000 'not signed in' whatever the
+   *      function does. AGENTS.md records the same trap for is_staff().
+   *
+   * What WAS settled against production, with the public anon key: the live
+   * function has no user_id parameter, and anon cannot execute it (42501).
+   * Both are recorded in 0068's header. Neither belongs in this file — the
+   * suite has no network, and re-asserting them from the migration TEXT would
+   * be asserting that SQL was typed, which is the false green this whole
+   * section exists to refuse.
    */
+
+  // ── newly assertable, and it is a warning rather than a reassurance ───────
+  /**
+   * ⚠ §28 IS NOT MERELY UNPROVEN — IT IS NOT IN EFFECT.
+   * Nothing calls book_slot_with_credit. bookWithCredit() still runs
+   * insert → insert → compensate(). Exactly one of those two paths may be
+   * live: wire the RPC and leave the saga in place and a single booking spends
+   * two credits. That is a real invariant, it executes offline, and it goes
+   * red the day someone wires the RPC without removing the saga.
+   */
+  /**
+   * ⚠ THE WHOLE OF src/, NOT actions.ts. The first version of this scanned one
+   * file, and that was a false green of its own making: this repo already
+   * calls .rpc() from capacity.ts, enrolment.ts and attempts.ts, so "it will be
+   * wired in actions.ts" is an assumption the repo's own history contradicts.
+   * A route handler calling the RPC while the saga survived would have printed
+   * a checkmark over a booking that spends two credits.
+   *
+   * ⚠ AND code(), NOT RAW TEXT. Eighth time this trap has been laid here: a
+   * COMMENT reading `.rpc("book_slot_with_credit")` — such as the one in this
+   * very docstring — must not flip it.
+   */
+  const walk = (dir: string): string[] =>
+    readdirSync(dir).flatMap((e) => {
+      const p = join(dir, e);
+      return statSync(p).isDirectory() ? walk(p) : /\.tsx?$/.test(p) ? [p] : [];
+    });
+  const RPC_CALLERS = walk("src").filter((p) =>
+    /\.rpc\(\s*["'`]book_slot_with_credit/.test(code(readFileSync(p, "utf8"))));
+  const WIRED = RPC_CALLERS.length > 0;
+  const SAGA = /async function compensate\(/.test(code(ACTIONS));
+  /**
+   * ⚠ ASSERT WHAT THE NAME SAYS. This was `WIRED ? !SAGA : SAGA`, which also
+   * went red when BOTH were absent — a rename of compensate() would have
+   * reported a defect that did not exist. The invariant that matters is that
+   * the two are never live together.
+   */
+  t("⚠ §28 — the RPC and the compensating saga are never both live",
+    !(WIRED && SAGA), `wired=[${RPC_CALLERS.join(", ")}] saga=${SAGA}`);
+  t("§28 — and some credit-spending path exists at all",
+    WIRED || SAGA, "neither an RPC call nor compensate() found in src/");
+  t("⚠ §28 — and 0068 records that the saga, not the RPC, is the live path",
+    /NOT IN EFFECT/.test(MIGRATION) && /NOTHING CALLS THIS FUNCTION/.test(MIGRATION));
+
+  // ── §55, the code-level half, which DOES execute here ────────────────────
+  /**
+   * The end-to-end proof needs a booking to exist. The code-level fact does
+   * not: the select list is read out of readers.ts and checked for identity
+   * columns, rather than a hand-copied string being compared to itself. A
+   * booked slot is subtracted server-side and is therefore ABSENT from a
+   * public read — not flagged, not redacted — which is what "indistinguishable
+   * from unavailable" has to mean.
+   */
+  const READERS = code(readFileSync("src/lib/booking/readers.ts", "utf8"));
+  /**
+   * ⚠ matchAll AND A COUNT, not .match(). Without /g, .match returns the FIRST
+   * hit — so an admin-mode select added above this one would silently become
+   * the subject of the assertion. Exactly one is the invariant.
+   *
+   * ⚠ AND IT IS NOT AN ANON READ. loadOpenSlots runs on the service-role
+   * client and subtracts server-side; readers.ts:17 records rejecting the
+   * anon-column-grant shape deliberately. The safety comes from the select
+   * list and from only Slot objects leaving the function — not from RLS, which
+   * this assertion does not test and must not be read as testing.
+   */
+  const PBS = [...READERS.matchAll(/from\("private_bookings"\)\s*\.select\("([^"]*)"\)/g)];
+  t("§55 — the server-side slot read pulls no identity column from private_bookings",
+    PBS.length === 1 && !/user_id|email|name|ref/.test(PBS[0][1]),
+    PBS.length === 1 ? `select("${PBS[0][1]}")` : `${PBS.length} private_bookings selects found`);
+
   todo("§28 atomicity: booking and debit succeed or fail together",
-    "Needs the RPC applied. Force the booking insert to fail after the balance " +
-    "check and confirm SUM(delta) is unchanged. Verification step 1 in the file.");
+    "0068 is APPLIED and this got WORSE, not better. The applied function " +
+    "raises on entry — FOR UPDATE on an aggregate — so it cannot be atomic " +
+    "about anything; and nothing calls it in any case. Repairing it needs a " +
+    "DROP FUNCTION in a new numbered migration. Step 0 in 0068's footer.");
   todo("§29 double-booking race under real concurrency",
     "The EXCLUDE constraint IS applied (0046) and its header records 23P01 " +
-    "verified. What is unproven is the RPC rolling the credit back on 23P01. " +
-    "Verification step 2.");
+    "verified. Two things remain unproven and one is now disproven: the RPC " +
+    "cannot roll a credit back because it never reaches the INSERT, and its " +
+    "FOR UPDATE would not have serialised a concurrent spend even if it " +
+    "parsed — two callers, one credit, produced a balance of -1 on a replica. " +
+    "The live path is still the saga. Step 2 in 0068's footer.");
   todo("§54/§55 RLS: a student cannot mutate their own balance",
-    "Needs a real authenticated session. From the SQL editor auth.uid() is " +
-    "NULL, so a refusal there proves nothing — see AGENTS.md on is_staff().");
-  todo("§55 a booked slot is publicly indistinguishable from unavailable",
-    "loadOpenSlots subtracts bookings before events are built, so this holds " +
-    "in code today; proving it end to end needs a booking to exist.");
+    "Needs a real authenticated session. anon is refused at the FUNCTION " +
+    "boundary — 42501, verified live — but that says nothing about table-level " +
+    "RLS for a signed-in student, which is what this claims. From the SQL " +
+    "Editor auth.uid() is NULL, so a refusal there proves nothing.");
+  todo("§55 end to end: a booked slot is absent from a logged-out read",
+    "The code-level half executes above. End to end still needs a booking to " +
+    "exist and a logged-out fetch that demonstrably does not see it.");
   todo("§88 webhook retry grants 5 credits, not 10",
-    "Blocked on Stripe entirely — no keys in any environment. alreadyProcessed() " +
-    "exists and is unit-tested; the delivery path it guards does not run.");
+    "Unchanged by 0068 and blocked on Stripe entirely — no keys in any " +
+    "environment. alreadyProcessed() exists and is unit-tested; the delivery " +
+    "path it guards does not run.");
 }
 
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed, ${pending} pending`);
