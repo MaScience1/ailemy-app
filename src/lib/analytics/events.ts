@@ -100,6 +100,14 @@ export const EVENTS = [
   "homepage_capability_clicked",
   "tuition_sticky_cta_clicked",
   "account_menu_opened",
+  // ── the qualification flow (§40). Subject → level → scope → board, all
+  //    public catalogue vocabulary; nothing identifies the student.
+  "qualification_flow_opened",
+  "qualification_level_selected",
+  "qualification_scope_selected",
+  "exam_board_selected",
+  "exam_board_unsure",
+  "flagship_pathway_opened",
 ] as const;
 export type EventName = (typeof EVENTS)[number];
 
@@ -133,4 +141,10 @@ export type EventProps = {
   resource?: "slide" | "notes" | "worked_example";
   /** A homepage capability label — public navigation, not personal. */
   capability?: string;
+  /** Qualification taxonomy (§40) — catalogue slugs, never personal data.
+   *  `level` is deliberately NOT redeclared here: the calendar taxonomy above
+   *  already carries a level slug, and two properties of the same name with
+   *  two meanings is how a funnel quietly splits in half. */
+  scope?: string;
+  board?: string;
 };

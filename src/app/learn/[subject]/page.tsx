@@ -24,6 +24,10 @@ import { getSubjectCopy } from "@/lib/catalogue/subject-descriptions";
 import type { Subject } from "@/lib/catalogue/types";
 import { cn } from "@/lib/utils";
 import { Editable } from "@/components/admin-inline/Editable";
+import { ChoiceCard } from "@/components/qualifications/ChoiceCard";
+import { SavedQualification } from "@/components/qualifications/SavedQualification";
+import { SupportBadge } from "@/components/qualifications/SupportBadge";
+import { LEVELS, LEVEL_COPY, LEVEL_PATHWAYS } from "@/lib/qualifications/model.ts";
 
 type Params = Promise<{ subject: string }>;
 
@@ -60,6 +64,22 @@ const HIDDEN_PATHWAYS: readonly Pathway[] = ["ib", "ap"];
 const VISIBLE_PATHWAYS = PATHWAY_DISPLAY_ORDER.filter(
   (pathway) => !HIDDEN_PATHWAYS.includes(pathway),
 );
+
+/**
+ * The level card's badge, translated from the catalogue's own three-state
+ * status so this page keeps ONE derivation and not two.
+ *
+ * ⚠ "available" BECOMES "Supported", NOT "Full support". Full support is a
+ * claim about one exam board having the whole apparatus — lessons, papers,
+ * marking — and a level spans several boards of very different depth. The
+ * per-board step is where that finer claim is made, from that board's own
+ * counts.
+ */
+const LEVEL_BADGE = {
+  available: "supported",
+  preview: "expanding",
+  coming_soon: "coming_soon",
+} as const;
 
 export async function generateMetadata({
   params,
@@ -110,24 +130,64 @@ export default async function SubjectPage({ params }: { params: Params }) {
               />
             </p>
             <p className="font-mono mt-6 text-xs uppercase tracking-[0.2em] text-ink/55">
-              <Editable id="learn.subject.pathway_prompt" default="Choose your pathway" />
+              <Editable id="learn.subject.pathway_prompt" default="Choose your level" />
             </p>
           </header>
 
-          {/* ⚠ TWO COLUMNS, NOT THREE. Six cards filled a 3-wide grid exactly;
-              four leave a 3-wide grid with a single orphan on the second row,
-              which reads as a card that failed to load. A 2×2 also gives each
-              remaining card enough width that "International A-Level" stops
-              wrapping to three lines at the xl breakpoint. */}
+          {/* ⚠ TWO CARDS, NOT FOUR — THE FIRST CHOICE IS A LEVEL (§CORE).
+              Asking a student to pick between "UK GCSE", "International GCSE",
+              "UK A-Level" and "International A-Level" makes them answer two
+              questions at once, and the one they can always answer instantly
+              is the level. UK-vs-international is the next screen, where it is
+              the only thing being asked.
+
+              ⚠ THE FOUR PATHWAY ROUTES STILL EXIST AND STILL WORK. Nothing was
+              deleted: /learn/chemistry/international-a-level and its siblings
+              resolve exactly as before, and the board step links straight to
+              them. This page changed which door it opens, not which doors
+              exist. */}
+          {/* §17 — if they have chosen before, offer the way back in first. */}
+          <SavedQualification subjectSlug={subject.slug} subjectName={subject.name} />
+
           <section className="mt-10 grid gap-5 md:grid-cols-2 lg:gap-6">
-            {VISIBLE_PATHWAYS.map((pathway) => (
-              <PathwayCard
-                key={pathway}
-                pathway={pathway}
-                pathwayStatus={pathwayStatuses[pathway]}
-                subject={subject}
-              />
-            ))}
+            {LEVELS.map((level) => {
+              const copy = LEVEL_COPY[level];
+              const counts = LEVEL_PATHWAYS[level].reduce(
+                (acc, p) => {
+                  const st = pathwayStatuses[p];
+                  return {
+                    total: acc.total + st.totalLessons,
+                    live: acc.live + st.liveLessons,
+                    courses: acc.courses + st.courseCount,
+                  };
+                },
+                { total: 0, live: 0, courses: 0 },
+              );
+              const status = deriveStatus({
+                totalLessons: counts.total,
+                liveLessons: counts.live,
+              });
+              return (
+                <ChoiceCard
+                  key={level}
+                  href={`/learn/${subject.slug}/${level}`}
+                  eyebrow={copy.ageRange}
+                  title={`${copy.name} ${subject.name}`}
+                  subtitle={copy.subtitle}
+                  description={copy.description}
+                  badge={<SupportBadge status={LEVEL_BADGE[status]} />}
+                  footnote={
+                    counts.courses > 0 ? (
+                      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45">
+                        {counts.courses} {counts.courses === 1 ? "course" : "courses"}
+                        {counts.total > 0 && ` · ${counts.live} of ${counts.total} lessons published`}
+                      </span>
+                    ) : null
+                  }
+                  ctaLabel={`Explore ${copy.name} →`}
+                />
+              );
+            })}
           </section>
         </div>
       </main>
