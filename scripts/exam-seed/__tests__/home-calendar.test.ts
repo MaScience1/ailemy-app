@@ -254,8 +254,17 @@ console.log("\n── PLACEMENT — hierarchy stays intact ──");
   t("…and the copy and CTAs precede it in the DOM",
     cta("hero_start_free_clicked") < at("hero-calendar")
     && cta("hero_book_tuition_clicked") < at("hero-calendar"));
-  t("…so the hero still leads, and subjects follow it",
-    at("hero-calendar") < at("subjects") && at("subjects") < at("tuition"));
+  /**
+   * ⚠ THIS PINNED subjects BEFORE tuition, WHICH §3 DELIBERATELY REVERSED.
+   * The rule the assertion protects is that the HERO LEADS — a calendar that
+   * ends up below the fold's content is the regression worth catching. The
+   * relative order of two sections further down was incidental to the layout
+   * that happened to exist when it was written, and the redesign moved tuition
+   * up on purpose: a visitor now meets it after experiencing the product and
+   * before scrolling through every academic explanation.
+   */
+  t("…so the hero still leads both of them",
+    at("hero-calendar") < at("subjects") && at("hero-calendar") < at("tuition"));
   t("the two-column split is at lg (1024px), stacking below it",
     /lg:grid-cols-\[minmax\(0,1fr\)_480px\]/.test(code));
   /**

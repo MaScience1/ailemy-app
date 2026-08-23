@@ -6,6 +6,8 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
 import { ExplorePanel } from "@/components/home/ExplorePanel";
+import { loadSubjectHoldings, holdingsLabel } from "@/lib/qualifications/tree";
+import { HeroAvailability, isHeroMode, type HeroMode } from "@/components/home/HeroAvailability";
 import { SubjectCard } from "@/components/home/SubjectCard";
 import { StickyCta } from "@/components/home/StickyCta";
 import { TryAilemy } from "@/components/home/TryAilemy";
@@ -69,9 +71,12 @@ export const metadata: Metadata = {
 };
 
 type Search = Promise<{
-  view?: string; date?: string; subject?: string; level?: string; type?: string;
+  view?: string; date?: string; subject?: string; level?: string; type?: string; tuition?: string;
   day?: string; calendar?: string;
 }>;
+
+/** One shape for a subject we could not count. */
+const EMPTY_HOLDINGS = { liveLessons: 0, pastPapers: 0, error: null };
 
 export default async function Home({ searchParams }: { searchParams: Search }) {
   const session = await getNavSession();
@@ -103,6 +108,25 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
     viewerCanRedeem: false,
   });
   const tuition = heroTuitionOffer(group, oneToOne);
+
+  /**
+   * §9 — which side of the hero's availability card is showing. A link, not
+   * client state, so it is shareable and the prices stay server-rendered (§59).
+   */
+  const heroMode: HeroMode = isHeroMode(params.tuition) ? params.tuition : "group";
+
+  /** §11 — real seats for the cohort whose lesson the card names, or nothing. */
+  /**
+   * §35 — what each subject actually holds, counted. /resources already draws
+   * its cards this way; the homepage said "Register interest" for two subjects
+   * carrying ~90 and ~72 past papers.
+   */
+  const holdings = await loadSubjectHoldings(SUBJECTS.map((x) => x.slug));
+
+  const heroCohort = cohorts[0];
+  const heroCapacity = heroCohort
+    ? await loadCapacity(heroCohort.slug, heroCohort.seatCap)
+    : null;
   const chemistryCohorts = cohorts.filter((c) => c.subject === "chemistry");
   const { currency } = await currentCurrency();
   const showToggle = offersCurrencyChoice(chemistryCohorts);
@@ -256,6 +280,22 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
       <TimezoneSync known={viewerTz !== null} />
       {/* 2 */} <SiteNav session={session} />
 
+      {/* ══════════════════════════════════════════════════════════════════
+          ⚠ SECTION ORDER IS §3's, AND IT IS A HIERARCHY, NOT A LIST
+          ══════════════════════════════════════════════════════════════════
+          The page was a stack of similarly weighted bands: subjects and the
+          audience selector arrived before a visitor had seen the product work,
+          tuition sat two thirds down, and marking, past papers and progress
+          were three separate explanations of one idea.
+
+          The order now runs: understand → experience → understand the loop →
+          buy → see the proof → choose a science → find yourself → trust →
+          questions → decide.
+
+          ⚠ NOTHING WAS DELETED TO ACHIEVE THIS. Every section below is the one
+          that was already here, in a different position. The two that WERE
+          removed were duplicates and are recorded above. */}
+
       {/* ── 3. hero ─────────────────────────────────────────────────────
           ⚠ TWO COLUMNS FROM 1024px (Tailwind `lg`), STACKED BELOW IT.
           The container caps at max-w-6xl (1152px) less 48px of padding, so the
@@ -340,45 +380,32 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
             the DOM is copy → CTAs → card, which is the reading order a phone
             gets for free and the one a screen reader gets everywhere. */}
         <div id="hero-calendar" className="lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:justify-self-end">
-          {/* ── §7/§38 — WHAT THE CALENDAR IS FOR, SAID BEFORE IT ────────────
-              ⚠ THIS LIVES HERE, NOT INSIDE HeroCalendar. §14 forbids a second
-              calendar, and the surest way to grow one is to start editing the
-              shared component for one caller's needs. The card keeps rendering
-              the same schedule /calendar and /tuition render; the homepage adds
-              its own framing above it.
+          {/* ── §9/§12 — WHAT YOU CAN BOOK, THEN THE CALENDAR ───────────────
+              The month grid used to lead this column, which asked a stranger
+              to interpret an empty August before seeing anything bookable.
+              The availability card states the next real session and what to do
+              about it; the grid stays underneath as supporting detail, reading
+              the same events. */}
+          <HeroAvailability
+            mode={heroMode}
+            /* ⚠ FORWARD-LOOKING, NOT THE VISIBLE MONTH — the same defect the
+               calendar shortcuts had. Fed the month window, this said "no
+               group lessons are scheduled" for the whole of August, because
+               teaching starts on 13 September. aheadEvents is the 120-day read
+               this page already performs, so it costs no extra query. */
+            events={calendarEvents.length > 0 ? calendarEvents : aheadEvents}
+            viewerTz={viewerTz}
+            now={new Date()}
+            capacity={heroCapacity}
+            group={group}
+            oneToOne={oneToOne}
+            /* ⚠ qs() ALREADY APPENDS #hero-calendar — adding it again produced
+               /?tuition=group#hero-calendar#hero-calendar, which is not a
+               valid fragment and would have scrolled nowhere. */
+            hrefFor={(m) => qs({ tuition: m })}
+          />
 
-              ⚠ BOTH LABELS ARE DERIVED (§2). "Book a 1-to-1 session or reserve
-              your place" was the requested copy; reserving a place is not
-              something this product can do today, so the sentence says what the
-              two links actually lead to and the links name their own state. */}
-          <div className="mb-4">
-            <h2 className="font-display text-xl font-medium tracking-tight">
-              Learn live with an expert.
-            </h2>
-            <p className="mt-1.5 text-sm leading-snug text-ink/65">
-              {tuition.bookable
-                ? "Book a 1-to-1 session, or take a place in an upcoming group lesson."
-                : "See real 1-to-1 availability and the group lessons running now."}
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Link
-                href={oneToOne.href}
-                data-cta="hero_book_one_to_one_clicked"
-                className="group/o inline-flex items-center gap-1 rounded-full border border-ink/20 px-3.5 py-2 text-[13px] font-medium transition-colors duration-200 hover:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-              >
-                {oneToOne.label}
-                <span aria-hidden className="transition-transform duration-200 motion-safe:group-hover/o:translate-x-0.5">→</span>
-              </Link>
-              <Link
-                href={group.href}
-                data-cta="hero_group_tuition_clicked"
-                className="group/g inline-flex items-center gap-1 rounded-full border border-ink/20 px-3.5 py-2 text-[13px] font-medium transition-colors duration-200 hover:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-              >
-                {group.label}
-                <span aria-hidden className="transition-transform duration-200 motion-safe:group-hover/g:translate-x-0.5">→</span>
-              </Link>
-            </div>
-          </div>
+          <div className="mt-4">
           <HeroCalendarCard
             events={calendarEvents}
             state={calendarState}
@@ -388,6 +415,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
             eventCount={calendarEvents.length}
             next={nextLesson}
           />
+          </div>
         </div>
 
         {/* ── THE RELOCATED CAPABILITIES (§1, §13, §14) ───────────────────
@@ -487,160 +515,6 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           ))}
         </div>
       </Section>
-
-      {/* ── 4a-ii. trust strip (§29) ──────────────────────────────────────
-          ============================================================
-          ⚠ FIVE CLAIMS, EVERY ONE OF THEM CHECKABLE TODAY
-          ============================================================
-          §29 lists what is NOT allowed here — student counts, pass rates,
-          grade improvements, testimonials — and this codebase has no data for
-          any of them. What is left is what Ailemy actually is, and each line
-          below can be pointed at something in the repository:
-
-            · specification-mapped — courses carry units, topics and spec
-              points, and the Resources pages count them
-            · mark-scheme-informed — marking runs against the real scheme; the
-              reconcile suite exists to keep it honest
-            · every answer marked — the demo two sections down does it live
-            · progress tracked — attempts and marks persist per student
-            · built by subject specialists — the teachers section below
-
-          ⚠ IT IS A ROW OF WORDS, NOT A ROW OF BADGES. Parents read this strip;
-          a line of award-shaped graphics with nothing behind them is exactly
-          the advertising clutter §29 warns against. */}
-      <section aria-label="What Ailemy is" className="border-t border-ink/10">
-        <div className="mx-auto max-w-6xl px-6 py-6">
-          <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 sm:gap-x-10">
-            {[
-              "Specification-mapped",
-              "Mark-scheme-informed",
-              "Every answer marked",
-              "Progress tracked",
-              "Built by subject specialists",
-            ].map((claim) => (
-              <li
-                key={claim}
-                className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink/45"
-              >
-                {claim}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* ── 4. subject selector ──────────────────────────────────────────
-          ============================================================
-          ⚠ THE SCIENCES COME FIRST NOW. THIS SUPERSEDES §2 AND §27.
-          ============================================================
-          §2 put the capability strip immediately under the hero; §27 put the
-          marking demonstration third, above the sciences. Both were arguing
-          about which FEATURE deserved to lead, and neither answered the
-          question a visitor actually arrives with, which is not "what can this
-          do" but "do you teach my subject?"
-
-          A parent looking for Biology met a feature list first and had to
-          scroll to find out that Biology is demand-triggered. Answering the
-          subject question at the top costs the feature list one screen and
-          costs a visitor in the wrong place nothing at all.
-
-          ⚠ NOTHING WAS DELETED TO DO THIS. The strip and the demonstration are
-          both still here, in the two bands directly below, in the order the
-          sequence 4 → 4b → 4c spells out. */}
-      <Section id="subjects" title="Three sciences, one platform">
-        <div className="grid gap-4 sm:grid-cols-3">
-          {SUBJECTS.map((s) => (
-            <SubjectCard
-              key={s.slug}
-              subject={{
-                slug: s.slug, name: s.name, qualifications: s.qualifications,
-                blurb: s.blurb, status: s.status, exploreHref: s.exploreHref,
-              }}
-            />
-          ))}
-        </div>
-      </Section>
-
-      {/* ── 4d. audience pathways (§20, §21, §22, §23) ────────────────────
-          ============================================================
-          ⚠ BELOW THE SUBJECTS, NOT BESIDE THE HERO — AND THAT IS §20
-          ============================================================
-          §20 puts this after the product pillars and says it "should not
-          compete with the main hero"; §24 forbids stacking audience cards into
-          the first viewport. So it sits here, after a visitor has seen what
-          Ailemy does and which sciences it covers, at the point a parent or a
-          teacher is deciding whether this is for them (§19, §37).
-
-          ⚠ THE TEACHER CARD PROMISES NO TEACHER TOOLS, BECAUSE THERE ARE NONE.
-          §23 offers "Explore teacher tools →" — conditionally, "if such
-          functionality exists". There is no teacher dashboard, no class list,
-          no assignment flow and no analytics surface in this codebase. What a
-          teacher CAN use today is exactly what a student uses: the
-          specification-mapped resources and the real papers. That is what it
-          says, and it is why the link goes to /resources rather than to a
-          page that would have to be invented to receive it. */}
-      <section aria-labelledby="audience-heading" className="border-t border-ink/10">
-        <div className="mx-auto max-w-6xl px-6 py-12 sm:py-14">
-          <h2 id="audience-heading" className="font-mono text-xs uppercase tracking-[0.2em] text-ink/55">
-            Using Ailemy as a…
-          </h2>
-          <ul className="mt-5 grid gap-3 sm:grid-cols-3">
-            {[
-              {
-                who: "Student",
-                cta: "audience_student_clicked",
-                href: "/resources",
-                body: "Learn a topic, revise it with notes and flashcards, practise it, and get every answer marked.",
-                action: "Start learning free",
-              },
-              {
-                who: "Parent",
-                cta: "audience_parent_clicked",
-                href: "/tuition",
-                body: "Qualified teaching to a published timetable, with the specification, the marking and the progress all visible.",
-                action: "See how tuition works",
-              },
-              {
-                who: "Teacher",
-                cta: "audience_teacher_clicked",
-                href: "/resources",
-                /* ⚠ NO CLASS LISTS, NO ASSIGNMENTS, NO ANALYTICS — none exist. */
-                body: "Specification-mapped lessons, real past papers and mark-scheme-informed marking you can point a class at. Teacher tools are not built yet.",
-                action: "Browse the resources",
-              },
-            ].map((a) => (
-              <li key={a.who}>
-                <Link
-                  href={a.href}
-                  data-cta={a.cta}
-                  className="group flex h-full flex-col justify-between gap-4 rounded-xl border border-ink/10 bg-snow p-5 transition-all duration-200 ease-out hover:border-ink/30 motion-safe:hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-                >
-                  <div>
-                    <h3 className="font-display text-lg font-medium tracking-tight">{a.who}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-ink/70">{a.body}</p>
-                  </div>
-                  <p className="text-sm font-medium text-ink">
-                    {a.action} <span aria-hidden className="inline-block transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">{"\u2192"}</span>
-                  </p>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* ⚠ THE "WHAT YOU CAN DO ON AILEMY" BAND STOOD HERE, AND ITS SEVEN
-          PILLS NOW SIT IN THE HERO (§13). Only the presentation went: the
-          seven destinations are unchanged and still come from
-          capabilitiesFor(), which ExplorePanel imports rather than copies.
-          CapabilityStrip itself is retained — it had exactly one caller, this
-          band, but it carries the focus-ring and scroll-clearance arithmetic
-          that took real measurement to get right, and deleting a component
-          because its only caller moved is how that work gets redone later.
-
-          ⚠ THE FOUR PRODUCT PILLARS ARE A DIFFERENT SECTION AND ARE UNTOUCHED.
-          They are `id="products"`, "Four ways to use Ailemy", added by the
-          homepage-conversion build and still directly below the hero. */}
 
       {/* ── 4c. product demonstration (§25) ──────────────────────────────
           ⚠ IT FOLLOWS THE STRIP RATHER THAN PRECEDING THE SCIENCES, AND THE
@@ -749,6 +623,69 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         </p>
       </Section>
 
+      {/* ── 9. progress ───────────────────────────────────────────────── */}
+      <Section
+        id="progress"
+        title="Know exactly what you know — and what still needs work."
+        lede="Specification-level progress, built from the questions you have actually attempted."
+      >
+        {/* ⚠ CLEARLY LABELLED AS AN EXAMPLE. These are not anyone's results. */}
+        <div className="rounded-lg border border-ink/10 bg-snow p-6 sm:p-8">
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink/40">
+            Example view · IAL Chemistry AS
+          </p>
+          <ul className="mt-5 space-y-3">
+            {[["Atomic Structure", 100], ["Bonding", 82], ["Energetics", 56], ["Kinetics", 31]].map(
+              ([topic, pct]) => (
+                <li key={topic as string} className="flex items-center gap-4">
+                  <span className="w-40 shrink-0 text-sm">{topic}</span>
+                  <span className="h-1.5 flex-1 rounded-full bg-ink/10">
+                    <span className="block h-full rounded-full bg-lime" style={{ width: `${pct}%` }} />
+                  </span>
+                  <span className="w-12 shrink-0 text-right font-mono text-xs text-ink/60">{pct}%</span>
+                </li>
+              ),
+            )}
+          </ul>
+        </div>
+      </Section>
+
+      {/* ⚠ TWO SECTIONS STOOD HERE AND BOTH WERE DUPLICATES (§34, §43).
+          ============================================================
+          "Everything for your course" listed nine capability chips —
+          Lessons, Revision notes, Topic questions, Past papers, Mark schemes,
+          Examiner reports, Interactive papers, plus two marked "coming soon".
+          The same inventory is already the four product cards and the hero's
+          Explore panel, so the page stated its contents three times and the
+          third carried the build-state language §63 asks to keep off the front
+          door.
+
+          "Looking for another science?" offered Biology and Physics as
+          register-interest cards, duplicating "Three sciences, one platform"
+          two screens above AND framing both subjects as tuition-only — when
+          they hold roughly 90 and 72 past papers today. §35 is explicit that
+          resources and tuition are different facts; the subject cards now say
+          what each subject actually holds.
+
+          ⚠ NO ROUTE WAS REMOVED. /chemistry, /biology, /physics and
+          /tuition/interest all still resolve, and the guard checks them. */}
+
+      {/* ── 8. the mark scheme ────────────────────────────────────────── */}
+      <Section
+        id="marks"
+        title="Understand the mark scheme, not just the topic."
+        lede="Submit an answer. See where the marks were won and lost."
+      >
+        <div className="rounded-lg border border-ink/10 bg-snow p-6 sm:p-8">
+          <ol className="space-y-3 text-sm leading-relaxed text-ink/75">
+            <li><span className="font-mono text-[11px] text-ink/40">01</span>  Your answer, as you wrote it.</li>
+            <li><span className="font-mono text-[11px] text-ink/40">02</span>  The phrase that earned the mark, highlighted.</li>
+            <li><span className="font-mono text-[11px] text-ink/40">03</span>  The mark-scheme criterion it satisfied — or did not.</li>
+            <li><span className="font-mono text-[11px] text-ink/40">04</span>  What would have earned the mark you missed.</li>
+          </ol>
+        </div>
+      </Section>
+
       {/* ── 7. interactive past papers ────────────────────────────────── */}
       <Section
         id="papers"
@@ -781,90 +718,167 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         </div>
       </Section>
 
-      {/* ── 8. the mark scheme ────────────────────────────────────────── */}
-      <Section
-        id="marks"
-        title="Understand the mark scheme, not just the topic."
-        lede="Submit an answer. See where the marks were won and lost."
-      >
-        <div className="rounded-lg border border-ink/10 bg-snow p-6 sm:p-8">
-          <ol className="space-y-3 text-sm leading-relaxed text-ink/75">
-            <li><span className="font-mono text-[11px] text-ink/40">01</span>  Your answer, as you wrote it.</li>
-            <li><span className="font-mono text-[11px] text-ink/40">02</span>  The phrase that earned the mark, highlighted.</li>
-            <li><span className="font-mono text-[11px] text-ink/40">03</span>  The mark-scheme criterion it satisfied — or did not.</li>
-            <li><span className="font-mono text-[11px] text-ink/40">04</span>  What would have earned the mark you missed.</li>
-          </ol>
+      {/* ── 4. subject selector ──────────────────────────────────────────
+          ============================================================
+          ⚠ THE SCIENCES COME FIRST NOW. THIS SUPERSEDES §2 AND §27.
+          ============================================================
+          §2 put the capability strip immediately under the hero; §27 put the
+          marking demonstration third, above the sciences. Both were arguing
+          about which FEATURE deserved to lead, and neither answered the
+          question a visitor actually arrives with, which is not "what can this
+          do" but "do you teach my subject?"
+
+          A parent looking for Biology met a feature list first and had to
+          scroll to find out that Biology is demand-triggered. Answering the
+          subject question at the top costs the feature list one screen and
+          costs a visitor in the wrong place nothing at all.
+
+          ⚠ NOTHING WAS DELETED TO DO THIS. The strip and the demonstration are
+          both still here, in the two bands directly below, in the order the
+          sequence 4 → 4b → 4c spells out. */}
+      <Section id="subjects" title="Three sciences, one platform">
+        <div className="grid gap-4 sm:grid-cols-3">
+          {SUBJECTS.map((s) => (
+            <SubjectCard
+              key={s.slug}
+              subject={{
+                slug: s.slug, name: s.name, qualifications: s.qualifications,
+                blurb: s.blurb, status: s.status, exploreHref: s.exploreHref,
+              }}
+              /* ⚠ §35 — WHAT THE SUBJECT HOLDS, NOT WHETHER A COHORT IS OPEN.
+                 The default eyebrow is the TUITION status, so Biology and
+                 Physics read "Register interest" while holding roughly 90 and
+                 72 past papers between them. Resources and tuition are
+                 different facts; stating the shelves is the honest one, and it
+                 is the same counted label /resources already uses. */
+              eyebrow={holdingsLabel(holdings[s.slug] ?? EMPTY_HOLDINGS)}
+              dataCta="subject_selected"
+            />
+          ))}
         </div>
       </Section>
 
-      {/* ── 9. progress ───────────────────────────────────────────────── */}
-      <Section
-        id="progress"
-        title="Know exactly what you know — and what still needs work."
-        lede="Specification-level progress, built from the questions you have actually attempted."
-      >
-        {/* ⚠ CLEARLY LABELLED AS AN EXAMPLE. These are not anyone's results. */}
-        <div className="rounded-lg border border-ink/10 bg-snow p-6 sm:p-8">
-          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-ink/40">
-            Example view · IAL Chemistry AS
-          </p>
-          <ul className="mt-5 space-y-3">
-            {[["Atomic Structure", 100], ["Bonding", 82], ["Energetics", 56], ["Kinetics", 31]].map(
-              ([topic, pct]) => (
-                <li key={topic as string} className="flex items-center gap-4">
-                  <span className="w-40 shrink-0 text-sm">{topic}</span>
-                  <span className="h-1.5 flex-1 rounded-full bg-ink/10">
-                    <span className="block h-full rounded-full bg-lime" style={{ width: `${pct}%` }} />
-                  </span>
-                  <span className="w-12 shrink-0 text-right font-mono text-xs text-ink/60">{pct}%</span>
-                </li>
-              ),
-            )}
+      {/* ── 4d. audience pathways (§20, §21, §22, §23) ────────────────────
+          ============================================================
+          ⚠ BELOW THE SUBJECTS, NOT BESIDE THE HERO — AND THAT IS §20
+          ============================================================
+          §20 puts this after the product pillars and says it "should not
+          compete with the main hero"; §24 forbids stacking audience cards into
+          the first viewport. So it sits here, after a visitor has seen what
+          Ailemy does and which sciences it covers, at the point a parent or a
+          teacher is deciding whether this is for them (§19, §37).
+
+          ⚠ THE TEACHER CARD PROMISES NO TEACHER TOOLS, BECAUSE THERE ARE NONE.
+          §23 offers "Explore teacher tools →" — conditionally, "if such
+          functionality exists". There is no teacher dashboard, no class list,
+          no assignment flow and no analytics surface in this codebase. What a
+          teacher CAN use today is exactly what a student uses: the
+          specification-mapped resources and the real papers. That is what it
+          says, and it is why the link goes to /resources rather than to a
+          page that would have to be invented to receive it. */}
+      <section aria-labelledby="audience-heading" className="border-t border-ink/10">
+        <div className="mx-auto max-w-6xl px-6 py-12 sm:py-14">
+          <h2 id="audience-heading" className="font-mono text-xs uppercase tracking-[0.2em] text-ink/55">
+            Using Ailemy as a…
+          </h2>
+          <ul className="mt-5 grid gap-3 sm:grid-cols-3">
+            {[
+              {
+                who: "Student",
+                cta: "audience_student_clicked",
+                href: "/resources",
+                body: "Learn a topic, revise it with notes and flashcards, practise it, and get every answer marked.",
+                action: "Start learning free",
+              },
+              {
+                who: "Parent",
+                cta: "audience_parent_clicked",
+                href: "/tuition",
+                body: "Qualified teaching to a published timetable, with the specification, the marking and the progress all visible.",
+                action: "See how tuition works",
+              },
+              {
+                who: "Teacher",
+                cta: "audience_teacher_clicked",
+                href: "/resources",
+                /* ⚠ NO CLASS LISTS, NO ASSIGNMENTS, NO ANALYTICS — none exist. */
+                body: "Specification-mapped lessons, real past papers and mark-scheme-informed marking you can point a class at. Teacher tools are not built yet.",
+                action: "Browse the resources",
+              },
+            ].map((a) => (
+              <li key={a.who}>
+                <Link
+                  href={a.href}
+                  data-cta={a.cta}
+                  className="group flex h-full flex-col justify-between gap-4 rounded-xl border border-ink/10 bg-snow p-5 transition-all duration-200 ease-out hover:border-ink/30 motion-safe:hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                >
+                  <div>
+                    <h3 className="font-display text-lg font-medium tracking-tight">{a.who}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-ink/70">{a.body}</p>
+                  </div>
+                  <p className="text-sm font-medium text-ink">
+                    {a.action} <span aria-hidden className="inline-block transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">{"\u2192"}</span>
+                  </p>
+                </Link>
+              </li>
+            ))}
           </ul>
         </div>
-      </Section>
+      </section>
 
-      {/* ── 10. resource library ──────────────────────────────────────── */}
-      <Section id="resources" title="Everything for your course" lede="Structured by specification, not by folder.">
-        <ul className="flex flex-wrap gap-2">
-          {[
-            ["Lessons", true], ["Revision notes", true], ["Topic questions", true],
-            ["Past papers", true], ["Mark schemes", true], ["Examiner reports", true],
-            ["Interactive papers", true], ["Worksheets", false], ["Videos", false],
-          ].map(([label, ready]) => (
-            <li
-              key={label as string}
-              className={`rounded-full border px-4 py-2 text-sm ${
-                ready ? "border-ink/15 bg-snow" : "border-ink/10 bg-transparent text-ink/45"
-              }`}
-            >
-              {label}{ready ? "" : " · coming soon"}
-            </li>
-          ))}
-        </ul>
-      </Section>
+      {/* ⚠ THE "WHAT YOU CAN DO ON AILEMY" BAND STOOD HERE, AND ITS SEVEN
+          PILLS NOW SIT IN THE HERO (§13). Only the presentation went: the
+          seven destinations are unchanged and still come from
+          capabilitiesFor(), which ExplorePanel imports rather than copies.
+          CapabilityStrip itself is retained — it had exactly one caller, this
+          band, but it carries the focus-ring and scroll-clearance arithmetic
+          that took real measurement to get right, and deleting a component
+          because its only caller moved is how that work gets redone later.
 
-      {/* ── 11. Biology / Physics interest ────────────────────────────── */}
-      <Section
-        id="other-sciences"
-        title="Looking for another science?"
-        lede="We open new Biology and Physics cohorts based on student demand. Register for priority access."
-      >
-        <div className="grid gap-4 sm:grid-cols-2">
-          {SUBJECTS.filter((s) => s.status === "interest").map((s) => (
-            <div key={s.slug} className="rounded-lg border border-ink/10 bg-snow p-6">
-              <h3 className="font-display text-xl font-medium">{s.name}</h3>
-              <p className="mt-1 font-mono text-[11px] text-ink/50">{s.qualifications.join(" · ")}</p>
-              <Link
-                href={`/tuition/interest?subject=${s.slug}`}
-                className="mt-4 inline-block rounded-full border border-ink/20 px-4 py-2 text-sm hover:border-ink/40"
+          ⚠ THE FOUR PRODUCT PILLARS ARE A DIFFERENT SECTION AND ARE UNTOUCHED.
+          They are `id="products"`, "Four ways to use Ailemy", added by the
+          homepage-conversion build and still directly below the hero. */}
+
+      {/* ── 4a-ii. trust strip (§29) ──────────────────────────────────────
+          ============================================================
+          ⚠ FIVE CLAIMS, EVERY ONE OF THEM CHECKABLE TODAY
+          ============================================================
+          §29 lists what is NOT allowed here — student counts, pass rates,
+          grade improvements, testimonials — and this codebase has no data for
+          any of them. What is left is what Ailemy actually is, and each line
+          below can be pointed at something in the repository:
+
+            · specification-mapped — courses carry units, topics and spec
+              points, and the Resources pages count them
+            · mark-scheme-informed — marking runs against the real scheme; the
+              reconcile suite exists to keep it honest
+            · every answer marked — the demo two sections down does it live
+            · progress tracked — attempts and marks persist per student
+            · built by subject specialists — the teachers section below
+
+          ⚠ IT IS A ROW OF WORDS, NOT A ROW OF BADGES. Parents read this strip;
+          a line of award-shaped graphics with nothing behind them is exactly
+          the advertising clutter §29 warns against. */}
+      <section aria-label="What Ailemy is" className="border-t border-ink/10">
+        <div className="mx-auto max-w-6xl px-6 py-6">
+          <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 sm:gap-x-10">
+            {[
+              "Specification-mapped",
+              "Mark-scheme-informed",
+              "Every answer marked",
+              "Progress tracked",
+              "Built by subject specialists",
+            ].map((claim) => (
+              <li
+                key={claim}
+                className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink/45"
               >
-                Register interest →
-              </Link>
-            </div>
-          ))}
+                {claim}
+              </li>
+            ))}
+          </ul>
         </div>
-      </Section>
+      </section>
 
       {/* ── 12. teacher credibility ───────────────────────────────────── */}
       {/* ⚠ NO TESTIMONIALS, RATINGS OR STUDENT COUNTS. None exist in the data,
