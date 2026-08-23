@@ -140,6 +140,32 @@ export function Calendar(props: CalendarProps) {
     return <CompactMonth weeks={monthGrid(state.date)} buckets={buckets} todayISO={todayISO} state={state} />;
   }
 
+  /**
+   * ⚠ §50 — "EMPTY" MEANS THE PERIOD YOU ARE LOOKING AT, NOT THE WHOLE FETCH.
+   *
+   * This was `events.length === 0`, which is true only when the entire loaded
+   * range is bare. A month with nothing in it, inside a range that has plenty,
+   * satisfied neither branch: no empty state, and a grid of forty-two blank
+   * cells with nothing to say why. That is the same §50 failure the panel was
+   * written for, wearing the other face — and moving the panel above the grid
+   * did not fix it, because the panel never rendered.
+   *
+   * It surfaced when the month grid became an agenda below `sm`: an empty
+   * month stopped being forty-two blank cells and became NOTHING AT ALL, which
+   * is louder. The condition is the actual defect either way.
+   *
+   * ⚠ COUNTED FROM buckets, WHICH IS THE REAL EVENTS — no separate query, no
+   * second opinion about what falls on which day, nothing invented.
+   */
+  const visibleCount =
+    state.view === "month"
+      ? monthGrid(state.date).flat()
+          .filter((d) => d.inMonth)
+          .reduce((n, d) => n + (buckets.get(d.date)?.length ?? 0), 0)
+      : state.view === "week"
+        ? weekGrid(state.date).reduce((n, d) => n + (buckets.get(d.date)?.length ?? 0), 0)
+        : events.length;
+
   const href = (patch: Partial<CalendarState> & { day?: string | null }) => {
     const next: CalendarState = { ...state, ...patch };
     const q = stateToQuery(next, todayISO, basePath);
@@ -156,14 +182,22 @@ export function Calendar(props: CalendarProps) {
     >
       <Toolbar state={state} todayISO={todayISO} href={href} viewerTz={viewerTz} />
 
-      {showFilters && <Filters state={state} href={href} lockedSubject={lockedSubject} />}
+      {/* ⚠ FILTERS SIT BELOW THE EXPLANATION WHEN THERE IS NOTHING TO FILTER.
+          At 375 the filter rows are 175px of controls for narrowing a set that
+          is empty — enough on their own to push the explanation off the fold.
+          They are moved, never removed: a filter can be the REASON the period
+          looks empty, so taking them away would trap somebody in a state they
+          cannot undo. */}
+      {showFilters && visibleCount > 0 && (
+        <Filters state={state} href={href} lockedSubject={lockedSubject} />
+      )}
 
       {/* ── §50 — AN EMPTY MONTH EXPLAINS ITSELF BEFORE THE GRID ──────────
           ⚠ IT USED TO BE BELOW. The same sentence and jump link existed under
           the grid, where a six-row August fills a laptop viewport and pushes
           them off-screen — so the page read as an unexplained blank, which is
           precisely the failure §50 names. Position was the whole defect. */}
-      {events.length === 0 && state.view !== "upcoming" && (
+      {visibleCount === 0 && state.view !== "upcoming" && (
         <div className="mt-6">
           <MonthEmptyState
             nextGroup={props.nextGroupAhead ?? null}
@@ -175,6 +209,10 @@ export function Calendar(props: CalendarProps) {
             note={props.emptyMessage}
           />
         </div>
+      )}
+
+      {showFilters && visibleCount === 0 && (
+        <Filters state={state} href={href} lockedSubject={lockedSubject} />
       )}
 
       <div className="mt-6">
@@ -349,20 +387,108 @@ type ViewProps = {
   capacityBySlug?: Map<string, Capacity>;
 };
 
+/**
+ * A month at 375 is an agenda, not a grid — and the repo already argued this.
+ *
+ * ============================================================================
+ * ⚠ THE NUMBER THAT DECIDES IT: 45.9px.
+ * ============================================================================
+ * Measured, not estimated: at a 375px viewport the seven-column grid resolves
+ * each cell to 45.85px wide. CompactMonth immediately below this file already
+ * refuses to put chips in a cell — "a 480px CARD GIVES EACH DAY ABOUT 62px …
+ * at 62px it would show two characters of a title and read as noise". The full
+ * grid on a phone is NARROWER than the width that reasoning already rejected.
+ * So the grid keeps its chips and its 112px rows from `sm` up, and below `sm`
+ * the same events are listed vertically where a title has the whole width.
+ *
+ * WHAT IS LOST, SAID PLAINLY: the shape of the month. A grid shows that the
+ * 14th is free at a glance; a list of days-with-lessons cannot. That is a real
+ * loss and it is the reason the grid is kept everywhere it fits. What is
+ * gained is that the events are readable at all, and that a month with two
+ * lessons is ~2 rows instead of 677px of blank cells.
+ *
+ * ⚠ §79 — NOTHING IS INVENTED HERE. The list is `buckets`, filtered to days
+ * inside the month that actually have events, in date order. A day with no
+ * lesson is ABSENT; it is never rendered as an empty row or a placeholder. An
+ * empty month never reaches this component at all — Calendar renders
+ * MonthEmptyState before the view when `events.length === 0`.
+ */
+function MonthAgenda({ weeks, buckets, todayISO, viewerTz, href }: ViewProps & { weeks: GridDay[][] }) {
+  const days = weeks
+    .flat()
+    .filter((d) => d.inMonth && (buckets.get(d.date) ?? []).length > 0);
+
+  return (
+    <ol className="flex flex-col gap-2">
+      {days.map((day) => {
+        const evs = buckets.get(day.date) ?? [];
+        const d = parseDate(day.date);
+        const isToday = day.date === todayISO;
+        const dayNum = d ? d.getUTCDate() : "";
+        const weekday = d ? WEEKDAY_SHORT[(((d.getUTCDay() + 6) % 7) + 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7] : "";
+        return (
+          <li key={day.date}>
+            <Link
+              href={href({ day: day.date })}
+              aria-current={isToday ? "date" : undefined}
+              aria-label={`${MONTH_LONG[d ? d.getUTCMonth() : 0]} ${dayNum}, ${evs.length} ${
+                evs.length === 1 ? "lesson" : "lessons"
+              }: ${evs.map((e) => describeEvent(e, viewerTz)).join("; ")}`}
+              /* ⚠ tap-44 — the row is a touch target, not a line of text. */
+              className="tap-44 flex w-full gap-3 rounded-xl bg-parchment p-3 text-left ring-1 ring-line
+                transition-colors duration-150
+                hover:bg-surface-cool focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink
+                motion-reduce:transition-none"
+            >
+              {/* the date rail — fixed width so every row's chips start on one line */}
+              <span className="flex w-11 shrink-0 flex-col items-center pt-0.5">
+                <span
+                  className={`flex h-7 w-7 items-center justify-center rounded-full font-mono text-sm tabular-nums ${
+                    isToday ? "bg-ink text-parchment" : "text-ink/75"
+                  }`}
+                >
+                  {dayNum}
+                </span>
+                <span className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-ink/40">
+                  {weekday}
+                </span>
+                {isToday && <span className="sr-only">Today</span>}
+              </span>
+              <span className="flex min-w-0 flex-1 flex-col gap-1">
+                {evs.map((ev) => (
+                  <EventChip key={ev.key} event={ev} viewerTz={viewerTz} />
+                ))}
+              </span>
+            </Link>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 function MonthView({ weeks, ...p }: ViewProps & { weeks: GridDay[][] }) {
   return (
     <div>
-      <div className="grid grid-cols-7 gap-px border-b border-ink/10 pb-2" aria-hidden>
-        {([1, 2, 3, 4, 5, 6, 7] as const).map((w) => (
-          <div key={w} className="text-center font-mono text-[10px] uppercase tracking-[0.18em] text-ink/40">
-            {WEEKDAY_SHORT[w]}
-          </div>
-        ))}
+      {/* ⚠ BELOW sm THE GRID IS NOT RENDERED NARROWER — IT IS NOT RENDERED.
+          Hiding it with CSS would still cost the DOM 42 cells and 42 accessible
+          names describing a layout nobody is looking at. */}
+      <div className="sm:hidden">
+        <MonthAgenda weeks={weeks} {...p} />
       </div>
-      <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg bg-ink/10">
-        {weeks.flat().map((day) => (
-          <DayCell key={day.date} day={day} {...p} />
-        ))}
+      <div className="hidden sm:block">
+        <div className="grid grid-cols-7 gap-px border-b border-ink/10 pb-2" aria-hidden>
+          {([1, 2, 3, 4, 5, 6, 7] as const).map((w) => (
+            <div key={w} className="text-center font-mono text-[10px] uppercase tracking-[0.18em] text-ink/40">
+              {WEEKDAY_SHORT[w]}
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-px overflow-hidden rounded-lg bg-ink/10">
+          {weeks.flat().map((day) => (
+            <DayCell key={day.date} day={day} {...p} />
+          ))}
+        </div>
       </div>
     </div>
   );

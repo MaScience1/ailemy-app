@@ -165,7 +165,7 @@ export function OnboardingSteps() {
                   type="button"
                   aria-pressed={on}
                   onClick={() => set(g)}
-                  className={`min-w-[3rem] rounded-full border px-3 py-2 text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
+                  className={`min-w-[3rem] rounded-full border px-3 py-2 text-base md:text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
                     on ? "border-ink bg-ink text-parchment" : "border-ink/15 hover:border-ink/35"
                   }`}
                 >
@@ -179,7 +179,7 @@ export function OnboardingSteps() {
             value={answers[step.id] ?? ""}
             onChange={(e) => set(e.target.value)}
             aria-label={step.question}
-            className="h-11 w-full rounded-md border border-ink/15 bg-parchment px-3 text-sm focus-visible:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink"
+            className="h-11 w-full rounded-md border border-ink/15 bg-parchment px-3 text-base md:text-base md:text-sm focus-visible:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink"
           />
         )}
       </div>

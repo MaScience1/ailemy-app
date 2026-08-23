@@ -434,8 +434,25 @@ console.log("\n=== 12. ⚠ §50 — an empty month explains itself, ABOVE the gr
   const viewsAt = CALENDAR.indexOf('state.view === "month" &&');
   t("⚠ §50 — the empty state renders BEFORE the grid, not after it",
     emptyAt > 0 && emptyAt < viewsAt, `empty@${emptyAt} views@${viewsAt}`);
-  t("§50 — and only when the period is genuinely empty",
-    /events\.length === 0 && state\.view !== "upcoming"/.test(CALENDAR));
+  /**
+   * ⚠ THIS PINNED `events.length === 0`, AND THAT CONDITION WAS THE BUG.
+   *
+   * `events` is the whole fetched range, so a month with nothing in it inside
+   * a range with plenty satisfied neither branch: no empty state, and a grid
+   * of forty-two blank cells saying nothing. §50's complaint exactly — and
+   * moving the panel above the grid never fixed it, because the panel did not
+   * render at all. The test passed throughout, because it was checking that a
+   * particular expression had been typed.
+   *
+   * It now asserts the INVARIANT: the trigger is scoped to the period on
+   * screen, and is not the whole-range count. Both halves matter — the second
+   * is what stops the old expression coming back.
+   */
+  t("§50 — the empty state triggers on the VISIBLE period, not the whole fetch",
+    /visibleCount === 0 && state\.view !== "upcoming"/.test(CALENDAR)
+      && !/events\.length === 0 && state\.view !== "upcoming"/.test(CALENDAR));
+  t("§50 — and the visible count is derived from the real buckets",
+    /visibleCount[\s\S]{0,400}buckets\.get\(/.test(CALENDAR));
   t("⚠ §50 — the old below-the-grid duplicate is gone",
     !/Try another month, or see what is opening[\s\S]{0,200}Jump to the first teaching week/.test(CALENDAR));
 

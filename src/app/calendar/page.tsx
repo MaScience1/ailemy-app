@@ -135,8 +135,8 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
       <SiteNav session={session} />
       <TimezoneSync known={viewerTz !== null} />
 
-      <main className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
-        <header className="mb-8">
+      <main className="mx-auto max-w-6xl px-6 py-7 sm:py-16">
+        <header className="mb-5 sm:mb-8">
           {/* ⚠ §47 — CALENDAR IS PART OF ONLINE TUITION, AND NOW SAYS SO. It
               lost its permanent header slot because it is a tuition feature,
               not a fifth product; without a way back it would read as
@@ -200,7 +200,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
             read a month to find out. These two answer it in one line each,
             from the events this page has already loaded — no extra query, and
             nothing they can say that the grid below could contradict. */}
-        <div className="mt-8">
+        <div className="mt-5 sm:mt-8">
           <CalendarShortcuts
             /* ⚠ THE SHORTCUTS LOOK PAST THE VISIBLE WINDOW, AND THE FIRST
                VERSION DID NOT. Fed `events`, "Next group lesson" rendered

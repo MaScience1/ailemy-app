@@ -31,6 +31,39 @@
   --color-marked: #4A9D5C; /* feedback returned */
   --color-pending: #C2410C; /* awaiting marking */
   --color-danger: #B3261E; /* errors only — deliberately NOT flask orange */
+  /* ── VERTICAL RHYTHM, ONE SCALE ────────────────────────────────────────
+     Section padding was py-14 sm:py-20 everywhere — uniform, but only two
+     steps and unrelated to anything else. These are the whole scale; a
+     section picks a step, it does not invent a number. Mobile steps are
+     deliberately much tighter than desktop: at 375 every multi-column grid
+     collapses to one column, so the page pays the padding 11 times over. */
+  --space-1: 0.5rem;   /*  8px */
+  --space-2: 0.75rem;  /* 12px */
+  --space-3: 1rem;     /* 16px */
+  --space-4: 1.5rem;   /* 24px */
+  --space-5: 2rem;     /* 32px */
+  --space-6: 2.5rem;   /* 40px — mobile section step */
+  --space-7: 3.5rem;   /* 56px */
+  --space-8: 4.5rem;   /* 72px — desktop section step */
+
+  /* ── SURFACE TINTS ────────────────────────────────────────────────────
+     Sections were separated by `border-t border-ink/10` — eleven hard rules
+     down the page. The brief is explicit: no hard rules. Structure comes from
+     alternating surface temperature instead, which reads as depth rather than
+     as a list of horizontal lines. Both steps are within a whisker of
+     Parchment so no section looks like a different site. */
+  --surface-warm: #F2EADF;  /* one step warmer than parchment */
+  --surface-cool: #F7F3EC;  /* one step cooler/lighter */
+  --color-surface-warm: #F2EADF;
+  --color-surface-cool: #F7F3EC;
+
+  /* ── GOLD, RESERVED FOR 1-to-1 ────────────────────────────────────────
+     Kept deliberately away from flask orange #F97316 in hue: gold sits at
+     ~42deg, flask at ~25deg, and gold is darker so it reads as metal rather
+     than as a second orange. */
+  --color-gold: #A8801A;
+  --color-gold-soft: #EFE0B8;
+
   --text-display: 3rem; /* 48px cohort title */
   --text-meta: 0.8125rem; /* 13px mono: spec codes, mark tariffs */
   --color-sidebar-ring: var(--sidebar-ring);
@@ -258,4 +291,155 @@
   [data-lesson-deck] {
     display: none;
   }
+}
+
+/* ===========================================================================
+   iOS SAFARI PRIMITIVES
+   ---------------------------------------------------------------------------
+   ⚠ NONE OF THIS IS VERIFIED ON A DEVICE, AND IT CANNOT BE FROM HERE.
+   These are known-correct patterns applied deliberately, plus guards in
+   scripts/exam-seed/__tests__/ios-safari.test.ts that go red on the
+   anti-patterns. "Applied a correct pattern" is a weaker claim than "checked
+   it renders", and the report says so.
+
+   VERSION FLOOR ASSUMED: iOS 16.4 (March 2023). That is what makes the
+   following safe to use unprefixed: `dvh` units (16.4), `:has()` (15.4),
+   container queries (16.0), flex `gap` (14.1), `scroll-snap-type` (11).
+   Anything needing iOS 17+ is NOT used.
+   =========================================================================== */
+
+/* ── viewport height ──────────────────────────────────────────────────────
+   100vh on iOS is measured against the viewport WITHOUT the URL bar, so a
+   100vh element is taller than what you can see and its bottom is cut off.
+   dvh tracks the bar as it collapses. The vh line stays first as the fallback
+   for anything below the floor; dvh overrides it where supported. */
+.h-screen-safe { height: 100vh; height: 100dvh; }
+.min-h-screen-safe { min-height: 100vh; min-height: 100dvh; }
+.max-h-screen-safe { max-height: 100vh; max-height: 100dvh; }
+
+/* ── safe areas ───────────────────────────────────────────────────────────
+   ⚠ READ THIS BEFORE TRUSTING ANY env() IN THIS REPO.
+
+   env(safe-area-inset-*) only becomes non-zero when the document sets
+   `viewport-fit=cover`. This app does NOT set it — there is no
+   `export const viewport` in layout.tsx, so Next emits the default and iOS
+   insets the LAYOUT VIEWPORT itself. Nothing clips today, and the three
+   existing env() call sites (StickyCta, DeckPreview, TuitionCta) are
+   resolving to 0 while reading like protection.
+
+   ⚠ AND IT IS DELIBERATELY LEFT THAT WAY IN THIS PASS. Adding
+   viewport-fit=cover moves the responsibility from the browser to us for
+   EVERY fixed and sticky element at once — there are 19, and 3 have any
+   padding to fall back on. Flipping it blind, on a target that cannot be
+   verified from here, trades a working default for sixteen unverified edges.
+
+   So these utilities, and the max() call sites below, are a FORWARD-COMPATIBLE
+   FLOOR: they render a fixed sensible padding today and become the true inset
+   on the day viewport-fit is set. ios-safari.test.ts fails if that day arrives
+   without every fixed/sticky element being handled in the same commit. */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+.px-safe {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+/* For a bar that already has its own padding and must ADD the inset. */
+.pb-safe-plus-3 { padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px)); }
+
+/* ── tap targets ──────────────────────────────────────────────────────────
+   44x44 is the Apple minimum. Declared as a utility so a control can hit it
+   without inflating its visual box: the padding grows the hit area, the
+   content stays the size it looks. */
+.tap-44 { min-width: 44px; min-height: 44px; }
+
+/* ── the grey flash ───────────────────────────────────────────────────────
+   Safari paints a translucent grey rectangle over any tapped element unless
+   told otherwise. Set deliberately to a faint ink wash so a tap still
+   acknowledges itself — transparent would remove the feedback entirely,
+   which is worse than the default, not better. */
+html {
+  -webkit-tap-highlight-color: rgb(15 20 25 / 0.06);
+}
+
+/* ── inputs ───────────────────────────────────────────────────────────────
+   Safari zooms the page when a focused input's font-size is under 16px, and
+   never zooms back out. This is a floor, not a size: a control may be larger. */
+input, select, textarea {
+  font-size: max(16px, 1rem);
+}
+
+/* ── horizontal scrollers ─────────────────────────────────────────────────
+   Used by the calendar's mobile date selector. Snap so a date always lands
+   aligned; momentum so it feels native; and an edge mask so the strip reads
+   as scrollable without needing a scrollbar, which iOS hides. */
+.snap-strip {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  /* the affordance: content fades at the trailing edge, so it reads as "more" */
+  -webkit-mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 28px), transparent 100%);
+  mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 28px), transparent 100%);
+}
+.snap-strip::-webkit-scrollbar { display: none; }
+.snap-strip > * { scroll-snap-align: center; flex: 0 0 auto; }
+/* At the end of the strip the mask would hide the last item; this class is
+   toggled off by nothing today — it exists so the mask never eats a target
+   the user cannot then reach. The last child gets trailing space instead. */
+.snap-strip > *:last-child { margin-right: 28px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .snap-strip { scroll-behavior: auto; }
+}
+
+/* ── Fraunces optical sizing ──────────────────────────────────────────────
+   ⚠ THIS WAS NOT ENGAGED. layout.tsx requested Fraunces with explicit
+   weights, which makes next/font serve STATIC instances — a static instance
+   has no opsz axis to engage, so `font-optical-sizing: auto` had nothing to
+   act on and display type was rendering with text-size letterforms. The font
+   is now loaded variable (see layout.tsx); this asks for the axis explicitly
+   at display sizes rather than trusting the default. */
+.ai-display {
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 48, "SOFT" 0, "WONK" 1;
+}
+.ai-display-sm {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 24, "SOFT" 0, "WONK" 0;
+}
+
+/* ===========================================================================
+   SECTION BANDS — structure from surface, not from rules
+   ---------------------------------------------------------------------------
+   Every homepage section used to be separated by `border-t border-ink/10`.
+   Eleven hairlines down a single page reads as a list of horizontal lines
+   rather than as structure, and at 375 — where every section is a single
+   column anyway — the rules are the only thing distinguishing one from the
+   next, so the page scans as one undifferentiated ribbon.
+
+   Alternating surface temperature does the same job without drawing anything.
+   Both steps sit within ~2% of Parchment, so no band reads as a different
+   site; what you perceive is depth, not colour.
+
+   ⚠ nth-of-type, NOT nth-child. The bands are <section> siblings among <div>
+   and <header> elements; nth-child would count those too and the alternation
+   would break wherever a non-section is interleaved.
+   =========================================================================== */
+.ai-band {
+  background: var(--color-parchment);
+  /* the seam: a 1px light edge instead of a dark rule — it separates by
+     catching light at the boundary rather than by drawing a line across it */
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.55);
+}
+.ai-band:nth-of-type(even) {
+  background: var(--surface-cool);
+}
+.ai-band:nth-of-type(4n + 3) {
+  background: var(--surface-warm);
 }
