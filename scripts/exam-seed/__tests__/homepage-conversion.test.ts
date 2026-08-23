@@ -274,5 +274,53 @@ console.log("\n=== 9. §2/§16 — hierarchy and spacing ===");
     !/Build an Exam/.test(code(HOME)));
 }
 
+// ============================================================================
+console.log("\n=== 10. ⚠ the capabilities were RELOCATED, not duplicated ===");
+// ============================================================================
+{
+  const PANEL = readFileSync("src/components/home/ExplorePanel.tsx", "utf8");
+  const STRIP = readFileSync("src/components/home/CapabilityStrip.tsx", "utf8");
+  const p = code(PANEL);
+
+  /**
+   * ⚠ §3 — NOT ONE HREF IS RETYPED. capabilitiesFor() is the single source,
+   * and it matters concretely: "Progress tracking" resolves to /profile for a
+   * student and /login?next=/profile for a stranger. A hand-copied list would
+   * lose that distinction or drift from it, and route-integrity would not
+   * notice because both strings are valid routes.
+   */
+  t("⚠ §3 — the panel imports the existing capability list",
+    /import \{ capabilitiesFor \} from "\.\/CapabilityStrip"/.test(PANEL));
+  t("⚠ §3 — and hardcodes no route of its own",
+    !/href=["']\/[a-z]/.test(p) && !/["']\/(learn|resources|past-papers|tuition|profile|login)["']/.test(p),
+    p.match(/["']\/(learn|resources|past-papers|tuition|profile|login)["']/)?.[0]);
+  t("§3 — the href comes off the item", /href=\{c\.href\}/.test(PANEL));
+  t("§3 — the source still exports the seven", /export function capabilitiesFor/.test(STRIP));
+
+  // ⚠ §2 OF THE HEADER — THE DESCRIPTIONS LIVE ON THE CAPABILITY, so a
+  // reworded label cannot silently orphan its blurb.
+  t("⚠ descriptions are a field, not a map keyed by label",
+    /blurb: string/.test(STRIP) && !/Record<string, string>/.test(p));
+
+  // §13 — one presentation, not two.
+  t("⚠ §13 — the old band is gone from the page",
+    !/What you can do on Ailemy/.test(HOME));
+  t("⚠ §13 — and the FOUR PRODUCT PILLARS are untouched",
+    HOME.includes('id="products"') && HOME.includes("Four ways to use Ailemy"));
+  t("§13 — the strip component is retained, not deleted",
+    existsSync("src/components/home/CapabilityStrip.tsx"));
+
+  // §9 — a reserved slot, so nothing moves.
+  t("⚠ §9 — the description area reserves a fixed height", /min-h-\[3rem\]/.test(PANEL));
+  t("⚠ §17 — it answers focus, not only hover",
+    /onFocus=/.test(PANEL) && /onBlur=/.test(PANEL) && /onMouseEnter=/.test(PANEL));
+  t("§17 — and announces the change", /aria-live="polite"/.test(PANEL));
+  t("§7 — the lift is guarded for reduced motion", /motion-safe:hover:-translate-y-px/.test(PANEL));
+  t("§17 — every pill is a real link with a visible focus state",
+    /<Link/.test(PANEL) && /focus-visible:outline\b/.test(PANEL));
+  t("§14 — the panel follows the calendar in the DOM",
+    HOME.indexOf("<HeroCalendarCard") < HOME.indexOf("<ExplorePanel"));
+}
+
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);
 process.exit(fail === 0 ? 0 : 1);
