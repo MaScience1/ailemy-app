@@ -27,6 +27,40 @@ import { Editable } from "@/components/admin-inline/Editable";
 
 type Params = Promise<{ subject: string }>;
 
+/**
+ * Pathways this page does not offer.
+ *
+ * ============================================================================
+ * ⚠ HIDDEN HERE, NOT DELETED (founder's call, 2026-08-23)
+ * ============================================================================
+ * The six pathway cards are NOT database rows. They come from
+ * PATHWAY_DISPLAY_ORDER, a hardcoded constant in lib/catalogue/pathways.ts —
+ * getPathwayStatusForSubject() only supplies the counts, and it seeds a
+ * complete record from those same hardcoded keys, so IB and AP render as
+ * "Coming soon" whether or not a single `courses` row exists for them. There is
+ * therefore no row to delete and no migration to write.
+ *
+ * They are filtered out because Ailemy teaches no IB or AP content and none is
+ * being built. "Coming soon" on a pathway nobody is working on is a promise the
+ * catalogue cannot keep, and it is the same untruth whether it comes from a
+ * table or from a constant.
+ *
+ * ⚠ THE SLUGS, THE pathway_type ENUM AND ANY courses ROWS ARE UNTOUCHED.
+ * /learn/[subject]/ib and /learn/[subject]/ap still resolve for anyone holding
+ * a URL — the demote-don't-delete stance the archived-lesson listing already
+ * uses. Editing PATHWAY_DISPLAY_ORDER instead would ALSO strip the IB and AP
+ * headings from /past-papers, which is a different surface with real papers
+ * under it and a decision nobody has made.
+ *
+ * ⚠ AND NOTHING TAKES THEIR PLACE. No placeholder card, no "more pathways
+ * coming" tile — the grid is simply four.
+ */
+const HIDDEN_PATHWAYS: readonly Pathway[] = ["ib", "ap"];
+
+const VISIBLE_PATHWAYS = PATHWAY_DISPLAY_ORDER.filter(
+  (pathway) => !HIDDEN_PATHWAYS.includes(pathway),
+);
+
 export async function generateMetadata({
   params,
 }: {
@@ -80,8 +114,13 @@ export default async function SubjectPage({ params }: { params: Params }) {
             </p>
           </header>
 
-          <section className="mt-10 grid gap-5 md:grid-cols-2 lg:gap-6 xl:grid-cols-3">
-            {PATHWAY_DISPLAY_ORDER.map((pathway) => (
+          {/* ⚠ TWO COLUMNS, NOT THREE. Six cards filled a 3-wide grid exactly;
+              four leave a 3-wide grid with a single orphan on the second row,
+              which reads as a card that failed to load. A 2×2 also gives each
+              remaining card enough width that "International A-Level" stops
+              wrapping to three lines at the xl breakpoint. */}
+          <section className="mt-10 grid gap-5 md:grid-cols-2 lg:gap-6">
+            {VISIBLE_PATHWAYS.map((pathway) => (
               <PathwayCard
                 key={pathway}
                 pathway={pathway}

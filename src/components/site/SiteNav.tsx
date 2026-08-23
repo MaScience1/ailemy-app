@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { ChevronDown, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 import { navToneVars, type NavToneKey } from "@/lib/design/subject-colours";
+import { AccountMenu, AccountPanel } from "@/components/site/AccountMenu";
+import type { NavSession } from "@/lib/auth/nav-session";
 
 /**
  * Site-wide top navigation. Used on the marketing landing page and on every
@@ -20,15 +22,34 @@ import { navToneVars, type NavToneKey } from "@/lib/design/subject-colours";
  * stay open across navigations.
  *
  * AUTH IS A PROP, NOT A LOOKUP. This is a Client Component (it owns the mobile
- * menu state and reads usePathname), so it cannot call cookies() itself. Each
- * of the five server components that render it resolves getNavSession() and
- * passes the result down. `session` is undefined only if a caller forgets to
- * pass it, which renders the signed-out nav — the safe default.
+ * menu state and reads usePathname), so it cannot call cookies() itself. Every
+ * server component that renders it resolves getNavSession() and passes the
+ * result down. `session` is undefined only if a caller forgets to pass it,
+ * which renders the signed-out nav — the safe default.
+ *
+ * ⚠ FIFTEEN RENDER SITES, NOT FIVE. This comment claimed five for a long time,
+ * and a prop change made on that belief would have missed ten callers. They are:
+ * app/page, app/calendar, app/past-papers, app/tuition, app/tuition/interest,
+ * app/tuition/one-to-one, app/intensive, app/resources, app/privacy, app/terms,
+ * app/profile, app/welcome, app/learn/layout, app/(site)/[...slug], and
+ * components/public/SubjectPage (which serves /chemistry, /biology, /physics).
+ *
+ * ⚠ WHICH IS WHY THE SESSION GREW A FIELD INSTEAD OF THE COMPONENT GROWING A
+ * PROP. `name` and `initials` ride inside the object every one of those callers
+ * already forwards, so adding the account menu changed no caller at all. A
+ * second prop would have been fifteen edits and a silent signed-out nav
+ * anywhere one was forgotten.
+ *
+ * ⚠ THE HEADER NO LONGER PRINTS AN EMAIL. It showed `session.email` as the
+ * student's primary identity — a login credential in the chrome of every
+ * marketing page. See AccountMenu.tsx for the full reasoning and for the
+ * "My Account" fallback, which labels the control and never the person.
  *
  * Sign-out is a plain <form method="POST">, not a client-side
  * supabase.auth.signOut(). Importing the Supabase browser client here would
  * ship it to every visitor of every marketing page, including logged-out ones
- * who can never use it. The form also works with JavaScript disabled.
+ * who can never use it. The form also works with JavaScript disabled. It lives
+ * in AccountMenu.tsx now, alongside the only two places that render it.
  */
 
 type NavLink = { label: string; href: string; tone: NavToneKey };
@@ -130,38 +151,25 @@ const NAV_LINKS: NavLink[] = [
   // subject.
 ];
 
-export type NavSession = { email: string } | null;
+/**
+ * ⚠ RE-EXPORTED, NOT RE-DECLARED. This file used to carry its own
+ * `{ email: string } | null` copy of the shape that nav-session.ts also
+ * declared — two truths about one object, which is exactly how the nav ends up
+ * unable to read a field the server is already sending. `import type` is erased
+ * before bundling, so nothing from that server-only module reaches the client.
+ */
+export type { NavSession };
 
 export function SiteNav({ session = null }: { session?: NavSession }) {
   const [open, setOpen] = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false);
   const pathname = usePathname();
-  const accountRef = useRef<HTMLDivElement | null>(null);
 
-  // Close both menus whenever the route changes. Same-route hash navigations
-  // (which don't change pathname) are handled by the per-link onClick below.
+  // Close the mobile panel whenever the route changes. Same-route hash
+  // navigations (which don't change pathname) are handled by the per-link
+  // onClick below. The account dropdown closes itself on the same signal.
   useEffect(() => {
     setOpen(false);
-    setAccountOpen(false);
   }, [pathname]);
-
-  // Escape and click-outside for the account dropdown. Bound only while it is
-  // open, so a closed nav adds no global listeners.
-  useEffect(() => {
-    if (!accountOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setAccountOpen(false);
-    };
-    const onPointer = (e: PointerEvent) => {
-      if (!accountRef.current?.contains(e.target as Node)) setAccountOpen(false);
-    };
-    window.addEventListener("keydown", onKey);
-    window.addEventListener("pointerdown", onPointer);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      window.removeEventListener("pointerdown", onPointer);
-    };
-  }, [accountOpen]);
 
   const closeMenu = () => setOpen(false);
 
@@ -196,52 +204,12 @@ export function SiteNav({ session = null }: { session?: NavSession }) {
         {/* Desktop right side: account menu when signed in, Login when not. */}
         <div className="hidden items-center gap-5 md:flex">
           {session ? (
-            <div className="relative" ref={accountRef}>
-              <button
-                type="button"
-                onClick={() => setAccountOpen((v) => !v)}
-                aria-haspopup="menu"
-                aria-expanded={accountOpen}
-                aria-controls="site-nav-account"
-                // The full address is in `title` because the visible label is
-                // truncated — a long email must not push the nav around.
-                title={session.email}
-                style={navToneVars("neutral")}
-                /**
-                 * ⚠ THE SAME CAPSULE AS Login, BECAUSE IT IS THE SAME SLOT.
-                 * Signed out this position holds a Login link; signed in it
-                 * holds this control. If only one of them grew a capsule, the
-                 * nav would change shape on sign-in for no reason the user can
-                 * see. Its own hover:bg-ink/[0.04] is what the neutral tone was
-                 * derived from, so this is that behaviour formalised, not
-                 * replaced. max-w and truncate stay: a long address must never
-                 * push the nav around, capsule or not.
-                 */
-                className={`${TAB} max-w-[16rem] gap-1.5 text-sm font-medium text-ink/75`}
-              >
-                <span className="min-w-0 truncate">{session.email}</span>
-                <ChevronDown
-                  className={`h-3.5 w-3.5 shrink-0 transition-transform duration-150 ${
-                    accountOpen ? "rotate-180" : ""
-                  }`}
-                  aria-hidden="true"
-                />
-              </button>
-
-              {accountOpen && (
-                <div
-                  id="site-nav-account"
-                  role="menu"
-                  className="absolute right-0 top-full z-50 mt-2 min-w-[13rem] rounded-md border border-ink/10 bg-parchment p-1 shadow-[0_8px_24px_-12px_rgba(15,20,25,0.18)]"
-                >
-                  <p className="truncate px-3 py-2 text-xs text-ink/50" title={session.email}>
-                    {session.email}
-                  </p>
-                  <div className="my-1 border-t border-ink/10" />
-                  <SignOutForm next={pathname} role="menuitem" />
-                </div>
-              )}
-            </div>
+            /* ⚠ TAB IS PASSED IN, NOT IMPORTED BACK OUT. AccountMenu occupies
+               the same slot as Login and must wear the same capsule, but this
+               file already imports that file — importing TAB the other way would
+               make the pair circular, and re-typing the capsule string there is
+               the drift TAB's own comment exists to prevent. */
+            <AccountMenu session={session} capsuleClassName={TAB} />
           ) : (
             <Link
               href="/login"
@@ -293,14 +261,7 @@ export function SiteNav({ session = null }: { session?: NavSession }) {
             </ul>
             <div className="mt-4 flex flex-col gap-3 border-t border-ink/10 pt-5">
               {session ? (
-                <>
-                  {/* No dropdown on mobile — the panel IS the disclosure, so
-                      nesting a second one would be a pointless extra tap. */}
-                  <p className="truncate text-sm text-ink/55" title={session.email}>
-                    {session.email}
-                  </p>
-                  <SignOutForm next={pathname} full />
-                </>
+                <AccountPanel session={session} onNavigate={closeMenu} />
               ) : (
                 <Link
                   href="/login"
@@ -315,36 +276,5 @@ export function SiteNav({ session = null }: { session?: NavSession }) {
         </div>
       )}
     </header>
-  );
-}
-
-/**
- * Sign out via a form POST. `next` returns the visitor to the page they were
- * on; the route validates it as a same-origin relative path before redirecting.
- */
-function SignOutForm({
-  next,
-  full = false,
-  role,
-}: {
-  next: string;
-  full?: boolean;
-  role?: string;
-}) {
-  return (
-    <form method="POST" action="/api/auth/sign-out">
-      <input type="hidden" name="next" value={next} />
-      <button
-        type="submit"
-        role={role}
-        className={
-          full
-            ? "w-full cursor-pointer rounded-md border border-ink/15 px-4 py-2.5 text-center text-sm font-medium text-ink transition-colors hover:bg-ink/[0.04]"
-            : "w-full cursor-pointer rounded px-3 py-2 text-left text-sm font-medium text-ink transition-colors hover:bg-ink/[0.06] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-        }
-      >
-        Sign out
-      </button>
-    </form>
   );
 }

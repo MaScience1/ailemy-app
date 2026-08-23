@@ -9,6 +9,21 @@ type MuxLessonPlayerProps = {
   title: string;
   /** Seconds into the video to use for the poster frame. Default: 1s. */
   posterTime?: number;
+  /**
+   * Fires as playback advances, with the fraction watched (0–1).
+   *
+   * ⚠ THIS IS THE ONLY HONEST ROUTE TO "VIDEO COMPLETE" (§6, §105). Before it
+   * existed the schema had no duration column and the player emitted no
+   * events, so a 90%-watched rule could not be OBSERVED — only guessed. The
+   * caller decides the threshold; this reports what actually happened.
+   *
+   * Fired only when duration is a finite positive number: a live stream or a
+   * still-loading asset reports duration NaN/Infinity, and dividing by it
+   * would manufacture a completion out of nothing.
+   */
+  onProgress?: (fractionWatched: number) => void;
+  /** Fires when playback reaches the end. */
+  onEnded?: () => void;
 };
 
 /**
@@ -28,6 +43,8 @@ export function MuxLessonPlayer({
   playbackId,
   title,
   posterTime = 1,
+  onProgress,
+  onEnded,
 }: MuxLessonPlayerProps) {
   // MuxCSSProperties extends React.CSSProperties with an index signature for
   // `--*` custom properties so the brand-theming variables type-check cleanly.
@@ -53,6 +70,16 @@ export function MuxLessonPlayer({
         }}
         style={themeStyle}
         streamType="on-demand"
+        onTimeUpdate={(e) => {
+          if (!onProgress) return;
+          const el = e.currentTarget as unknown as { currentTime?: number; duration?: number };
+          const { currentTime, duration } = el;
+          // See onProgress' contract: an unusable duration reports nothing.
+          if (typeof currentTime !== "number" || typeof duration !== "number") return;
+          if (!Number.isFinite(duration) || duration <= 0) return;
+          onProgress(Math.min(1, currentTime / duration));
+        }}
+        onEnded={onEnded}
       />
     </div>
   );

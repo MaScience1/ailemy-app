@@ -5,14 +5,12 @@ import { ArrowLeft, ArrowRight, BookOpen, Clock } from "lucide-react";
 
 import { Breadcrumb } from "@/components/catalogue/breadcrumb";
 import { StatusBadge } from "@/components/catalogue/status-badge";
-import { VideoPlaceholder } from "@/components/catalogue/video-placeholder";
-import { MuxLessonPlayer } from "@/components/lesson/MuxLessonPlayer";
 import { PATHWAY_COPY, isPathway } from "@/lib/catalogue/pathways";
 import {
   getCourseBySubjectPathwayAndSlug,
   getLessonByCourseAndSlug,
-  getLessonNeighbours,
   getSubjectBySlug,
+  listLessonsForCourse,
 } from "@/lib/catalogue/queries";
 import { getSubjectThemeStyle } from "@/lib/catalogue/subject-theme";
 import type {
@@ -21,9 +19,42 @@ import type {
   LessonNeighbour,
   Subject,
 } from "@/lib/catalogue/types";
-import { LessonDeckSection } from "@/components/lesson/LessonDeckSection";
 import { InlineEditBoundary } from "@/components/admin-inline/InlineEditBoundary";
 import { LessonEditBarSlot } from "@/components/admin-inline/slots";
+import { LessonExamQuestions } from "@/components/lesson/LessonExamQuestions";
+import { LessonNotes } from "@/components/lesson/LessonNotes";
+import { LessonOutro } from "@/components/lesson/LessonOutro";
+import { LessonPractice } from "@/components/lesson/LessonPractice";
+import { LessonJourney, LessonProgressProvider } from "@/components/lesson/LessonProgress";
+import { LessonSection, SectionUnavailable } from "@/components/lesson/LessonSectionShell";
+import { LessonSlides } from "@/components/lesson/LessonSlides";
+import { LessonWorkedExamples } from "@/components/lesson/LessonWorkedExamples";
+import { LessonVideo } from "@/components/lesson/LessonVideo";
+import type { PlayerFrame } from "@/components/lesson/LessonPlayer";
+import { TuitionCta } from "@/components/tuition/TuitionCta";
+import { flattenFrames } from "@/lib/lesson-deck/manifest.ts";
+import { frameUrl, loadPublishedDeck } from "@/lib/lesson-deck/store.ts";
+import { readCompletion } from "@/lib/lesson/completion";
+import {
+  loadLessonExamQuestions,
+  loadLessonNotes,
+  loadWorkedExamples,
+} from "@/lib/lesson/content";
+import type { LessonSectionKey } from "@/lib/lesson/sections.ts";
+import { createClient } from "@/lib/supabase/server";
+
+/**
+ * ⚠ THE WATERMARK IS THE SIGNED-IN ADDRESS (§7), AND ANONYMOUS IS A REAL CASE.
+ * Returning null (not "") matters: the player renders the plain "Ailemy" mark
+ * for a null and appends the identifier for a string. The previous code passed
+ * "" for anonymous viewers, which is falsy, so the anonymous watermark
+ * silently disappeared while the comment claimed it was there.
+ */
+async function deckWatermark(): Promise<string | null> {
+  const db = await createClient();
+  const { data: { user } } = await db.auth.getUser();
+  return user?.email ?? null;
+}
 
 type Params = Promise<{
   subject: string;
@@ -116,11 +147,23 @@ export default async function LessonPage({ params }: { params: Params }) {
     );
   }
 
-  // Prev/next nav — only meaningful when we have a lesson_number to anchor on.
-  const neighbours =
-    lesson.lesson_number != null
-      ? await getLessonNeighbours(course.id, lesson.lesson_number)
-      : { prev: null, next: null };
+  /**
+   * ⚠ ONE LIST GIVES POSITION, TOTAL AND NEIGHBOURS — AND FIXES A REAL BUG.
+   * ==========================================================================
+   * getLessonNeighbours() had no `.neq("status","archived")` while
+   * listLessonsForCourse() does, so Previous/Next could offer a lesson the
+   * course index deliberately hides — the 2026-08-22 reflow archived two rows
+   * whose content was merged elsewhere, and prev/next walked straight back
+   * into them. Deriving both from the SAME list the index renders means the
+   * sequence a student walks is by construction the sequence they were shown.
+   *
+   * It also supplies §62's "Lesson N of M" honestly: M is the number of
+   * lessons actually in this course's teaching order, counted, never typed.
+   */
+  const siblings = await listLessonsForCourse(course.id);
+  const position = siblings.findIndex((l) => l.slug === lesson.slug);
+  const prev = position > 0 ? siblings[position - 1] : null;
+  const next = position >= 0 && position < siblings.length - 1 ? siblings[position + 1] : null;
 
   return wrap(
     <LiveLesson
@@ -130,8 +173,11 @@ export default async function LessonPage({ params }: { params: Params }) {
       subjectSlug={subjectSlug}
       pathwaySlug={pathwaySlug}
       courseSlug={courseSlug}
-      prev={neighbours.prev}
-      next={neighbours.next}
+      prev={prev ? { slug: prev.slug, title: prev.title, lesson_number: prev.lesson_number } : null}
+      next={next ? { slug: next.slug, title: next.title, lesson_number: next.lesson_number } : null}
+      position={position >= 0 ? position + 1 : null}
+      courseLessonCount={siblings.length}
+      coursePublishedCount={siblings.filter((l) => l.status === "live").length}
     />,
   );
 }
@@ -140,7 +186,7 @@ export default async function LessonPage({ params }: { params: Params }) {
 // LIVE LESSON VARIANT
 // ---------------------------------------------------------------------------
 
-function LiveLesson({
+async function LiveLesson({
   course,
   lesson,
   subject,
@@ -149,6 +195,9 @@ function LiveLesson({
   courseSlug,
   prev,
   next,
+  position,
+  courseLessonCount,
+  coursePublishedCount,
 }: {
   course: CourseWithRelations;
   lesson: LessonForPage;
@@ -158,16 +207,79 @@ function LiveLesson({
   courseSlug: string;
   prev: LessonNeighbour | null;
   next: LessonNeighbour | null;
+  position: number | null;
+  courseLessonCount: number;
+  coursePublishedCount: number;
 }) {
   const paddedNumber = lesson.lesson_number
     ? String(lesson.lesson_number).padStart(2, "0")
     : null;
   const pathway = PATHWAY_COPY[pathwaySlug as keyof typeof PATHWAY_COPY];
 
+  /**
+   * ⚠ PRESENCE IS DECIDED HERE, ONCE, FOR ALL SIX SECTIONS (§89, §R4).
+   * ==========================================================================
+   * Practice and the video used to be CHILDREN of the deck section, which
+   * returned null whenever the deck manifest failed to load. One unreadable
+   * manifest therefore removed the player, the practice and the video
+   * placeholder together, silently — a lesson that looked finished and did
+   * nothing. Each section now loads its own content and is mounted
+   * independently; a missing one shrinks to a compact honest line (§90) and
+   * takes nothing else with it.
+   *
+   * The four loads run together — they are independent reads and the page
+   * already makes more round-trips than it should.
+   */
+  const [deck, notes, examples, examQuestions, completion] = await Promise.all([
+    loadPublishedDeck(lesson.deck_path),
+    loadLessonNotes(lesson.id),
+    loadWorkedExamples(lesson.id),
+    loadLessonExamQuestions(lesson.id),
+    readCompletion(lesson.id),
+  ]);
+
+  const watermark = await deckWatermark();
+
+  const frames: PlayerFrame[] = deck.available
+    ? flattenFrames(deck.manifest).map((f) => ({
+        index: f.index,
+        slideN: f.slideN,
+        step: f.step,
+        stepCount: f.stepCount,
+        url: frameUrl(deck, f.path),
+        buildLabel: f.buildLabel,
+      }))
+    : [];
+
+  // §76 — the FIRST slide carrying each spec chip, from the deck's own detection.
+  const specTargets: { code: string; slideN: number }[] = [];
+  if (deck.available) {
+    for (const s of deck.manifest.slides) {
+      for (const code of s.specCodes) {
+        if (!specTargets.some((t) => t.code === code)) specTargets.push({ code, slideN: s.n });
+      }
+    }
+    specTargets.sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
+  }
+
+  /**
+   * ⚠ THE DENOMINATOR IS WHAT THIS LESSON HAS (§89). A lesson with no video and
+   * no exam questions is complete at 4/4 — not stuck at 4/6 forever, waiting
+   * for content nobody has written. Practice is present whenever the lesson has
+   * a deck, because practice is generated from the deck's own content.
+   */
+  const present: LessonSectionKey[] = [];
+  if (lesson.voice_video_mux_id) present.push("video");
+  if (deck.available) present.push("slides");
+  if (notes.available) present.push("notes");
+  if (examples.available) present.push("worked_examples");
+  if (deck.available) present.push("practice");
+  if (examQuestions.available) present.push("exam_questions");
+
   return (
     <div style={getSubjectThemeStyle(subject)}>
       <main className="min-h-screen bg-parchment text-ink">
-        <div className="mx-auto w-full max-w-6xl px-6 py-10 sm:px-10 sm:py-16">
+        <div className="mx-auto w-full max-w-7xl px-6 py-10 sm:px-10 sm:py-16">
           <Breadcrumb
             crumbs={[
               { label: "Learn", href: "/learn" },
@@ -227,81 +339,213 @@ function LiveLesson({
               </div>
             )}
 
-            {lesson.estimated_duration_minutes != null && (
-              <p className="font-mono mt-3 inline-flex items-center gap-1.5 text-xs tracking-wide text-ink/55">
-                <Clock className="h-3 w-3" aria-hidden="true" />
-                {lesson.estimated_duration_minutes} min
-              </p>
-            )}
-          </header>
-
-          <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-12">
-            <div className="min-w-0">
-              {/* ⚠ THE DECK IS THE PRIMARY LESSON EXPERIENCE (§4). Precedence:
-                  a published deck renders the interactive player (and the
-                  10-question practice beneath it); with no deck, the previous
-                  behaviour is preserved exactly — video if one exists, else
-                  the placeholder. A published deck DEMOTES the placeholder
-                  rather than sitting under it: a giant "video coming soon" is
-                  not the main content of a lesson that has a full deck. When a
-                  lesson eventually has BOTH deck and video, the video renders
-                  below the deck — a switcher is deliberately deferred until a
-                  lesson actually has both (no dead UI for a state that does
-                  not exist yet). */}
-              {lesson.deck_path ? (
-                <>
-                  <LessonDeckSection lessonSlug={lesson.slug} deckPath={lesson.deck_path} />
-                  {lesson.voice_video_mux_id && (
-                    <div className="mt-10">
-                      <h2 className="font-mono mb-4 text-xs uppercase tracking-[0.25em] text-ink/55">
-                        Lesson video
-                      </h2>
-                      <MuxLessonPlayer
-                        playbackId={lesson.voice_video_mux_id}
-                        title={lesson.title}
-                      />
-                    </div>
+            <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
+              {lesson.estimated_duration_minutes != null && (
+                <p className="font-mono inline-flex items-center gap-1.5 text-xs tracking-wide text-ink/55">
+                  <Clock className="h-3 w-3" aria-hidden="true" />
+                  {lesson.estimated_duration_minutes} min
+                </p>
+              )}
+              {/* ⚠ §62 — BOTH NUMBERS ARE COUNTED, AND THE SECOND ONE MATTERS.
+                  "Lesson 1 of 81" is true of the course's teaching order and
+                  matches the index the student just came from — but 80 of
+                  those 81 are not written yet, so the figure alone advertises
+                  a course that does not exist. Where the two differ, both are
+                  shown; where every lesson is published, the qualifier
+                  disappears rather than stating the obvious. */}
+              {position !== null && courseLessonCount > 0 && (
+                <p className="font-mono text-xs tracking-wide text-ink/55">
+                  Lesson {position} of {courseLessonCount}
+                  {coursePublishedCount < courseLessonCount && (
+                    <span className="text-ink/40">
+                      {" "}· {coursePublishedCount} published so far
+                    </span>
                   )}
-                </>
-              ) : lesson.voice_video_mux_id ? (
-                <MuxLessonPlayer
-                  playbackId={lesson.voice_video_mux_id}
-                  title={lesson.title}
-                />
-              ) : (
-                <VideoPlaceholder />
-              )}
-
-              {lesson.description && (
-                <section className="mt-10">
-                  <h2 className="font-mono text-xs uppercase tracking-[0.25em] text-ink/55">
-                    About this lesson
-                  </h2>
-                  <p className="mt-4 max-w-3xl text-base leading-[1.7] text-ink/80">
-                    {lesson.description}
-                  </p>
-                </section>
-              )}
-
-              {lesson.summary_md && (
-                <section className="mt-10">
-                  <h2 className="font-mono text-xs uppercase tracking-[0.25em] text-ink/55">
-                    Summary
-                  </h2>
-                  <p className="mt-4 max-w-3xl whitespace-pre-line text-base leading-[1.7] text-ink/80">
-                    {lesson.summary_md}
-                  </p>
-                </section>
+                </p>
               )}
             </div>
+          </header>
 
-            <aside className="space-y-5 lg:sticky lg:top-10 lg:self-start">
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-ink/55" aria-hidden="true" />
-                <h2 className="font-mono text-xs uppercase tracking-[0.25em] text-ink/55">
-                  This lesson covers
-                </h2>
+          <LessonProgressProvider
+            lessonId={lesson.id}
+            lessonSlug={lesson.slug}
+            present={present}
+            initialStates={completion.states}
+            initialStore={completion.store}
+            initialReason={completion.reason}
+          >
+            {/* §29 — mobile keeps a compact scrollable stepper, not a second
+                sticky bar competing with the tuition CTA for the same space. */}
+            <LessonJourney variant="strip" />
+
+            <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-12">
+              <div className="grid min-w-0 gap-14">
+                {/* ── 1 · WATCH ─────────────────────────────────────────── */}
+                <LessonSection
+                  section="video"
+                  title="Lesson video"
+                  completable={Boolean(lesson.voice_video_mux_id)}
+                >
+                  {lesson.voice_video_mux_id ? (
+                    <LessonVideo
+                      playbackId={lesson.voice_video_mux_id}
+                      title={lesson.title}
+                      lessonSlug={lesson.slug}
+                    />
+                  ) : (
+                    /* ⚠ COMPACT, NOT A 16:9 BLACK HOLE (§5). A full-bleed
+                       "video coming soon" was the largest thing on a lesson
+                       whose actual teaching — the deck below — is finished. */
+                    <SectionUnavailable
+                      what="No video for this lesson yet."
+                      next={
+                        deck.available
+                          ? "The interactive slides below teach the whole lesson."
+                          : undefined
+                      }
+                    />
+                  )}
+                </LessonSection>
+
+                {/* ── 2 · LEARN ─────────────────────────────────────────── */}
+                <LessonSection
+                  section="slides"
+                  title="Interactive lesson slides"
+                  meta={deck.available ? `${deck.manifest.slideCount} slides` : undefined}
+                  completable={deck.available}
+                >
+                  {deck.available ? (
+                    <LessonSlides
+                      lessonSlug={lesson.slug}
+                      version={deck.manifest.version}
+                      frames={frames}
+                      slideCount={deck.manifest.slideCount}
+                      watermark={watermark}
+                      specTargets={specTargets}
+                    />
+                  ) : (
+                    /* ⚠ A SET-BUT-UNLOADABLE deck_path USED TO RENDER NOTHING
+                       AT ALL — no player, no message. The student saw a gap
+                       and the page looked finished. It now says so. */
+                    <SectionUnavailable
+                      what={
+                        lesson.deck_path
+                          ? "These slides could not be loaded just now."
+                          : "Interactive slides are not published for this lesson yet."
+                      }
+                      next={lesson.deck_path ? "Reloading the page usually fixes it." : undefined}
+                    />
+                  )}
+                </LessonSection>
+
+                {/* ── 3 + 4 · CONSOLIDATE and UNDERSTAND, side by side (§10, §74) */}
+                <div className="grid gap-10 xl:grid-cols-2">
+                  <LessonSection section="notes" completable={notes.available}>
+                    {notes.available ? (
+                      <LessonNotes body={notes.body} lessonSlug={lesson.slug} />
+                    ) : (
+                      <SectionUnavailable what={notes.reason} />
+                    )}
+                  </LessonSection>
+
+                  <LessonSection
+                    section="worked_examples"
+                    meta={examples.available ? `${examples.examples.length} examples` : undefined}
+                    completable={examples.available}
+                  >
+                    {examples.available ? (
+                      <LessonWorkedExamples examples={examples.examples} lessonSlug={lesson.slug} />
+                    ) : (
+                      <SectionUnavailable what={examples.reason} />
+                    )}
+                  </LessonSection>
+                </div>
+
+                {/* ── 5 + 6 · CHECK and APPLY (§16) ─────────────────────── */}
+                <div className={examQuestions.available ? "grid gap-10 xl:grid-cols-2" : "grid gap-10"}>
+                  <LessonSection
+                    section="practice"
+                    title="Check your understanding"
+                    completable={deck.available}
+                  >
+                    {deck.available ? (
+                      <LessonPractice lessonSlug={lesson.slug} />
+                    ) : (
+                      <SectionUnavailable what="Practice questions come from this lesson's slides, which are not published yet." />
+                    )}
+                  </LessonSection>
+
+                  <LessonSection
+                    section="exam_questions"
+                    completable={examQuestions.available}
+                  >
+                    {examQuestions.available ? (
+                      <LessonExamQuestions questions={examQuestions.questions} lessonSlug={lesson.slug} />
+                    ) : (
+                      /* ⚠ SCHEMA-BLOCKED, AND POINTED SOMEWHERE REAL. The
+                         lesson→question mapping is a parked migration; the
+                         course's exam papers exist and work today, so the
+                         empty state sends the student there rather than
+                         spending their attention on "coming soon". */
+                      <SectionUnavailable
+                        what={examQuestions.reason}
+                        next={
+                          <Link
+                            href={`/learn/${subjectSlug}/${pathwaySlug}/${courseSlug}/exam-questions`}
+                            className="underline underline-offset-4 transition-colors hover:text-ink"
+                          >
+                            Browse this course&rsquo;s exam papers →
+                          </Link>
+                        }
+                      />
+                    )}
+                  </LessonSection>
+                </div>
+
+                {lesson.description && (
+                  <section>
+                    <h2 className="font-mono text-xs uppercase tracking-[0.25em] text-ink/55">
+                      About this lesson
+                    </h2>
+                    <p className="mt-4 max-w-3xl text-base leading-[1.7] text-ink/80">
+                      {lesson.description}
+                    </p>
+                  </section>
+                )}
+
+                {lesson.summary_md && (
+                  <section>
+                    <h2 className="font-mono text-xs uppercase tracking-[0.25em] text-ink/55">
+                      Summary
+                    </h2>
+                    <p className="mt-4 max-w-3xl whitespace-pre-line text-base leading-[1.7] text-ink/80">
+                      {lesson.summary_md}
+                    </p>
+                  </section>
+                )}
+
+                {/* §31, §66 — the honest close: what is done, what is left. */}
+                <LessonOutro
+                  nextHref={
+                    next
+                      ? `/learn/${subjectSlug}/${pathwaySlug}/${courseSlug}/${next.slug}`
+                      : null
+                  }
+                  nextTitle={next?.title ?? null}
+                  nextNumber={next?.lesson_number ?? null}
+                />
               </div>
+
+              <aside className="space-y-5 lg:sticky lg:top-10 lg:self-start">
+                {/* §24, §28 — the journey rail follows the student down the page. */}
+                <LessonJourney />
+
+                <div className="flex items-center gap-2 pt-2">
+                  <BookOpen className="h-4 w-4 text-ink/55" aria-hidden="true" />
+                  <h2 className="font-mono text-xs uppercase tracking-[0.25em] text-ink/55">
+                    This lesson covers
+                  </h2>
+                </div>
 
               {lesson.spec_points.length === 0 ? (
                 <p className="text-sm text-ink/55">
@@ -344,8 +588,9 @@ function LiveLesson({
                   ))}
                 </ul>
               )}
-            </aside>
-          </div>
+              </aside>
+            </div>
+          </LessonProgressProvider>
 
           <PrevNextNav
             subjectSlug={subjectSlug}
@@ -355,6 +600,14 @@ function LiveLesson({
             next={next}
           />
         </div>
+
+        {/* ⚠ §42, §71 — ONE STICKY THING AT THE BOTTOM, NOT TWO. The lesson
+            already has a bottom-anchored element on mobile: the journey strip
+            is sticky at the TOP, deliberately, so these two never fight for
+            the same edge. targetId is left at its default and this page has no
+            #tuition section, so the CTA navigates rather than scrolling to
+            nothing. */}
+        <TuitionCta subject={subject.slug} revealAfter={400} />
       </main>
     </div>
   );

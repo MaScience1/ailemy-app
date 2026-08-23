@@ -140,9 +140,31 @@ export function HeroCalendarCard({
         <span className="font-display block text-lg font-medium tracking-tight">
           See what&rsquo;s happening this week.
         </span>
+        {/* ⚠ THIS LINE PROMISED A BOOKING THE CALENDAR CANNOT TAKE. It said
+            "book tuition directly from the Ailemy calendar". There is no
+            booking control anywhere in this component or in DayPanel — the
+            private-slot branch there says "Booking opens soon" and links to
+            register interest, because CHECKOUT_BUILT is false and nothing in
+            src/ ever inserts a booking_holds row. Describing the one thing the
+            surface cannot do, in the sentence that sells the surface, is the
+            dead CTA rule broken in prose instead of in a button.
+
+            What it CAN do is stated instead, and it matches DayPanel exactly so
+            the caption and the thing it opens cannot disagree.
+
+            ⚠ AND THE CLAIM IS ABOUT THIS SURFACE, NOT ABOUT THE PRODUCT. A flat
+            "Booking is not open yet" was untrue twice over. HomeFaq — rendered
+            further down THIS SAME PAGE — answers "Can I book 1-to-1 tuition?"
+            with "Booking is arranged directly at the moment", and a signed-in
+            student holding a lesson credit really can book, instantly, through
+            BookWithCredit on /tuition/one-to-one; canRedeem never consults
+            Stripe. Telling the customer who has already paid us that booking is
+            shut is the same class of falsehood as the sentence this replaced,
+            pointed the other way. What is true for every reader is that the
+            CALENDAR takes no bookings, so that is what it says. */}
         <span className="mt-1 block text-sm leading-snug text-ink/60">
-          Browse live lessons, check availability and book tuition directly from the Ailemy
-          calendar.
+          Browse live lessons and check real 1-to-1 availability. You cannot book from the
+          calendar yet — open a day to register your interest in a time.
         </span>
         <span className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium">
           <span className="underline decoration-transparent underline-offset-4 transition-colors duration-200 group-hover/cap:decoration-current">

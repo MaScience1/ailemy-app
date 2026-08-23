@@ -110,7 +110,20 @@ export function StickyCta({
     >
       <div
         className={[
-          "pointer-events-auto flex items-center gap-3 border-t border-ink/10 bg-parchment/95 px-4 py-3 backdrop-blur",
+          /**
+           * ⚠ THE HITBOX FOLLOWS THE VISIBILITY. THIS WAS A LIVE DEFECT.
+           * ==================================================================
+           * The wrapper is pointer-events-none, but this inner bar took them
+           * back UNCONDITIONALLY — and opacity-0 does not stop a click. So for
+           * the first 620px of scroll on the homepage, every visitor had a
+           * full-width, ~55px, completely invisible strip across the bottom of
+           * the viewport that navigated away when tapped. aria-hidden closed
+           * the screen-reader path and the faded state was never keyboard
+           * focusable, so the only route still open was the one a mouse or a
+           * thumb uses — the one nearly everybody uses.
+           */
+          shown ? "pointer-events-auto" : "pointer-events-none",
+          "flex items-center gap-3 border-t border-ink/10 bg-parchment/95 px-4 py-3 backdrop-blur",
           "sm:rounded-full sm:border sm:px-2 sm:py-2 sm:pl-5 sm:shadow-[0_8px_28px_-12px_rgba(15,20,25,0.28)]",
           "motion-safe:transition-transform motion-safe:duration-300",
           shown ? "translate-y-0" : "translate-y-2",

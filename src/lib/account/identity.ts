@@ -135,6 +135,41 @@ export function displayName(id: Identity): { value: string; kind: "name" | "emai
 }
 
 /**
+ * The monogram for an avatar bubble — "Muhammed Ali" → "MA".
+ *
+ * ⚠ FROM A NAME, AND NEVER FROM AN EMAIL. displayName() offers the address as a
+ * separate, clearly-LABELLED rung precisely so a caller cannot mistake it for a
+ * name. Slicing "MA" out of `ma.science@example.com` and drawing it in a circle
+ * undoes that in one step: the circle then asserts a name the system does not
+ * have, in the one place a user cannot see the source. No name, no monogram —
+ * the caller draws a neutral silhouette instead, which is the same ruling as the
+ * ladder ending at null.
+ *
+ * ⚠ SPREAD, NOT charAt. `[...word][0]` iterates by CODE POINT, so a name outside
+ * the BMP yields a whole character rather than half a surrogate pair. A mangled
+ * initial for a student's own name is a worse failure than no initial.
+ *
+ * ⚠ FIRST AND LAST, NOT FIRST TWO. "Abd al-Rahman Khan" is A K, not A A —
+ * middle words are the ones a person is least identified by, and the last word
+ * is what the second letter is expected to be.
+ *
+ * The result is capped at two code points because it is drawn in a fixed circle:
+ * toLocaleUpperCase can lengthen a character (ß → SS) and a three-letter
+ * monogram overflows the bubble.
+ */
+export function initialsFor(name: string | null): string | null {
+  const t = text(name);
+  if (t === null) return null;
+  const heads = t
+    .split(/[\s._-]+/)
+    .filter((w) => w.length > 0)
+    .map((w) => [...w][0]);
+  if (heads.length === 0) return null;
+  const picked = heads.length === 1 ? heads : [heads[0], heads[heads.length - 1]];
+  return [...picked.join("").toLocaleUpperCase()].slice(0, 2).join("");
+}
+
+/**
  * "Doha · Asia/Qatar · 7:14 pm there now" — as much of it as is true.
  *
  * ⚠ THE CLOCK IS THE POINT. A zone NAME cannot be checked by reading it —

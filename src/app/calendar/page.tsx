@@ -139,9 +139,34 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
           <h1 className="font-display mt-3 text-3xl font-medium tracking-tight sm:text-4xl">
             Calendar
           </h1>
+          {/* ⚠ "genuinely bookable" WAS THE WRONG WORD FOR A TRUE FACT. The
+              1-to-1 times here are genuinely OPEN — loadOpenSlots subtracts
+              blocks, group lessons, confirmed bookings and live holds, so the
+              claim this page really makes is a strong one and worth keeping.
+              What it cannot claim is that they can be booked: there is no
+              booking control on this page, DayPanel's private branch says
+              "Booking opens soon", and CHECKOUT_BUILT is false. One adjective
+              turned an honest availability claim into a broken promise.
+
+              ⚠ THE SECOND SENTENCE IS UNTOUCHED AND STILL TRUE — it is the
+              whole point of the page, and the third now says what to do about
+              it rather than leaving a visitor to hunt for the button.
+
+              ⚠ AND THE THIRD SENTENCE IS SCOPED TO THIS PAGE. It first read
+              "Booking is not open yet", which overcorrects into a second
+              untruth: a signed-in student holding a lesson credit can book a
+              1-to-1 time today — canRedeem() never consults Stripe, and
+              bookWithCredit() re-resolves the slot and writes a confirmed
+              private_booking with no payment at all. The homepage FAQ already
+              says so ("Booking is arranged directly at the moment"), so the
+              flat claim also put two surfaces at odds. Telling the customer who
+              has ALREADY paid that booking is shut is the more expensive
+              falsehood of the two. What holds for every reader is that this
+              calendar has no booking control on it. */}
           <p className="mt-3 max-w-2xl text-base leading-relaxed text-ink/70">
-            Every published lesson and every genuinely bookable 1-to-1 slot. Nothing here is
-            scheduled that is not really happening.
+            Every published lesson, and every 1-to-1 time that is genuinely open. Nothing here
+            is scheduled that is not really happening. You cannot book from the calendar yet —
+            open a day to register your interest in a time.
           </p>
         </header>
 
