@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import {
-  COMMITMENT_LABEL, DISCOUNTS, ONE_TO_ONE_LEVEL_LABEL, PROGRAMME_WINDOW,
+  COMMITMENT_LABEL, DISCOUNTS, ONE_TO_ONE_LEVEL_LABEL,
   billingNote, displayAmount, fromGbp, oneToOneQuote, quote, show,
   type Commitment, type OneToOneLevel,
 } from "@/lib/tuition/pricing";
@@ -141,8 +141,11 @@ function GroupProgramme({
   capacity: Capacity | null;
   hrefFor: (c: Commitment) => string;
 }) {
-  const q = quote(cohort.pricePence, commitment, cohort.slug);
-  const window = PROGRAMME_WINDOW[cohort.slug];
+  // ⚠ THE COHORT'S OWN DATES, NOT A LOOKUP. See pricing.ts: the slug→window
+  // map was a second copy of `cohorts.ends_on` and it had one entry, so two
+  // live programmes said their dates were unpublished when the row held them.
+  const window = { firstClassOn: cohort.firstClassOn, lastClassOn: cohort.lastClassOn };
+  const q = quote(cohort.pricePence, commitment, window);
   const canReserve = cohort.status === "enrolling" && !!cohort.enrolmentUrl;
   const colour = subjectColour(cohort.subject);
 
@@ -226,9 +229,9 @@ function GroupProgramme({
               : `${displayAmount(q.perMonthMinor, currency)} a month · ${q.months} months`}
           </p>
           {/* §18/§47 — the real dates, never "12 months". */}
-          {commitment === "academic_year" && window && (
+          {commitment === "academic_year" && window.firstClassOn && window.lastClassOn && (
             <p className="mt-1 text-xs text-ink/55">
-              Covers teaching from {fmt(window.firstTeachingISO)} to {fmt(window.lastTeachingISO)}.
+              Covers teaching from {fmt(window.firstClassOn)} to {fmt(window.lastClassOn)}.
             </p>
           )}
         </div>

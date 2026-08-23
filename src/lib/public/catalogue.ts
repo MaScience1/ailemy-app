@@ -56,6 +56,16 @@ export type Cohort = {
   onboardingOn: string | null;
   firstClassOn: string | null;
   /**
+   * The last teaching day. `cohorts.ends_on` is `date not null` and has been
+   * since 0009 — it was simply never selected.
+   *
+   * ⚠ NULLABLE HERE ONLY BECAUSE THE ROW MAPPER REFUSES TO INVENT ONE. If a
+   * read ever comes back without it, the programme has no defined end and the
+   * academic price must not be offered, which is what quote() already does
+   * with a zero-month window.
+   */
+  lastClassOn: string | null;
+  /**
    * ⚠ NULLABLE, AND THAT IS LOAD-BEARING. cohorts.year_group arrives with 0054
    * and every AS cohort legitimately has none — a year group is a GCSE concept.
    * cohortFromRow REFUSES rows rather than defaulting them, so a required field
@@ -91,6 +101,7 @@ const COHORTS: Cohort[] = [
     scheduleSummary: "Tuesday + Saturday · 7:00–9:30 PM Doha · 2 hours teaching + short break",
     onboardingOn: "2026-09-13",
     firstClassOn: "2026-09-15",
+    lastClassOn: "2027-05-21",
     // ⚠ NULL FOR AS IS CORRECT, NOT A MISS — 0054's own verification says so.
     yearGroup: null,
     seatCap: 20,
@@ -124,7 +135,15 @@ const COHORTS: Cohort[] = [
     sessionsPerWeek: 2,
     scheduleSummary: null,
     onboardingOn: null,
-    firstClassOn: null,
+    /**
+     * ⚠ THE REAL WINDOW FROM `cohorts`, MIRRORED HERE FOR THE ENV-LESS PATH.
+     * These are starts_on/ends_on as the rows hold them. The DATABASE is the
+     * source — this list only renders when Supabase env vars are absent — but
+     * a fallback that says "no dates" while the row has them would reproduce
+     * the exact defect this change fixes, just one layer down.
+     */
+    firstClassOn: "2026-09-01",
+    lastClassOn: "2027-06-30",
     // 0054 stores the LABEL, not a slug — levelForYearGroup bridges them.
     yearGroup: "Year 11",
     seatCap: 20,
@@ -152,7 +171,15 @@ const COHORTS: Cohort[] = [
     sessionsPerWeek: 2,
     scheduleSummary: null,
     onboardingOn: null,
-    firstClassOn: null,
+    /**
+     * ⚠ THE REAL WINDOW FROM `cohorts`, MIRRORED HERE FOR THE ENV-LESS PATH.
+     * These are starts_on/ends_on as the rows hold them. The DATABASE is the
+     * source — this list only renders when Supabase env vars are absent — but
+     * a fallback that says "no dates" while the row has them would reproduce
+     * the exact defect this change fixes, just one layer down.
+     */
+    firstClassOn: "2026-09-01",
+    lastClassOn: "2027-06-30",
     // 0054 stores the LABEL, not a slug — levelForYearGroup bridges them.
     yearGroup: "Year 10",
     seatCap: 20,
@@ -373,6 +400,7 @@ export function cohortFromRow(row: Record<string, unknown>): Mapped<Cohort> {
       scheduleSummary: str(row.schedule_summary),
       onboardingOn: str(row.onboarding_on),
       firstClassOn: str(row.starts_on),
+      lastClassOn: str(row.ends_on),
       // ⚠ NULL STAYS NULL — see the type. An AS cohort has no year group.
       yearGroup: str(row.year_group),
       seatCap: num(row.seat_cap) ?? 0,

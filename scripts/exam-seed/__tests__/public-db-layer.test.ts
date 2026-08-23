@@ -43,7 +43,12 @@ const rowFrom = (c: Cohort): Record<string, unknown> => ({
   slug: c.slug, title: c.title, subject: c.subject, qualification: c.qualification,
   price_pence: c.pricePence, price_qar: c.priceQar, currency: c.currency, hours_per_week: c.hoursPerWeek,
   sessions_per_week: c.sessionsPerWeek, schedule_summary: c.scheduleSummary,
-  onboarding_on: c.onboardingOn, starts_on: c.firstClassOn, seat_cap: c.seatCap,
+  // ⚠ ends_on IS PART OF THE ROW, AND THIS TEST IS WHY IT HAD TO BE ADDED HERE.
+  // The mapper now carries cohorts.ends_on → lastClassOn; a synthetic row that
+  // omits the column would let the round-trip pass while the real read lost a
+  // field. That is the shape of the defect this whole change fixes.
+  onboarding_on: c.onboardingOn, starts_on: c.firstClassOn, ends_on: c.lastClassOn,
+  seat_cap: c.seatCap,
   // ⚠ 0054's column. Added when Cohort gained yearGroup — and this round-trip
   // is what caught the omission: the field went in and came back null, which
   // is exactly the "a new field silently arrives as a default" failure the
