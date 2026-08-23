@@ -283,6 +283,18 @@ console.log("\n=== 7. ⚠ §65 — nothing that worked was broken ===");
   t("§65 — cancelled lessons are still fetched, so they can still be explained",
     /includeCancelled: true/.test(READERS));
   t("§41 — the breadcrumb still names Online Tuition", /Online Tuition/.test(PAGE));
+  // ⚠ §13 — THE SHORTCUT MUST OUTLIVE AN EMPTY WINDOW. See the page comment.
+  t("⚠ §13 — the shortcuts reach past the visible window",
+    /events=\{events\.length > 0 \? events : aheadEvents\}/.test(PAGE));
+
+  /**
+   * ⚠ §13 — THE SHORTCUT MUST OUTLIVE AN EMPTY WINDOW. Fed only the visible
+   * range it rendered nothing for the whole of August, because teaching starts
+   * on 13 September and a month grid of August holds no sessions. Caught on
+   * production, not by a test: every local check ran on a month that had them.
+   */
+  t("⚠ §13 — the shortcuts reach past the visible window",
+    /events=\{events\.length > 0 \? events : aheadEvents\}/.test(PAGE));
 }
 
 // ============================================================================

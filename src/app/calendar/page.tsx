@@ -200,7 +200,19 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
             nothing they can say that the grid below could contradict. */}
         <div className="mt-8">
           <CalendarShortcuts
-            events={events}
+            /* ⚠ THE SHORTCUTS LOOK PAST THE VISIBLE WINDOW, AND THE FIRST
+               VERSION DID NOT. Fed `events`, "Next group lesson" rendered
+               nothing all through August — August's month grid holds no
+               sessions, teaching starts on 13 September, and a shortcut scoped
+               to the window can only repeat what the window already shows. A
+               shortcut that disappears exactly when a student needs it is not
+               a shortcut. Caught on production, not by a test: every local
+               check happened to run on a month that had sessions.
+
+               `aheadEvents` is the 120-day forward read this page already
+               performs when the window is empty, so this costs no extra
+               query. */
+            events={events.length > 0 ? events : aheadEvents}
             viewerTz={viewerTz}
             now={new Date()}
             groupHref={(dayISO) => `/calendar?date=${dayISO}&day=${dayISO}`}
