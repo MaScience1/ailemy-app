@@ -1,0 +1,242 @@
+/**
+ * Tuition pricing: one configuration, one rate, and no arithmetic in the UI.
+ *
+ * ============================================================================
+ * ⚠ THE RULE THIS FILE EXISTS FOR: A DISCOUNT LIVES IN ONE PLACE
+ * ============================================================================
+ * §19 asks that moving the academic-year offer from 20% to 15% be a one-line
+ * data change, and §44 forbids `price * 0.9` in components. Both are the same
+ * requirement seen from different ends: if any component multiplies, then the
+ * discount is defined in as many places as there are components, and the
+ * one-line change silently misses some of them.
+ *
+ * So: the config is asserted to be data, the arithmetic is exercised directly,
+ * and the components are checked to contain none of it.
+ */
+import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
+
+import {
+  DISCOUNTS, QAR_PER_GBP, PROGRAMME_WINDOW, COMMITMENT_MONTHS,
+  billableMonths, monthsFor, quote, oneToOneQuote, displayAmount, billingNote,
+  type Commitment,
+} from "../../../src/lib/tuition/pricing.ts";
+import { availabilityFor } from "../../../src/lib/tuition/availability.ts";
+
+let pass = 0, fail = 0;
+const t = (n: string, c: boolean, got?: unknown) => {
+  c ? (pass++, console.log("  ✓ " + n))
+    : (fail++, console.log("  ✗ " + n + (got !== undefined ? "\n      " + String(got) : "")));
+};
+
+const APP = "src/app";
+const MODES = readFileSync("src/components/tuition/TuitionModes.tsx", "utf8");
+const PAGE = readFileSync("src/app/tuition/page.tsx", "utf8");
+const PRICING = readFileSync("src/lib/tuition/pricing.ts", "utf8");
+
+const code = (s: string) => s
+  .replace(/\/\*[\s\S]*?\*\//g, " ")
+  .replace(/(^|[^:])\/\/[^\n]*/g, "$1 ");
+
+function routes(dir: string, prefix: string[] = []): string[][] {
+  const out: string[][] = [];
+  for (const e of readdirSync(dir)) {
+    const full = join(dir, e);
+    if (!statSync(full).isDirectory() || e.startsWith("_")) continue;
+    const next = e.startsWith("(") && e.endsWith(")") ? prefix : [...prefix, e];
+    if (readdirSync(full).some((f) => /^page\.(tsx|ts|jsx|js)$/.test(f))) out.push(next);
+    out.push(...routes(full, next));
+  }
+  return out;
+}
+const ROUTES = routes(APP);
+const hasRoute = (p: string) => {
+  const want = p.split("/").filter(Boolean);
+  return ROUTES.some((r) => r.length === want.length && r.every((s, i) => s.startsWith("[") || s === want[i]));
+};
+
+// ============================================================================
+console.log("\n=== 1. ⚠ §2/§19/§44 — pricing is configuration, not code ===");
+// ============================================================================
+{
+  t("§19 — the three discounts are data", DISCOUNTS.monthly === 0
+    && DISCOUNTS.three_month === 0.10 && DISCOUNTS.academic_year === 0.20);
+
+  /**
+   * ⚠ THE ONE-LINE-CHANGE TEST, PERFORMED RATHER THAN ASSERTED.
+   * Every downstream figure must move when the rate does. If a component held
+   * its own 0.9, this would still pass — which is why the component scan below
+   * exists as well.
+   */
+  const at20 = quote(16900, "academic_year", "ial-chemistry-as-sep-2026")!;
+  t("§19 — at 20% the academic price is base less a fifth",
+    at20.finalMinor === Math.round(at20.baseMinor * 0.8), `${at20.baseMinor} → ${at20.finalMinor}`);
+  t("§19 — base, final and saving always reconcile",
+    at20.baseMinor - at20.finalMinor === at20.savingMinor);
+  t("§19 — the per-month equivalent divides the FINAL price",
+    at20.perMonthMinor === Math.round(at20.finalMinor / at20.months));
+
+  // ⚠ NO ARITHMETIC IN THE UI. This is §44 stated as a check on the source.
+  const ui = code(MODES) + code(PAGE);
+  for (const re of [/\*\s*0?\.9\b/, /\*\s*0?\.8\b/, /\*\s*0\.2\b/, /\*\s*0\.1\b/, /\/\s*100\s*\*/]) {
+    t(`⚠ §44 — no ${re.source} in a component`, !re.test(ui), ui.match(re)?.[0]);
+  }
+  t("⚠ §44 — no component multiplies by a discount at all",
+    !/DISCOUNTS\[[^\]]+\]\s*\*/.test(ui));
+  t("§44 — the components read quote()/oneToOneQuote() instead",
+    MODES.includes("quote(cohort.pricePence") && MODES.includes("oneToOneQuote(level"));
+  t("§2 — there is exactly one pricing module",
+    existsSync("src/lib/tuition/pricing.ts") && !existsSync("src/lib/tuition/prices.ts"));
+}
+
+// ============================================================================
+console.log("\n=== 2. ⚠ §3 — ONE currency rate, GBP is billing truth ===");
+// ============================================================================
+{
+  t("§3 — a single exported rate exists", typeof QAR_PER_GBP === "number" && QAR_PER_GBP > 0);
+  t("⚠ §3 — and it is the only conversion factor in the module",
+    (code(PRICING).match(/QAR_PER_GBP/g) ?? []).length <= 3,
+    (code(PRICING).match(/QAR_PER_GBP/g) ?? []).length);
+  t("⚠ §3 — no component converts currency itself",
+    !/\*\s*4\.7|\*\s*5(\.0)?\b|QAR_PER_GBP/.test(code(MODES)));
+
+  /**
+   * ⚠ THE TWO RATES THE BRIEF CARRIED, PINNED AS A FACT.
+   * Group prices imply ~4.70; 1-to-1 prices imply exactly 5.00. Only one
+   * survives, and this records which figures move as a result so the shift is
+   * a decision on the record rather than a surprise in a screenshot.
+   */
+  t("§3 — the live group trio implies ~4.70, not 5.0",
+    Math.abs(800 / 169 - 4.73) < 0.02 && Math.abs(700 / 149 - 4.70) < 0.02);
+  t("§3 — Year 11 £149 still displays 700 QAR exactly",
+    displayAmount(14900, "QAR") === "700 QAR", displayAmount(14900, "QAR"));
+  t("§3 — IAL AS £169 now displays 794 QAR (was a stored 800)",
+    displayAmount(16900, "QAR") === "794 QAR", displayAmount(16900, "QAR"));
+  t("§3 — 1-to-1 £60 displays 282 QAR (the brief's 300 implied 5.0)",
+    displayAmount(6000, "QAR") === "282 QAR", displayAmount(6000, "QAR"));
+
+  // ⚠ GBP IS ALWAYS ON SCREEN WHEN QAR IS. currency.ts already required this;
+  // dropping it would let a parent read riyals and be charged sterling.
+  t("⚠ §7 — a QAR figure is accompanied by the billed sterling amount",
+    billingNote(25000, "QAR") === "Billed as £250", billingNote(25000, "QAR"));
+  t("§7 — and in GBP there is nothing to add", billingNote(25000, "GBP") === null);
+  t("§7 — the components render it", MODES.includes("billingNote("));
+}
+
+// ============================================================================
+console.log("\n=== 3. ⚠ §7 of the header — nine months is DERIVED ===");
+// ============================================================================
+{
+  t("⚠ §20 — the academic commitment is not a hardcoded number",
+    COMMITMENT_MONTHS.academic_year === "programme");
+  t("§7 — the real window is 15 Sep 2026 → 21 May 2027",
+    PROGRAMME_WINDOW["ial-chemistry-as-sep-2026"].firstTeachingISO === "2026-09-15"
+      && PROGRAMME_WINDOW["ial-chemistry-as-sep-2026"].lastTeachingISO === "2027-05-21");
+  t("⚠ §7 — and it derives to 9 billable months",
+    monthsFor("academic_year", "ial-chemistry-as-sep-2026") === 9,
+    monthsFor("academic_year", "ial-chemistry-as-sep-2026"));
+
+  /**
+   * ⚠ MONTHS TOUCHED, NOT ELAPSED. The window is 8.2 months long; a family is
+   * taught in September and in May, so it is billed for nine. Dividing the
+   * span would undercharge by a month.
+   */
+  t("§7 — a shorter window prices fewer months",
+    billableMonths("2026-09-15", "2027-01-10") === 5, billableMonths("2026-09-15", "2027-01-10"));
+  t("§7 — one month inside a single month is 1",
+    billableMonths("2026-09-01", "2026-09-30") === 1);
+  t("⚠ §7 — moving the end date moves the price, with no code change",
+    billableMonths("2026-09-15", "2027-06-21") === 10);
+  t("⚠ §20 — a cohort with no window gets NO academic price, not a guess",
+    monthsFor("academic_year", "unknown-cohort") === 0
+      && quote(16900, "academic_year", "unknown-cohort") === null);
+  t("§18/§47 — the card prints the real dates, never '12 months'",
+    /Covers teaching from \{fmt\(window\.firstTeachingISO\)\}/.test(MODES)
+      && !/12 months/.test(code(MODES)));
+}
+
+// ============================================================================
+console.log("\n=== 4. ⚠ §5 of the header / §26 — the CTA is derived ===");
+// ============================================================================
+{
+  t("⚠ §26 — 'Reserve your place' is conditional, not typed",
+    /canReserve \? "Reserve your place" : "Register interest"/.test(MODES));
+  t("⚠ §26 — and the condition is status AND a payment link",
+    /cohort\.status === "enrolling" && !!cohort\.enrolmentUrl/.test(MODES));
+  t("§26 — no unconditional Reserve string", !/>\s*Reserve your place/.test(code(MODES)));
+
+  // The same AND, exercised through the shared availability function.
+  t("§26 — a cohort with no link is not enrolable",
+    availabilityFor("chemistry", [{ subject: "chemistry", status: "enrolling", enrolmentUrl: null }]).state === "interest");
+  t("§26 — with a link it is",
+    availabilityFor("chemistry", [{ subject: "chemistry", status: "enrolling", enrolmentUrl: "https://pay" }]).state === "enrolling");
+}
+
+// ============================================================================
+console.log("\n=== 5. ⚠ §10/§25 — capacity from the RPC, never invented ===");
+// ============================================================================
+{
+  t("§10 — the page reads loadCapacity", PAGE.includes("loadCapacity("));
+  t("⚠ §10 — and never counts cohort_enrolments", !/cohort_enrolments/.test(code(PAGE) + code(MODES)));
+  // ⚠ THE FALLBACK IS A TEMPLATE LITERAL, NOT JSX INTERPOLATION — the first
+  // version of this check looked for `{cohort.seatCap}` and failed against
+  // correct code. Checking both halves separately says what it means.
+  t("⚠ §25 — an unknown count shows the cap alone, not a number",
+    MODES.includes("capacity?.known") && MODES.includes("Maximum ${cohort.seatCap} students")
+      && MODES.includes("${capacity.taken} of ${cohort.seatCap} places taken"));
+  // §58 — no fake urgency anywhere on the surface.
+  for (const re of [/only \d+ left/i, /selling fast/i, /countdown/i, /\d+ people (are )?viewing/i, /hurry/i]) {
+    t(`⚠ §58 — no ${re.source}`, !re.test(code(MODES) + code(PAGE)));
+  }
+}
+
+// ============================================================================
+console.log("\n=== 6. ⚠ §4 — no Stripe products were created ===");
+// ============================================================================
+{
+  const ui = code(MODES) + code(PAGE) + code(PRICING);
+  t("§4 — no Stripe product or price is constructed",
+    !/stripe\.(products|prices)\.create|new Stripe\(/.test(ui));
+  t("§4 — no price id is invented in config", !/price_[A-Za-z0-9]{8,}/.test(ui));
+  t("§43 — the client is never handed an amount to submit",
+    !/body:\s*JSON\.stringify\([^)]*amount/.test(ui));
+}
+
+// ============================================================================
+console.log("\n=== 7. ⚠ §9/§34 — one calendar, filtered by mode ===");
+// ============================================================================
+{
+  t("§9 — the page renders the shared Calendar", PAGE.includes("<Calendar"));
+  t("§9 — fed by the shared reader", PAGE.includes("loadCalendarEvents"));
+  t("§9 — no third calendar component was created",
+    !existsSync("src/components/tuition/TuitionCalendar.tsx"));
+  t("⚠ §34 — the chosen product sets the calendar's type filter",
+    /mode === "one-to-one" \? "private"/.test(PAGE));
+  t("⚠ §34 — but an explicit ?type= still wins, so it is not a lock",
+    /params\.type\s*\?\s*state\.type/.test(PAGE));
+  // §9 of the header — the §50 panel must survive here too.
+  t("⚠ §50 — this page also feeds the empty-month panel a real next lesson",
+    /nextGroupAhead=\{ahead\.kind === "session"/.test(PAGE));
+  t("§59 — 1-to-1 with nothing published says so, and offers the interest route",
+    /No 1-to-1 times are published for this period yet/.test(PAGE));
+}
+
+// ============================================================================
+console.log("\n=== 8. §3 of the tuition brief — URL state, and nothing broken ===");
+// ============================================================================
+{
+  t("§3 — mode is read from the URL", /isTuitionMode\(params\.mode\)/.test(PAGE));
+  t("§3 — commitment too", /isCommitment\(params\.commitment\)/.test(PAGE));
+  t("§3 — both fall back rather than throwing on junk",
+    /\? params\.mode : "group"/.test(PAGE) && /: "monthly"/.test(PAGE));
+  t("§51 — no new top-level route was added",
+    !hasRoute("/tuition/group") && !hasRoute("/tuition/one-to-one/book"));
+  for (const p of ["/tuition", "/tuition/one-to-one", "/tuition/interest", "/calendar", "/intensive"]) {
+    t(`§preserve — ${p} still resolves`, hasRoute(p));
+  }
+  t("§preserve — no URL moved, so nothing was owed a redirect",
+    !/redirect\(|permanentRedirect/.test(code(PAGE)));
+}
+
+console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);
+process.exit(fail === 0 ? 0 : 1);

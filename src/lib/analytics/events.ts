@@ -24,6 +24,24 @@
 
 export const CTA_SOURCES = [
   /**
+   * ⚠ ONLINE TUITION (§57). The whole argument for the two-mode selector is
+   * that a visitor picks a product and everything after is relevant to it —
+   * which is only checkable if the mode choice and each commitment report
+   * separately. Checkout values are declared but not yet emitted: there is no
+   * checkout, and declaring them now means the flow that eventually ships
+   * cannot do so unnamed.
+   *
+   * No PII: every value names a control, never a student, price or cohort.
+   */
+  "tuition_one_to_one_selected",
+  "tuition_group_selected",
+  "tuition_group_one_month_selected",
+  "tuition_group_three_month_selected",
+  "tuition_group_academic_selected",
+  "tuition_group_programme_selected",
+  "tuition_checkout_started",
+  "tuition_checkout_completed",
+  /**
    * ⚠ THE CALENDAR AS A BOOKING SURFACE (§56 of the calendar brief).
    * The redesign's claim is that banding, gold and the two shortcuts make
    * bookable time findable — which is only checkable if each step reports

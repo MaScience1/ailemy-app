@@ -1,0 +1,318 @@
+import Link from "next/link";
+
+import {
+  COMMITMENT_LABEL, DISCOUNTS, ONE_TO_ONE_LEVEL_LABEL, PROGRAMME_WINDOW,
+  billingNote, displayAmount, oneToOneQuote, quote,
+  type Commitment, type OneToOneLevel,
+} from "@/lib/tuition/pricing";
+import { ONE_TO_ONE, subjectColour, subjectVars } from "@/lib/design/subject-colours";
+import type { Currency } from "@/lib/public/currency";
+import type { Cohort } from "@/lib/public/catalogue";
+import type { Capacity } from "@/lib/public/capacity-rules";
+
+/**
+ * Online Tuition's two products, and the price of each (§1, §14–§23, §35–§37).
+ *
+ * ============================================================================
+ * ⚠ ONE PRODUCT AT A TIME (§37)
+ * ============================================================================
+ * The page used to open with three cohort cards and a schedule dump, which
+ * asks a visitor to understand Ailemy's catalogue before it tells them what is
+ * on offer. There are two things to buy — a personal lesson or a place in a
+ * group — and §37 is explicit that showing both in full at once is the density
+ * problem. So the mode is a link-driven segmented control and the page below
+ * it belongs entirely to the chosen product.
+ *
+ * ⚠ LINKS, NOT CLIENT STATE (§3 of the tuition brief). `?type=one-to-one` has
+ * to be shareable, has to let the homepage's "See 1-to-1 availability" land in
+ * the right mode, and has to survive a reload — all of which a useState toggle
+ * loses. It also keeps this a server component, so the prices are in the HTML
+ * for a crawler rather than appearing after hydration.
+ *
+ * ⚠ NO PRICE ARITHMETIC IN THIS FILE (§44). Every figure comes from quote() or
+ * oneToOneQuote(). There is no `* 0.9` here and the guard fails if one appears.
+ */
+
+export type TuitionMode = "one-to-one" | "group";
+
+export function isTuitionMode(v: string | undefined): v is TuitionMode {
+  return v === "one-to-one" || v === "group";
+}
+
+function Segmented({ mode, hrefFor }: { mode: TuitionMode; hrefFor: (m: TuitionMode) => string }) {
+  return (
+    <nav aria-label="Choose a kind of tuition" className="flex flex-col gap-2 sm:flex-row">
+      {(["one-to-one", "group"] as const).map((m) => {
+        const on = m === mode;
+        const label = m === "one-to-one" ? "1-to-1 Tuition" : "Group Tuition";
+        const sub = m === "one-to-one"
+          ? "Personal lessons, booked around published times."
+          : "Structured weekly teaching, with the platform included.";
+        return (
+          <Link
+            key={m}
+            href={hrefFor(m)}
+            aria-current={on ? "page" : undefined}
+            data-cta={m === "one-to-one" ? "tuition_one_to_one_selected" : "tuition_group_selected"}
+            className={[
+              "flex min-h-[44px] flex-1 flex-col gap-1 rounded-xl border px-5 py-4",
+              "transition-all duration-200 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink",
+              on
+                ? "border-ink bg-ink text-parchment"
+                : "border-ink/15 bg-snow hover:border-ink/35 motion-safe:hover:-translate-y-0.5",
+            ].join(" ")}
+          >
+            <span className="font-display text-lg font-medium tracking-tight">{label}</span>
+            <span className={`text-sm leading-snug ${on ? "text-parchment/75" : "text-ink/65"}`}>{sub}</span>
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+/** §5, §6, §8 — level × package, compact, no wall of four cards. */
+function OneToOnePricing({ currency }: { currency: Currency }) {
+  return (
+    <div className="grid gap-6 sm:grid-cols-2">
+      {(Object.keys(ONE_TO_ONE_LEVEL_LABEL) as OneToOneLevel[]).map((level) => {
+        const single = oneToOneQuote(level, 1);
+        const pack = oneToOneQuote(level, 5);
+        return (
+          <section key={level} style={subjectVars(ONE_TO_ONE)} aria-labelledby={`lvl-${level}`}>
+            <h3 id={`lvl-${level}`} className="font-display text-lg font-medium tracking-tight">
+              {ONE_TO_ONE_LEVEL_LABEL[level]}
+            </h3>
+            <ul className="mt-3 grid gap-2">
+              <li className="rounded-xl border border-ink/10 bg-snow px-4 py-3">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-sm text-ink/70">Single lesson</span>
+                  <span className="font-display text-lg font-medium">
+                    {displayAmount(single.totalMinor, currency)}
+                  </span>
+                </div>
+                <p className="font-mono mt-1 text-[10px] uppercase tracking-[0.16em] text-ink/45">
+                  One hour
+                </p>
+                {billingNote(single.totalMinor, currency) && (
+                  <p className="mt-1 text-[11px] text-ink/50">{billingNote(single.totalMinor, currency)}</p>
+                )}
+              </li>
+              <li className="rounded-xl border border-[var(--subject-accent)] bg-[var(--subject-tint)] px-4 py-3">
+                <div className="flex items-baseline justify-between gap-3">
+                  <span className="text-sm text-ink/70">5-hour package</span>
+                  <span className="font-display text-lg font-medium">
+                    {displayAmount(pack.totalMinor, currency)}
+                  </span>
+                </div>
+                {/* §5 — restrained, and the saving is computed, never typed. */}
+                <p className="font-mono mt-1 text-[10px] uppercase tracking-[0.16em] text-[var(--subject-text)]">
+                  {displayAmount(pack.perHourMinor, currency)} per hour · saves{" "}
+                  {displayAmount(pack.savingMinor, currency)}
+                </p>
+                {billingNote(pack.totalMinor, currency) && (
+                  <p className="mt-1 text-[11px] text-ink/50">{billingNote(pack.totalMinor, currency)}</p>
+                )}
+              </li>
+            </ul>
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * §15–§23 — one programme, three commitments, one price panel.
+ *
+ * ⚠ THE CTA IS DERIVED, NEVER TYPED (§5 of the header, §26). §26 asks for
+ * "Reserve your place →". That is true only when a cohort is enrolling AND has
+ * somewhere to enrol — the same AND the homepage and nav builds established,
+ * and the reason is unchanged: a cohort marked enrolling with a null payment
+ * link cannot be reserved, and a button saying otherwise leads nowhere. It
+ * flips on its own the moment the link lands.
+ */
+function GroupProgramme({
+  cohort, commitment, currency, capacity, hrefFor,
+}: {
+  cohort: Cohort;
+  commitment: Commitment;
+  currency: Currency;
+  capacity: Capacity | null;
+  hrefFor: (c: Commitment) => string;
+}) {
+  const q = quote(cohort.pricePence, commitment, cohort.slug);
+  const window = PROGRAMME_WINDOW[cohort.slug];
+  const canReserve = cohort.status === "enrolling" && !!cohort.enrolmentUrl;
+  const colour = subjectColour(cohort.subject);
+
+  return (
+    <article style={subjectVars(colour)} className="rounded-xl border border-ink/10 bg-snow p-5 sm:p-6">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h3 className="font-display text-xl font-medium tracking-tight">{cohort.title}</h3>
+        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--subject-text)]">
+          Group tuition
+        </span>
+      </div>
+
+      {/* §22 — schedule, hours, capacity: the decision facts, once. */}
+      <ul className="font-mono mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] uppercase tracking-[0.14em] text-ink/45">
+        {cohort.scheduleSummary && <li>{cohort.scheduleSummary}</li>}
+        <li>{cohort.hoursPerWeek} teaching hours a week</li>
+        {/* ⚠ §25 — CAPACITY COMES FROM cohort_seats_taken OR IS NOT SHOWN.
+            `capacity.known` is false when the RPC is absent; the honest render
+            of "we could not count" is the cap alone, never an invented number. */}
+        <li>
+          {capacity?.known
+            ? `${capacity.taken} of ${cohort.seatCap} places taken`
+            : `Maximum ${cohort.seatCap} students`}
+        </li>
+      </ul>
+
+      {/* ── §15/§40 — one segmented selector, one price panel ─────────────── */}
+      <div className="mt-5 flex flex-wrap gap-1.5">
+        {(Object.keys(DISCOUNTS) as Commitment[]).map((c) => {
+          const on = c === commitment;
+          const off = DISCOUNTS[c];
+          return (
+            <Link
+              key={c}
+              href={hrefFor(c)}
+              aria-current={on ? "true" : undefined}
+              data-cta={
+                c === "monthly" ? "tuition_group_one_month_selected"
+                : c === "three_month" ? "tuition_group_three_month_selected"
+                : "tuition_group_academic_selected"
+              }
+              className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-4 py-2 text-sm transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
+                on ? "border-ink bg-ink text-parchment" : "border-ink/15 text-ink/70 hover:border-ink/35"
+              }`}
+            >
+              {COMMITMENT_LABEL[c]}
+              {off > 0 && (
+                /* §21 — the number, stated plainly. No "HUGE SALE". */
+                <span className={`font-mono text-[10px] ${on ? "text-parchment/70" : "text-ink/45"}`}>
+                  −{Math.round(off * 100)}%
+                </span>
+              )}
+            </Link>
+          );
+        })}
+      </div>
+
+      {q ? (
+        <div className="mt-4">
+          <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className="font-display text-3xl font-medium tracking-tight">
+              {displayAmount(q.finalMinor, currency)}
+            </span>
+            {q.savingMinor > 0 && (
+              <>
+                <span className="text-sm text-ink/45 line-through">
+                  {displayAmount(q.baseMinor, currency)}
+                </span>
+                <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--subject-text)]">
+                  Save {displayAmount(q.savingMinor, currency)}
+                </span>
+              </>
+            )}
+          </p>
+          {billingNote(q.finalMinor, currency) && (
+            <p className="mt-1 text-[11px] text-ink/50">{billingNote(q.finalMinor, currency)}</p>
+          )}
+          <p className="mt-1 text-sm text-ink/65">
+            {q.months === 1
+              ? "per month"
+              : `${displayAmount(q.perMonthMinor, currency)} a month · ${q.months} months`}
+          </p>
+          {/* §18/§47 — the real dates, never "12 months". */}
+          {commitment === "academic_year" && window && (
+            <p className="mt-1 text-xs text-ink/55">
+              Covers teaching from {fmt(window.firstTeachingISO)} to {fmt(window.lastTeachingISO)}.
+            </p>
+          )}
+        </div>
+      ) : (
+        /* ⚠ NO WINDOW, NO PRICE. See monthsFor(): pricing a year-long
+           commitment against an undefined programme would be a guess. */
+        <p className="mt-4 text-sm text-ink/65">
+          The academic programme dates for this cohort are not published yet.
+        </p>
+      )}
+
+      <p className="mt-5">
+        <Link
+          href={canReserve ? cohort.enrolmentUrl! : `/tuition/interest?cohort=${cohort.slug}`}
+          data-cta="tuition_group_programme_selected"
+          className="group inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-parchment transition-colors duration-200 hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+        >
+          {canReserve ? "Reserve your place" : "Register interest"}
+          <span aria-hidden className="transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">→</span>
+        </Link>
+      </p>
+    </article>
+  );
+}
+
+const MONTHS = ["January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"];
+
+function fmt(iso: string): string {
+  const d = Number(iso.slice(8, 10)), m = Number(iso.slice(5, 7)), y = iso.slice(0, 4);
+  return `${d} ${MONTHS[m - 1]} ${y}`;
+}
+
+export function TuitionModes({
+  mode, commitment, currency, cohorts, capacityBySlug, hrefForMode, hrefForCommitment,
+}: {
+  mode: TuitionMode;
+  commitment: Commitment;
+  currency: Currency;
+  cohorts: readonly Cohort[];
+  capacityBySlug: Map<string, Capacity>;
+  hrefForMode: (m: TuitionMode) => string;
+  hrefForCommitment: (c: Commitment) => string;
+}) {
+  return (
+    <div className="grid gap-8">
+      <Segmented mode={mode} hrefFor={hrefForMode} />
+
+      {mode === "one-to-one" ? (
+        <section aria-labelledby="oto-heading">
+          <h2 id="oto-heading" className="font-display text-2xl font-medium tracking-tight">
+            Personal lessons, on your course.
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink/70">
+            Teaching built around one student&rsquo;s specification, their gaps and the exam they
+            are sitting — with the same resources, marking and practice the platform provides.
+          </p>
+          <div className="mt-6">
+            <OneToOnePricing currency={currency} />
+          </div>
+        </section>
+      ) : (
+        <section aria-labelledby="grp-heading">
+          <h2 id="grp-heading" className="font-display text-2xl font-medium tracking-tight">
+            Structured weekly teaching, in a small group.
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink/70">
+            A whole programme to the specification, with the Ailemy platform, marked practice and
+            progress tracking included.
+          </p>
+          <div className="mt-6 grid gap-4">
+            {cohorts.map((c) => (
+              <GroupProgramme
+                key={c.slug}
+                cohort={c}
+                commitment={commitment}
+                currency={currency}
+                capacity={capacityBySlug.get(c.slug) ?? null}
+                hrefFor={hrefForCommitment}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
