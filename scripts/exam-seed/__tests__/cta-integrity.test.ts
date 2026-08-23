@@ -58,8 +58,17 @@ for (const f of files) {
    * meant a TYPO in the table — `nav_resorces` — was invisible to this suite
    * and silently discarded by Analytics.tsx at runtime. That is precisely the
    * failure this file exists to prevent, reappearing one indirection later.
+   *
+   * ⚠ AND AGAIN ONE INDIRECTION FURTHER OUT. The course selector passes the
+   * value to its own <Option cta="..."> and <SubjectCard dataCta="...">, so a
+   * scan for `data-cta=` and `cta:` still missed four of them. The pattern now
+   * matches the NAME — data-cta, dataCta or cta — followed by a string, in an
+   * attribute or a field. The lesson each time is the same: this guard must
+   * track how the value is written, not how it was written last time.
    */
-  for (const m of text.matchAll(/(?:data-cta=["'{`]?["']|\bcta:\s*")([a-z0-9_]+)["']/g)) {
+  for (const m of text.matchAll(
+    /\b(?:data-cta|dataCta|cta)\s*[:=]\s*\{?\s*["']([a-z0-9_]+)["']/g,
+  )) {
     const v = m[1];
     found.set(v, [...(found.get(v) ?? []), f.replace(process.cwd() + "/", "")]);
   }

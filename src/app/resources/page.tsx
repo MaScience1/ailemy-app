@@ -9,6 +9,7 @@ import { SubjectCard } from "@/components/home/SubjectCard";
 import { ResourceSearch } from "@/components/resources/ResourceSearch";
 import { searchResources } from "@/lib/resources/search";
 import { SUBJECTS } from "@/lib/public/catalogue";
+import { loadSubjectHoldings, holdingsLabel, resourcesBlurb } from "@/lib/qualifications/tree";
 import { subjectColour, subjectVars } from "@/lib/design/subject-colours";
 
 /**
@@ -41,6 +42,9 @@ export const metadata: Metadata = {
  * in resources-hub.test.ts enforces exactly that distinction by reading each
  * page's own markup rather than what the shared nav renders.
  */
+/** One shape for a subject we could not count, used by both labels. */
+const EMPTY_HOLDINGS = { liveLessons: 0, pastPapers: 0, error: null };
+
 export default async function ResourcesPage({
   searchParams,
 }: {
@@ -50,6 +54,13 @@ export default async function ResourcesPage({
   const { q } = await searchParams;
   const query = (q ?? "").trim();
   const results = query.length >= 2 ? await searchResources(query) : null;
+  /**
+   * ⚠ §4 — WHAT THE LIBRARY HOLDS, NOT WHETHER A TUITION COHORT IS RUNNING.
+   * SubjectCard's default eyebrow is the subject's TUITION status, so Biology
+   * and Physics rendered "Register interest" above a card that opens a
+   * resources listing. Here the eyebrow is counted from the shelves.
+   */
+  const holdings = await loadSubjectHoldings(SUBJECTS.map((s) => s.slug));
 
   return (
     <>
@@ -67,7 +78,11 @@ export default async function ResourcesPage({
           </p>
         </header>
 
-        <div className="mt-8 max-w-2xl">
+        {/* ⚠ §1 — mt-8 → mt-3. The search sat 32px below the supporting
+            sentence, which read as a separate band rather than the next thing
+            to do. 12px binds it to the copy above it without touching its
+            size, shape or styling. */}
+        <div className="mt-3 max-w-2xl">
           <Suspense fallback={<div className="h-[52px] rounded-full border border-ink/10 bg-snow" />}>
             <ResourceSearch />
           </Suspense>
@@ -87,6 +102,9 @@ export default async function ResourcesPage({
                   subject={s}
                   href={`/resources/${s.slug}`}
                   ctaLabel="Browse resources"
+                  eyebrow={holdingsLabel(holdings[s.slug] ?? EMPTY_HOLDINGS)}
+                  blurb={resourcesBlurb(holdings[s.slug] ?? EMPTY_HOLDINGS)}
+                  dataCta="resources_subject_opened"
                 />
               ))}
             </div>
