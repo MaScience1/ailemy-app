@@ -11,6 +11,7 @@ import { SiteNav } from "@/components/site/SiteNav";
 import { getNavSession } from "@/lib/auth/nav-session";
 import { dayKeyOf, parseDate, rangeFor, readState } from "@/lib/calendar/grid";
 import { loadCalendarEvents } from "@/lib/calendar/readers";
+import { CalendarShortcuts } from "@/components/calendar/CalendarShortcuts";
 import { levelLabel } from "@/lib/calendar/types";
 import { nextSession } from "@/lib/calendar/next-session";
 import { SUBJECTS } from "@/lib/public/catalogue";
@@ -77,6 +78,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
     subject: state.subject,
     level: state.level,
     type: state.type,
+    availableOnly: state.availableOnly,
   });
 
   const subjectName = SUBJECTS.find((s) => s.slug === state.subject)?.name ?? null;
@@ -148,9 +150,18 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
             <span aria-hidden> / </span>
             <span className="text-ink/70">Calendar</span>
           </p>
+          {/* ⚠ §7 — THE HEADING NAMES THE TASK, NOT THE ARTEFACT. "Calendar"
+              describes the widget; a student arrives wanting a lesson, and the
+              breadcrumb above already carries the word Calendar for anyone
+              orienting themselves. The route, the bookmark and the nav label
+              are all unchanged (§41, §59) — only the on-page heading moves
+              from naming the tool to naming what it is for. */}
           <h1 className="font-display mt-3 text-3xl font-medium tracking-tight sm:text-4xl">
-            Calendar
+            Find a lesson.
           </h1>
+          <p className="mt-3 max-w-2xl text-base leading-relaxed text-ink/70">
+            See upcoming group tuition, or choose an available 1-to-1 time.
+          </p>
           {/* ⚠ "genuinely bookable" WAS THE WRONG WORD FOR A TRUE FACT. The
               1-to-1 times here are genuinely OPEN — loadOpenSlots subtracts
               blocks, group lessons, confirmed bookings and live holds, so the
@@ -181,6 +192,21 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
             open a day to register your interest in a time.
           </p>
         </header>
+
+        {/* ── §12/§13 — WHAT IS NEAREST, BEFORE THE GRID ───────────────────
+            A student asking "when can I go to something?" should not have to
+            read a month to find out. These two answer it in one line each,
+            from the events this page has already loaded — no extra query, and
+            nothing they can say that the grid below could contradict. */}
+        <div className="mt-8">
+          <CalendarShortcuts
+            events={events}
+            viewerTz={viewerTz}
+            now={new Date()}
+            groupHref={(dayISO) => `/calendar?date=${dayISO}&day=${dayISO}`}
+            oneToOneHref="/tuition/one-to-one"
+          />
+        </div>
 
         <Calendar
           events={events}

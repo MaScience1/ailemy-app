@@ -242,10 +242,21 @@ export type CalendarState = {
   subject: string | null;
   level: string | null;
   type: "all" | "group" | "private";
+  /**
+   * §11 — hide anything the student cannot act on: cancelled lessons, full
+   * cohorts, and slots that are not open.
+   *
+   * ⚠ IT IS OFF BY DEFAULT, AND THAT IS DELIBERATE. A calendar that silently
+   * hides a cancelled lesson generates the email it was meant to prevent —
+   * "Cancelled — Winter break" answers the question before it is asked, which
+   * is why includeCancelled is true in the reader. This filter is the student
+   * CHOOSING to see only what is actionable, never the page deciding for them.
+   */
+  availableOnly: boolean;
 };
 
 export function readState(
-  params: { view?: string; date?: string; subject?: string; level?: string; type?: string },
+  params: { view?: string; date?: string; subject?: string; level?: string; type?: string; available?: string },
   todayISO: string,
   /**
    * ⚠ THE DEFAULT VIEW IS A PARAMETER, NOT A CONSTANT (§58). A 7-column month
@@ -262,6 +273,7 @@ export function readState(
     subject: params.subject?.trim() || null,
     level: params.level?.trim() || null,
     type,
+    availableOnly: params.available === "1",
   };
 }
 
@@ -273,6 +285,7 @@ export function stateToQuery(s: CalendarState, todayISO: string, base = "/calend
   if (s.subject) p.set("subject", s.subject);
   if (s.level) p.set("level", s.level);
   if (s.type !== "all") p.set("type", s.type);
+  if (s.availableOnly) p.set("available", "1");
   const q = p.toString();
   if (!q) return base;
   /**
@@ -312,7 +325,14 @@ export function periodLabel(view: CalendarView, dateISO: string): string {
     }
     return `${a.getUTCDate()}–${b.getUTCDate()} ${mA} ${a.getUTCFullYear()}`;
   }
-  return `Next ${UPCOMING_DAYS} days`;
+  /**
+   * ⚠ §25/§60 — "Next 60 days" NAMED THE QUERY, NOT THE VIEW. It sat as the
+   * page's period heading beside the view switcher, which is the most
+   * prominent label on the screen — a student reading it learns the size of a
+   * fetch window. The window is unchanged at UPCOMING_DAYS; only what the
+   * heading calls it has moved from the database's vocabulary to theirs.
+   */
+  return "Upcoming tuition";
 }
 
 // ============================================================================

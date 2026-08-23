@@ -24,6 +24,24 @@
 
 export const CTA_SOURCES = [
   /**
+   * ⚠ THE CALENDAR AS A BOOKING SURFACE (§56 of the calendar brief).
+   * The redesign's claim is that banding, gold and the two shortcuts make
+   * bookable time findable — which is only checkable if each step reports
+   * separately. Booking-completion values are declared but NOT yet emitted:
+   * there is no booking control to fire them, and declaring them now means the
+   * flow that eventually does cannot ship unnamed. cta-integrity lists them as
+   * "declared but not found", which is the honest state.
+   *
+   * No PII: every value names a control, never a student, slot or teacher.
+   */
+  "calendar_day_selected",
+  "next_group_lesson_clicked",
+  "next_one_to_one_clicked",
+  "one_to_one_slot_opened",
+  "group_session_opened",
+  "one_to_one_booking_started",
+  "group_reservation_started",
+  /**
    * ⚠ THE HERO AND TUITION FUNNEL (§45 of the conversion brief).
    * These names come from the brief verbatim so the events it asks to be
    * tracked are the events that exist. Four homepage values were RENAMED to

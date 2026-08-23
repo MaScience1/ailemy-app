@@ -222,7 +222,18 @@ console.log("\n── STEPPING AND LABELS ──");
   t("week across two months names both", periodLabel("week", "2026-10-01") === "28 Sep – 4 Oct 2026", periodLabel("week", "2026-10-01"));
   t("week across the year names both years",
     periodLabel("week", "2026-12-31") === "28 Dec 2026 – 3 Jan 2027", periodLabel("week", "2026-12-31"));
-  t("upcoming label", periodLabel("upcoming", "2026-09-15") === `Next ${UPCOMING_DAYS} days`);
+  /**
+   * ⚠ THIS ASSERTION CHANGED, AND THE REASON IS THE POINT.
+   * It pinned "Next 60 days" — the label to the fetch window, so the heading
+   * moved automatically if UPCOMING_DAYS ever did. Sound coupling, wrong
+   * thing coupled: the calendar brief's §25/§60 are that a student should
+   * never read the size of a query as a page heading. The WINDOW is still
+   * UPCOMING_DAYS and still asserted below; only its name is now the reader's.
+   */
+  t("upcoming label names the task, not the query window",
+    periodLabel("upcoming", "2026-09-15") === "Upcoming tuition",
+    periodLabel("upcoming", "2026-09-15"));
+  t("⚠ and the window itself is untouched at 60 days", UPCOMING_DAYS === 60);
   t("junk date gives an empty label rather than 'Invalid Date'", periodLabel("month", "nope") === "");
 }
 

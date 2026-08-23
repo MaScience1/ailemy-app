@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import {
-  MONTH_LONG, WEEKDAY_SHORT, addDays, bucketByDay, cellEvents, monthGrid,
+  MONTH_LONG, WEEKDAY_SHORT, addDays, bucketByDay, cellEvents, dayKeyOf, monthGrid,
   parseDate, periodLabel, stateToQuery, step, weekGrid,
   type CalendarState, type CalendarView, type GridDay,
   hourWindow, hourRows, hourLabel,
@@ -11,9 +11,12 @@ import type { Capacity } from "@/lib/public/capacity-rules";
 import { LEVELS } from "@/lib/calendar/types";
 import { SUBJECTS } from "@/lib/public/catalogue";
 import { CANONICAL_LABEL, CANONICAL_TZ, hourIn } from "@/lib/schedule/timezone";
+import { actionFor, dayLabel, groupUpcoming, nextOf } from "@/lib/calendar/upcoming";
 
 import { DayPanel } from "./DayPanel";
 import { EventChip, TypeMarker, describeEvent } from "./EventChip";
+import { ONE_TO_ONE, subjectColour, subjectVars } from "@/lib/design/subject-colours";
+import { dualTime } from "@/lib/schedule/timezone";
 
 /**
  * The one Ailemy calendar (§2, §5, §34).
@@ -159,7 +162,7 @@ export function Calendar(props: CalendarProps) {
         )}
         {state.view === "upcoming" && (
           <UpcomingView events={events} viewerTz={viewerTz} href={href}
-            emptyMessage={props.emptyMessage} />
+            emptyMessage={props.emptyMessage} todayISO={todayISO} />
         )}
 
         {/*
@@ -341,6 +344,11 @@ function Filters({
           state.subject, (k) => ({ subject: k }))}
       {row("Level", [{ key: null, label: "All" }, ...LEVELS.map((l) => ({ key: l.slug, label: l.label }))],
         state.level, (k) => ({ level: k }))}
+      {/* §11 — the one filter that answers "show me what I can actually do". */}
+      {row("Show", [
+        { key: null, label: "Everything" },
+        { key: "1", label: "Available only" },
+      ], state.availableOnly ? "1" : null, (k) => ({ availableOnly: k === "1" }))}
       {row("Type", [
         { key: "all", label: "All" }, { key: "group", label: "Group" }, { key: "private", label: "1-to-1" },
       ], state.type, (k) => ({ type: (k ?? "all") as CalendarState["type"] }))}
@@ -566,36 +574,138 @@ function WeekView({ days, ...p }: ViewProps & { days: GridDay[] }) {
 
   return (
     <>
-      {/* ── phone: the list, unchanged ─────────────────────────────────── */}
-      <div className="grid gap-px overflow-hidden rounded-lg bg-ink/10 sm:hidden">
-        {days.map((day) => {
-          const dayEvents = p.buckets.get(day.date) ?? [];
-          const d = parseDate(day.date);
-          const isToday = day.date === p.todayISO;
+      {/* ── phone: a date selector, then one day (§23, §64) ──────────────
+          ============================================================
+          ⚠ THIS WAS SEVEN STACKED DAY CARDS. IT IS NOW ONE DAY.
+          ============================================================
+          §23 is explicit that a seven-column grid must not be shrunk onto a
+          phone — but the list it replaced had the opposite problem: all seven
+          days at once, most of them empty, so the two that had a lesson were
+          buried under five that said "—". A student on a phone is asking
+          about ONE day at a time.
+
+          ⚠ THE SELECTED DAY IS `state.date`, NOT A NEW PARAMETER. Every day
+          in a week shares a startOfWeek, so weekGrid renders the same seven
+          days whichever one anchors it — which means the anchor is already a
+          per-day cursor and costs no new URL surface, no new state, and no
+          new thing that can disagree with the week being shown.
+
+          ⚠ AND IT DOES NOT OPEN THE DAY PANEL. Tapping a date switches the
+          list underneath; §16's panel is a different interaction, reached by
+          tapping a session. Conflating them would mean a student could not
+          look at Wednesday without a sheet covering the calendar. */}
+      <div className="sm:hidden">
+        {/* ⚠ overflow-x-auto ON ITS OWN ROW so the page body never scrolls
+            sideways — the seven dates scroll, the layout does not. */}
+        <div className="-mx-1 overflow-x-auto pb-1">
+          <ul className="flex min-w-max gap-1.5 px-1">
+            {days.map((day) => {
+              const d = parseDate(day.date);
+              const isToday = day.date === p.todayISO;
+              const selected = day.date === p.state.date;
+              const count = (p.buckets.get(day.date) ?? []).length;
+              return (
+                <li key={day.date}>
+                  <Link
+                    href={p.href({ date: day.date, day: null })}
+                    aria-current={selected ? "date" : undefined}
+                    aria-label={`${WEEKDAY_SHORT[day.weekday]} ${d?.getUTCDate()}, ${count} ${count === 1 ? "session" : "sessions"}`}
+                    className={`flex min-h-[56px] w-[52px] flex-col items-center justify-center gap-0.5 rounded-xl border transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
+                      selected
+                        ? "border-ink bg-ink text-parchment"
+                        : "border-ink/15 text-ink/70 hover:border-ink/35"
+                    }`}
+                  >
+                    <span className="font-mono text-[9px] uppercase tracking-[0.14em] opacity-70">
+                      {WEEKDAY_SHORT[day.weekday]}
+                    </span>
+                    <span className={`font-mono text-sm tabular-nums ${isToday && !selected ? "underline underline-offset-2" : ""}`}>
+                      {d?.getUTCDate()}
+                    </span>
+                    {/* ⚠ A DOT ONLY WHERE THERE IS SOMETHING — and never a
+                        count of nothing dressed as a zero. */}
+                    <span
+                      aria-hidden
+                      className={`h-1 w-1 rounded-full ${count > 0 ? (selected ? "bg-parchment/80" : "bg-ink/50") : "bg-transparent"}`}
+                    />
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+        {/* ── the selected day, chronologically ──────────────────────────── */}
+        {(() => {
+          const selectedISO = days.some((d) => d.date === p.state.date) ? p.state.date : days[0].date;
+          const dayEvents = p.buckets.get(selectedISO) ?? [];
+          const labels = dayLabel(p.todayISO, selectedISO);
           return (
-            <div key={day.date} className="flex min-h-[64px] flex-col bg-parchment">
-              <Link
-                href={p.href({ day: day.date })}
-                className="flex items-baseline gap-2 border-b border-ink/10 px-2 py-2 transition-colors hover:bg-ink/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ink"
-                aria-label={`${WEEKDAY_SHORT[day.weekday]} ${d?.getUTCDate()}, ${dayEvents.length} ${dayEvents.length === 1 ? "session" : "sessions"}`}
-              >
-                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink/45">
-                  {WEEKDAY_SHORT[day.weekday]}
-                </span>
-                <span className={`font-mono text-xs tabular-nums ${isToday ? "rounded-full bg-ink px-1.5 text-parchment" : "text-ink/70"}`}>
-                  {d?.getUTCDate()}
-                </span>
-              </Link>
-              <div className="flex flex-1 flex-col gap-1.5 p-2">
-                {dayEvents.length === 0 ? (
-                  <span className="font-mono text-[10px] text-ink/30">—</span>
-                ) : (
-                  dayEvents.map((ev) => <EventChip key={ev.key} event={ev} viewerTz={p.viewerTz} />)
+            <div className="mt-4">
+              <h3 className="flex items-baseline gap-2">
+                <span className="font-display text-lg font-medium tracking-tight">{labels.lead}</span>
+                {labels.lead !== labels.exact && (
+                  <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink/45">
+                    {labels.exact}
+                  </span>
                 )}
-              </div>
+              </h3>
+
+              {dayEvents.length === 0 ? (
+                /* §49 — never a dead end: say it, then offer the way out. */
+                <div className="mt-3 rounded-lg border border-dashed border-ink/15 bg-ink/[0.015] px-4 py-4">
+                  <p className="text-sm text-ink/70">No tuition on this day.</p>
+                  <p className="mt-2 text-sm">
+                    <Link
+                      href={p.href({ view: "upcoming" })}
+                      className="font-medium underline underline-offset-4 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                    >
+                      See what is coming up →
+                    </Link>
+                  </p>
+                </div>
+              ) : (
+                <ul className="mt-3 grid gap-2">
+                  {dayEvents.map((ev) => {
+                    const action = actionFor(ev);
+                    const tone = ev.type === "group" ? subjectColour(ev.subject) : ONE_TO_ONE;
+                    return (
+                      <li key={ev.key}>
+                        {/* ⚠ §48 — THE WHOLE ROW IS THE TARGET, AND THE ACTION
+                            IS VISIBLE WITHOUT HOVER. A phone has no hover, so
+                            an action that only appears on it does not exist. */}
+                        <Link
+                          href={p.href({ day: selectedISO })}
+                          data-cta={ev.type === "group" ? "group_session_opened" : "one_to_one_slot_opened"}
+                          style={subjectVars(ev.status === "cancelled" ? null : tone)}
+                          className="flex min-h-[44px] items-start gap-3 rounded-xl border border-ink/10 bg-snow p-3 transition-colors duration-200 hover:border-[var(--subject-accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                        >
+                          <span
+                            aria-hidden
+                            className="mt-1 h-8 w-1 shrink-0 rounded-full bg-[var(--subject-accent)]"
+                          />
+                          <span className="min-w-0 flex-1">
+                            <span className="block font-mono text-xs tabular-nums text-ink">
+                              {dualTime(ev.startsAt, p.viewerTz).canonical}
+                            </span>
+                            <span className="mt-0.5 block text-sm font-medium text-ink">{ev.title}</span>
+                            {/* §38 — the type in words, never colour alone. */}
+                            <span className="mt-0.5 block font-mono text-[10px] uppercase tracking-[0.14em] text-ink/45">
+                              {ev.type === "group" ? "Group tuition" : "1-to-1"}
+                            </span>
+                          </span>
+                          <span className="shrink-0 self-center text-[13px] font-medium text-ink">
+                            {action.label} <span aria-hidden>→</span>
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
           );
-        })}
+        })()}
       </div>
 
       {/* ── tablet and up: the hour grid ───────────────────────────────── */}
@@ -672,45 +782,78 @@ function WeekView({ days, ...p }: ViewProps & { days: GridDay[] }) {
 // ── upcoming ────────────────────────────────────────────────────────────────
 
 function UpcomingView({
-  events, viewerTz, href, emptyMessage,
+  events, viewerTz, href, emptyMessage, todayISO,
 }: {
   events: readonly CalendarEvent[];
   viewerTz: string | null;
   href: (p: Partial<CalendarState> & { day?: string | null }) => string;
   emptyMessage?: string;
+  todayISO: string;
 }) {
+  /**
+   * ⚠ THIS WAS A SIXTY-ROW LIST UNDER THE HEADING "NEXT 60 DAYS" (§24, §25).
+   * Every row carried the same weight: a date column, a time, a course, and
+   * the word GROUP in small monospace. It was a query result with a
+   * stylesheet — the reader had to scan all of it to find the two sessions
+   * that were actually near.
+   *
+   * It is now banded by nearness, because that is the question being asked.
+   * "Next 60 days" describes the FETCH; "This week" describes what a student
+   * can go to. The window is unchanged — only the label and the hierarchy.
+   */
   if (events.length === 0) {
     return (
       <p className="text-sm leading-relaxed text-ink/60">
-        {emptyMessage ?? "No lessons are scheduled in this period."}
+        {emptyMessage ?? "No tuition is scheduled in this period."}
       </p>
     );
   }
 
-  const byDay = bucketByDay(events);
-  const days = [...byDay.keys()].sort();
+  const sections = groupUpcoming(events, todayISO, (e) => dayKeyOf(e.startsAt));
 
   return (
-    <ol className="divide-y divide-ink/10 border-y border-ink/10">
-      {days.map((dayISO) => {
-        const d = parseDate(dayISO)!;
-        return (
-          <li key={dayISO} className="flex flex-wrap gap-x-6 gap-y-2 py-4 sm:flex-nowrap">
-            <Link
-              href={href({ day: dayISO })}
-              className="w-28 shrink-0 font-mono text-[11px] uppercase tracking-[0.15em] text-ink/50 transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-            >
-              {WEEKDAY_SHORT[((d.getUTCDay() === 0 ? 7 : d.getUTCDay()) as 1)]} {d.getUTCDate()}{" "}
-              {MONTH_LONG[d.getUTCMonth()].slice(0, 3)}
-            </Link>
-            <ul className="min-w-0 flex-1 space-y-1.5">
-              {byDay.get(dayISO)!.map((ev) => (
-                <li key={ev.key}><EventChip event={ev} viewerTz={viewerTz} /></li>
-              ))}
-            </ul>
-          </li>
-        );
-      })}
-    </ol>
+    <div className="grid gap-9">
+      {sections.map((section) => (
+        <section key={section.band} aria-labelledby={`band-${section.band}`}>
+          <div className="flex items-baseline justify-between gap-4 border-b border-ink/10 pb-2">
+            <h3 id={`band-${section.band}`} className="font-display text-lg font-medium tracking-tight">
+              {section.label}
+            </h3>
+            {/* §35 — a count of what is really there, never a claim about it. */}
+            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink/45">
+              {section.count} session{section.count === 1 ? "" : "s"}
+            </span>
+          </div>
+
+          <ol className="mt-3 grid gap-5">
+            {section.days.map((day) => (
+              <li key={day.dayISO}>
+                {/* ⚠ §29 — THE FRIENDLY WORD AND THE EXACT DATE, BOTH.
+                    "Tomorrow" alone is ambiguous the moment a tab is left open
+                    overnight; a bare "Tue 15 Sep" is colder than it needs to
+                    be for something happening in a few hours. */}
+                <Link
+                  href={href({ day: day.dayISO })}
+                  data-cta="calendar_day_selected"
+                  className="group/day inline-flex items-baseline gap-2 rounded px-1 py-1 -mx-1 transition-colors hover:bg-parchment-2/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                >
+                  <span className="text-sm font-medium text-ink">{day.lead}</span>
+                  {day.lead !== day.exact && (
+                    <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink/45">
+                      {day.exact}
+                    </span>
+                  )}
+                </Link>
+                <ul className="mt-2 grid gap-1.5">
+                  {day.events.map((ev) => (
+                    <li key={ev.key}><EventChip event={ev} viewerTz={viewerTz} /></li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))}
+    </div>
   );
 }
