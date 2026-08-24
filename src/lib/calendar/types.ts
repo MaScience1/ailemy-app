@@ -27,7 +27,22 @@ export type CalendarEventType =
   /** A genuinely bookable 1-to-1 slot. Public. Carries no student. */
   | "private_open"
   /** THIS viewer's own confirmed 1-to-1 booking. Personal mode only. */
-  | "private_booked";
+  | "private_booked"
+  /**
+   * A period the teacher is unavailable — an availability_blocks ROW.
+   *
+   * ⚠ IT IS NEVER COMPUTED. Prayer blocks in particular reach the calendar the
+   * same way every other block does: somebody entered a row. Nothing in this
+   * codebase calculates a prayer time, and the day one does, it will be wrong
+   * for half the year in a way nobody notices.
+   *
+   * ⚠ AND IT CARRIES NO REASON IN PUBLIC MODE. 0045 grants anon SELECT on
+   * (id, teacher_id, starts_at, ends_at) ONLY — `reason` is withheld on
+   * purpose, because why a teacher is unavailable is their business. So a
+   * public block says "Unavailable" and nothing more; the reason is surfaced
+   * only where the viewer may legitimately read it.
+   */
+  | "blocked";
 
 export type CalendarEventStatus = "scheduled" | "cancelled";
 

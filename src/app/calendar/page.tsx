@@ -70,7 +70,17 @@ export default async function CalendarPage({ searchParams }: { searchParams: Sea
   const ua = (await headers()).get("user-agent") ?? "";
   const handheld = /Android|iPhone|iPod|Windows Phone|\bMobi\b/i.test(ua) && !/iPad|Tablet/i.test(ua);
 
-  const state = readState(params, todayISO, handheld ? "upcoming" : "month");
+  /**
+   * ⚠ WEEK IS THE DEFAULT NOW, ON BOTH (§4). Month was chosen when the calendar
+   * was something you READ; a timetable you BOOK from has to open on the week,
+   * which is the only view that shows a day's shape against its neighbours.
+   *
+   * ⚠ AND HANDHELD GETS WEEK TOO, WHICH IS NOT THE SAME AS A SQUEEZED GRID.
+   * Below sm the week view is already a date strip over a single day's list —
+   * §11's own suggested structure — so "week" on a phone means that, not seven
+   * columns at 46px each.
+   */
+  const state = readState(params, todayISO);
   const openDay = params.day && parseDate(params.day) ? params.day : null;
 
   const range = rangeFor(state.view, state.date);

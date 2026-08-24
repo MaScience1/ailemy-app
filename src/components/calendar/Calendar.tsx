@@ -4,7 +4,8 @@ import {
   MONTH_LONG, WEEKDAY_SHORT, addDays, bucketByDay, cellEvents, dayKeyOf, monthGrid,
   parseDate, periodLabel, stateToQuery, step, weekGrid,
   type CalendarState, type CalendarView, type GridDay,
-  hourWindow, hourRows, hourLabel,
+  hourWindow, hourRows, hourLabel, zoneTz, type CalendarZone,
+  VIEWS,
 } from "@/lib/calendar/grid";
 import type { CalendarEvent, CalendarMode } from "@/lib/calendar/types";
 import type { Capacity } from "@/lib/public/capacity-rules";
@@ -15,6 +16,8 @@ import { actionFor, dayLabel, groupUpcoming, nextOf } from "@/lib/calendar/upcom
 
 import { DayPanel } from "./DayPanel";
 import { MonthEmptyState } from "./MonthEmptyState";
+import { WeekTimetable } from "./WeekTimetable";
+import { TimetableLegend, ZoneToggle } from "./TimetableLegend";
 import { EventChip, TypeMarker, describeEvent } from "./EventChip";
 import { ONE_TO_ONE, subjectColour, subjectVars } from "@/lib/design/subject-colours";
 import { dualTime } from "@/lib/schedule/timezone";
@@ -164,7 +167,12 @@ export function Calendar(props: CalendarProps) {
           .reduce((n, d) => n + (buckets.get(d.date)?.length ?? 0), 0)
       : state.view === "week"
         ? weekGrid(state.date).reduce((n, d) => n + (buckets.get(d.date)?.length ?? 0), 0)
-        : events.length;
+        // ⚠ THE DAY VIEW GETS THE SAME TREATMENT. Without this arm an empty day
+        // would fall through to events.length — the whole fetched range — and
+        // render neither the timetable nor the §50 panel: a blank page.
+        : state.view === "day"
+          ? (buckets.get(state.date)?.length ?? 0)
+          : events.length;
 
   const href = (patch: Partial<CalendarState> & { day?: string | null }) => {
     const next: CalendarState = { ...state, ...patch };
@@ -200,6 +208,7 @@ export function Calendar(props: CalendarProps) {
       {visibleCount === 0 && state.view !== "upcoming" && (
         <div className="mt-6">
           <MonthEmptyState
+            periodNoun={state.view === "week" ? "week" : state.view === "day" ? "day" : "month"}
             nextGroup={props.nextGroupAhead ?? null}
             nextPrivate={props.nextPrivateAhead ?? null}
             viewerTz={viewerTz}
@@ -215,6 +224,16 @@ export function Calendar(props: CalendarProps) {
         <Filters state={state} href={href} lockedSubject={lockedSubject} />
       )}
 
+      {/* ⚠ THE KEY SITS WITH THE TIMETABLE, not at the top of the page. It is
+          only meaningful next to the thing it decodes, and on the month view —
+          where blocks are dots, not lanes — it would be a key to colours that
+          are not on screen. */}
+      {(state.view === "week" || state.view === "day") && visibleCount > 0 && (
+        <div className="mt-5">
+          <TimetableLegend />
+        </div>
+      )}
+
       <div className="mt-6">
         {state.view === "month" && (
           <MonthView weeks={monthGrid(state.date)} buckets={buckets} state={state}
@@ -225,6 +244,19 @@ export function Calendar(props: CalendarProps) {
           <WeekView days={weekGrid(state.date)} buckets={buckets} state={state}
             todayISO={todayISO} viewerTz={viewerTz} href={href}
             capacityBySlug={props.capacityBySlug} />
+        )}
+        {/* ── §10 — one day, the same timetable ─────────────────────────────
+            ⚠ THE SAME COMPONENT, ONE COLUMN. A separate day renderer would be
+            a second opinion about where 7:30 PM sits, and the two would drift.
+            WeekTimetable takes a list of days; a day view is that list with one
+            entry in it. */}
+        {state.view === "day" && (
+          <WeekTimetable
+            events={buckets.get(state.date) ?? []}
+            dayISOs={[state.date]}
+            tz={zoneTz(state.zone)}
+            href={(dayISO) => href({ day: dayISO })}
+          />
         )}
         {state.view === "upcoming" && (
           <UpcomingView events={events} viewerTz={viewerTz} href={href}
@@ -261,21 +293,21 @@ function Toolbar({
       <nav className="flex items-center gap-1" aria-label="Change period">
         <Link
           href={href({ date: step(state.view, state.date, -1), day: null })}
-          aria-label={`Previous ${state.view === "month" ? "month" : state.view === "week" ? "week" : "period"}`}
-          className="grid h-9 w-9 place-items-center rounded-full border border-ink/15 text-ink/70 transition-colors hover:border-ink/35 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+          aria-label={`Previous ${state.view === "month" ? "month" : state.view === "week" ? "week" : state.view === "day" ? "day" : "period"}`}
+          className="tap-44 grid h-9 w-9 place-items-center rounded-full border border-ink/15 text-ink/70 transition-colors hover:border-ink/35 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
         >
           <span aria-hidden>←</span>
         </Link>
         <Link
           href={href({ date: step(state.view, state.date, 1), day: null })}
-          aria-label={`Next ${state.view === "month" ? "month" : state.view === "week" ? "week" : "period"}`}
-          className="grid h-9 w-9 place-items-center rounded-full border border-ink/15 text-ink/70 transition-colors hover:border-ink/35 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+          aria-label={`Next ${state.view === "month" ? "month" : state.view === "week" ? "week" : state.view === "day" ? "day" : "period"}`}
+          className="tap-44 grid h-9 w-9 place-items-center rounded-full border border-ink/15 text-ink/70 transition-colors hover:border-ink/35 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
         >
           <span aria-hidden>→</span>
         </Link>
         <Link
           href={href({ date: todayISO, day: null })}
-          className="ml-1 rounded-full border border-ink/15 px-3 py-1.5 text-xs font-medium text-ink/75 transition-colors hover:border-ink/35 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+          className="tap-44 ml-1 inline-flex items-center justify-center rounded-full border border-ink/15 px-3 py-1.5 text-xs font-medium text-ink/75 transition-colors hover:border-ink/35 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
         >
           Today
         </Link>
@@ -293,22 +325,33 @@ function Toolbar({
         "+ your local time" over a grid that only prints Doha would be a small
         lie in the one place a lie costs an hour. Month says where to find it.
       */}
-      <p className="order-last w-full font-mono text-[10px] uppercase tracking-[0.18em] text-ink/45 sm:order-none sm:w-auto">
-        Times in {CANONICAL_LABEL}
-        {viewerTz && viewerTz !== "Asia/Qatar"
-          ? state.view === "month" ? " · open a day for yours" : " + your local time"
-          : ""}
-      </p>
+      {/* ⚠ THIS WAS A LABEL. IT IS A CONTROL NOW (§8).
+          "Times in Doha" told a student in London the one thing they could not
+          act on. The zone is part of calendar state, so it is in the URL with
+          the view and the filters — shareable, bookmarkable, and re-rendered
+          server-side rather than nudged about on the client. */}
+      <div className="order-last flex w-full items-center gap-2 sm:order-none sm:w-auto">
+        <ZoneToggle zone={state.zone} hrefFor={(z) => href({ zone: z })} />
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink/40">
+          {state.zone === "doha" ? CANONICAL_LABEL : "London"}
+        </span>
+      </div>
 
       <div role="group" aria-label="Calendar view" className="inline-flex overflow-hidden rounded-full border border-ink/15">
-        {(["month", "week", "upcoming"] as CalendarView[]).map((v) => {
+        {/* ⚠ VIEWS, NOT A SECOND LIST. This was a literal
+              ["month","week","upcoming"] — a copy of the union kept in step by
+              hand, and it was not: adding the day view (§10) left it reachable
+              only by typing ?view=day, because the switcher had never heard of
+              it. Reading the exported list means a new view appears in the
+              control the moment it exists. */}
+          {VIEWS.map((v) => {
           const on = state.view === v;
           return (
             <Link
               key={v}
               href={href({ view: v, day: null })}
               aria-current={on ? "true" : undefined}
-              className={`px-3 py-1.5 text-xs font-medium capitalize transition-colors ${
+              className={`tap-44 inline-flex items-center justify-center px-3 py-1.5 text-xs font-medium capitalize transition-colors ${
                 on ? "bg-ink text-parchment" : "text-ink/70 hover:bg-ink/[0.06]"
               } focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ink`}
             >
@@ -815,72 +858,24 @@ function WeekView({ days, ...p }: ViewProps & { days: GridDay[] }) {
         })()}
       </div>
 
-      {/* ── tablet and up: the hour grid ───────────────────────────────── */}
+      {/* ── tablet and up: the real timetable ─────────────────────────────
+          ⚠ THIS WAS AN HOUR-CELL GRID AND THAT WAS THE DEFECT. Each event was
+          rendered in the cell for the hour it STARTED and nowhere else, so a
+          7:00–9:30 PM lesson and a 7:00–8:00 PM lesson drew the same box, and
+          a 7:30 start sat flush against the 7 o'clock line. WeekTimetable
+          positions a block against the axis from its real start and end, and
+          gives overlapping events their own lanes instead of hiding one.
+
+          ⚠ AND IT IS DRAWN IN THE SELECTED ZONE, not always in Doha. The old
+          axis was Doha-only with a footnote; the zone control now decides, and
+          every position is recomputed for each instant rather than shifted. */}
       <div className="hidden sm:block">
-        <div className="overflow-hidden rounded-lg border border-ink/10">
-          {/* Day header row */}
-          <div className="grid grid-cols-[3.25rem_repeat(7,minmax(0,1fr))] border-b border-ink/10 bg-parchment-2/40">
-            <div aria-hidden />
-            {days.map((day) => {
-              const d = parseDate(day.date);
-              const isToday = day.date === p.todayISO;
-              return (
-                <Link
-                  key={day.date}
-                  href={p.href({ day: day.date })}
-                  className="flex items-baseline justify-center gap-1.5 border-l border-ink/10 py-2 transition-colors hover:bg-ink/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ink"
-                >
-                  <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink/45">
-                    {WEEKDAY_SHORT[day.weekday]}
-                  </span>
-                  <span className={`font-mono text-xs tabular-nums ${isToday ? "rounded-full bg-ink px-1.5 text-parchment" : "text-ink/70"}`}>
-                    {d?.getUTCDate()}
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* Hour rows */}
-          {rows.map((h) => (
-            <div
-              key={h}
-              className="grid grid-cols-[3.25rem_repeat(7,minmax(0,1fr))] border-b border-ink/[0.06] last:border-b-0"
-            >
-              <div className="flex items-start justify-end pr-2 pt-1.5">
-                <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-ink/35">
-                  {hourLabel(h)}
-                </span>
-              </div>
-              {days.map((day) => {
-                const dayEvents = p.buckets.get(day.date) ?? [];
-                /**
-                 * ⚠ AN EVENT IS RENDERED IN ITS STARTING ROW ONLY. Repeating it
-                 * in every hour it spans would announce the same lesson three
-                 * times to a screen reader and triple-count it by eye.
-                 */
-                const starting = dayEvents.filter((ev) => canonicalHour(ev.startsAt) === h);
-                return (
-                  <div
-                    key={day.date + h}
-                    className="min-h-[42px] border-l border-ink/10 p-1"
-                  >
-                    {starting.map((ev) => (
-                      <EventChip key={ev.key} event={ev} viewerTz={p.viewerTz} />
-                    ))}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-
-        {/* ⚠ THE AXIS IS DOHA, SAID OUT LOUD. A grid of hours with no zone on it
-            is the silent-wrong-hour failure this project already fixed once in
-            the timezone work. */}
-        <p className="mt-2 text-right font-mono text-[9px] uppercase tracking-[0.14em] text-ink/40">
-          Hours shown in Doha
-        </p>
+        <WeekTimetable
+          events={days.flatMap((d) => p.buckets.get(d.date) ?? [])}
+          dayISOs={days.map((d) => d.date)}
+          tz={zoneTz(p.state.zone)}
+          href={(dayISO) => p.href({ day: dayISO })}
+        />
       </div>
     </>
   );

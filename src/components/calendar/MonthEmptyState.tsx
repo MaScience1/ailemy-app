@@ -44,8 +44,11 @@ export function monthNameOf(dayISO: string): string {
 
 export function MonthEmptyState({
   nextGroup, nextPrivate, viewerTz, jumpHref, upcomingHref, oneToOneHref, note,
+  periodNoun = "month",
 }: {
   /** The next real group lesson, from the forward read. Null if none. */
+  /** "month" | "week" | "day" — what the viewer is actually looking at. */
+  periodNoun?: string;
   nextGroup: { event: CalendarEvent; dateISO: string } | null;
   /** §66 — a real open slot, or null. Never a stand-in. */
   nextPrivate: CalendarEvent | null;
@@ -67,7 +70,12 @@ export function MonthEmptyState({
 
   return (
     <div className="rounded-xl border border-ink/15 bg-snow px-5 py-5">
-      <h3 className="font-display text-xl font-medium tracking-tight">No tuition this month.</h3>
+      {/* ⚠ THE NOUN FOLLOWS THE VIEW (§20). This was hardcoded "month", which
+          was true while the panel only ever appeared under a month grid. It now
+          also serves the week and the day, where "No tuition this month." over
+          a single Tuesday is simply wrong — and wrong in the confident way that
+          makes a reader distrust the rest of the page. */}
+      <h3 className="font-display text-xl font-medium tracking-tight">No tuition this {periodNoun}.</h3>
       {note && <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink/65">{note}</p>}
 
       {nextGroup && (

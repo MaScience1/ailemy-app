@@ -443,3 +443,86 @@ input, select, textarea {
 .ai-band:nth-of-type(4n + 3) {
   background: var(--surface-warm);
 }
+
+/* ===========================================================================
+   TIMETABLE LANES (§6)
+   ---------------------------------------------------------------------------
+   ⚠ COLOUR IS THE SECOND SIGNAL, NEVER THE ONLY ONE. Every lane also carries a
+   text label and a distinct border weight, because a printed timetable, a
+   greyscale screen and a deuteranopic reader all have to separate these (§22).
+
+   The three group tones are one Chemistry family walked from light to deep —
+   apricot, terracotta, copper — so they read as a progression rather than as
+   three unrelated colours. Gold is reserved for 1-to-1 and is used nowhere
+   else on the site, which is what lets a student find their private time at a
+   glance. Blocked is deliberately desaturated: it is the one lane you are
+   meant to skip over.
+
+   ⚠ NONE OF THESE IS A CTA COLOUR. Signal lime remains the single primary
+   action colour sitewide; a lane is a surface, and any action inside it is a
+   lime control on top.
+   =========================================================================== */
+@theme inline {
+  /* Chemistry progression — Year 10 → Year 11 → AS */
+  --color-lane-y10-bg: #FDE8D6;
+  --color-lane-y10-edge: #E9A876;
+  --color-lane-y11-bg: #F8D3B0;
+  --color-lane-y11-edge: #D07C3F;
+  --color-lane-as-bg: #EFBF98;
+  --color-lane-as-edge: #A85A22;
+  /* a cohort that identifies neither year nor qualification */
+  --color-lane-group-bg: #EDE7DD;
+  --color-lane-group-edge: #B6AC9A;
+
+  /* 1-to-1 — gold, and gold only */
+  --color-lane-open-bg: #FBF6E6;
+  --color-lane-open-edge: #C9A227;
+  --color-lane-booked-bg: #E4CE8C;
+  --color-lane-booked-edge: #8A6A15;
+
+  /* unavailable — cool, quiet, clearly not actionable */
+  --color-lane-blocked-bg: #E4E2DC;
+  --color-lane-blocked-edge: #AFAA9E;
+}
+
+.lane {
+  border-left-width: 3px;
+  border-left-style: solid;
+  color: var(--color-ink);
+}
+.lane-group_y10   { background: var(--color-lane-y10-bg);     border-left-color: var(--color-lane-y10-edge); }
+.lane-group_y11   { background: var(--color-lane-y11-bg);     border-left-color: var(--color-lane-y11-edge); }
+.lane-group_as    { background: var(--color-lane-as-bg);      border-left-color: var(--color-lane-as-edge); }
+.lane-group_other { background: var(--color-lane-group-bg);   border-left-color: var(--color-lane-group-edge); }
+.lane-private_open   { background: var(--color-lane-open-bg);   border-left-color: var(--color-lane-open-edge); }
+.lane-private_booked { background: var(--color-lane-booked-bg); border-left-color: var(--color-lane-booked-edge); }
+/* ⚠ A HATCH, NOT JUST A GREY. The stripe survives greyscale and says
+   "excluded" in a way a flat fill cannot. Kept very low contrast so it reads
+   as texture rather than as pattern noise. */
+.lane-blocked {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--color-lane-blocked-bg) 0 6px,
+    color-mix(in srgb, var(--color-lane-blocked-edge) 22%, var(--color-lane-blocked-bg)) 6px 12px
+  );
+  border-left-color: var(--color-lane-blocked-edge);
+  color: color-mix(in srgb, var(--color-ink) 70%, transparent);
+}
+
+/* An available slot is the only lane that invites a tap, so it is the only one
+   that moves. Everything else is information and stays still. */
+.lane-private_open {
+  transition: background-color 150ms ease-out, box-shadow 150ms ease-out;
+}
+.lane-private_open:hover,
+.lane-private_open:focus-visible {
+  background: color-mix(in srgb, var(--color-lane-open-edge) 14%, var(--color-lane-open-bg));
+  box-shadow: 0 1px 10px -4px color-mix(in srgb, var(--color-lane-open-edge) 60%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lane-private_open { transition: none; }
+}
+
+/* The grid's own lines recede — they are an axis, not content (§21). */
+.tt-gridline { border-top: 1px solid color-mix(in srgb, var(--color-line) 65%, transparent); }
+.tt-gridline-major { border-top: 1px solid var(--color-line); }
