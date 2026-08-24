@@ -83,7 +83,7 @@ export function FilterBar({ options }: { options: FilterOptions }) {
                 value={params.get(key) ?? ""}
                 onChange={(e) => update(key, e.target.value)}
                 disabled={emptyNote}
-                className="mt-1.5 w-full rounded-md border border-ink/15 bg-parchment px-3 py-2 text-sm text-ink transition focus:border-flask focus:outline-none focus:ring-2 focus:ring-flask/20 disabled:cursor-not-allowed disabled:opacity-55"
+                className="mt-1.5 w-full rounded-md border border-ink/15 bg-parchment px-3 py-2 text-base md:text-base md:text-sm text-ink transition focus:border-flask focus:outline-none focus:ring-2 focus:ring-flask/20 disabled:cursor-not-allowed disabled:opacity-55"
               >
                 <option value="">{emptyNote ? "None available" : "All"}</option>
                 {opts.map((o) => (
@@ -109,7 +109,7 @@ export function FilterBar({ options }: { options: FilterOptions }) {
           <noscript>
             <button
               type="submit"
-              className="rounded-md border border-ink/20 bg-snow px-3 py-1.5 text-sm text-ink"
+              className="rounded-md border border-ink/20 bg-snow px-3 py-1.5 text-base md:text-sm text-ink"
             >
               Apply filters
             </button>
@@ -122,7 +122,7 @@ export function FilterBar({ options }: { options: FilterOptions }) {
                   router.push("/past-papers", { scroll: false }),
                 )
               }
-              className="rounded-md border border-ink/20 bg-snow px-3 py-1.5 text-sm text-ink transition hover:bg-parchment"
+              className="rounded-md border border-ink/20 bg-snow px-3 py-1.5 text-base md:text-sm text-ink transition hover:bg-parchment"
             >
               Clear all
             </button>

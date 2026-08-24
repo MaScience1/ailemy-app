@@ -5,10 +5,23 @@ import "./globals.css";
 
 import { AdminOverlay } from "@/components/admin-inline/AdminOverlay";
 
+/**
+ * ⚠ VARIABLE, NOT FOUR STATIC WEIGHTS — OPTICAL SIZING WAS NEVER ENGAGED.
+ *
+ * This asked for weight: ["400","500","600","700"], and next/font answers a
+ * weight list with STATIC instances. A static instance carries no `opsz`
+ * axis, so `font-optical-sizing: auto` had nothing to act on: every display
+ * heading was rendering with letterforms drawn for body text — tighter
+ * apertures and heavier hairlines than Fraunces intends at 48px.
+ *
+ * Omitting `weight` requests the variable font, and `axes` adds the optical
+ * and stylistic axes on top of the implicit `wght`. globals.css then drives
+ * `opsz` explicitly at each display size rather than trusting the default.
+ */
 const fraunces = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  axes: ["opsz", "SOFT", "WONK"],
   display: "swap",
 });
 

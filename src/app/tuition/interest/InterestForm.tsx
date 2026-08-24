@@ -195,7 +195,7 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
 }
 
 const inputClass =
-  "mt-1 w-full rounded-md border border-ink/20 bg-snow px-3 py-2 text-sm text-ink " +
+  "mt-1 w-full rounded-md border border-ink/20 bg-snow px-3 py-2 text-base md:text-base md:text-sm text-ink " +
   "focus:border-ink/50 focus:outline-none focus:ring-1 focus:ring-ink/30";
 
 function Field({

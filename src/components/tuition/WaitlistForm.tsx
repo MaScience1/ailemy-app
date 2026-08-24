@@ -24,7 +24,7 @@ export function WaitlistForm({ cohortSlug }: { cohortSlug: string }) {
 
   if (state.status === "ok") {
     return (
-      <p className="mt-3 rounded border border-ink/15 bg-parchment-2/50 px-3 py-2.5 text-sm leading-relaxed text-ink/75">
+      <p className="mt-3 rounded border border-ink/15 bg-parchment-2/50 px-3 py-2.5 text-base md:text-sm leading-relaxed text-ink/75">
         You&rsquo;re on the list. We&rsquo;ll email you if a place opens — this does not reserve a
         place.
       </p>
@@ -49,7 +49,7 @@ export function WaitlistForm({ cohortSlug }: { cohortSlug: string }) {
           type="email"
           required
           placeholder="you@example.com"
-          className="h-10 min-w-0 flex-1 rounded-md border border-ink/15 bg-snow px-3 text-sm placeholder:text-ink/35 focus-visible:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink"
+          className="h-10 min-w-0 flex-1 rounded-md border border-ink/15 bg-snow px-3 text-base md:text-base md:text-sm placeholder:text-ink/35 focus-visible:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink"
         />
         <button
           type="submit"

@@ -129,19 +129,19 @@ export default function PracticePage({ params }: { params: Params }) {
   const pdfClasses = cn(
     "border-b border-ink/10 md:border-b-0 md:border-r md:border-ink/10",
     "md:h-full md:w-1/2",
-    mobileView === "both" && "h-[60vh]",
-    mobileView === "pdf" && "h-[calc(100vh-60px)]",
+    mobileView === "both" && "h-[60dvh]",
+    mobileView === "pdf" && "h-[calc(100dvh-60px)]",
     mobileView === "canvas" && "hidden md:block",
   );
   const canvasClasses = cn(
     "md:h-full md:w-1/2",
-    mobileView === "both" && "h-[calc(40vh-60px)]",
-    mobileView === "canvas" && "h-[calc(100vh-60px)]",
+    mobileView === "both" && "h-[calc(40dvh-60px)]",
+    mobileView === "canvas" && "h-[calc(100dvh-60px)]",
     mobileView === "pdf" && "hidden md:block",
   );
 
   return (
-    <main className="flex h-screen flex-col overflow-hidden bg-parchment text-ink">
+    <main className="flex h-screen-safe flex-col overflow-hidden bg-parchment text-ink">
       {/* Top bar */}
       <header className="flex h-[60px] shrink-0 items-center justify-between gap-4 border-b border-ink/15 bg-ink px-4 text-snow sm:px-6">
         <div className="flex min-w-0 items-center gap-4">

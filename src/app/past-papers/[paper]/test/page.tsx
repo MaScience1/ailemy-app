@@ -70,7 +70,7 @@ export default async function PaperTestPage({
   if (!paper) notFound();
 
   return (
-    <div className="flex min-h-screen flex-col bg-parchment text-ink lg:h-screen lg:overflow-hidden">
+    <div className="flex min-h-screen flex-col bg-parchment text-ink lg:h-dvh lg:overflow-hidden">
       <header className="sticky top-0 z-40 flex shrink-0 flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-ink/15 bg-ink px-4 py-3 text-snow sm:px-6">
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <Link

@@ -324,7 +324,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           breakpoints and still clears the header by a full step of the spacing
           scale — the hero is moved up, not jammed against the nav. */}
       <header className="mx-auto max-w-6xl px-6 pt-10 pb-10 sm:pt-16 sm:pb-12">
-        <div className="flex flex-col gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_480px] lg:grid-rows-[auto_auto] lg:items-start lg:gap-x-10 lg:gap-y-0">
+        <div className="flex flex-col gap-6 lg:gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_480px] lg:grid-rows-[auto_auto] lg:items-start lg:gap-x-10 lg:gap-y-0">
         <div>
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink/50">
           Pearson Edexcel · GCSE · International GCSE · IAL
@@ -825,7 +825,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           specification-mapped resources and the real papers. That is what it
           says, and it is why the link goes to /resources rather than to a
           page that would have to be invented to receive it. */}
-      <section aria-labelledby="audience-heading" className="border-t border-ink/10">
+      <section aria-labelledby="audience-heading" className="ai-band">
         <div className="mx-auto max-w-6xl px-6 py-12 sm:py-14">
           <h2 id="audience-heading" className="font-mono text-xs uppercase tracking-[0.2em] text-ink/55">
             Using Ailemy as a…
@@ -908,7 +908,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           ⚠ IT IS A ROW OF WORDS, NOT A ROW OF BADGES. Parents read this strip;
           a line of award-shaped graphics with nothing behind them is exactly
           the advertising clutter §29 warns against. */}
-      <section aria-label="What Ailemy is" className="border-t border-ink/10">
+      <section aria-label="What Ailemy is" className="ai-band">
         <div className="mx-auto max-w-6xl px-6 py-6">
           <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 sm:gap-x-10">
             {[
@@ -1104,7 +1104,7 @@ function Section({
   id, title, lede, children,
 }: { id: string; title: string; lede?: string; children: React.ReactNode }) {
   return (
-    <section id={id} className="border-t border-ink/10 py-14 sm:py-20">
+    <section id={id} className="ai-band py-10 sm:py-18">
       <div className="mx-auto max-w-6xl px-6">
         <h2
           id={`${id}-title`}
@@ -1193,7 +1193,7 @@ function CohortCard({
 
   if (full) {
     return (
-      <div className="flex flex-col rounded-lg border border-ink/10 bg-snow p-7">
+      <div className="flex flex-col rounded-lg border border-ink/10 bg-snow p-5 sm:p-7">
         {body}
         <WaitlistForm cohortSlug={cohort.slug} />
       </div>
@@ -1206,7 +1206,7 @@ function CohortCard({
       dataCta="chemistry_course"
       ariaLabel={`${cta.label} — ${cohort.title}`}
       cta={cta.label}
-      className="p-7"
+      className="p-5 sm:p-7"
     >
       {body}
     </InteractiveCard>
