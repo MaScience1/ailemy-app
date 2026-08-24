@@ -1,0 +1,61 @@
+{
+  "nav": {
+    "resources": "Resources",
+    "pastPapers": "Past Papers",
+    "examBuilder": "Exam Builder",
+    "onlineTuition": "Online Tuition",
+    "login": "Login",
+    "startFree": "Start free",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "subjects": "Subjects"
+  },
+  "language": {
+    "label": "Language",
+    "english": "English",
+    "arabic": "العربية",
+    "switchTo": "Switch to {language}"
+  },
+  "tuition": {
+    "eyebrow": "Online Tuition",
+    "modeOneToOne": "1-to-1",
+    "modeGroup": "Group",
+    "oneToOneSub": "Private lessons, your pace",
+    "groupSub": "Small classes, fixed timetable",
+    "singleLesson": "Single lesson",
+    "fiveHourPackage": "5-hour package",
+    "oneHour": "One hour",
+    "perHour": "{amount} per hour",
+    "save": "save {amount}",
+    "pricingUnavailable": "Pricing unavailable",
+    "pricingTemporarilyUnavailable": "Pricing temporarily unavailable — please try again shortly.",
+    "groupTuition": "Group tuition",
+    "perMonth": "per month",
+    "monthsUpfront": "{months} months upfront",
+    "aMonthForMonths": "{amount} a month · {months} months",
+    "bestValueOver": "Best value over {months} months",
+    "saveAmount": "Save {amount}",
+    "datesNotPublished": "The academic programme dates for this cohort are not published yet.",
+    "teachingHoursAWeek": "{hours} teaching hours a week",
+    "placesTaken": "{taken} of {cap} places taken",
+    "maximumStudents": "Maximum {cap} students",
+    "registerInterest": "Register interest",
+    "reserveYourPlace": "Reserve your place",
+    "seeCourseRoadmap": "See course roadmap",
+    "coversTeaching": "Covers teaching from {from} to {to}."
+  },
+  "commitment": {
+    "monthly": "1 month",
+    "three_month": "3 months",
+    "academic_year": "Academic year"
+  },
+  "currency": {
+    "label": "Currency",
+    "qar": "QAR",
+    "gbp": "GBP"
+  },
+  "common": {
+    "loading": "Loading…",
+    "somethingWentWrong": "Something went wrong. Please try again."
+  }
+}

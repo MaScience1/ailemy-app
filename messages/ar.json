@@ -1,0 +1,68 @@
+{
+  "__status": "UNREVIEWED — every Arabic string below is a draft by Claude, not reviewed by a native speaker. See HANDOVER.md for the full review table. Do not merge until the founder has signed off.",
+  "nav": {
+    "__status": "UNREVIEWED",
+    "resources": "المصادر",
+    "pastPapers": "الامتحانات السابقة",
+    "examBuilder": "منشئ الامتحانات",
+    "onlineTuition": "الدروس عبر الإنترنت",
+    "login": "تسجيل الدخول",
+    "startFree": "ابدأ مجانًا",
+    "openMenu": "فتح القائمة",
+    "closeMenu": "إغلاق القائمة",
+    "subjects": "المواد"
+  },
+  "language": {
+    "__status": "UNREVIEWED",
+    "label": "اللغة",
+    "english": "English",
+    "arabic": "العربية",
+    "switchTo": "التبديل إلى {language}"
+  },
+  "tuition": {
+    "__status": "UNREVIEWED",
+    "eyebrow": "الدروس عبر الإنترنت",
+    "modeOneToOne": "فردي",
+    "modeGroup": "مجموعات",
+    "oneToOneSub": "دروس خاصة وفق وتيرة الطالب",
+    "groupSub": "مجموعات صغيرة بجدول ثابت",
+    "singleLesson": "درس واحد",
+    "fiveHourPackage": "باقة 5 ساعات",
+    "oneHour": "ساعة واحدة",
+    "perHour": "{amount} للساعة",
+    "save": "توفير {amount}",
+    "pricingUnavailable": "السعر غير متاح",
+    "pricingTemporarilyUnavailable": "السعر غير متاح مؤقتًا — يرجى المحاولة بعد قليل.",
+    "groupTuition": "دروس جماعية",
+    "perMonth": "شهريًا",
+    "monthsUpfront": "{months} أشهر مقدمًا",
+    "aMonthForMonths": "{amount} شهريًا · {months} أشهر",
+    "bestValueOver": "أفضل قيمة على مدى {months} أشهر",
+    "saveAmount": "توفير {amount}",
+    "datesNotPublished": "لم تُنشر مواعيد البرنامج الدراسي لهذه المجموعة بعد.",
+    "teachingHoursAWeek": "{hours} ساعات تدريس أسبوعيًا",
+    "placesTaken": "{taken} من {cap} مقعدًا محجوز",
+    "maximumStudents": "بحد أقصى {cap} طالبًا",
+    "registerInterest": "سجّل اهتمامك",
+    "reserveYourPlace": "احجز مقعدك",
+    "seeCourseRoadmap": "اطّلع على خطة المقرر",
+    "coversTeaching": "يغطي التدريس من {from} إلى {to}."
+  },
+  "commitment": {
+    "__status": "UNREVIEWED",
+    "monthly": "شهر واحد",
+    "three_month": "3 أشهر",
+    "academic_year": "العام الدراسي"
+  },
+  "currency": {
+    "__status": "UNREVIEWED",
+    "label": "العملة",
+    "qar": "QAR",
+    "gbp": "GBP"
+  },
+  "common": {
+    "__status": "UNREVIEWED",
+    "loading": "جارٍ التحميل…",
+    "somethingWentWrong": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
+  }
+}

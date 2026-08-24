@@ -30,8 +30,8 @@ import { NEUTRAL_SLOT, subjectColour } from "@/lib/design/subject-colours";
  * ============================================================================
  * ⚠ BOTTOM-RIGHT IS ALREADY TAKEN, TWICE OVER — SO DESKTOP SITS BOTTOM-CENTRE
  * ============================================================================
- *   StickyCta      sm:bottom-6 sm:right-6, z-40 (homepage)
- *   AdminOverlay   bottom-5 right-5, z-[9999], mounted in the ROOT LAYOUT
+ *   StickyCta      sm:bottom-6 sm:end-6, z-40 (homepage)
+ *   AdminOverlay   bottom-5 end-5, z-[9999], mounted in the ROOT LAYOUT
  *
  * AdminOverlay returns null for non-admins, so it costs a visitor nothing — but
  * it is on every route for the one person most likely to be looking at this
@@ -362,7 +362,7 @@ export function TuitionCta({
             hitbox,
             "flex w-full items-center gap-3 border-t border-ink/10",
             "bg-parchment/95 px-4 py-2.5 backdrop-blur",
-            "sm:w-auto sm:rounded-full sm:border sm:py-2 sm:pl-5 sm:pr-2",
+            "sm:w-auto sm:rounded-full sm:border sm:py-2 sm:ps-5 sm:pe-2",
             "sm:shadow-[0_8px_28px_-12px_rgba(15,20,25,0.28)]",
             "motion-safe:transition-transform motion-safe:duration-300",
             shown ? "translate-y-0" : "translate-y-2",

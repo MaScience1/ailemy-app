@@ -50,7 +50,14 @@ function routes(dir: string, prefix: string[] = []): string[][] {
   return out;
 }
 
-const ROUTES = routes(APP);
+/**
+ * ⚠ [locale] IS TRANSPARENT FOR THE DEFAULT LOCALE. i18n phase 1 moved the
+ * homepage and /tuition under app/[locale]/; with localePrefix "as-needed"
+ * English carries no prefix, so those files still serve /  and /tuition. A
+ * resolver that counted [locale] as a segment would call every one of them
+ * missing and make a working move look like a breakage.
+ */
+const ROUTES = routes(APP).map((r) => (r[0] === "[locale]" ? r.slice(1) : r));
 t(`the router tree parsed — ${ROUTES.length} routes found`, ROUTES.length > 30, ROUTES.length);
 
 /**
