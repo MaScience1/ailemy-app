@@ -22,6 +22,12 @@ const TYPE_LABEL: Record<CalendarEvent["type"], string> = {
   group: "Group",
   private_open: "1-to-1",
   private_booked: "1-to-1",
+  /**
+   * ⚠ "Unavailable", NOT "Prayer". A block's reason is withheld from every
+   * viewer this reader serves (0045 column grant), so the chip can only say
+   * that the time is not open — which is the whole of what a student needs.
+   */
+  blocked: "Unavailable",
 };
 
 /**
@@ -30,6 +36,13 @@ const TYPE_LABEL: Record<CalendarEvent["type"], string> = {
  * greyscale.
  */
 export function TypeMarker({ type }: { type: CalendarEvent["type"] }) {
+  /**
+   * ⚠ A THIRD SHAPE, so blocked is separable from group and private without
+   * colour — a barred square rather than a bar or a ring (§22).
+   */
+  if (type === "blocked") {
+    return <span aria-hidden className="mt-[3px] h-2.5 w-2.5 shrink-0 rounded-[2px] border border-ink/35 bg-ink/10" />;
+  }
   if (type === "group") {
     return <span aria-hidden className="mt-[3px] h-2.5 w-1 shrink-0 rounded-full bg-ink/70" />;
   }

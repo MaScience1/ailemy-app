@@ -167,6 +167,14 @@ export function rangeFor(view: CalendarView, anchorISO: string): { from: string;
       const w = weekGrid(anchorISO);
       return { from: w[0].date, to: w[6].date };
     }
+    /**
+     * ⚠ ONE DAY, AND THE RANGE IS THAT DAY (§10). The day view exists for exact
+     * booking review and for a phone, where a seven-column grid has nothing to
+     * offer; fetching a week for it would be §60's unbounded-query problem in
+     * miniature.
+     */
+    case "day":
+      return { from: anchorISO, to: anchorISO };
     case "upcoming":
     default:
       // ⚠ BOUNDED. "Upcoming" is a rolling window, not "everything from now on";
@@ -177,8 +185,40 @@ export function rangeFor(view: CalendarView, anchorISO: string): { from: string;
 
 export const UPCOMING_DAYS = 60;
 
-export type CalendarView = "month" | "week" | "upcoming";
-export const VIEWS: CalendarView[] = ["month", "week", "upcoming"];
+/**
+ * ⚠ TWO NAMED ZONES, RESOLVED TO REAL IANA IDENTIFIERS. Never an offset, never
+ * a count of hours. Adding the viewer's own browser zone later is a third
+ * entry in this list and no arithmetic anywhere.
+ */
+export type CalendarZone = "doha" | "uk";
+export const ZONES: { id: CalendarZone; tz: string; label: string }[] = [
+  { id: "doha", tz: "Asia/Qatar", label: "Qatar time" },
+  { id: "uk", tz: "Europe/London", label: "UK time" },
+];
+export function zoneTz(z: CalendarZone): string {
+  return z === "uk" ? "Europe/London" : "Asia/Qatar";
+}
+export function isZone(v: unknown): v is CalendarZone {
+  return v === "doha" || v === "uk";
+}
+
+export type CalendarView = "month" | "week" | "day" | "upcoming";
+export const VIEWS: CalendarView[] = ["month", "week", "day", "upcoming"];
+
+/**
+ * ⚠ ONE DEFAULT, READ BY BOTH readState AND stateToQuery.
+ *
+ * §4 moves the default from month to week. That is a two-sided change and
+ * getting one side wrong is silent: readState defaulting to week while
+ * stateToQuery still omitted `view` for month meant a "Month" link serialised
+ * to a bare URL, which readState then parsed back as week. You would click
+ * Month and land on Week, with nothing in the address bar to explain it.
+ *
+ * A per-caller defaultView parameter reintroduces exactly that hazard the
+ * moment two surfaces disagree, so the parameter still exists but this is what
+ * it defaults to, and no caller in the app overrides it.
+ */
+export const DEFAULT_VIEW: CalendarView = "week";
 
 export function isView(v: unknown): v is CalendarView {
   return typeof v === "string" && (VIEWS as string[]).includes(v);
@@ -253,17 +293,25 @@ export type CalendarState = {
    * CHOOSING to see only what is actionable, never the page deciding for them.
    */
   availableOnly: boolean;
+  /**
+   * ⚠ WHICH CLOCK THE GRID IS DRAWN ON (§8), AND IT IS A ZONE CHOICE, NOT AN
+   * OFFSET. "uk" resolves to Europe/London, +0 in January and +1 in July;
+   * Asia/Qatar is +3 all year. So the gap between them is three hours for part
+   * of the year and two for the rest, and every position is recomputed per
+   * instant rather than shifted by a constant.
+   */
+  zone: CalendarZone;
 };
 
 export function readState(
-  params: { view?: string; date?: string; subject?: string; level?: string; type?: string; available?: string },
+  params: { view?: string; date?: string; subject?: string; level?: string; type?: string; available?: string; zone?: string },
   todayISO: string,
   /**
    * ⚠ THE DEFAULT VIEW IS A PARAMETER, NOT A CONSTANT (§58). A 7-column month
    * grid at 375px gives each day about 46px — legible, but not the view a
    * student wants first on a phone. The caller decides; this stays pure.
    */
-  defaultView: CalendarView = "month",
+  defaultView: CalendarView = DEFAULT_VIEW,
 ): CalendarState {
   const date = params.date && parseDate(params.date) ? params.date : todayISO;
   const type = params.type === "group" || params.type === "private" ? params.type : "all";
@@ -274,18 +322,21 @@ export function readState(
     level: params.level?.trim() || null,
     type,
     availableOnly: params.available === "1",
+    zone: isZone(params.zone) ? params.zone : "doha",
   };
 }
 
 /** Serialise state back to a query string, omitting defaults so URLs stay short. */
 export function stateToQuery(s: CalendarState, todayISO: string, base = "/calendar"): string {
   const p = new URLSearchParams();
-  if (s.view !== "month") p.set("view", s.view);
+  // ⚠ COMPARED TO DEFAULT_VIEW, not to a literal — see the constant.
+  if (s.view !== DEFAULT_VIEW) p.set("view", s.view);
   if (s.date !== todayISO) p.set("date", s.date);
   if (s.subject) p.set("subject", s.subject);
   if (s.level) p.set("level", s.level);
   if (s.type !== "all") p.set("type", s.type);
   if (s.availableOnly) p.set("available", "1");
+  if (s.zone !== "doha") p.set("zone", s.zone);
   const q = p.toString();
   if (!q) return base;
   /**
@@ -303,6 +354,7 @@ export function stateToQuery(s: CalendarState, todayISO: string, base = "/calend
 export function step(view: CalendarView, dateISO: string, direction: -1 | 1): string {
   if (view === "month") return addMonths(dateISO, direction);
   if (view === "week") return addDays(dateISO, 7 * direction);
+  if (view === "day") return addDays(dateISO, direction);
   return addDays(dateISO, UPCOMING_DAYS * direction);
 }
 
@@ -311,6 +363,9 @@ export function periodLabel(view: CalendarView, dateISO: string): string {
   const d = parseDate(dateISO);
   if (!d) return "";
   if (view === "month") return `${MONTH_LONG[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+  if (view === "day") {
+    return `${d.getUTCDate()} ${MONTH_LONG[d.getUTCMonth()].slice(0, 3)} ${d.getUTCFullYear()}`;
+  }
   if (view === "week") {
     const w = weekGrid(dateISO);
     const a = parseDate(w[0].date)!, b = parseDate(w[6].date)!;

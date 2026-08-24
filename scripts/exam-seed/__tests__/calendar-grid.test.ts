@@ -19,6 +19,8 @@ import {
   startOfMonth, endOfMonth, sameMonth, monthGrid, weekGrid, rangeFor,
   bucketByDay, cellEvents, readState, stateToQuery, step, periodLabel,
   isView, UPCOMING_DAYS,
+  DEFAULT_VIEW,
+  VIEWS,
 } from "../../../src/lib/calendar/grid.ts";
 import { zonedTimeToInstant, CANONICAL_TZ } from "../../../src/lib/schedule/timezone.ts";
 
@@ -181,13 +183,21 @@ console.log("\n── \"+N MORE\" NEVER SILENTLY DROPS A LESSON (§6) ──");
 console.log("\n── URL STATE FALLS BACK, NEVER THROWS ──");
 {
   const TODAY = "2026-09-15";
-  t("empty params default to month/today", (() => {
+  /**
+   * ⚠ ASSERTED AGAINST DEFAULT_VIEW, NOT AGAINST "month".
+   * These four restated the default as a literal, so §4 moving it from month to
+   * week turned four correct tests red at once while nothing was broken. The
+   * invariant was never "the default is month" — it is "an empty query yields
+   * THE default, today, and no filters".
+   */
+  t("empty params default to the default view, today, unfiltered", (() => {
     const s = readState({}, TODAY);
-    return s.view === "month" && s.date === TODAY && s.type === "all" && s.subject === null;
+    return s.view === DEFAULT_VIEW && s.date === TODAY && s.type === "all" && s.subject === null;
   })());
+  t("§4 — and that default is the week, the view you book from", DEFAULT_VIEW === "week");
   t("?date=banana falls back to today, not a 500", readState({ date: "banana" }, TODAY).date === TODAY);
   t("?date=2026-02-31 falls back too", readState({ date: "2026-02-31" }, TODAY).date === TODAY);
-  t("?view=galaxy falls back to month", readState({ view: "galaxy" }, TODAY).view === "month");
+  t("?view=galaxy falls back to the default", readState({ view: "galaxy" }, TODAY).view === DEFAULT_VIEW);
   t("a real view is kept", readState({ view: "week" }, TODAY).view === "week");
   t("?type=private is kept", readState({ type: "private" }, TODAY).type === "private");
   t("?type=nonsense falls back to all", readState({ type: "nonsense" }, TODAY).type === "all");
@@ -195,16 +205,23 @@ console.log("\n── URL STATE FALLS BACK, NEVER THROWS ──");
     readState({ subject: "   " }, TODAY).subject === null);
 
   t("defaults serialise to a bare path", stateToQuery(readState({}, TODAY), TODAY) === "/calendar");
-  const s = readState({ view: "week", date: "2026-10-01", subject: "chemistry", type: "group" }, TODAY);
+  /**
+   * ⚠ THE FIXTURE USED view:"week", WHICH IS NOW THE DEFAULT — so the one thing
+   * this test exists to check, that a non-default view is serialised, was about
+   * to stop being checked while the test stayed green. Derived from
+   * DEFAULT_VIEW so it cannot silently become a no-op again.
+   */
+  const nonDefaultView = VIEWS.find((v) => v !== DEFAULT_VIEW)!;
+  const s = readState({ view: nonDefaultView, date: "2026-10-01", subject: "chemistry", type: "group" }, TODAY);
   const q = stateToQuery(s, TODAY);
-  t("non-defaults all appear", q.includes("view=week") && q.includes("date=2026-10-01")
+  t("non-defaults all appear", q.includes(`view=${nonDefaultView}`) && q.includes("date=2026-10-01")
     && q.includes("subject=chemistry") && q.includes("type=group"), q);
   t("round-trips through readState", (() => {
     const back = readState(Object.fromEntries(new URLSearchParams(q.split("?")[1])), TODAY);
     return JSON.stringify(back) === JSON.stringify(s);
   })(), q);
   t("a different base path is honoured",
-    stateToQuery(readState({ view: "week" }, TODAY), TODAY, "/profile").startsWith("/profile?"));
+    stateToQuery(readState({ view: nonDefaultView, subject: "chemistry" }, TODAY), TODAY, "/profile").startsWith("/profile?"));
   t("isView guards", isView("month") && isView("week") && isView("upcoming") && !isView("year") && !isView(null));
 }
 

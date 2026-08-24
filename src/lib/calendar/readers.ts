@@ -3,6 +3,7 @@ import "server-only";
 import { loadCalendar } from "@/lib/schedule/readers";
 import { loadOpenSlots } from "@/lib/booking/readers";
 import { stripeConfig } from "@/lib/booking/config";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { CANONICAL_TZ } from "@/lib/schedule/timezone";
 
 import { matchesFilters, type CalendarEvent, type CalendarQuery, levelForYearGroup } from "./types.ts";
@@ -135,6 +136,46 @@ export async function loadCalendarEvents(q: CalendarQuery): Promise<CalendarLoad
     }
   }
 
+  // ── unavailability, as rows ───────────────────────────────────────────────
+  /**
+   * ⚠ BLOCKS ARE READ, NEVER DERIVED. §3 asks for prayer times to be CALCULATED
+   * from a location and a date. This does not do that, and the standing guard
+   * is that it must not: a computed prayer time is a claim the database cannot
+   * check, it drifts through the year, and on the days it is wrong it paints
+   * "unavailable" over a real bookable hour. Every block here — prayer,
+   * holiday, anything — is an availability_blocks row somebody entered.
+   *
+   * ⚠ AND `reason` IS NOT SELECTED IN PUBLIC MODE. 0045 grants anon SELECT on
+   * (id, teacher_id, starts_at, ends_at) only. Reading `reason` with the
+   * service role and rendering it publicly would route around a column grant
+   * that exists so a teacher's private business stays private. A public block
+   * says "Unavailable" and nothing else.
+   */
+  if (wantPrivate) {
+    /**
+     * ⚠ withReason IS FALSE ON EVERY PATH THROUGH THIS READER, and that is not
+     * an oversight. CalendarMode is "public" | "personal" — there is no staff
+     * mode here — and 0045 withholds `reason` from anon and authenticated by
+     * column grant. So no viewer this reader serves is entitled to it. The
+     * parameter stays because the boundary is worth naming at the call site;
+     * a staff surface that grows one later passes true and reads it legitimately.
+     */
+    const blocks = await loadBlocks({ from: q.from, to: q.to, withReason: false });
+    if (blocks.reason) refusals.push(`blocks: ${blocks.reason}`);
+    for (const b of blocks.rows) {
+      events.push({
+        key: `b:${b.id}`,
+        type: "blocked",
+        status: "scheduled",
+        startsAt: b.startsAt,
+        endsAt: b.endsAt,
+        title: b.reason ?? "Unavailable",
+        subject: null, qualification: null, yearGroup: null,
+        cohortSlug: null, teacherName: null, cancelledReason: null,
+      });
+    }
+  }
+
   // ⚠ FILTERED ONCE, AT THE END, BY A PURE FUNCTION. Level cannot be pushed
   // into loadCalendar (it has no level parameter) so doing it here keeps ONE
   // filter implementation rather than two that can disagree.
@@ -142,6 +183,52 @@ export async function loadCalendarEvents(q: CalendarQuery): Promise<CalendarLoad
   filtered.sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime() || a.key.localeCompare(b.key));
 
   return { events: filtered, fromDatabase, reason, refusals, payable };
+}
+
+/**
+ * availability_blocks in a window.
+ *
+ * ⚠ THE SELECT LIST IS THE PRIVACY BOUNDARY. withReason is true only for staff
+ * surfaces; everywhere else the column is not even requested, so there is no
+ * value in memory to leak into a payload by accident.
+ */
+async function loadBlocks(args: { from: string; to: string; withReason: boolean }): Promise<{
+  rows: { id: string; startsAt: Date; endsAt: Date; reason: string | null }[];
+  reason?: string;
+}> {
+  /**
+   * ⚠ createAdminClient() THROWS on missing env vars rather than returning
+   * null, so a `if (!db)` guard would never fire and an unconfigured
+   * environment would take the whole calendar down instead of degrading. The
+   * failure has to become a `reason` the page can surface — the same channel
+   * every other refusal on this reader uses.
+   */
+  let db: ReturnType<typeof createAdminClient>;
+  try {
+    db = createAdminClient();
+  } catch (err) {
+    return { rows: [], reason: err instanceof Error ? err.message : "admin client unavailable" };
+  }
+  const cols = args.withReason ? "id,starts_at,ends_at,reason" : "id,starts_at,ends_at";
+  const res = await db
+    .from("availability_blocks").select(cols)
+    .lt("starts_at", `${args.to}T23:59:59Z`)
+    .gt("ends_at", `${args.from}T00:00:00Z`);
+  if (res.error) return { rows: [], reason: `${res.error.code}: ${res.error.message}` };
+  const rows: { id: string; startsAt: Date; endsAt: Date; reason: string | null }[] = [];
+  for (const r of (res.data ?? []) as unknown as Record<string, unknown>[]) {
+    const id = r.id == null ? null : String(r.id);
+    const st = r.starts_at == null ? null : String(r.starts_at);
+    const en = r.ends_at == null ? null : String(r.ends_at);
+    // ⚠ A ROW WE CANNOT READ IS DROPPED, NEVER DEFAULTED — a block with a
+    // guessed time paints "unavailable" over a real, bookable hour.
+    if (!id || !st || !en) continue;
+    rows.push({
+      id, startsAt: new Date(st), endsAt: new Date(en),
+      reason: args.withReason && r.reason != null ? String(r.reason) : null,
+    });
+  }
+  return { rows };
 }
 
 function cap(s: string): string {
