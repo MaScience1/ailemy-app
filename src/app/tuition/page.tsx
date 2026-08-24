@@ -16,6 +16,7 @@ function isCommitment(v: string | undefined): v is Commitment {
 }
 import { offersCurrencyChoice } from "@/lib/public/currency";
 import { currentCurrency } from "@/lib/public/currency-server";
+import { loadPricing } from "@/lib/tuition/tuition-pricing";
 import { CohortPrice } from "@/components/public/CohortPrice";
 import { CurrencyToggle } from "@/components/public/CurrencyToggle";
 import { Calendar } from "@/components/calendar/Calendar";
@@ -70,6 +71,31 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
   const { data: cohorts, source: cohortSource, reason: cohortReason, refusals: cohortRefusals }
     = await loadCohorts();
   const { currency } = await currentCurrency();
+  /**
+   * ⚠ THE 1-to-1 PRICES COME FROM STRIPE, ON THE SERVER, ONCE PER RENDER — and
+   * behind Next's data cache, so a burst of traffic is one round trip rather
+   * than one per visitor (§4). The client receives formatted strings and minor
+   * units, never a Stripe object and never the key.
+   *
+   * ⚠ A FAILURE IS AN ABSENT PRICE, NOT A ZERO. loadPricing returns named
+   * failures; the card renders "Pricing unavailable" and the reason is logged
+   * server-side rather than shown to a customer (§19).
+   */
+  const [asPricing, gcsePricing] = await Promise.all([
+    loadPricing("as", "one_to_one"),
+    loadPricing("gcse", "one_to_one"),
+  ]);
+  for (const [label, load] of [["as", asPricing], ["gcse", gcsePricing]] as const) {
+    if (load.failures.length > 0) {
+      console.error("[tuition] 1-to-1 price resolution failed", label, load.failures);
+    }
+  }
+  const strip = (v: { formatted: Record<string, string | undefined>; amounts: Record<string, number | undefined> } | undefined) =>
+    v ? { formatted: v.formatted, amounts: v.amounts } : undefined;
+  const oneToOnePricing = {
+    as_a_level: { single: strip(asPricing.views.single), five_hour: strip(asPricing.views.five_hour) },
+    gcse: { single: strip(gcsePricing.views.single), five_hour: strip(gcsePricing.views.five_hour) },
+  };
   const viewerTz = await viewerTimeZone();
 
   /**
@@ -203,6 +229,7 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
             capacityBySlug={capacityBySlug}
             hrefForMode={(m) => qs({ mode: m })}
             hrefForCommitment={(c) => qs({ mode, commitment: c })}
+            oneToOnePricing={oneToOnePricing}
           />
         </div>
 

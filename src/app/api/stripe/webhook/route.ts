@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { stripeConfig } from "@/lib/booking/config";
+import { verifyStripeSignature } from "@/lib/tuition/stripe-signature";
+import { applyGrant, GRANTING_EVENTS, ACKNOWLEDGED_EVENTS } from "@/lib/tuition/webhook-grant";
 
 /**
  * The Stripe webhook endpoint (§27, §63).
@@ -62,18 +64,63 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing stripe-signature header." }, { status: 400 });
   }
 
-  // ⚠ NOT IMPLEMENTED, AND IT SAYS SO RATHER THAN PRETENDING.
-  // Returning 200 here would tell Stripe the payment was handled while nothing
-  // was recorded — a booking taken and lost. 501 is honest and, like 503, is
-  // retried, so the event survives until the handler exists.
-  console.error(
-    "[stripe] webhook handler not implemented; refusing to acknowledge an event we cannot process.",
-    { bytes: raw.length, hasSignature: true },
-  );
-  return NextResponse.json(
-    { error: "Webhook handler not implemented yet." },
-    { status: 501 },
-  );
+  const verified = verifyStripeSignature({
+    rawBody: raw,
+    header: signature,
+    secret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
+    nowSeconds: Math.floor(Date.now() / 1000),
+  });
+  if (!verified.ok) {
+    /**
+     * ⚠ 400, AND STRIPE MUST NOT RETRY THIS. A bad signature is not a transient
+     * fault — retrying it cannot make it valid. The reason is logged, never
+     * returned: telling a caller WHY their forgery failed is a hint.
+     */
+    console.error("[stripe] signature rejected", { reason: verified.reason });
+    return NextResponse.json({ error: "Invalid signature." }, { status: 400 });
+  }
+
+  let event: { id?: unknown; type?: unknown; data?: { object?: unknown } };
+  try {
+    event = JSON.parse(raw) as typeof event;
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
+  }
+  const eventId = typeof event.id === "string" ? event.id : null;
+  const eventType = typeof event.type === "string" ? event.type : null;
+  if (!eventId || !eventType) {
+    return NextResponse.json({ error: "Malformed event." }, { status: 400 });
+  }
+
+  if ((ACKNOWLEDGED_EVENTS as readonly string[]).includes(eventType)) {
+    // Acknowledged so Stripe stops retrying; logged so a human can see it.
+    console.info("[stripe] acknowledged", { eventId, eventType });
+    return NextResponse.json({ received: true, handled: false });
+  }
+  if (!(GRANTING_EVENTS as readonly string[]).includes(eventType)) {
+    return NextResponse.json({ received: true, handled: false });
+  }
+
+  const outcome = await applyGrant({
+    eventId, eventType,
+    session: (event.data?.object ?? {}) as Parameters<typeof applyGrant>[0]["session"],
+  });
+
+  if (outcome.status === "failed") {
+    /**
+     * ⚠ 500 SO STRIPE RETRIES. A payment was taken and the entitlement was not
+     * written; acknowledging that with a 200 loses it permanently.
+     */
+    console.error("[stripe] grant failed", { eventId, eventType, detail: outcome.detail });
+    return NextResponse.json({ error: "Grant failed." }, { status: 500 });
+  }
+  /**
+   * ⚠ already_granted IS A 200. It means the unique index refused a replay,
+   * which is the system working; returning an error would make Stripe retry a
+   * grant that has already happened.
+   */
+  console.info("[stripe] webhook handled", { eventId, eventType, status: outcome.status, detail: outcome.detail });
+  return NextResponse.json({ received: true, handled: true, status: outcome.status });
 }
 
 /**

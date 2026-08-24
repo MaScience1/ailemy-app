@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import {
   COMMITMENT_LABEL, DISCOUNTS, ONE_TO_ONE_LEVEL_LABEL,
-  billingNote, displayAmount, fromGbp, oneToOneQuote, quote, show,
+  displayAmount, quote,
   type Commitment, type OneToOneLevel,
 } from "@/lib/tuition/pricing";
 import { ONE_TO_ONE, subjectColour, subjectVars } from "@/lib/design/subject-colours";
@@ -71,13 +71,37 @@ function Segmented({ mode, hrefFor }: { mode: TuitionMode; hrefFor: (m: TuitionM
   );
 }
 
-/** §5, §6, §8 — level × package, compact, no wall of four cards. */
-function OneToOnePricing({ currency }: { currency: Currency }) {
+/**
+ * §5, §6, §8 — level × package, priced from Stripe.
+ *
+ * ⚠ THE FIGURES ARE NO LONGER COMPUTED HERE OR ANYWHERE ELSE IN THIS REPO.
+ * This rendered oneToOneQuote(), which multiplied a hardcoded QAR table by
+ * QAR_PER_GBP = 4.7 to produce a sterling figure Stripe would never charge —
+ * so the page and the checkout could disagree by construction. Both amounts
+ * now come off the SAME active Stripe Price that Checkout uses.
+ *
+ * ⚠ AND AN ABSENT PRICE RENDERS AN HONEST LINE, NOT A ZERO (§19). "0 QAR"
+ * against a real product is worse than saying the price could not be loaded.
+ */
+function OneToOnePricing({ currency, pricing }: { currency: Currency; pricing: OneToOnePricingProps }) {
+  const cur: "qar" | "gbp" = currency === "QAR" ? "qar" : "gbp";
   return (
     <div className="grid gap-6 sm:grid-cols-2">
       {(Object.keys(ONE_TO_ONE_LEVEL_LABEL) as OneToOneLevel[]).map((level) => {
-        const single = oneToOneQuote(level, 1);
-        const pack = oneToOneQuote(level, 5);
+        const forLevel = pricing[level];
+        const single = forLevel?.single?.formatted?.[cur] ?? null;
+        const pack = forLevel?.five_hour?.formatted?.[cur] ?? null;
+        const singleMinor = forLevel?.single?.amounts?.[cur] ?? null;
+        const packMinor = forLevel?.five_hour?.amounts?.[cur] ?? null;
+        /**
+         * ⚠ DERIVED FROM THE TWO STRIPE AMOUNTS, IN ONE CURRENCY. Five single
+         * lessons minus the package price — arithmetic within a currency, which
+         * is comparison, never across one, which would be FX. If either amount
+         * is missing, neither line is claimed.
+         */
+        const perHour = packMinor !== null ? fmtMoney(Math.round(packMinor / 5), cur) : null;
+        const saveMinor = singleMinor !== null && packMinor !== null ? singleMinor * 5 - packMinor : null;
+        const save = saveMinor !== null && saveMinor > 0 ? fmtMoney(saveMinor, cur) : null;
         return (
           <section key={level} style={subjectVars(ONE_TO_ONE)} aria-labelledby={`lvl-${level}`}>
             <h3 id={`lvl-${level}`} className="font-display text-lg font-medium tracking-tight">
@@ -88,30 +112,24 @@ function OneToOnePricing({ currency }: { currency: Currency }) {
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="text-sm text-ink/70">Single lesson</span>
                   <span className="font-display text-lg font-medium">
-                    {show(single.total, currency)}
+                    {single ?? <span className="text-sm font-normal text-ink/45">Pricing unavailable</span>}
                   </span>
                 </div>
                 <p className="font-mono mt-1 text-[10px] uppercase tracking-[0.16em] text-ink/45">
                   One hour
                 </p>
-                {billingNote(single.total, currency) && (
-                  <p className="mt-1 text-[11px] text-ink/50">{billingNote(single.total, currency)}</p>
-                )}
               </li>
               <li className="rounded-xl border border-[var(--subject-accent)] bg-[var(--subject-tint)] px-4 py-3">
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="text-sm text-ink/70">5-hour package</span>
                   <span className="font-display text-lg font-medium">
-                    {show(pack.total, currency)}
+                    {pack ?? <span className="text-sm font-normal text-ink/45">Pricing unavailable</span>}
                   </span>
                 </div>
-                {/* §5 — restrained, and the saving is computed, never typed. */}
-                <p className="font-mono mt-1 text-[10px] uppercase tracking-[0.16em] text-[var(--subject-text)]">
-                  {show(pack.perHour, currency)} per hour · saves{" "}
-                  {show(pack.saving, currency)}
-                </p>
-                {billingNote(pack.total, currency) && (
-                  <p className="mt-1 text-[11px] text-ink/50">{billingNote(pack.total, currency)}</p>
+                {perHour && (
+                  <p className="font-mono mt-1 text-[10px] uppercase tracking-[0.16em] text-[var(--subject-text)]">
+                    {perHour} per hour{save ? ` · save ${save}` : ""}
+                  </p>
                 )}
               </li>
             </ul>
@@ -220,9 +238,12 @@ function GroupProgramme({
               </>
             )}
           </p>
-          {billingNote(fromGbp(q.finalMinor), currency) && (
-            <p className="mt-1 text-[11px] text-ink/50">{billingNote(fromGbp(q.finalMinor), currency)}</p>
-          )}
+          {/* ⚠ THE "charged as £64" LINE IS GONE (§6). It existed because the
+              QAR figure was a CONVERSION of a sterling price, so the sterling
+              line was the only honest number on the card. Both currencies now
+              come off the same Stripe Price, so the selected currency simply IS
+              the price — and a second, different-looking amount underneath it
+              reads as a contradiction rather than as reassurance. */}
           <p className="mt-1 text-sm text-ink/65">
             {q.months === 1
               ? "per month"
@@ -281,8 +302,25 @@ function fmt(iso: string): string {
   return `${d} ${MONTHS[m - 1]} ${y}`;
 }
 
+export type OneToOnePricingProps = Partial<Record<OneToOneLevel, {
+  single?: { formatted: Partial<Record<"qar" | "gbp", string>>; amounts: Partial<Record<"qar" | "gbp", number>> };
+  five_hour?: { formatted: Partial<Record<"qar" | "gbp", string>>; amounts: Partial<Record<"qar" | "gbp", number>> };
+}>>;
+
+/** ⚠ Intl, and no rate — the same rule pricing-math.ts states, client-side. */
+function fmtMoney(minor: number, cur: "qar" | "gbp"): string {
+  if (cur === "qar") {
+    const whole = minor / 100;
+    return `${new Intl.NumberFormat("en-GB", {
+      maximumFractionDigits: Number.isInteger(whole) ? 0 : 2,
+    }).format(whole)} QAR`;
+  }
+  return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(minor / 100);
+}
+
 export function TuitionModes({
   mode, commitment, currency, cohorts, capacityBySlug, hrefForMode, hrefForCommitment,
+  oneToOnePricing = {},
 }: {
   mode: TuitionMode;
   commitment: Commitment;
@@ -291,6 +329,7 @@ export function TuitionModes({
   capacityBySlug: Map<string, Capacity>;
   hrefForMode: (m: TuitionMode) => string;
   hrefForCommitment: (c: Commitment) => string;
+  oneToOnePricing?: OneToOnePricingProps;
 }) {
   return (
     <div className="grid gap-8">
@@ -306,7 +345,7 @@ export function TuitionModes({
             are sitting — with the same resources, marking and practice the platform provides.
           </p>
           <div className="mt-6">
-            <OneToOnePricing currency={currency} />
+            <OneToOnePricing currency={currency} pricing={oneToOnePricing} />
           </div>
         </section>
       ) : (

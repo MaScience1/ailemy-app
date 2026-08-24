@@ -114,8 +114,23 @@ console.log("\n=== 1. ⚠ §2/§19/§44 — pricing is configuration, not code =
   }
   t("⚠ §44 — no component multiplies by a discount at all",
     !/DISCOUNTS\[[^\]]+\]\s*\*/.test(ui));
-  t("§44 — the components read quote()/oneToOneQuote() instead",
-    MODES.includes("quote(cohort.pricePence") && MODES.includes("oneToOneQuote(level"));
+  /**
+   * ⚠ THIS PINNED oneToOneQuote(), WHICH IS NOW THE WRONG ANSWER.
+   * The 1-to-1 prices come from Stripe: the component receives formatted
+   * strings and minor units resolved server-side from the same active Price
+   * that Checkout charges. Asserting it still calls the local quote helper
+   * would be asserting the defect back into place. The group card still reads
+   * quote() and that half is unchanged.
+   */
+  t("§44 — the group card still reads quote(), and does no arithmetic of its own",
+    MODES.includes("quote(cohort.pricePence"));
+  /**
+   * ⚠ code(MODES), NOT THE RAW FILE. The component's own docstring explains what
+   * oneToOneQuote() used to do, and a raw scan reads that explanation as the
+   * call it is warning about. Tenth time this trap has been laid in this repo.
+   */
+  t("⚠ §44 — and the 1-to-1 card no longer computes anything locally",
+    !/\boneToOneQuote\s*\(/.test(code(MODES)) && code(MODES).includes("pricing[level]"));
   t("§2 — there is exactly one pricing module",
     existsSync("src/lib/tuition/pricing.ts") && !existsSync("src/lib/tuition/prices.ts"));
 }
@@ -128,8 +143,31 @@ console.log("\n=== 2. ⚠ §3 — ONE currency rate, GBP is billing truth ===");
   t("⚠ §3 — and it is the only conversion factor in the module",
     (code(PRICING).match(/QAR_PER_GBP/g) ?? []).length <= 3,
     (code(PRICING).match(/QAR_PER_GBP/g) ?? []).length);
+  /**
+   * ⚠ `* 5` IS NO LONGER AN FX SIGNAL, AND KEEPING IT WOULD BE A FALSE POSITIVE.
+   * It was one when QAR was a converted label: a riyal figure is roughly five
+   * times a sterling one, so `* 5` in a component meant somebody had inlined
+   * the rate. The 1-to-1 card now legitimately computes `singleMinor * 5` —
+   * five single lessons, to compare against the five-hour package — which is
+   * same-currency arithmetic and is expressly allowed.
+   *
+   * What still must never appear is a RATE: a named conversion constant, or a
+   * fractional multiplier applied to an amount. Those are unambiguous.
+   */
   t("⚠ §3 — no component converts currency itself",
-    !/\*\s*4\.7|\*\s*5(\.0)?\b|QAR_PER_GBP/.test(code(MODES)));
+    !/QAR_PER_GBP|GBP_PER_QAR|EXCHANGE_RATE|FX_RATE/.test(code(MODES))
+      && !/[*/]\s*\d+\.\d+/.test(code(MODES)));
+  t("⚠ §3 — and the five-lesson comparison it DOES do stays in one currency",
+    /singleMinor \* 5 - packMinor/.test(code(MODES)));
+  /**
+   * ⚠ AND IT NO LONGER REACHES FOR THE CROSS-CURRENCY CONSTRUCTORS EITHER.
+   * fromGbp() built a QAR figure from a sterling one at a fixed 4.7; the
+   * component used it for the "charged as £X" line. Both are gone from the
+   * live path — the selected currency is now read straight off the Stripe
+   * Price, so there is nothing to convert.
+   */
+  t("⚠ §3 — and no component calls fromGbp()/fromQar()",
+    !/\bfrom(Gbp|Qar)\s*\(/.test(code(MODES)));
 
   /**
    * ⚠ THE TWO RATES THE BRIEF CARRIED, PINNED AS A FACT.
@@ -184,7 +222,17 @@ console.log("\n=== 2. ⚠ §3 — ONE currency rate, GBP is billing truth ===");
   t("§7 — and in GBP there is nothing to add", billingNote(fromGbp(25000), "GBP") === null);
   t("⚠ §7 — a GBP view shows no riyal figure at all",
     show(fromGbp(16900), "GBP") === "£169" && !show(fromGbp(16900), "GBP").includes("QAR"));
-  t("§7 — the components render it", MODES.includes("billingNote("));
+  /**
+   * ⚠ INVERTED, DELIBERATELY (§6). billingNote produced "charged as £64"
+   * beneath a QAR figure — necessary while QAR was a converted label on a
+   * sterling price, and a contradiction now that both amounts come off the
+   * same Stripe Price. The selected currency IS the price; a second,
+   * different-looking number under it reads as an error, not as reassurance.
+   */
+  t("⚠ §6 — the dual-currency 'charged as' line is gone from the components",
+    !MODES.includes("billingNote("));
+  t("§7 — and the helper itself still exists for the surfaces that have not moved",
+    /export function billingNote/.test(readFileSync("src/lib/tuition/pricing.ts", "utf8")));
 }
 
 // ============================================================================
