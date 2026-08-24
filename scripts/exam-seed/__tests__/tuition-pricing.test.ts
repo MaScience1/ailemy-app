@@ -17,9 +17,8 @@ import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import {
-  DISCOUNTS, QAR_PER_GBP, COMMITMENT_MONTHS,
-  billableMonths, monthsFor, quote, oneToOneQuote, displayAmount, billingNote,
-  fromGbp, fromQar, show, ONE_TO_ONE_QAR,
+  DISCOUNTS, COMMITMENT_MONTHS,
+  billableMonths, monthsFor, quote,
   type Commitment,
 } from "../../../src/lib/tuition/pricing.ts";
 import { availabilityFor } from "../../../src/lib/tuition/availability.ts";
@@ -32,6 +31,12 @@ const t = (n: string, c: boolean, got?: unknown) => {
 };
 
 const APP = "src/app";
+/** Recursive walk, so the anchor sweeps below cover whole directories. */
+const walkSrc = (dir: string): string[] =>
+  readdirSync(dir).flatMap((e) => {
+    const p = join(dir, e);
+    return statSync(p).isDirectory() ? walkSrc(p) : /\.tsx?$/.test(p) ? [p] : [];
+  });
 const MODES = readFileSync("src/components/tuition/TuitionModes.tsx", "utf8");
 const PAGE = readFileSync("src/app/tuition/page.tsx", "utf8");
 const PRICING = readFileSync("src/lib/tuition/pricing.ts", "utf8");
@@ -114,77 +119,128 @@ console.log("\n=== 1. ⚠ §2/§19/§44 — pricing is configuration, not code =
   }
   t("⚠ §44 — no component multiplies by a discount at all",
     !/DISCOUNTS\[[^\]]+\]\s*\*/.test(ui));
-  t("§44 — the components read quote()/oneToOneQuote() instead",
-    MODES.includes("quote(cohort.pricePence") && MODES.includes("oneToOneQuote(level"));
+  /**
+   * ⚠ THIS PINNED oneToOneQuote(), WHICH IS NOW THE WRONG ANSWER.
+   * The 1-to-1 prices come from Stripe: the component receives formatted
+   * strings and minor units resolved server-side from the same active Price
+   * that Checkout charges. Asserting it still calls the local quote helper
+   * would be asserting the defect back into place. The group card still reads
+   * quote() and that half is unchanged.
+   */
+  /**
+   * ⚠ THE GROUP CARD HAS MOVED TOO. It read quote(cohort.pricePence, …), which
+   * applied a local DISCOUNTS table to a sterling column and converted the
+   * result — three commercial decisions this repo does not own. It now reads
+   * the amounts the server resolved from Stripe, keyed by its own cohort slug.
+   */
+  t("⚠ §44 — the group card reads Stripe amounts, not quote()",
+    !/\bquote\s*\(cohort\.pricePence/.test(code(MODES))
+      && code(MODES).includes("pricing[c]?.amounts"));
+  t("⚠ §44 — and its tabs are no longer keyed on the discount table",
+    !/Object\.keys\(DISCOUNTS\)/.test(code(MODES)));
+  /**
+   * ⚠ code(MODES), NOT THE RAW FILE. The component's own docstring explains what
+   * oneToOneQuote() used to do, and a raw scan reads that explanation as the
+   * call it is warning about. Tenth time this trap has been laid in this repo.
+   */
+  t("⚠ §44 — and the 1-to-1 card no longer computes anything locally",
+    !/\boneToOneQuote\s*\(/.test(code(MODES)) && code(MODES).includes("pricing[level]"));
   t("§2 — there is exactly one pricing module",
     existsSync("src/lib/tuition/pricing.ts") && !existsSync("src/lib/tuition/prices.ts"));
 }
 
 // ============================================================================
-console.log("\n=== 2. ⚠ §3 — ONE currency rate, GBP is billing truth ===");
+// ============================================================================
+console.log("\n=== 2. ⚠ §3 — ONE PRICE, TWO CURRENCIES, AND NO RATE AT ALL ===");
 // ============================================================================
 {
-  t("§3 — a single exported rate exists", typeof QAR_PER_GBP === "number" && QAR_PER_GBP > 0);
-  t("⚠ §3 — and it is the only conversion factor in the module",
-    (code(PRICING).match(/QAR_PER_GBP/g) ?? []).length <= 3,
-    (code(PRICING).match(/QAR_PER_GBP/g) ?? []).length);
+  /**
+   * ==========================================================================
+   * ⚠ THIS SECTION USED TO ASSERT THE CONVERSION. IT NOW ASSERTS ITS ABSENCE.
+   * ==========================================================================
+   * Fifteen assertions here pinned QAR_PER_GBP = 4.7 and the figures it
+   * produced — £169 → 794 QAR, 300 QAR → £64, "charged as £266". Every one of
+   * them passed, and every one of them described a price Stripe would never
+   * charge: the rate was a constant in this repo, so the site drifted from the
+   * till by however much the real rate had moved.
+   *
+   * They are rewritten rather than deleted. The concern is unchanged — is the
+   * currency shown the currency billed — but the mechanism that answers it has
+   * moved from arithmetic to a lookup, so the assertions follow it. Deleting
+   * them would have dropped the only coverage of that question.
+   */
+  const legacy = code(PRICING);
+  t("⚠ §3 — pricing.ts exports no rate", !/export const QAR_PER_GBP/.test(legacy));
+  t("⚠ §3 — and no cross-currency constructors",
+    !/export function from(Gbp|Qar)/.test(legacy));
+  t("⚠ §3 — the Money type that carried both currencies is gone",
+    !/export type Money/.test(legacy));
+  t("⚠ §3 — and so are the dual-currency formatters it fed",
+    !/export function (show|displayAmount|billingNote)/.test(legacy));
+
+  /**
+   * ⚠ THE OLD ANCHOR TABLE IS GONE TOO. ONE_TO_ONE_QAR held 300/1250/250/1000
+   * as source constants — Stripe's numbers, restated here, with nothing to keep
+   * the two in step. A test asserting those constants was the codebase agreeing
+   * with itself.
+   */
+  t("⚠ §3 — the hardcoded 1-to-1 price table is gone", !/ONE_TO_ONE_QAR/.test(legacy));
+  t("⚠ §3 — and no tuition module reconstructs one",
+    walkSrc("src/lib/tuition").concat(walkSrc("src/components/tuition"))
+      .every((p) => !/\b(300|1250|250|1000)\s*[,:]\s*(?:\/\/)?\s*(?:QAR|riyal)/i.test(code(readFileSync(p, "utf8")))));
+
+  /**
+   * ⚠ AND THE OLD STERLING ANCHORS ARE NOT SOMEWHERE ELSE. £169/£149/£139 were
+   * the group monthly prices the site displayed; they must not survive as a
+   * literal in any tuition surface now that Stripe owns the amount.
+   */
+  const tuitionFiles = walkSrc("src/lib/tuition")
+    .concat(walkSrc("src/components/tuition"), walkSrc("src/app/api/tuition"));
+  const staleAnchors = tuitionFiles.filter((p) =>
+    /\b(16900|14900|13900|26600|21300|79400|65300)\b/.test(code(readFileSync(p, "utf8"))));
+  t("⚠ §3 — no old GBP or QAR anchor survives as a literal",
+    staleAnchors.length === 0, staleAnchors.join(", "));
+
+  /**
+   * ⚠ WHAT REPLACED IT, ASSERTED POSITIVELY. Both currencies are read off the
+   * currency_options of ONE Stripe Price — the same Price id the checkout route
+   * puts in its line item — so display and charge cannot diverge.
+   */
+  const catalogue = code(readFileSync("src/lib/tuition/stripe-catalogue.ts", "utf8"));
+  t("⚠ §3 — currencies come from the Price's own currency_options",
+    /currency_options/.test(catalogue));
+  t("⚠ §3 — including the decimal field Stripe uses for converted amounts",
+    /unit_amount_decimal/.test(catalogue));
+  const pricingLayer = code(readFileSync("src/lib/tuition/tuition-pricing.ts", "utf8"));
+  t("⚠ §3 — one resolve per package feeds every currency",
+    /options\.find\(\(o\) => o\.currency === cur\)/.test(pricingLayer));
+  const checkout = code(readFileSync("src/app/api/tuition/checkout/route.ts", "utf8"));
+  t("⚠ §3 — and Checkout charges that same resolved Price",
+    /"line_items\[0\]\[price\]": price\.id/.test(checkout));
+
+  /**
+   * ⚠ THE COMPONENT NO LONGER CONVERTS, AND NO LONGER PRINTS A SECOND AMOUNT.
+   * Kept from the original section, because these two were the assertions that
+   * actually protected the customer rather than describing the maths.
+   */
   t("⚠ §3 — no component converts currency itself",
-    !/\*\s*4\.7|\*\s*5(\.0)?\b|QAR_PER_GBP/.test(code(MODES)));
+    !/QAR_PER_GBP|GBP_PER_QAR|EXCHANGE_RATE|FX_RATE/.test(code(MODES))
+      && !/[*/]\s*\d+\.\d+/.test(code(MODES)));
+  t("⚠ §3 — and no component calls fromGbp()/fromQar()",
+    !/\bfrom(Gbp|Qar)\s*\(/.test(code(MODES)));
+  t("⚠ §6 — the dual-currency 'charged as' line is gone from the components",
+    !MODES.includes("billingNote("));
+  t("⚠ §6 — and from the roadmap page, which had its own copy",
+    !/billingNote\(/.test(code(readFileSync("src/app/tuition/[cohort]/roadmap/page.tsx", "utf8"))));
 
   /**
-   * ⚠ THE TWO RATES THE BRIEF CARRIED, PINNED AS A FACT.
-   * Group prices imply ~4.70; 1-to-1 prices imply exactly 5.00. Only one
-   * survives, and this records which figures move as a result so the shift is
-   * a decision on the record rather than a surprise in a screenshot.
+   * ⚠ THE PIECES THAT ARE NOT COMMERCIAL SURVIVED, and that is deliberate:
+   * monthsFor() derives a teaching window from a cohort's own dates. It is a
+   * fact about the programme, never a price, and the card still needs it to say
+   * "best value over 10 months".
    */
-  /**
-   * ⚠ TWO ANCHORS, ONE RATE — AND THE ANCHOR MUST SURVIVE DISPLAY.
-   * Group programmes are priced in sterling and quoted to Stripe in it, so QAR
-   * is derived. 1-to-1 is quoted to Doha families in riyals, so those figures
-   * are exact and sterling is derived. Deriving £64 from 300 QAR and then
-   * re-deriving QAR from £64 gives 301: the rounding is not reversible, which
-   * is the whole reason a price carries both sides rather than one.
-   */
-  t("§3 — group is GBP-anchored: £149 → 700 QAR", displayAmount(14900, "QAR") === "700 QAR");
-  t("§3 — £169 → 794 QAR", displayAmount(16900, "QAR") === "794 QAR", displayAmount(16900, "QAR"));
-  t("§3 — £139 → 653 QAR", displayAmount(13900, "QAR") === "653 QAR", displayAmount(13900, "QAR"));
-
-  const asHour = oneToOneQuote("as_a_level", 1), asPack = oneToOneQuote("as_a_level", 5);
-  const gcHour = oneToOneQuote("gcse", 1), gcPack = oneToOneQuote("gcse", 5);
-  t("⚠ §3 — 1-to-1 AS shows EXACTLY 300 QAR, the quoted figure",
-    show(asHour.total, "QAR") === "300 QAR", show(asHour.total, "QAR"));
-  t("§3 — …with sterling derived to £64", show(asHour.total, "GBP") === "£64", show(asHour.total, "GBP"));
-  t("⚠ §3 — the 5-hour package shows EXACTLY 1,250 QAR",
-    show(asPack.total, "QAR") === "1,250 QAR", show(asPack.total, "QAR"));
-  t("§3 — …derived to £266", show(asPack.total, "GBP") === "£266", show(asPack.total, "GBP"));
-  t("⚠ §3 — GCSE shows EXACTLY 250 QAR and 1,000 QAR",
-    show(gcHour.total, "QAR") === "250 QAR" && show(gcPack.total, "QAR") === "1,000 QAR");
-  t("§3 — …derived to £53 and £213",
-    show(gcHour.total, "GBP") === "£53" && show(gcPack.total, "GBP") === "£213");
-
-  // ⚠ THE ROUND-TRIP THAT WOULD HAVE BROKEN IT. £64 re-derived gives 301.
-  t("⚠ §3 — a QAR anchor is NOT re-derived through its rounded GBP",
-    show(fromGbp(6400), "QAR") === "301 QAR" && show(asHour.total, "QAR") === "300 QAR",
-    `${show(fromGbp(6400), "QAR")} vs ${show(asHour.total, "QAR")}`);
-
-  // Per-currency arithmetic: each side is the real figure in that currency.
-  t("§5 — the package's per-hour rate is 250 QAR", show(asPack.perHour, "QAR") === "250 QAR");
-  t("§5 — and its saving is 250 QAR", show(asPack.saving, "QAR") === "250 QAR");
-  t("§6 — GCSE's per-hour rate is 200 QAR", show(gcPack.perHour, "QAR") === "200 QAR");
-  t("§3 — the price list is four numbers, in riyals",
-    ONE_TO_ONE_QAR.as_a_level.hour === 300 && ONE_TO_ONE_QAR.as_a_level.fiveHour === 1250
-      && ONE_TO_ONE_QAR.gcse.hour === 250 && ONE_TO_ONE_QAR.gcse.fiveHour === 1000);
-  t("§3 — one rate still, applied once at creation",
-    show(fromQar(470), "GBP") === "£100" && show(fromGbp(10000), "QAR") === "470 QAR");
-
-  t("⚠ §7 — a QAR figure carries the charged sterling amount",
-    billingNote(fromQar(1250), "QAR") === "charged as £266", billingNote(fromQar(1250), "QAR"));
-  // ⚠ ONE-DIRECTIONAL. Sterling accompanies riyals; riyals never accompany
-  // sterling, because in GBP the headline IS the charged amount.
-  t("§7 — and in GBP there is nothing to add", billingNote(fromGbp(25000), "GBP") === null);
-  t("⚠ §7 — a GBP view shows no riyal figure at all",
-    show(fromGbp(16900), "GBP") === "£169" && !show(fromGbp(16900), "GBP").includes("QAR"));
-  t("§7 — the components render it", MODES.includes("billingNote("));
+  t("§3 — the teaching-window derivation is untouched",
+    typeof monthsFor === "function" && typeof billableMonths === "function");
 }
 
 // ============================================================================

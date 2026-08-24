@@ -1,10 +1,10 @@
 import Link from "next/link";
 
 import {
-  COMMITMENT_LABEL, DISCOUNTS, ONE_TO_ONE_LEVEL_LABEL,
-  billingNote, displayAmount, fromGbp, oneToOneQuote, quote, show,
+  COMMITMENT_LABEL, ONE_TO_ONE_LEVEL_LABEL, monthsFor,
   type Commitment, type OneToOneLevel,
 } from "@/lib/tuition/pricing";
+import { savingAgainst, cheapestFor } from "@/lib/tuition/pricing-math";
 import { ONE_TO_ONE, subjectColour, subjectVars } from "@/lib/design/subject-colours";
 import type { Currency } from "@/lib/public/currency";
 import type { Cohort } from "@/lib/public/catalogue";
@@ -71,13 +71,37 @@ function Segmented({ mode, hrefFor }: { mode: TuitionMode; hrefFor: (m: TuitionM
   );
 }
 
-/** §5, §6, §8 — level × package, compact, no wall of four cards. */
-function OneToOnePricing({ currency }: { currency: Currency }) {
+/**
+ * §5, §6, §8 — level × package, priced from Stripe.
+ *
+ * ⚠ THE FIGURES ARE NO LONGER COMPUTED HERE OR ANYWHERE ELSE IN THIS REPO.
+ * This rendered oneToOneQuote(), which multiplied a hardcoded QAR table by
+ * QAR_PER_GBP = 4.7 to produce a sterling figure Stripe would never charge —
+ * so the page and the checkout could disagree by construction. Both amounts
+ * now come off the SAME active Stripe Price that Checkout uses.
+ *
+ * ⚠ AND AN ABSENT PRICE RENDERS AN HONEST LINE, NOT A ZERO (§19). "0 QAR"
+ * against a real product is worse than saying the price could not be loaded.
+ */
+function OneToOnePricing({ currency, pricing }: { currency: Currency; pricing: OneToOnePricingProps }) {
+  const cur: "qar" | "gbp" = currency === "QAR" ? "qar" : "gbp";
   return (
     <div className="grid gap-6 sm:grid-cols-2">
       {(Object.keys(ONE_TO_ONE_LEVEL_LABEL) as OneToOneLevel[]).map((level) => {
-        const single = oneToOneQuote(level, 1);
-        const pack = oneToOneQuote(level, 5);
+        const forLevel = pricing[level];
+        const single = forLevel?.single?.formatted?.[cur] ?? null;
+        const pack = forLevel?.five_hour?.formatted?.[cur] ?? null;
+        const singleMinor = forLevel?.single?.amounts?.[cur] ?? null;
+        const packMinor = forLevel?.five_hour?.amounts?.[cur] ?? null;
+        /**
+         * ⚠ DERIVED FROM THE TWO STRIPE AMOUNTS, IN ONE CURRENCY. Five single
+         * lessons minus the package price — arithmetic within a currency, which
+         * is comparison, never across one, which would be FX. If either amount
+         * is missing, neither line is claimed.
+         */
+        const perHour = packMinor !== null ? fmtMoney(Math.round(packMinor / 5), cur) : null;
+        const saveMinor = singleMinor !== null && packMinor !== null ? singleMinor * 5 - packMinor : null;
+        const save = saveMinor !== null && saveMinor > 0 ? fmtMoney(saveMinor, cur) : null;
         return (
           <section key={level} style={subjectVars(ONE_TO_ONE)} aria-labelledby={`lvl-${level}`}>
             <h3 id={`lvl-${level}`} className="font-display text-lg font-medium tracking-tight">
@@ -88,30 +112,24 @@ function OneToOnePricing({ currency }: { currency: Currency }) {
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="text-sm text-ink/70">Single lesson</span>
                   <span className="font-display text-lg font-medium">
-                    {show(single.total, currency)}
+                    {single ?? <span className="text-sm font-normal text-ink/45">Pricing unavailable</span>}
                   </span>
                 </div>
                 <p className="font-mono mt-1 text-[10px] uppercase tracking-[0.16em] text-ink/45">
                   One hour
                 </p>
-                {billingNote(single.total, currency) && (
-                  <p className="mt-1 text-[11px] text-ink/50">{billingNote(single.total, currency)}</p>
-                )}
               </li>
               <li className="rounded-xl border border-[var(--subject-accent)] bg-[var(--subject-tint)] px-4 py-3">
                 <div className="flex items-baseline justify-between gap-3">
                   <span className="text-sm text-ink/70">5-hour package</span>
                   <span className="font-display text-lg font-medium">
-                    {show(pack.total, currency)}
+                    {pack ?? <span className="text-sm font-normal text-ink/45">Pricing unavailable</span>}
                   </span>
                 </div>
-                {/* §5 — restrained, and the saving is computed, never typed. */}
-                <p className="font-mono mt-1 text-[10px] uppercase tracking-[0.16em] text-[var(--subject-text)]">
-                  {show(pack.perHour, currency)} per hour · saves{" "}
-                  {show(pack.saving, currency)}
-                </p>
-                {billingNote(pack.total, currency) && (
-                  <p className="mt-1 text-[11px] text-ink/50">{billingNote(pack.total, currency)}</p>
+                {perHour && (
+                  <p className="font-mono mt-1 text-[10px] uppercase tracking-[0.16em] text-[var(--subject-text)]">
+                    {perHour} per hour{save ? ` · save ${save}` : ""}
+                  </p>
                 )}
               </li>
             </ul>
@@ -133,19 +151,77 @@ function OneToOnePricing({ currency }: { currency: Currency }) {
  * flips on its own the moment the link lands.
  */
 function GroupProgramme({
-  cohort, commitment, currency, capacity, hrefFor,
+  cohort, commitment, currency, capacity, pricing, hrefFor,
 }: {
   cohort: Cohort;
   commitment: Commitment;
   currency: Currency;
   capacity: Capacity | null;
+  pricing: Partial<Record<Commitment, PriceCell | undefined>>;
   hrefFor: (c: Commitment) => string;
 }) {
   // ⚠ THE COHORT'S OWN DATES, NOT A LOOKUP. See pricing.ts: the slug→window
   // map was a second copy of `cohorts.ends_on` and it had one entry, so two
   // live programmes said their dates were unpublished when the row held them.
   const window = { firstClassOn: cohort.firstClassOn, lastClassOn: cohort.lastClassOn };
-  const q = quote(cohort.pricePence, commitment, window);
+  /**
+   * ⚠ THE MONTHS ARE THE COHORT'S OWN, THE MONEY IS STRIPE'S.
+   * monthsFor() reads the teaching window off the row — that is a fact about
+   * this programme and stays. quote() is gone: it applied a local DISCOUNTS
+   * table to a sterling column and converted at a fixed 4.7, which is three
+   * commercial decisions this repo does not own.
+   */
+  const months = monthsFor("academic_year", window);
+  const cur: "qar" | "gbp" = currency === "QAR" ? "qar" : "gbp";
+  const amount = (c: Commitment) => pricing[c]?.amounts?.[cur] ?? null;
+  const shown = (c: Commitment) => pricing[c]?.formatted?.[cur] ?? null;
+
+  const monthlyMinor = amount("monthly");
+  const selectedMinor = amount(commitment);
+  const selectedText = shown(commitment);
+
+  /**
+   * ⚠ THE SAVING IS DERIVED FROM TWO STRIPE AMOUNTS IN ONE CURRENCY, and is
+   * null when the arithmetic does not support one. The old card rendered a
+   * hardcoded −5% / −10% chip beside every tab whether or not the prices
+   * agreed with it.
+   */
+  const normalMinor = monthlyMinor !== null && commitment !== "monthly"
+    ? monthlyMinor * (commitment === "three_month" ? 3 : months)
+    : null;
+  const saving = normalMinor !== null && selectedMinor !== null
+    ? savingAgainst(normalMinor, selectedMinor) : null;
+
+  /**
+   * ⚠ THE BADGE MUST EARN ITSELF (§8 of the guards). On this catalogue three
+   * 3-month AS packages cover nine months for 6,900 QAR against 7,000 for the
+   * academic year — so at nine months the academic year is NOT best value and
+   * gets no badge. cheapestFor() decides; nothing here assumes.
+   */
+  const best = cheapestFor(months, {
+    monthly: monthlyMinor ?? undefined,
+    three_month: amount("three_month") ?? undefined,
+    academic_year: amount("academic_year") ?? undefined,
+  });
+
+  /**
+   * ⚠ COMPUTED PER TAB, FROM THE RETRIEVED AMOUNTS. Returns null — no chip —
+   * whenever the arithmetic does not support a claim.
+   */
+  const tabHint = (c: Commitment): string | null => {
+    if (best === c) return "Best value";
+    if (c === "monthly" || monthlyMinor === null) return null;
+    const pay = amount(c);
+    if (pay === null) return null;
+    const normal = monthlyMinor * (c === "three_month" ? 3 : months);
+    const sv = savingAgainst(normal, pay);
+    return sv ? `~${Math.round(sv.pct)}% saving` : null;
+  };
+
+  const perMonthMinor = commitment === "monthly" ? monthlyMinor
+    : selectedMinor !== null
+      ? Math.round(selectedMinor / (commitment === "three_month" ? 3 : Math.max(1, months)))
+      : null;
   const canReserve = cohort.status === "enrolling" && !!cohort.enrolmentUrl;
   const colour = subjectColour(cohort.subject);
 
@@ -174,9 +250,12 @@ function GroupProgramme({
 
       {/* ── §15/§40 — one segmented selector, one price panel ─────────────── */}
       <div className="mt-5 flex flex-wrap gap-1.5">
-        {(Object.keys(DISCOUNTS) as Commitment[]).map((c) => {
+        {/* ⚠ THE TABS COME FROM COMMITMENT_LABEL, NOT FROM DISCOUNTS. The tab
+            list was keyed on the discount table, so the set of things you could
+            buy was defined by a local percentage map — remove a discount and a
+            purchase option silently disappeared. */}
+        {(Object.keys(COMMITMENT_LABEL) as Commitment[]).map((c) => {
           const on = c === commitment;
-          const off = DISCOUNTS[c];
           return (
             <Link
               key={c}
@@ -192,42 +271,63 @@ function GroupProgramme({
               }`}
             >
               {COMMITMENT_LABEL[c]}
-              {off > 0 && (
-                /* §21 — the number, stated plainly. No "HUGE SALE". */
-                <span className={`font-mono text-[10px] ${on ? "text-parchment/70" : "text-ink/45"}`}>
-                  −{Math.round(off * 100)}%
-                </span>
-              )}
+              {/**
+                * ⚠ THE HINT IS DERIVED, AND OFTEN THERE ISN'T ONE.
+                * This rendered −{DISCOUNTS[c] * 100}% from a local table, so the
+                * chip kept claiming a percentage after the Stripe amount moved.
+                * The saving is now computed from the two retrieved amounts, and
+                * "Best value" appears only on whichever option cheapestFor()
+                * actually finds cheapest over this cohort's own teaching window.
+                */}
+              {(() => {
+                const hint = tabHint(c);
+                if (!hint) return null;
+                return (
+                  <span className={`font-mono text-[10px] ${on ? "text-parchment/70" : "text-ink/45"}`}>
+                    {hint}
+                  </span>
+                );
+              })()}
             </Link>
           );
         })}
       </div>
 
-      {q ? (
+      {selectedText ? (
         <div className="mt-4">
           <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <span className="font-display text-3xl font-medium tracking-tight">
-              {displayAmount(q.finalMinor, currency)}
+              {selectedText}
             </span>
-            {q.savingMinor > 0 && (
+            {saving && normalMinor !== null && (
               <>
                 <span className="text-sm text-ink/45 line-through">
-                  {displayAmount(q.baseMinor, currency)}
+                  {fmtMoney(normalMinor, cur)}
                 </span>
                 <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--subject-text)]">
-                  Save {displayAmount(q.savingMinor, currency)}
+                  Save {fmtMoney(saving.saveMinor, cur)}
                 </span>
               </>
             )}
           </p>
-          {billingNote(fromGbp(q.finalMinor), currency) && (
-            <p className="mt-1 text-[11px] text-ink/50">{billingNote(fromGbp(q.finalMinor), currency)}</p>
-          )}
+          {/* ⚠ THE "charged as £64" LINE IS GONE (§6). It existed because the
+              QAR figure was a CONVERSION of a sterling price, so the sterling
+              line was the only honest number on the card. Both currencies now
+              come off the same Stripe Price, so the selected currency simply IS
+              the price — and a second, different-looking amount underneath it
+              reads as a contradiction rather than as reassurance. */}
           <p className="mt-1 text-sm text-ink/65">
-            {q.months === 1
+            {commitment === "monthly"
               ? "per month"
-              : `${displayAmount(q.perMonthMinor, currency)} a month · ${q.months} months`}
+              : perMonthMinor !== null
+                ? `${fmtMoney(perMonthMinor, cur)} a month · ${commitment === "three_month" ? 3 : months} months`
+                : `${commitment === "three_month" ? 3 : months} months upfront`}
           </p>
+          {best === commitment && (
+            <p className="font-mono mt-1 text-[10px] uppercase tracking-[0.16em] text-[var(--subject-text)]">
+              Best value over {months} months
+            </p>
+          )}
           {/* §18/§47 — the real dates, never "12 months". */}
           {commitment === "academic_year" && window.firstClassOn && window.lastClassOn && (
             <p className="mt-1 text-xs text-ink/55">
@@ -236,11 +336,21 @@ function GroupProgramme({
           )}
         </div>
       ) : (
-        /* ⚠ NO WINDOW, NO PRICE. See monthsFor(): pricing a year-long
-           commitment against an undefined programme would be a guess. */
-        <p className="mt-4 text-sm text-ink/65">
-          The academic programme dates for this cohort are not published yet.
-        </p>
+        /**
+         * ⚠ TWO DIFFERENT SILENCES, SAID DIFFERENTLY (§19). "Dates not
+         * published" is a fact about the cohort row; "pricing unavailable" is a
+         * fact about a failed Stripe read. Collapsing them sends somebody to
+         * check the wrong thing — and neither branch ever renders a 0.
+         */
+        !window.firstClassOn || !window.lastClassOn ? (
+          <p className="mt-4 text-sm text-ink/65">
+            The academic programme dates for this cohort are not published yet.
+          </p>
+        ) : (
+          <p className="mt-4 text-sm text-ink/65">
+            Pricing temporarily unavailable — please try again shortly.
+          </p>
+        )
       )}
 
       <div className="mt-5 flex flex-wrap items-center gap-2.5">
@@ -281,8 +391,35 @@ function fmt(iso: string): string {
   return `${d} ${MONTHS[m - 1]} ${y}`;
 }
 
+/** One package's amounts, as the server resolved them from Stripe. */
+export type PriceCell = {
+  formatted: Partial<Record<"qar" | "gbp", string>>;
+  amounts: Partial<Record<"qar" | "gbp", number>>;
+};
+
+/** Keyed by cohort slug — the card looks up its own prices and no one else's. */
+export type GroupPricingProps = Record<string, Partial<Record<Commitment, PriceCell | undefined>>>;
+
+export type OneToOnePricingProps = Partial<Record<OneToOneLevel, {
+  single?: { formatted: Partial<Record<"qar" | "gbp", string>>; amounts: Partial<Record<"qar" | "gbp", number>> };
+  five_hour?: { formatted: Partial<Record<"qar" | "gbp", string>>; amounts: Partial<Record<"qar" | "gbp", number>> };
+}>>;
+
+/** ⚠ Intl, and no rate — the same rule pricing-math.ts states, client-side. */
+function fmtMoney(minor: number, cur: "qar" | "gbp"): string {
+  if (cur === "qar") {
+    const whole = minor / 100;
+    return `${new Intl.NumberFormat("en-GB", {
+      maximumFractionDigits: Number.isInteger(whole) ? 0 : 2,
+    }).format(whole)} QAR`;
+  }
+  return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(minor / 100);
+}
+
 export function TuitionModes({
   mode, commitment, currency, cohorts, capacityBySlug, hrefForMode, hrefForCommitment,
+  oneToOnePricing = {},
+  groupPricing = {},
 }: {
   mode: TuitionMode;
   commitment: Commitment;
@@ -291,6 +428,8 @@ export function TuitionModes({
   capacityBySlug: Map<string, Capacity>;
   hrefForMode: (m: TuitionMode) => string;
   hrefForCommitment: (c: Commitment) => string;
+  oneToOnePricing?: OneToOnePricingProps;
+  groupPricing?: GroupPricingProps;
 }) {
   return (
     <div className="grid gap-8">
@@ -306,7 +445,7 @@ export function TuitionModes({
             are sitting — with the same resources, marking and practice the platform provides.
           </p>
           <div className="mt-6">
-            <OneToOnePricing currency={currency} />
+            <OneToOnePricing currency={currency} pricing={oneToOnePricing} />
           </div>
         </section>
       ) : (
@@ -326,6 +465,7 @@ export function TuitionModes({
                 commitment={commitment}
                 currency={currency}
                 capacity={capacityBySlug.get(c.slug) ?? null}
+                pricing={groupPricing[c.slug] ?? {}}
                 hrefFor={hrefForCommitment}
               />
             ))}

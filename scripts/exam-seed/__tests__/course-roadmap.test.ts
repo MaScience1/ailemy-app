@@ -151,7 +151,17 @@ console.log("\n=== 2. ⚠ §3 — no invented calendar data ===");
 console.log("\n=== 3. ⚠ §5/§22 — price, CTA and capacity are derived ===");
 // ============================================================================
 {
-  t("§21 — the price comes from the pricing service", /displayAmount\(cohort\.pricePence/.test(PAGE));
+  /**
+   * ⚠ THE SERVICE CHANGED, SO THE ASSERTION FOLLOWS IT. This pinned
+   * displayAmount(cohort.pricePence), which read a sterling column and
+   * converted it at a fixed 4.7 — so the roadmap could quote a different figure
+   * from the card that linked to it. The price now comes from the same active
+   * Stripe Price the tuition card shows and Checkout charges.
+   */
+  t("§21 — the price comes from the Stripe pricing layer",
+    /loadPricing\(course, "group"\)/.test(PAGE) && /views\.monthly\?\.formatted/.test(PAGE));
+  t("⚠ §21 — and the course is derived from the cohort's qualification, not its slug",
+    /courseForQualification\(cohort\.qualification\)/.test(PAGE));
   t("⚠ §5 — the CTA label is derived, not typed",
     /canReserve \? "Reserve your place" : "Register interest"/.test(PAGE));
   t("⚠ §5 — from availabilityFor, the same AND every other surface uses",
@@ -255,7 +265,13 @@ console.log("\n=== 7. ⚠ §7 of the header — nothing was broken ===");
   t("§7 — no URL moved, so nothing was owed a redirect",
     !/redirect\(|permanentRedirect/.test(code(PAGE) + code(MODES)));
   t("preserved — the commitment selector still renders", /COMMITMENT_LABEL\[c\]/.test(MODES));
-  t("preserved — pricing still comes from quote()", /quote\(cohort\.pricePence/.test(MODES));
+  /**
+   * ⚠ SAME MOVE ON THE CARD. quote(cohort.pricePence, …) applied a local
+   * discount table to a converted column; the card now renders the Stripe
+   * amounts the server resolved for its own cohort slug.
+   */
+  t("preserved — pricing still comes from the pricing layer, now Stripe's",
+    !/quote\(cohort\.pricePence/.test(MODES) && /pricing\[c\]\?\.amounts/.test(MODES));
   t("§1 — every cohort card links to its roadmap",
     /href=\{`\/tuition\/\$\{cohort\.slug\}\/roadmap`\}/.test(MODES));
   t("⚠ §1 — the roadmap CTA is secondary, not a second filled button",

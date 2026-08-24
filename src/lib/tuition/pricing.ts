@@ -39,15 +39,6 @@
 
 // ── the configuration. everything else in this file is derived from it. ─────
 
-/**
- * GBP → QAR. GBP is what Stripe charges; QAR is a label a Doha parent can read.
- *
- * ⚠ NOT A LIVE RATE, AND DELIBERATELY NOT. There is no rate API in this system
- * and a price that moves with the market would change under a reader mid-visit.
- * QAR is pegged to USD, so this is stable in practice; it is reviewed by hand.
- */
-export const QAR_PER_GBP = 4.7;
-
 /** §19 — the one place a commitment discount is defined. */
 export const DISCOUNTS = {
   monthly: 0,
@@ -167,53 +158,6 @@ export function quote(monthlyMinor: number, commitment: Commitment, window: Teac
   };
 }
 
-// ── money: two anchors, one rate ────────────────────────────────────────────
-
-/**
- * An amount, carried in both currencies.
- *
- * ============================================================================
- * ⚠ WHICH SIDE IS THE ANCHOR IS A COMMERCIAL DECISION, NOT A TECHNICAL ONE
- * ============================================================================
- * Group programmes are priced in sterling — £169/£149/£139 are what Stripe
- * charges and what has been published — so QAR is derived from them.
- * 1-to-1 is priced in riyals: 300 and 250 an hour are the figures quoted to
- * families in Doha, so those are exact and the sterling is derived.
- *
- * ⚠ AND THE ANCHOR MUST SURVIVE DISPLAY, WHICH IS WHY THIS TYPE EXISTS.
- * Deriving £64 from 300 QAR and then re-deriving QAR from £64 gives 301 — the
- * rounding is not reversible. Storing both sides means each currency shows the
- * number that was actually decided, and neither is a round trip through the
- * other. There is still exactly ONE rate (§3); it is applied once, at the
- * moment the amount is created.
- */
-export type Money = { gbpMinor: number; qarMinor: number };
-
-/** GBP is the decided figure; QAR is a label on it. Whole riyals. */
-export function fromGbp(gbpMinor: number): Money {
-  return { gbpMinor, qarMinor: Math.round((gbpMinor / 100) * QAR_PER_GBP) * 100 };
-}
-
-/**
- * QAR is the decided figure; sterling is derived. Whole pounds.
- *
- * ⚠ ROUNDED TO WHOLE POUNDS, matching the rule QAR already follows — a price
- * list reading £63.83 an hour would be an artefact of arithmetic rather than a
- * price anybody chose. 300 → £64, 250 → £53.
- */
-export function fromQar(qarWhole: number): Money {
-  return { qarMinor: qarWhole * 100, gbpMinor: Math.round(qarWhole / QAR_PER_GBP) * 100 };
-}
-
-export const scale = (m: Money, n: number): Money => ({
-  gbpMinor: m.gbpMinor * n, qarMinor: m.qarMinor * n,
-});
-export const minus = (a: Money, b: Money): Money => ({
-  gbpMinor: a.gbpMinor - b.gbpMinor, qarMinor: a.qarMinor - b.qarMinor,
-});
-export const divide = (m: Money, n: number): Money => ({
-  gbpMinor: Math.round(m.gbpMinor / n), qarMinor: Math.round(m.qarMinor / n),
-});
 
 // ── 1-to-1 (§5, §6, §8 of the tuition brief) ────────────────────────────────
 
@@ -224,82 +168,26 @@ export const ONE_TO_ONE_LEVEL_LABEL: Record<OneToOneLevel, string> = {
   gcse: "GCSE / International GCSE",
 };
 
-/**
- * 1-to-1 prices, anchored in RIYALS because that is how they are quoted.
- *
- * ⚠ THESE FOUR NUMBERS ARE THE PRICE LIST. Everything else about 1-to-1 —
- * the per-hour rate, the saving, the sterling equivalent — is computed from
- * them. Changing a price is changing one of these.
- *
- * Derived sterling at 4.70: 300→£64, 250→£53, 1250→£266, 1000→£213.
- */
-export const ONE_TO_ONE_QAR: Record<OneToOneLevel, { hour: number; fiveHour: number }> = {
-  as_a_level: { hour: 300, fiveHour: 1250 },
-  gcse: { hour: 250, fiveHour: 1000 },
-};
-
-export type PackQuote = {
-  level: OneToOneLevel;
-  hours: number;
-  total: Money;
-  perHour: Money;
-  /** Against buying the same hours singly. Zero for a single lesson. */
-  saving: Money;
-};
-
-export function oneToOneQuote(level: OneToOneLevel, hours: 1 | 5): PackQuote {
-  const p = ONE_TO_ONE_QAR[level];
-  const hour = fromQar(p.hour);
-  const total = hours === 1 ? hour : fromQar(p.fiveHour);
-  return {
-    level,
-    hours,
-    total,
-    perHour: divide(total, hours),
-    // ⚠ COMPUTED PER CURRENCY, so each side is the saving in that currency:
-    // 250 QAR and £54, not one converted into the other.
-    saving: hours === 1 ? { gbpMinor: 0, qarMinor: 0 } : minus(scale(hour, hours), total),
-  };
-}
-
 // ── display ─────────────────────────────────────────────────────────────────
 
 /**
- * GBP minor units → the figure to show, in the viewer's currency.
+ * ============================================================================
+ * ⚠ THE CURRENCY CONVERSION THAT USED TO LIVE HERE HAS BEEN REMOVED.
+ * ============================================================================
+ * This module held `QAR_PER_GBP = 4.7` and a Money type carrying both
+ * currencies, built by fromGbp()/fromQar(). Every tuition figure on the site
+ * was one currency computed from the other at that fixed rate — so the page
+ * quoted an amount Stripe would never charge, and the discrepancy grew with
+ * every real-world rate movement while the constant sat still.
  *
- * ⚠ QAR IS ROUNDED TO WHOLE RIYALS. Showing 794.30 QAR implies a precision the
- * conversion does not have — it is a label on a sterling price, not a second
- * price. GBP keeps its pence because that is the amount actually charged.
+ * Both currencies now come from the SAME active Stripe Price that Checkout
+ * charges, read through src/lib/tuition/stripe-catalogue.ts. There is no rate
+ * anywhere in the tuition layer, and stripe-tuition.test.ts fails if one
+ * appears.
+ *
+ * ⚠ WHAT REMAINS HERE IS NOT COMMERCIAL. monthsFor()/billableMonths() derive a
+ * teaching window from a cohort's own dates — a fact about the programme, not
+ * a price — and the labels are copy. DISCOUNTS and quote() survive because
+ * ~15 assertions cover their arithmetic and deleting tested code to tidy up is
+ * how coverage quietly falls; they are no longer read by any rendering path.
  */
-export function show(m: Money, currency: "GBP" | "QAR"): string {
-  if (currency === "QAR") {
-    return `${Math.round(m.qarMinor / 100).toLocaleString("en-GB")} QAR`;
-  }
-  const pounds = m.gbpMinor / 100;
-  return pounds % 1 === 0
-    ? `£${pounds.toLocaleString("en-GB")}`
-    : `£${pounds.toLocaleString("en-GB", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
-/** Convenience for the GBP-anchored group prices. */
-export function displayAmount(gbpMinor: number, currency: "GBP" | "QAR"): string {
-  return show(fromGbp(gbpMinor), currency);
-}
-
-/**
- * The sterling amount, when the reader is being shown riyals.
- *
- * ⚠ THIS EXISTS BECAUSE GBP IS WHAT STRIPE CHARGES (§7). currency.ts states
- * the rule already — "whenever QAR is shown, the sterling price is too" — and
- * dropping it would let a parent read 1,250 QAR, be charged £266, and find the
- * two do not match at their bank's rate. The QAR figure is a label; this is
- * the price.
- *
- * ⚠ AND IT RETURNS NULL IN GBP, DELIBERATELY. When sterling is the headline it
- * is already the charged amount, so a second line would either repeat it or
- * introduce a riyal figure nobody is paying. The rule is one-directional:
- * sterling accompanies riyals, never the other way round.
- */
-export function billingNote(m: Money, currency: "GBP" | "QAR"): string | null {
-  return currency === "QAR" ? `charged as ${show(m, "GBP")}` : null;
-}
