@@ -64,3 +64,30 @@ export type PriceView = {
 export type EntitlementGrant =
   | { kind: "one_to_one_credits"; level: "as_a_level" | "gcse"; credits: number }
   | { kind: "group_enrolment"; course: Course; term: "monthly" | "three_month" | "academic_year" };
+
+/**
+ * Which Stripe course a cohort belongs to.
+ *
+ * ⚠ KEYED ON `qualification`, NOT ON THE SLUG. The slugs carry an intake date —
+ * ial-chemistry-as-sep-2026 — so a slug map silently unmaps the September 2027
+ * cohort and the card renders "Pricing unavailable" for a live programme. The
+ * qualification column is the taxonomy the catalogue already uses
+ * (ial-as, ial-a2, gcse-y11, gcse-y10) and does not move between intakes.
+ *
+ * ⚠ AND IT REFUSES RATHER THAN GUESSING. An unrecognised qualification returns
+ * null and the card says it cannot price itself. Falling back to "as" would
+ * put AS prices on a Year 10 card and look entirely deliberate.
+ */
+export function courseForQualification(qualification: string | null | undefined): Course | null {
+  switch ((qualification ?? "").trim().toLowerCase()) {
+    case "ial-as":
+    case "ial-a2":
+      return "as";
+    case "gcse-y11":
+      return "year11";
+    case "gcse-y10":
+      return "year10";
+    default:
+      return null;
+  }
+}

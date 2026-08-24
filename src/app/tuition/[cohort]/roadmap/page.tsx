@@ -12,7 +12,8 @@ import { calendarDate, CANONICAL_TZ } from "@/lib/schedule/timezone";
 import { loadCourseRoadmap } from "@/lib/roadmap/reader";
 import { daysUntil } from "@/lib/roadmap/model";
 import { RoadmapPhases } from "@/components/roadmap/RoadmapPhases";
-import { displayAmount, billingNote, fromGbp } from "@/lib/tuition/pricing";
+import { loadPricing } from "@/lib/tuition/tuition-pricing";
+import { courseForQualification } from "@/lib/tuition/tuition-types";
 import { availabilityFor } from "@/lib/tuition/availability";
 import { subjectColour, subjectVars } from "@/lib/design/subject-colours";
 
@@ -65,6 +66,19 @@ export default async function RoadmapPage({ params }: { params: Params }) {
     loadCapacity(cohort.slug, cohort.seatCap),
     currentCurrency(),
   ]);
+
+  /**
+   * ⚠ THE MONTHLY PRICE COMES FROM STRIPE, resolved server-side from the same
+   * active Price the tuition card renders and Checkout charges. The course is
+   * derived from the cohort's `qualification` column — never its slug, which
+   * carries an intake date and would unmap the next cohort.
+   */
+  const course = courseForQualification(cohort.qualification);
+  const groupPricing = course ? await loadPricing(course, "group") : null;
+  if (groupPricing?.failures.length) {
+    console.error("[roadmap] group price resolution failed", cohort.slug, groupPricing.failures);
+  }
+  const monthlyPrice = groupPricing?.views.monthly?.formatted?.[currency === "QAR" ? "qar" : "gbp"] ?? null;
 
   const colour = subjectColour(cohort.subject);
   // §21/§5 — price from the service, label from availability. Never typed.
@@ -174,14 +188,14 @@ export default async function RoadmapPage({ params }: { params: Params }) {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <p className="font-display text-xl font-medium tracking-tight">
-                {displayAmount(cohort.pricePence, currency)}{" "}
+                {monthlyPrice ?? <span className="text-base font-normal text-ink/50">Pricing unavailable</span>}{" "}
                 <span className="text-sm font-normal text-ink/60">a month</span>
               </p>
-              {billingNote(fromGbp(cohort.pricePence), currency) && (
-                <p className="mt-0.5 text-[11px] text-ink/50">
-                  {billingNote(fromGbp(cohort.pricePence), currency)}
-                </p>
-              )}
+                {/* ⚠ THE "charged as £X" LINE IS GONE (§6). The figure above is
+                    now the Stripe amount in the selected currency — the same
+                    Price the tuition card shows and Checkout charges — so a
+                    second, differently-converted number under it would be a
+                    contradiction, not reassurance. */}
             </div>
             <Link
               href={ctaHref}

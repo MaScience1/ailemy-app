@@ -241,21 +241,17 @@ console.log("\n=== 7. SABOTAGE 7 — no FX anywhere in the tuition layer ===");
       return statSync(p).isDirectory() ? walk(p) : /\.tsx?$/.test(p) ? [p] : [];
     });
   /**
-   * ⚠ SCOPE, PRINTED RATHER THAN QUIETLY APPLIED.
-   * src/lib/tuition/pricing.ts still holds QAR_PER_GBP = 4.7 and its Money
-   * constructors. It is NOT deleted in this change: ~100 existing assertions
-   * cover it, and removing them to make a guard pass is exactly the
-   * gate-weakening this work is forbidden from doing. What matters is that it
-   * is out of the LIVE path, which is asserted separately below — and the count
-   * is printed so this guard cannot read as "there is no FX anywhere".
+   * ⚠ NO EXCLUSION ANY MORE — THIS NOW ASSERTS ABSENCE.
+   * It previously skipped src/lib/tuition/pricing.ts and PRINTED that one
+   * legacy module still held QAR_PER_GBP = 4.7, because ~15 assertions covered
+   * that code and deleting tested code to make a guard pass is how coverage
+   * quietly falls. The rate and its Money constructors are gone now and those
+   * assertions were rewritten against the new invariant rather than removed, so
+   * the whole tuition layer is in scope and the guard states a fact rather than
+   * a caveat.
    */
-  const LEGACY = "src/lib/tuition/pricing.ts";
   const files = [...walk("src/lib/tuition"), ...walk("src/components/tuition"),
-                 ...walk("src/app/api/tuition")]
-    .filter((p) => p !== LEGACY)
-    .map((p) => ({ p, c: code(readFileSync(p, "utf8")) }));
-  const legacyFx = /QAR_PER_GBP/.test(readFileSync(LEGACY, "utf8"));
-  console.log(`      (scope: ${legacyFx ? 1 : 0} legacy module still holds an FX rate — ${LEGACY})`);
+                 ...walk("src/app/api/tuition")].map((p) => ({ p, c: code(readFileSync(p, "utf8")) }));
   /**
    * ⚠ THE SHAPES AN FX RATE ACTUALLY TAKES. Not the digit 4 — these are the
    * forms that convert one currency into another. QAR_PER_GBP = 4.7 was real
@@ -272,6 +268,16 @@ console.log("\n=== 7. SABOTAGE 7 — no FX anywhere in the tuition layer ===");
   for (const f of files) for (const s of FX) if (s.re.test(f.c)) hits.push(`${f.p} — ${s.why}`);
   t("⚠ no FX constant, helper or rate arithmetic in the tuition layer",
     hits.length === 0, hits.join("\n      "));
+  /**
+   * ⚠ AND THE MODULE THAT HELD THE RATE NO LONGER EXPORTS IT. Asserted on the
+   * export, not on the file text, because the file still EXPLAINS the removal
+   * in prose and a raw scan would read the explanation as the violation.
+   */
+  const legacy = code(readFileSync("src/lib/tuition/pricing.ts", "utf8"));
+  t("⚠ pricing.ts no longer exports QAR_PER_GBP, fromGbp or fromQar",
+    !/export (const QAR_PER_GBP|function from(Gbp|Qar))/.test(legacy));
+  t("⚠ and nothing in src/ calls the removed constructors",
+    walk("src").every((p) => !/\bfrom(Gbp|Qar)\s*\(/.test(code(readFileSync(p, "utf8")))));
   /**
    * ⚠ THE PROPERTY THAT ACTUALLY MATTERS: the Stripe-backed pricing layer does
    * not reach for the legacy converters. If a new surface imports fromGbp or

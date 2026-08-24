@@ -17,6 +17,7 @@ function isCommitment(v: string | undefined): v is Commitment {
 import { offersCurrencyChoice } from "@/lib/public/currency";
 import { currentCurrency } from "@/lib/public/currency-server";
 import { loadPricing } from "@/lib/tuition/tuition-pricing";
+import { courseForQualification } from "@/lib/tuition/tuition-types";
 import { CohortPrice } from "@/components/public/CohortPrice";
 import { CurrencyToggle } from "@/components/public/CurrencyToggle";
 import { Calendar } from "@/components/calendar/Calendar";
@@ -96,6 +97,42 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
     as_a_level: { single: strip(asPricing.views.single), five_hour: strip(asPricing.views.five_hour) },
     gcse: { single: strip(gcsePricing.views.single), five_hour: strip(gcsePricing.views.five_hour) },
   };
+
+  /**
+   * ⚠ GROUP PRICES, KEYED BY COHORT SLUG SO THE CARD CANNOT MISMATCH ITSELF.
+   * The course is derived from each cohort's `qualification` column and the
+   * three Stripe products are resolved once each; a cohort whose qualification
+   * is unrecognised gets no entry and its card says so rather than borrowing
+   * another course's prices.
+   *
+   * ⚠ AND THE OLD PATH IS GONE. quote(cohort.pricePence, …) applied a local
+   * DISCOUNTS table to a sterling column and then converted at 4.7 — three
+   * commercial decisions this repo does not own. All three now come off the
+   * same active Stripe Price that Checkout charges.
+   */
+  const groupCourses = [...new Set(
+    cohorts.map((c) => courseForQualification(c.qualification)).filter((c): c is NonNullable<typeof c> => c !== null),
+  )];
+  const groupLoads = await Promise.all(groupCourses.map(async (course) => [course, await loadPricing(course, "group")] as const));
+  for (const [course, load] of groupLoads) {
+    if (load.failures.length > 0) console.error("[tuition] group price resolution failed", course, load.failures);
+  }
+  const byCourse = new Map(groupLoads);
+  const groupPricing: Record<string, {
+    monthly?: { formatted: Record<string, string | undefined>; amounts: Record<string, number | undefined> };
+    three_month?: { formatted: Record<string, string | undefined>; amounts: Record<string, number | undefined> };
+    academic_year?: { formatted: Record<string, string | undefined>; amounts: Record<string, number | undefined> };
+  }> = {};
+  for (const c of cohorts) {
+    const course = courseForQualification(c.qualification);
+    const load = course ? byCourse.get(course) : undefined;
+    if (!load) continue;
+    groupPricing[c.slug] = {
+      monthly: strip(load.views.monthly),
+      three_month: strip(load.views.three_month),
+      academic_year: strip(load.views.academic_year),
+    };
+  }
   const viewerTz = await viewerTimeZone();
 
   /**
@@ -230,6 +267,7 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
             hrefForMode={(m) => qs({ mode: m })}
             hrefForCommitment={(c) => qs({ mode, commitment: c })}
             oneToOnePricing={oneToOnePricing}
+            groupPricing={groupPricing}
           />
         </div>
 
