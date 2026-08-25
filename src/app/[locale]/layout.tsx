@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { NextIntlClientProvider } from "next-intl";
 
 import { routing } from "@/i18n/routing";
 
@@ -33,5 +32,11 @@ export default async function LocaleLayout({
   const { locale } = await params;
   if (!routing.locales.includes(locale as never)) notFound();
 
-  return <NextIntlClientProvider>{children}</NextIntlClientProvider>;
+  /**
+   * ⚠ NO PROVIDER HERE ANY MORE. It is in the ROOT layout so that the routes
+   * OUTSIDE this segment get it too — SiteNav calls useTranslations on every
+   * page, and a provider scoped to [locale] left six routes throwing. A second,
+   * nested provider here would just shadow the root one for no gain.
+   */
+  return <>{children}</>;
 }
