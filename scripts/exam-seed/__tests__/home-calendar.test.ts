@@ -21,7 +21,7 @@ const t = (n: string, c: boolean, got?: unknown) => {
     : (fail++, console.log("  ✗ " + n + (got !== undefined ? "  got: " + JSON.stringify(got) : "")));
 };
 
-const PAGE = readFileSync("src/app/[locale]/page.tsx", "utf8");
+const PAGE = readFileSync("src/app/page.tsx", "utf8");
 const CAL = readFileSync("src/components/calendar/Calendar.tsx", "utf8");
 const GRID = readFileSync("src/lib/calendar/grid.ts", "utf8");
 const HERO = readFileSync("src/components/calendar/HeroCalendar.tsx", "utf8");

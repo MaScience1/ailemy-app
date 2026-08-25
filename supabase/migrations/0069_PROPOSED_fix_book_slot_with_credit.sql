@@ -1,17 +1,14 @@
 -- ============================================================================
--- 0069_fix_book_slot_with_credit.sql
+-- 0069_PROPOSED_fix_book_slot_with_credit.sql
 -- ----------------------------------------------------------------------------
 -- ⚠ NUMBER ISSUED BY THE FOUNDER (2026-08-23, repair of 0068).
--- APPLIED 2026-08-24 (production). VERIFIED:
---   STEP 7 · 0/1/0 pre-apply -> 1/0/1 post-apply, same query, same DB.
---   STEP 4 · 1 overload · 0 take user_id.
---   STEP 5 · 1 authenticated EXECUTE · 0 anon · 0 PUBLIC.
---   STEP 6 · 0 bad grants.
---   STEP 1 · ATOMICITY — NOT RUN. auth.uid() is NULL in the SQL editor;
---     needs a JWT shim. Must pass before the RPC is wired.
---   STEP 2 · THE RACE — SKIPPED. Measured on replica per (b).
---     Re-run before the wiring change.
---   STEP 3 · NO CREDIT — NOT RUN. Same reason as step 1.
+-- ⚠ PARKED AND NOT APPLIED. Nothing in this file has run against production.
+--   Rename to 0069_fix_book_slot_with_credit.sql — dropping _PROPOSED_ — only
+--   once it is applied, and record the step counts below in the same edit.
+--   A rebuild replays this folder in order, so an unapplied file sitting under
+--   a plain number manufactures the drift the rule exists to prevent:
+--   production without it, a rebuild with it. 0033 sat as _PROPOSED_ for a day
+--   for exactly this reason.
 --
 -- ============================================================================
 -- ⚠⚠ THE APPLICATION MUST NOT BE SWITCHED TO THIS RPC UNTIL 0069 IS APPLIED

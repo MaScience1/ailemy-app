@@ -65,7 +65,7 @@ export function SocialProof({
               </dt>
               <dd className="font-display mt-1 text-3xl font-medium tabular-nums">
                 {m.value!.toLocaleString("en-GB")}
-                {m.unit && <span className="ms-1.5 text-base text-ink/50">{m.unit}</span>}
+                {m.unit && <span className="ml-1.5 text-base text-ink/50">{m.unit}</span>}
               </dd>
             </div>
           ))}

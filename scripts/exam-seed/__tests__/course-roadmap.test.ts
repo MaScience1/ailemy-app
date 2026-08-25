@@ -31,7 +31,7 @@ const APP = "src/app";
 const MODEL = readFileSync("src/lib/roadmap/model.ts", "utf8");
 const READER = readFileSync("src/lib/roadmap/reader.ts", "utf8");
 const PHASES = readFileSync("src/components/roadmap/RoadmapPhases.tsx", "utf8");
-const PAGE = readFileSync("src/app/[locale]/tuition/[cohort]/roadmap/page.tsx", "utf8");
+const PAGE = readFileSync("src/app/tuition/[cohort]/roadmap/page.tsx", "utf8");
 const MODES = readFileSync("src/components/tuition/TuitionModes.tsx", "utf8");
 
 const code = (s: string) => s
@@ -60,14 +60,7 @@ function routes(dir: string, prefix: string[] = []): string[][] {
   }
   return out;
 }
-/**
- * ⚠ [locale] IS TRANSPARENT FOR THE DEFAULT LOCALE. i18n phase 1 moved the
- * homepage and /tuition under app/[locale]/; with localePrefix "as-needed"
- * English carries no prefix, so those files still serve /  and /tuition. A
- * resolver that counted [locale] as a segment would call every one of them
- * missing and make a working move look like a breakage.
- */
-const ROUTES = routes(APP).map((r) => (r[0] === "[locale]" ? r.slice(1) : r));
+const ROUTES = routes(APP);
 const hasRoute = (p: string) => {
   const want = p.split("/").filter(Boolean);
   return ROUTES.some((r) => r.length === want.length && r.every((s, i) => s.startsWith("[") || s === want[i]));
@@ -257,7 +250,7 @@ console.log("\n=== 7. ⚠ §7 of the header — nothing was broken ===");
 {
   for (const p of ["/tuition", "/tuition/one-to-one", "/tuition/interest", "/tuition/[cohort]/roadmap",
                    "/calendar", "/intensive", "/resources", "/past-papers", "/exam-builder", "/"]) {
-    t(`preserved — ${p} resolves`, p === "/" ? existsSync(join(APP, "[locale]", "page.tsx")) : hasRoute(p));
+    t(`preserved — ${p} resolves`, p === "/" ? existsSync(join(APP, "page.tsx")) : hasRoute(p));
   }
   /**
    * ⚠ THE STATIC SIBLINGS MUST STILL WIN. /tuition/one-to-one and
@@ -266,9 +259,9 @@ console.log("\n=== 7. ⚠ §7 of the header — nothing was broken ===");
    * the failure would be a 404 on a live page.
    */
   t("⚠ the new dynamic segment did not replace the static ones",
-    existsSync("src/app/[locale]/tuition/one-to-one/page.tsx")
-      && existsSync("src/app/[locale]/tuition/interest/page.tsx")
-      && existsSync("src/app/[locale]/tuition/[cohort]/roadmap/page.tsx"));
+    existsSync("src/app/tuition/one-to-one/page.tsx")
+      && existsSync("src/app/tuition/interest/page.tsx")
+      && existsSync("src/app/tuition/[cohort]/roadmap/page.tsx"));
   t("§7 — no URL moved, so nothing was owed a redirect",
     !/redirect\(|permanentRedirect/.test(code(PAGE) + code(MODES)));
   t("preserved — the commitment selector still renders", /COMMITMENT_LABEL\[c\]/.test(MODES));

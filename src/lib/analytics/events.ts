@@ -72,15 +72,6 @@ export const CTA_SOURCES = [
    */
   "tuition_one_to_one_selected",
   "tuition_group_selected",
-  /**
-   * ⚠ §26 — THE MULTI-SUBJECT DEMAND FUNNEL. Declared here because
-   * Analytics.tsx SILENTLY DISCARDS an undeclared data-cta: the attribute
-   * would sit in the markup looking like tracking while emitting nothing.
-   * Properties carry subject/mode only — never the free-text notes or any
-   * contact detail (§26).
-   */
-  "tuition_subject_selected",
-  "tuition_interest_started",
   "tuition_group_one_month_selected",
   "tuition_group_three_month_selected",
   "tuition_group_academic_selected",

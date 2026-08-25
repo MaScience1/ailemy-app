@@ -38,7 +38,7 @@ const walkSrc = (dir: string): string[] =>
     return statSync(p).isDirectory() ? walkSrc(p) : /\.tsx?$/.test(p) ? [p] : [];
   });
 const MODES = readFileSync("src/components/tuition/TuitionModes.tsx", "utf8");
-const PAGE = readFileSync("src/app/[locale]/tuition/page.tsx", "utf8");
+const PAGE = readFileSync("src/app/tuition/page.tsx", "utf8");
 const PRICING = readFileSync("src/lib/tuition/pricing.ts", "utf8");
 
 const code = (s: string) => s
@@ -56,14 +56,7 @@ function routes(dir: string, prefix: string[] = []): string[][] {
   }
   return out;
 }
-/**
- * ⚠ [locale] IS TRANSPARENT FOR THE DEFAULT LOCALE. i18n phase 1 moved the
- * homepage and /tuition under app/[locale]/; with localePrefix "as-needed"
- * English carries no prefix, so those files still serve /  and /tuition. A
- * resolver that counted [locale] as a segment would call every one of them
- * missing and make a working move look like a breakage.
- */
-const ROUTES = routes(APP).map((r) => (r[0] === "[locale]" ? r.slice(1) : r));
+const ROUTES = routes(APP);
 const hasRoute = (p: string) => {
   const want = p.split("/").filter(Boolean);
   return ROUTES.some((r) => r.length === want.length && r.every((s, i) => s.startsWith("[") || s === want[i]));
@@ -238,7 +231,7 @@ console.log("\n=== 2. ⚠ §3 — ONE PRICE, TWO CURRENCIES, AND NO RATE AT ALL 
   t("⚠ §6 — the dual-currency 'charged as' line is gone from the components",
     !MODES.includes("billingNote("));
   t("⚠ §6 — and from the roadmap page, which had its own copy",
-    !/billingNote\(/.test(code(readFileSync("src/app/[locale]/tuition/[cohort]/roadmap/page.tsx", "utf8"))));
+    !/billingNote\(/.test(code(readFileSync("src/app/tuition/[cohort]/roadmap/page.tsx", "utf8"))));
 
   /**
    * ⚠ THE PIECES THAT ARE NOT COMMERCIAL SURVIVED, and that is deliberate:

@@ -170,7 +170,7 @@ export default async function OneToOnePage() {
                         {start.canonical}–{end.canonical}{" "}
                         <span className="font-mono text-[11px] text-ink/50">{start.canonicalLabel}</span>
                         {start.viewer && (
-                          <span className="ms-2 font-mono text-[11px] text-ink/50">
+                          <span className="ml-2 font-mono text-[11px] text-ink/50">
                             {start.viewer}–{end.viewer} {start.viewerLabel}
                           </span>
                         )}

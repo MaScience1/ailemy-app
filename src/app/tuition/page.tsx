@@ -17,10 +17,6 @@ function isCommitment(v: string | undefined): v is Commitment {
 import { offersCurrencyChoice } from "@/lib/public/currency";
 import { currentCurrency } from "@/lib/public/currency-server";
 import { loadPricing } from "@/lib/tuition/tuition-pricing";
-import { SubjectSelector } from "@/components/tuition/SubjectSelector";
-import { SubjectComingSoon } from "@/components/tuition/SubjectComingSoon";
-import { readSubject, subjectState, isComingSoon } from "@/lib/tuition/subjects";
-import { interestCapability } from "@/lib/tuition/interest-capability";
 import { courseForQualification } from "@/lib/tuition/tuition-types";
 import { CohortPrice } from "@/components/public/CohortPrice";
 import { CurrencyToggle } from "@/components/public/CurrencyToggle";
@@ -161,28 +157,6 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
    * exactly as §34 asks.
    */
   const mode: TuitionMode = isTuitionMode(params.mode) ? params.mode : "group";
-  /**
-   * ⚠ §4 — AN UNKNOWN OR ABSENT subject FALLS BACK TO CHEMISTRY, NEVER TO A
-   * BLANK PICKER. /tuition?mode=group has been linked from WhatsApp, receipts
-   * and the existing marketing since before subjects existed; those links must
-   * keep landing on the live Chemistry experience.
-   */
-  const subject = readSubject(params.subject);
-
-  /**
-   * ⚠ ONE CohortFacts LIST, SHARED. The selector, availabilityFor and the cards
-   * all read the same rows, so a subject cannot be ACTIVE in the picker and
-   * empty in the panel below it.
-   */
-  const cohortFacts = cohorts.map((c) => ({
-    subject: c.subject, status: c.status, enrolmentUrl: c.enrolmentUrl ?? null,
-  }));
-  const comingSoon = isComingSoon(subjectState(subject, cohortFacts));
-  /** ⚠ Probed, not assumed — see interest-capability.ts. */
-  const interest = comingSoon ? await interestCapability() : { canRegister: false };
-  if (comingSoon && !interest.canRegister && "reason" in interest && interest.reason) {
-    console.error("[tuition] interest funnel unavailable:", interest.reason);
-  }
   const commitment: Commitment = isCommitment(params.commitment) ? params.commitment : "monthly";
   const calendarType = params.type
     ? state.type
@@ -283,28 +257,6 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
             The three cohort cards that used to open this page are now inside
             Group mode, priced by commitment. Nothing was removed: every cohort
             still renders, with the same schedule, hours and capacity. */}
-        {/* ── §3 — THE SUBJECT SELECTOR, INSIDE BOTH MODES ────────────────
-            Status per card is derived from real cohort rows by subjectState();
-            nothing here decides that Chemistry is special. */}
-        <SubjectSelector
-          mode={mode}
-          selected={subject}
-          cohorts={cohortFacts}
-          hrefFor={(s) => qs({ subject: s })}
-        />
-
-        {/* ── §6/§32/§33 — A SUBJECT WITH NO COHORTS SELLS NOTHING ─────────
-            The coming-soon panel replaces the pricing experience entirely for
-            those subjects: no price, no calendar, no checkout. Chemistry falls
-            through to exactly the experience it has today. */}
-        {comingSoon ? (
-          <SubjectComingSoon
-            subject={subject}
-            mode={mode}
-            interestHref={qs({ subject, mode })}
-            canRegister={interest.canRegister}
-          />
-        ) : (
         <div className="mt-8">
           <TuitionModes
             mode={mode}
@@ -318,7 +270,6 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
             groupPricing={groupPricing}
           />
         </div>
-        )}
 
         {/* ⚠ THE THREE COHORT CARDS THAT USED TO SIT HERE ARE NOW INSIDE
             GROUP MODE ABOVE (§1, §22, §37). Nothing was dropped: every cohort
@@ -326,13 +277,6 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
             the commitment the reader chose, instead of three cards each
             repeating a monthly figure with no way to compare terms. */}
 
-        {/* ── §31/§6 — NO CALENDAR FOR A SUBJECT WE DO NOT TEACH YET ──────
-            This section leaked onto the maths and biology pages before it was
-            gated: a real Chemistry availability grid, rendered under a heading
-            that implied it belonged to the selected subject. That is precisely
-            the fake-availability §6 forbids — the slots were real, but the
-            claim that they were maths slots was not. */}
-        {!comingSoon && (
         <section className="mt-14 border-t border-ink/10 pt-10">
           {/* §27/§34 — the heading follows the chosen product, and the
               calendar below it is already filtered to match. */}
@@ -368,7 +312,6 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
             Full calendar →
           </Link>
         </section>
-        )}
 
         {/* ⚠ INTENSIVE LIVES HERE NOW (§4). It was a top-level nav entry — a
             single campaign holding a slot next to three whole sciences. The

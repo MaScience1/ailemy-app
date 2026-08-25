@@ -22,15 +22,6 @@
   --font-sans: var(--font-inter), -apple-system, sans-serif;
   --font-mono: var(--font-jetbrains-mono), Menlo, monospace;
   --font-heading: var(--font-fraunces), Georgia, serif;
-  /**
-   * ⚠ ARABIC HAS ITS OWN FACE BECAUSE THE OTHERS HAVE NO ARABIC GLYPHS.
-   * Fraunces and Inter cover Latin only. Arabic set in them does not fall back
-   * gracefully — the browser substitutes whatever the device has, which on iOS
-   * Safari is a different weight and a different baseline from the rest of the
-   * page. The fallbacks after it are the system Arabic faces, in the order iOS
-   * and Android actually ship them.
-   */
-  --font-arabic: var(--font-arabic-plex), "Geeza Pro", "Noto Sans Arabic", "Segoe UI", sans-serif;
   /* Intensive brand additions (merged from ailemy-brand-tokens.css, additive) */
   --color-lime: #B8FF3D; /* alias of --color-signal, matches brand-tokens name */
   --color-parchment-2: #EDE5D8; /* muted surface */
@@ -535,40 +526,3 @@ input, select, textarea {
 /* The grid's own lines recede — they are an axis, not content (§21). */
 .tt-gridline { border-top: 1px solid color-mix(in srgb, var(--color-line) 65%, transparent); }
 .tt-gridline-major { border-top: 1px solid var(--color-line); }
-
-/* ===========================================================================
-   ARABIC / RTL
-   ---------------------------------------------------------------------------
-   ⚠ APPLIED BY THE ROOT LAYOUT ONLY WHEN THE LOCALE IS ar. An English visitor
-   never downloads the Arabic face and never gets these rules.
-   =========================================================================== */
-.font-arabic {
-  font-family: var(--font-arabic);
-}
-/**
- * ⚠ THE DISPLAY FACE IS OVERRIDDEN FOR ARABIC, DELIBERATELY. .ai-display sets
- * Fraunces, which has no Arabic glyphs at all — an Arabic heading in it renders
- * in a substituted system face at a different weight, next to body copy that IS
- * Plex Arabic. Two mismatched faces in one heading block is the single most
- * visible way a localised page looks unfinished.
- */
-.font-arabic .ai-display,
-.font-arabic .font-display {
-  font-family: var(--font-arabic);
-  font-weight: 600;
-  letter-spacing: 0;
-}
-/**
- * ⚠ NUMERALS STAY WESTERN (§ of the brief). Arabic-Indic digits would render
- * 700 as ٧٠٠ — which is correct Arabic typography but wrong here: the price is
- * a Stripe amount a parent will compare against a bank statement and a receipt,
- * both of which show Western digits.
- */
-.font-arabic {
-  font-variant-numeric: lining-nums tabular-nums;
-}
-.font-arabic [dir="ltr"] {
-  /* Prices, times and Latin proper nouns stay LTR inside RTL prose. */
-  direction: ltr;
-  unicode-bidi: isolate;
-}

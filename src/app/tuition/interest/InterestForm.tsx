@@ -88,7 +88,7 @@ export function InterestForm({
 
       <form action={action} className="mt-8 space-y-6">
         {/* honeypot — hidden from people, tempting to bots */}
-        <div aria-hidden className="absolute start-[-9999px] h-0 w-0 overflow-hidden">
+        <div aria-hidden className="absolute left-[-9999px] h-0 w-0 overflow-hidden">
           <label htmlFor="website">Website</label>
           <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
         </div>

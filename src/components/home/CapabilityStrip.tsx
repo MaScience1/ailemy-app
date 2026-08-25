@@ -280,7 +280,7 @@ export function CapabilityStrip({
                 // air rides along inside the capsule on the right only. Taking
                 // it back off the right padding re-centres the word in the pill.
                 // In `em` rather than px so it tracks the phone's smaller type.
-                "py-3 ps-6 pe-[calc(1.5rem_-_0.14em)]",
+                "py-3 pl-6 pr-[calc(1.5rem_-_0.14em)]",
                 // ⚠ leading IS EXPLICIT BECAUSE THE TAP TARGET DEPENDS ON IT. An
                 // inherited line-height would make the capsule's height a
                 // property of whatever this component is dropped inside.
