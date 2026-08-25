@@ -30,13 +30,26 @@ export type HeroChip = {
   readonly cta: string;
 };
 
+/**
+ * ⚠ FOUR CHIPS, FOUR DESTINATIONS — ONE LABEL EACH, AND NO LABEL NAMES A
+ * SURFACE IT DOES NOT LEAD TO.
+ *
+ * "Question Bank" and "Exam Practice" were removed outright. Both resolved to
+ * /past-papers because no standalone question-bank or exam-practice surface
+ * exists — so three labels pointed at one archive and two of them named
+ * something the app does not have. A label over a destination it does not name
+ * is the same broken promise as a link to a stub, made more quietly.
+ *
+ * "Revision Notes" became "Resources" for the same reason: /resources is a
+ * search and three subject cards, not a notes library. The only real notes are
+ * a self-labelled sample deck inside one lesson. Rename it back when notes
+ * exist, not before.
+ */
 export const HERO_CHIPS: readonly HeroChip[] = [
   { labelKey: "home.chipLessons",        href: "/learn",       cta: "hero_chip_lessons" },
-  { labelKey: "home.chipRevisionNotes",  href: "/resources",   cta: "hero_chip_revision_notes" },
-  { labelKey: "home.chipQuestionBank",   href: "/past-papers", cta: "hero_chip_question_bank" },
   { labelKey: "home.chipPastPapers",     href: "/past-papers", cta: "hero_chip_past_papers" },
-  { labelKey: "home.chipExamPractice",   href: "/past-papers", cta: "hero_chip_exam_practice" },
   { labelKey: "home.chipMarkedFeedback", href: "/#try",        cta: "hero_chip_marked_feedback" },
+  { labelKey: "home.chipResources",      href: "/resources",   cta: "hero_chip_resources" },
 ] as const;
 
 /**

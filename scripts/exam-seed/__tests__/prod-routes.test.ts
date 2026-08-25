@@ -250,7 +250,19 @@ async function main() {
        * destinations would pass if the chips vanished entirely.
        */
       const chipCtas = (home.match(/data-cta="hero_chip_[a-z_]+"/g) ?? []);
-      t("all six hero chips render on the homepage", chipCtas.length === 6, `${chipCtas.length} chip(s)`);
+      t("all four hero chips render on the homepage", chipCtas.length === 4, `${chipCtas.length} chip(s)`);
+
+      /**
+       * ⚠ FOUR LABELS, FOUR DESTINATIONS — no label may resolve to a surface it
+       * does not name. "Question Bank" and "Exam Practice" both resolved to
+       * /past-papers, so three labels shared one archive and two of them named
+       * something the app does not have. That is the same broken promise as a
+       * link to a stub, made more quietly, and this fails if it comes back.
+       */
+      const uniqueDestinations = new Set(CHIP_HREFS);
+      t("⚠ every chip has its own destination — no label over a shared surface",
+        uniqueDestinations.size === chipCtas.length,
+        `${uniqueDestinations.size} destination(s) for ${chipCtas.length} chip(s)`);
 
       /**
        * ⚠ THE QUALIFICATION LINE STAYS ONE LINE AT 375. It cannot be measured

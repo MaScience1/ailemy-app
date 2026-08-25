@@ -415,29 +415,46 @@ correctly inside the RTL document.
 | `home.nextLessonLabel` | Next group lesson | الدرس الجماعي القادم |
 | `home.nextLessonNone` | No group lessons are scheduled yet. Register your interest and we will tell you  | لا توجد دروس جماعية مجدولة بعد. سجّل اهتمامك وسنخبرك عند فتح المجموعة القادمة. |
 
-### Chip destinations — verified, not assumed
+### Chip destinations — four labels, four destinations
 
 | chip | destination | verdict |
 |---|---|---|
 | Lessons | `/learn` | real subject chooser; Physics tile honestly disabled |
-| Revision Notes | `/resources` | real search + subject cards, **0 not-built markers** |
-| Question Bank | `/past-papers` | real archive |
 | Past Papers | `/past-papers` | real archive |
-| Exam Practice | `/past-papers` | real archive |
 | Marked Feedback | `/#try` | the working marking demo on the homepage |
+| Resources | `/resources` | real search + subject cards, **0 not-built markers** |
+
+**Founder ruling: dropped from six to four.** "Question Bank" and "Exam
+Practice" were removed outright — both resolved to `/past-papers`, so three
+labels shared one archive and two of them named something the app does not
+have. A label over a destination it does not name is the same broken promise
+as a link to a stub, made more quietly.
+
+**"Revision Notes" became "Resources"** for the same reason: `/resources` is a
+search and three subject cards, not a notes library. The only real notes are a
+self-labelled *sample* deck inside one lesson. Rename it back when notes exist.
 
 **Four routes deliberately not linked**, each a verified stub: `/exam-builder`
 ("This is not built yet."), `/past-papers/<slug>/test` ("Not built yet —
 nothing you type anywhere on this page is saved"), `.../sit/practice`
-("Practice mode isn't built yet."), `.../sit/exam` ("Nothing is marked yet" plus
-a sign-in wall). Flashcards are absent entirely — their tables live in an
+("Practice mode isn't built yet."), `.../sit/exam` ("Nothing is marked yet"
+plus a sign-in wall). Flashcards are absent entirely — their tables live in an
 unapplied `_PROPOSED_` migration.
 
-⚠ **THREE CHIPS SHARE ONE DESTINATION** — Question Bank, Past Papers and Exam
-Practice all resolve to `/past-papers`, because no standalone question-bank or
-exam-practice surface exists. Not dishonest (the archive really is the question
-source) but redundant, and it needs a founder ruling: keep six labels over four
-destinations, or drop to four chips until the surfaces diverge.
+### Measured at 375×812
+
+| | before (6 chips) | after (4 chips) |
+|---|---|---|
+| qualification line | 327px, one line | 327px, one line |
+| headline bottom | 246px | 246px |
+| chips bottom | 515px | **478px** |
+| last CTA bottom | 699px | **663px** |
+| headroom above fold | 113px | **149px** |
+
+### Part D — parked by ruling
+
+The compact tuition section, the derived next-lesson teaser and the section
+reordering are **not built**. Parked on the founder's instruction, not skipped.
 
 ## Phase 2 — the seventeen files, the bidi bug, and the LTR defect
 

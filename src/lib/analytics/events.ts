@@ -166,9 +166,9 @@ export const CTA_SOURCES = [
   "hero_start_free_clicked",
   "hero_book_tuition_clicked",
   /**
-   * ⚠ THE SIX HERO CHIPS ARE SIX SOURCES, NOT ONE. They sit above the fold on
+   * ⚠ THE FOUR HERO CHIPS ARE FOUR SOURCES, NOT ONE. They sit above the fold on
    * the first screen a parent sees, and the only question worth asking about
-   * them is WHICH of the six a stranger taps — folding them into one
+   * them is WHICH of the four a stranger taps — folding them into one
    * hero_chip_clicked would answer "somebody tapped a chip", which is the one
    * thing already obvious.
    *
@@ -178,11 +178,9 @@ export const CTA_SOURCES = [
    * cta-integrity.test.ts caught exactly that on the first run of this change.
    */
   "hero_chip_lessons",
-  "hero_chip_revision_notes",
-  "hero_chip_question_bank",
   "hero_chip_past_papers",
-  "hero_chip_exam_practice",
   "hero_chip_marked_feedback",
+  "hero_chip_resources",
   "floating_start_learning",
   "floating_continue_studying",
   // ⚠ THE TWO STATES OF TuitionCta ARE SEPARATE SOURCES, NOT ONE. A click on
