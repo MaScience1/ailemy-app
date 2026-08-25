@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from "next-intl";
 
 import { usePathname } from "@/i18n/navigation";
+import { localeCookieString } from "@/i18n/locale-cookie";
 import { localeSwitchHref } from "@/i18n/locale-switch";
 import { routing } from "@/i18n/routing";
 
@@ -61,6 +62,24 @@ export function LanguageToggle({ className = "" }: { className?: string }) {
             href={localeSwitchHref(pathname, locale)}
             hrefLang={locale}
             aria-current={on ? "true" : undefined}
+            /**
+             * ⚠ THE CHOICE IS WRITTEN BEFORE THE NAVIGATION, NOT AFTER IT.
+             * The proxy reads NEXT_LOCALE on the very next request — the one
+             * this click is about to make — so setting it in an effect after
+             * arrival would be a request too late, and the first load would
+             * still be un-remembered.
+             *
+             * ⚠ AND ENGLISH WRITES IT TOO. It is not "clear the cookie for
+             * English": an absent cookie means "never chose", while
+             * NEXT_LOCALE=en means "chose English", and only the second one
+             * stops the proxy sending an Arabic-remembering visitor straight
+             * back to /ar. Without this the English link is a one-way door.
+             *
+             * This runs on the click of a plain anchor, so the write lands and
+             * then the browser does a full document load — no race with a
+             * client-side router.
+             */
+            onClick={() => { document.cookie = localeCookieString(locale); }}
             /**
              * ⚠ tap-44 AND LOGICAL PADDING. This sits in the top bar on a phone;
              * ps-/pe- keep the padding on the correct side when the document

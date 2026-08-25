@@ -165,6 +165,22 @@ export const CTA_SOURCES = [
   "pillar_online_tuition_clicked",
   "hero_start_free_clicked",
   "hero_book_tuition_clicked",
+  /**
+   * ⚠ THE FOUR HERO CHIPS ARE FOUR SOURCES, NOT ONE. They sit above the fold on
+   * the first screen a parent sees, and the only question worth asking about
+   * them is WHICH of the four a stranger taps — folding them into one
+   * hero_chip_clicked would answer "somebody tapped a chip", which is the one
+   * thing already obvious.
+   *
+   * ⚠ AND THEY MUST BE DECLARED HERE OR THEY DO NOT EXIST. Analytics.tsx
+   * silently discards any data-cta that is not in this list, so an undeclared
+   * chip looks wired, renders fine, and reports nothing forever.
+   * cta-integrity.test.ts caught exactly that on the first run of this change.
+   */
+  "hero_chip_lessons",
+  "hero_chip_past_papers",
+  "hero_chip_marked_feedback",
+  "hero_chip_resources",
   "floating_start_learning",
   "floating_continue_studying",
   // ⚠ THE TWO STATES OF TuitionCta ARE SEPARATE SOURCES, NOT ONE. A click on

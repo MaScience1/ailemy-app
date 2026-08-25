@@ -381,6 +381,81 @@ a price on the coming-soon panel; the calendar gate removed).
 Least sure: `subjects.english` — "اللغة الإنجليزية" is the language; if the subject
 is English Literature rather than Language the term should differ.
 
+## Mobile hero — 21 new strings, all UNREVIEWED
+
+Added by the mobile-hero pass. Same rules: `"__status": "UNREVIEWED"` on every
+namespace, Western numerals, and qualification names left in Latin script.
+
+⚠ `home.qualificationLine` is **identical in both locales** — GCSE, IGCSE,
+A LEVEL and INTERNATIONAL A LEVEL are qualification names, which the scope rule
+keeps in Latin. The bidi isolation shipped earlier is what makes it render
+correctly inside the RTL document.
+
+| key | English | Arabic (UNREVIEWED) |
+|---|---|---|
+| `home.qualificationLine` | GCSE · IGCSE · A LEVEL · INTERNATIONAL A LEVEL | GCSE · IGCSE · A LEVEL · INTERNATIONAL A LEVEL |
+| `home.heroHeadline` | Learn. Revise. Practise. Get marked. Master your exams. | تعلّم. راجع. تدرّب. احصل على التصحيح. أتقن امتحاناتك. |
+| `home.benefitTuition` | Expert live tuition — 1-to-1 or small groups | دروس مباشرة مع معلّم متخصص — فردية أو في مجموعات صغيرة |
+| `home.benefitLessons` | Exam-board lessons, revision and past papers | دروس ومراجعات وامتحانات سابقة وفق منهج مجلس الامتحانات |
+| `home.benefitPractice` | Practise by topic, with real past papers | تدرّب حسب الموضوع، مع امتحانات سابقة حقيقية |
+| `home.benefitExaminer` | Feedback from an active Edexcel examiner | تقييم من ممتحن Edexcel يعمل حالياً |
+| `home.chipLessons` | Lessons | الدروس |
+| `home.chipRevisionNotes` | Revision Notes | ملخّصات المراجعة |
+| `home.chipQuestionBank` | Question Bank | بنك الأسئلة |
+| `home.chipPastPapers` | Past Papers | الامتحانات السابقة |
+| `home.chipExamPractice` | Exam Practice | التدريب على الامتحان |
+| `home.chipMarkedFeedback` | Marked Feedback | تصحيح مع ملاحظات |
+| `home.chipsLabel` | What you get | ما الذي تحصل عليه |
+| `home.heroReassurance` | A growing library of lessons, questions and revision resources — new content add | مكتبة متنامية من الدروس والأسئلة ومواد المراجعة — نضيف محتوى جديداً بانتظام. |
+| `home.liveTuitionTitle` | Learn live with an expert. | تعلّم مباشرةً مع معلّم متخصص. |
+| `home.liveTuitionBody` | 1-to-1 personalised tuition or structured group lessons. | دروس فردية مخصّصة أو دروس جماعية منظّمة. |
+| `home.liveTuitionOneToOne` | 1-to-1 Tuition | دروس فردية |
+| `home.liveTuitionGroup` | Group Tuition | دروس جماعية |
+| `home.liveTuitionTimetable` | View tuition timetable | عرض جدول الدروس |
+| `home.nextLessonLabel` | Next group lesson | الدرس الجماعي القادم |
+| `home.nextLessonNone` | No group lessons are scheduled yet. Register your interest and we will tell you  | لا توجد دروس جماعية مجدولة بعد. سجّل اهتمامك وسنخبرك عند فتح المجموعة القادمة. |
+
+### Chip destinations — four labels, four destinations
+
+| chip | destination | verdict |
+|---|---|---|
+| Lessons | `/learn` | real subject chooser; Physics tile honestly disabled |
+| Past Papers | `/past-papers` | real archive |
+| Marked Feedback | `/#try` | the working marking demo on the homepage |
+| Resources | `/resources` | real search + subject cards, **0 not-built markers** |
+
+**Founder ruling: dropped from six to four.** "Question Bank" and "Exam
+Practice" were removed outright — both resolved to `/past-papers`, so three
+labels shared one archive and two of them named something the app does not
+have. A label over a destination it does not name is the same broken promise
+as a link to a stub, made more quietly.
+
+**"Revision Notes" became "Resources"** for the same reason: `/resources` is a
+search and three subject cards, not a notes library. The only real notes are a
+self-labelled *sample* deck inside one lesson. Rename it back when notes exist.
+
+**Four routes deliberately not linked**, each a verified stub: `/exam-builder`
+("This is not built yet."), `/past-papers/<slug>/test` ("Not built yet —
+nothing you type anywhere on this page is saved"), `.../sit/practice`
+("Practice mode isn't built yet."), `.../sit/exam` ("Nothing is marked yet"
+plus a sign-in wall). Flashcards are absent entirely — their tables live in an
+unapplied `_PROPOSED_` migration.
+
+### Measured at 375×812
+
+| | before (6 chips) | after (4 chips) |
+|---|---|---|
+| qualification line | 327px, one line | 327px, one line |
+| headline bottom | 246px | 246px |
+| chips bottom | 515px | **478px** |
+| last CTA bottom | 699px | **663px** |
+| headroom above fold | 113px | **149px** |
+
+### Part D — parked by ruling
+
+The compact tuition section, the derived next-lesson teaser and the section
+reordering are **not built**. Parked on the founder's instruction, not skipped.
+
 ## Phase 2 — the seventeen files, the bidi bug, and the LTR defect
 
 **All seventeen converted. The backlog guard now prints 0.** `/ar` renders 56%

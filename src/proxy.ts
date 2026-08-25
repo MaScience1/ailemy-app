@@ -1,8 +1,9 @@
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import createMiddleware from "next-intl/middleware";
 
 import { updateSession } from "@/lib/supabase/middleware";
 import { isLocalisedPath } from "@/i18n/localised-paths";
+import { LOCALE_COOKIE } from "@/i18n/locale-cookie";
 import { routing } from "@/i18n/routing";
 
 /**
@@ -49,6 +50,46 @@ export async function proxy(request: NextRequest) {
   if (authResponse && authResponse.headers.get("location")) return authResponse;
 
   if (!isLocalisedPath(request.nextUrl.pathname)) return authResponse;
+
+  /**
+   * ==========================================================================
+   * ⚠ A RETURNING VISITOR'S OWN CHOICE IS HONOURED. A GUESS ABOUT THEM IS NOT.
+   * ==========================================================================
+   * If somebody deliberately pressed العربية on an earlier visit, the toggle
+   * wrote NEXT_LOCALE=ar, and they should land back in Arabic rather than
+   * pressing it again every time. That is remembering a decision they made.
+   *
+   * ⚠ Accept-Language IS NEVER READ, AND THAT IS THE WHOLE POINT. Redirecting
+   * on the browser header would push a first-time visitor with an Arabic
+   * system into Arabic they never asked for — and this catalogue is still
+   * UNREVIEWED, so English is the version we can stand behind for a stranger.
+   * next-intl's `localeDetection` switch would turn on the cookie AND the
+   * header together, which is exactly why it stays false and this is done here.
+   *
+   * ⚠ AND IT CANNOT TRAP ANYBODY IN ARABIC. Pressing English writes
+   * NEXT_LOCALE=en before navigating, so the read below finds "en" and this
+   * branch does nothing. Without that write the English link would redirect
+   * straight back to /ar and the toggle would be a one-way door.
+   */
+  const remembered = request.cookies.get(LOCALE_COOKIE)?.value;
+  const alreadyPrefixed = routing.locales.some(
+    (l) => request.nextUrl.pathname === `/${l}` || request.nextUrl.pathname.startsWith(`/${l}/`),
+  );
+  if (
+    !alreadyPrefixed &&
+    remembered !== undefined &&
+    remembered !== routing.defaultLocale &&
+    (routing.locales as readonly string[]).includes(remembered)
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = url.pathname === "/" ? `/${remembered}` : `/${remembered}${url.pathname}`;
+    const redirect = NextResponse.redirect(url);
+    /** ⚠ The refreshed Supabase cookies must survive this redirect too. */
+    if (authResponse) {
+      for (const cookie of authResponse.cookies.getAll()) redirect.cookies.set(cookie);
+    }
+    return redirect;
+  }
 
   /**
    * ⚠ THE AUTH COOKIES ARE CARRIED ONTO THE LOCALE RESPONSE. updateSession

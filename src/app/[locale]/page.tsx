@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
 import { ExplorePanel } from "@/components/home/ExplorePanel";
+import { HERO_CHIPS } from "@/lib/home/hero-chips";
 import { loadSubjectHoldings, holdingsLabel } from "@/lib/qualifications/tree";
 import { HeroAvailability, isHeroMode, type HeroMode } from "@/components/home/HeroAvailability";
 import { SubjectCard } from "@/components/home/SubjectCard";
@@ -328,19 +329,76 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
       <header className="mx-auto max-w-6xl px-6 pt-10 pb-10 sm:pt-16 sm:pb-12">
         <div className="flex flex-col gap-6 lg:gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_480px] lg:grid-rows-[auto_auto] lg:items-start lg:gap-x-10 lg:gap-y-0">
         <div>
-        <p dir="auto" className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink/50">
-          Pearson Edexcel · GCSE · International GCSE · IAL
+        {/* ⚠ ONE LINE AT 375, BY SIZE AND TRACKING — NEVER BY TRUNCATION.
+            Four qualification names in 44 characters do not fit at the old
+            text-[11px]/tracking-[0.25em]. Truncating would hide the very thing
+            it exists to say, so the size and letter-spacing step down on small
+            screens and back up from sm:. whitespace-nowrap makes a wrap a
+            visible overflow rather than a silent second line, and
+            home-mobile-hero.test.ts fails if the rendered width exceeds 375. */}
+        <p dir="auto" className="whitespace-nowrap font-mono text-[9px] uppercase tracking-[0.12em] text-ink/50 sm:text-[11px] sm:tracking-[0.25em]">
+          {t("home.qualificationLine")}
         </p>
         {/* ⚠ THE HEADLINE IS THE PRODUCT, NOT A SLOGAN (§1). "Master science.
             Ace the exam." is an outcome anyone could promise; the four verbs
             below are what Ailemy actually does, in the order a student does
             them — and the third one is the differentiator, because everybody
             else stops at "practise". */}
-        <h1 className="font-display mt-5 max-w-3xl text-4xl font-medium leading-[1.05] tracking-tight sm:text-6xl">
-          {t("home.heroHeadlineLine1")}<br className="hidden sm:block" /> {t("home.heroHeadlineLine2")}
+        {/* ⚠ TIGHTER RHYTHM ABOVE THE FOLD. mt-5 → mt-3 at phone width: the
+            qualification line and the headline are one thought, and every
+            millimetre spent between them is a millimetre the CTAs do not get. */}
+        <h1 className="font-display mt-3 max-w-3xl text-[2rem] font-medium leading-[1.08] tracking-tight sm:mt-5 sm:text-6xl sm:leading-[1.05]">
+          {t("home.heroHeadline")}
         </h1>
-        <p className="mt-6 max-w-2xl text-base leading-relaxed text-ink/70 sm:text-lg">
-          {t("home.heroLede")}
+
+        {/* ⚠ FOUR BENEFIT LINES, AND EVERY ONE IS TRUE TODAY. The paragraph
+            they replace promised "intelligent marking" and "progress
+            tracking": marking works for exactly one paper, and progress reads
+            student_courses, which has zero writers anywhere in the codebase.
+            A dense claim nobody can check is worse on a phone than four short
+            ones that hold. */}
+        <ul className="mt-5 flex flex-col gap-2 text-[15px] leading-snug text-ink/75 sm:mt-6 sm:gap-2.5 sm:text-base">
+          {[
+            "home.benefitTuition",
+            "home.benefitLessons",
+            "home.benefitPractice",
+            "home.benefitExaminer",
+          ].map((key) => (
+            <li key={key} className="flex items-start gap-2.5">
+              <span aria-hidden className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-flask" />
+              <span>{t(key)}</span>
+            </li>
+          ))}
+        </ul>
+
+        {/* ⚠ CHIPS ARE LABELS, NOT BUTTONS (§A). Six things you get, readable
+            in one glance. They are links because a label you cannot follow is
+            a tease — but they carry no button chrome, so they never compete
+            with the two real CTAs below them.
+
+            ⚠ EVERY DESTINATION WAS VERIFIED AS NOT-A-STUB. See HERO_CHIPS for
+            the four routes deliberately excluded and the copy each one shows. */}
+        <ul aria-label={t("home.chipsLabel")} className="mt-5 grid grid-cols-2 gap-x-3 gap-y-2 sm:mt-6 sm:flex sm:flex-wrap">
+          {HERO_CHIPS.map((chip) => (
+            <li key={chip.labelKey}>
+              <Link
+                href={chip.href}
+                data-cta={chip.cta}
+                className="group inline-flex items-center gap-1.5 rounded-full border border-ink/12 bg-snow/60 ps-2.5 pe-3 py-1.5 text-[12px] leading-none text-ink/75 transition-colors duration-200 hover:border-ink/30 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink sm:text-[13px]"
+              >
+                <span aria-hidden className="h-1 w-1 shrink-0 rounded-full bg-flask/70" />
+                {t(chip.labelKey)}
+              </Link>
+            </li>
+          ))}
+        </ul>
+
+        {/* ⚠ THE HONEST VERSION OF "COMPREHENSIVE". The library is genuinely
+            thin — 1 of 82 lessons published — so this says growing rather than
+            complete. It is the sentence that lets the six chips above be read
+            as a direction of travel instead of a claim about today. */}
+        <p className="mt-4 max-w-xl text-[13px] leading-relaxed text-ink/55 sm:mt-5 sm:text-sm">
+          {t("home.heroReassurance")}
         </p>
         {/* ⚠ THE PRIMARY AND SECONDARY HAVE SWAPPED, AND THAT IS THE POINT OF
             §1. Tuition was the filled button, which told every visitor the
@@ -352,7 +410,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
             stranger; "Continue studying" to somebody signed in, who has already
             started and would read an invitation to start as the site forgetting
             them. */}
-        <div className="mt-9 flex flex-wrap gap-3">
+        <div className="mt-6 flex flex-wrap gap-3 sm:mt-8">
           <Link
             href={session ? "/profile" : "/past-papers"}
             data-cta="hero_start_free_clicked"

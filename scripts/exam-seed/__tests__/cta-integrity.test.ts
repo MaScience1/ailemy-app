@@ -88,6 +88,39 @@ t("⚠ every data-cta in the markup is a declared CtaSource — an undeclared on
 // Not a failure — a name may be declared a beat before its button lands, and
 // some sources are passed as props rather than written as literals. Reported
 // so the drift is visible rather than accumulating unseen.
+/**
+ * ============================================================================
+ * ⚠ THE HERO CHIP FAMILY IS CHECKED IN BOTH DIRECTIONS, EXACTLY.
+ * ============================================================================
+ * The general orphan check below is deliberately a report, not a failure —
+ * twelve declared sources are passed as props rather than written as literals,
+ * so failing on absence would fail on healthy code. That reasoning does not
+ * apply here: every hero chip's data-cta is a literal in hero-chips.ts and a
+ * literal in the rendered list, so declared and rendered must match EXACTLY.
+ *
+ * It fails if a chip is added without declaring it — Analytics.tsx silently
+ * discards an undeclared source, so the chip would render fine and report
+ * nothing forever, which is how the six-chip version shipped its first run.
+ * And it fails the other way too, when a chip is removed and its declaration
+ * is left behind: dead vocabulary in the analytics contract that quietly
+ * implies a surface the homepage no longer offers.
+ *
+ * The count is asserted separately from the set, so "four" cannot be satisfied
+ * by four wrong names, and the right names cannot be satisfied at the wrong
+ * count.
+ */
+const HERO_CHIP_PREFIX = "hero_chip_";
+const heroDeclared = [...declared].filter((v) => v.startsWith(HERO_CHIP_PREFIX)).sort();
+const heroRendered = [...found.keys()].filter((v) => v.startsWith(HERO_CHIP_PREFIX)).sort();
+
+t("⚠ exactly four hero chips are declared — the founder's ruling, not a drifting number",
+  heroDeclared.length === 4, `${heroDeclared.length}: ${heroDeclared.join(", ")}`);
+t("⚠ exactly four hero chips are rendered",
+  heroRendered.length === 4, `${heroRendered.length}: ${heroRendered.join(", ")}`);
+t("⚠ declared === rendered for hero chips, both directions, no orphans",
+  heroDeclared.join("|") === heroRendered.join("|"),
+  `declared: ${heroDeclared.join(", ")}\n      rendered: ${heroRendered.join(", ")}`);
+
 const unused = [...declared].filter((v) => !found.has(v));
 console.log(
   unused.length === 0
