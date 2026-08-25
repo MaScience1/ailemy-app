@@ -22,6 +22,7 @@
  * outage.
  */
 import { spawn, spawnSync } from "node:child_process";
+import { createServer } from "node:net";
 import { existsSync, statSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
@@ -49,8 +50,24 @@ export const PROD_ROUTES = [
   "/exam-builder",
 ] as const;
 
-const PORT = 3131;
-const BASE = `http://127.0.0.1:${PORT}`;
+/**
+ * ⚠ A FREE PORT, NOT A FIXED ONE — AND THIS BIT ONCE ALREADY.
+ * On a fixed 3131 a leftover `next start` from an earlier run held the port,
+ * the server failed to bind, and the whole suite went red against code that
+ * was perfectly fine. A gate that fails for reasons unrelated to the code is
+ * a gate people learn to re-run rather than read.
+ */
+async function freePort(): Promise<number> {
+  return await new Promise((resolve, reject) => {
+    const srv = createServer();
+    srv.on("error", reject);
+    srv.listen(0, "127.0.0.1", () => {
+      const addr = srv.address();
+      const port = typeof addr === "object" && addr ? addr.port : 0;
+      srv.close(() => (port ? resolve(port) : reject(new Error("no port"))));
+    });
+  });
+}
 
 /** Newest mtime under a directory — used to decide whether .next is stale. */
 function newestMtime(dir: string, depth = 0): number {
@@ -66,6 +83,8 @@ function newestMtime(dir: string, depth = 0): number {
 }
 
 async function main() {
+  const PORT = await freePort();
+  const BASE = `http://127.0.0.1:${PORT}`;
   // ── build, unless a build newer than the sources already exists ───────────
   /**
    * ⚠ A STALE BUILD IS WORSE THAN NO BUILD. It would test yesterday's code and
