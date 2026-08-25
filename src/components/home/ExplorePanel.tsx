@@ -95,7 +95,7 @@ export function ExplorePanel({ signedIn }: { signedIn: boolean }) {
                 onBlur={() => setActive(null)}
                 className={[
                   "group/c flex min-h-[44px] w-full items-center justify-between gap-3 rounded-full",
-                  "py-2.5 pl-4 pr-[calc(1rem_-_0.14em)]",
+                  "py-2.5 ps-4 pe-[calc(1rem_-_0.14em)]",
                   // ⚠ THE PILL'S EXISTING DNA (§4, §20): gold hairline, faint
                   // foil ground, mono uppercase with the strip's own tracking.
                   // Smaller than the band's 17px because this column is 584px

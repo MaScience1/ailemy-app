@@ -61,9 +61,16 @@ function routes(dir: string, prefix: string[] = []): string[][] {
   }
   return out;
 }
-const ROUTES = routes(APP);
+/**
+ * ⚠ [locale] IS TRANSPARENT FOR THE DEFAULT LOCALE. i18n phase 1 moved the
+ * homepage and /tuition under app/[locale]/; with localePrefix "as-needed"
+ * English carries no prefix, so those files still serve /  and /tuition. A
+ * resolver that counted [locale] as a segment would call every one of them
+ * missing and make a working move look like a breakage.
+ */
+const ROUTES = routes(APP).map((r) => (r[0] === "[locale]" ? r.slice(1) : r));
 const hasRoute = (p: string) => {
-  if (p === "/") return existsSync(join(APP, "page.tsx"));
+  if (p === "/") return existsSync(join(APP, "[locale]", "page.tsx"));
   const want = p.split("/").filter(Boolean);
   return ROUTES.some((r) => r.length === want.length && r.every((s, i) => s.startsWith("[") || s === want[i]));
 };
@@ -256,7 +263,7 @@ console.log("\n=== 6. ⚠ §2/§42 — one calendar system ===");
 // ============================================================================
 {
   t("§42 — every surface reads loadCalendarEvents",
-    ["src/app/calendar/page.tsx", "src/app/page.tsx", "src/app/tuition/page.tsx"]
+    ["src/app/calendar/page.tsx", "src/app/[locale]/page.tsx", "src/app/[locale]/tuition/page.tsx"]
       .every((f) => readFileSync(f, "utf8").includes("loadCalendarEvents")));
   t("§2 — no second calendar component was created",
     !existsSync("src/components/calendar/BookingCalendar.tsx")
@@ -416,7 +423,7 @@ console.log("\n=== 12. ⚠ §50 — an empty month explains itself, ABOVE the gr
 // ============================================================================
 {
   const EMPTY = readFileSync("src/components/calendar/MonthEmptyState.tsx", "utf8");
-  const HOME = readFileSync("src/app/page.tsx", "utf8");
+  const HOME = readFileSync("src/app/[locale]/page.tsx", "utf8");
 
   t("§50 — it says what is true of the month", /No tuition this month\./.test(EMPTY));
   t("§50 — it names the next real lesson's date", /monthNameOf\(nextGroup\.dateISO\)/.test(EMPTY));

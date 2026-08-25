@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
+
+import { LanguageToggle } from "@/components/i18n/LanguageToggle";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Menu, Search as SearchIcon, X } from "lucide-react";
@@ -53,7 +56,13 @@ import type { NavSession } from "@/lib/auth/nav-session";
  */
 
 type NavLink = {
-  label: string;
+  /**
+   * ⚠ A CATALOGUE KEY, NOT A LABEL. The literal used to live here, which meant
+   * the nav could never be translated without editing the data structure. The
+   * key is resolved at render through useTranslations, so adding a locale is a
+   * catalogue change and nothing more.
+   */
+  labelKey: string;
   href: string;
   tone: NavToneKey;
   /**
@@ -154,14 +163,14 @@ const TAB_MOBILE = [
 const NAV_LINKS: NavLink[] = [
   {
     cta: "nav_resources",
-    label: "Resources",
+    labelKey: "resources",
     href: "/resources",
     tone: "gold",
     // Lessons live under /learn and are reached THROUGH Resources — a student
     // reading a lesson is inside "learn and revise", so Resources stays lit.
     activePrefixes: ["/resources", "/learn"],
   },
-  { cta: "nav_past_papers", label: "Past Papers", href: "/past-papers", tone: "gold", activePrefixes: ["/past-papers"] },
+  { cta: "nav_past_papers", labelKey: "pastPapers", href: "/past-papers", tone: "gold", activePrefixes: ["/past-papers"] },
   {
     /**
      * ⚠ EXAM BUILDER IS HERE AT FULL WEIGHT, WITH A "SOON" MARKER, AND THAT
@@ -180,7 +189,7 @@ const NAV_LINKS: NavLink[] = [
      * the page offers.
      */
     cta: "nav_exam_builder",
-    label: "Exam Builder",
+    labelKey: "examBuilder",
     href: "/exam-builder",
     tone: "gold",
     activePrefixes: ["/exam-builder"],
@@ -196,7 +205,7 @@ const NAV_LINKS: NavLink[] = [
      * this tab or are reached from the homepage, Resources and the footer.
      */
     cta: "nav_tuition",
-    label: "Online Tuition",
+    labelKey: "onlineTuition",
     href: "/tuition",
     tone: "gold",
     activePrefixes: ["/tuition", "/calendar", "/intensive", "/my-tuition"],
@@ -231,6 +240,14 @@ function isActive(pathname: string, link: NavLink): boolean {
 export type { NavSession };
 
 export function SiteNav({ session = null }: { session?: NavSession }) {
+  /**
+   * ⚠ Chemistry / Biology / Physics ARE NOT TRANSLATED. They are the subject
+   * names as the qualifications spell them, and the brief keeps the
+   * qualification vocabulary — Edexcel, IAL, GCSE, IGCSE, Chemistry — in
+   * English so a parent matching the site against an exam board page or a
+   * Stripe receipt sees the same words.
+   */
+  const tNav = useTranslations("nav");
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -276,9 +293,9 @@ export function SiteNav({ session = null }: { session?: NavSession }) {
                   aria-current={active ? "page" : undefined}
                   className={`${TAB} ${active ? "text-ink underline decoration-2 underline-offset-[6px]" : ""}`}
                 >
-                  {link.label}
+                  {tNav(link.labelKey)}
                   {link.marker && (
-                    <span className="font-mono ml-1.5 align-[1px] text-[9px] uppercase tracking-[0.14em] text-ink/40">
+                    <span className="font-mono ms-1.5 align-[1px] text-[9px] uppercase tracking-[0.14em] text-ink/40">
                       {link.marker}
                     </span>
                   )}
@@ -302,6 +319,10 @@ export function SiteNav({ session = null }: { session?: NavSession }) {
           >
             <SearchIcon className="h-4 w-4" aria-hidden="true" />
           </Link>
+            {/* ⚠ THE TOGGLE SITS BEFORE THE ACCOUNT CONTROLS, so it is reachable
+                whether or not somebody is signed in — a parent comparing prices
+                has usually not made an account yet. */}
+            <LanguageToggle />
           {session ? (
             /* ⚠ TAB IS PASSED IN, NOT IMPORTED BACK OUT. AccountMenu occupies
                the same slot as Login and must wear the same capsule, but this
@@ -315,18 +336,14 @@ export function SiteNav({ session = null }: { session?: NavSession }) {
                 href="/login"
                 style={navToneVars("neutral")}
                 className={`${TAB} text-sm font-medium text-ink/75`}
-              >
-                Login
-              </Link>
+              >{tNav("login")}</Link>
               {/* ⚠ §18 — SHOWN ONLY WHEN SIGNED OUT. Offering "Start free" to
                   somebody who already has an account is the small rudeness
                   that tells them the product is not paying attention. */}
               <Link
                 href="/signup"
                 className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-parchment transition-colors hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-              >
-                Start free
-              </Link>
+              >{tNav("startFree")}</Link>
             </>
           )}
         </div>
@@ -337,7 +354,7 @@ export function SiteNav({ session = null }: { session?: NavSession }) {
           onClick={() => setOpen((value) => !value)}
           aria-controls="site-nav-mobile"
           aria-expanded={open}
-          aria-label={open ? "Close menu" : "Open menu"}
+          aria-label={open ? tNav("closeMenu") : tNav("openMenu")}
           className="rounded-md p-2 text-ink transition-colors hover:bg-ink/[0.05] md:hidden"
         >
           {open ? (
@@ -368,9 +385,9 @@ export function SiteNav({ session = null }: { session?: NavSession }) {
                       aria-current={active ? "page" : undefined}
                       className={`${TAB_MOBILE} ${active ? "text-ink underline decoration-2 underline-offset-[6px]" : ""}`}
                     >
-                      {link.label}
+                      {tNav(link.labelKey)}
                       {link.marker && (
-                        <span className="font-mono ml-1.5 text-[9px] uppercase tracking-[0.14em] text-ink/40">
+                        <span className="font-mono ms-1.5 text-[9px] uppercase tracking-[0.14em] text-ink/40">
                           {link.marker}
                         </span>
                       )}
@@ -384,9 +401,7 @@ export function SiteNav({ session = null }: { session?: NavSession }) {
                 They left the primary row because they are a dimension of every
                 product; they stay one tap away because "I want Chemistry" is
                 still how a lot of students think. */}
-            <p className="font-mono mt-5 px-[13px] text-[10px] uppercase tracking-[0.2em] text-ink/45">
-              Subjects
-            </p>
+            <p className="font-mono mt-5 px-[13px] text-[10px] uppercase tracking-[0.2em] text-ink/45">{tNav("subjects")}</p>
             <ul className="-mx-[13px] mt-1 space-y-1 text-base font-medium text-ink">
               {SUBJECT_LINKS.map((link) => (
                 <li key={link.href}>
@@ -411,16 +426,12 @@ export function SiteNav({ session = null }: { session?: NavSession }) {
                     href="/login"
                     onClick={closeMenu}
                     className="rounded-md border border-ink/15 px-4 py-2.5 text-center text-sm font-medium text-ink hover:bg-ink/[0.04]"
-                  >
-                    Login
-                  </Link>
+                  >{tNav("login")}</Link>
                   <Link
                     href="/signup"
                     onClick={closeMenu}
                     className="rounded-md bg-ink px-4 py-2.5 text-center text-sm font-medium text-parchment hover:bg-ink/90"
-                  >
-                    Start free
-                  </Link>
+                  >{tNav("startFree")}</Link>
                 </>
               )}
             </div>

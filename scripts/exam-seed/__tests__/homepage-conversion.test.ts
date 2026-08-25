@@ -30,7 +30,7 @@ const t = (n: string, c: boolean, got?: unknown) => {
 };
 
 const APP = "src/app";
-const HOME = readFileSync("src/app/page.tsx", "utf8");
+const HOME = readFileSync("src/app/[locale]/page.tsx", "utf8");
 const HERO_CAL = readFileSync("src/components/calendar/HeroCalendar.tsx", "utf8");
 const STICKY = readFileSync("src/components/home/StickyCta.tsx", "utf8");
 const AVAIL = readFileSync("src/lib/tuition/availability.ts", "utf8");
@@ -51,9 +51,16 @@ function routes(dir: string, prefix: string[] = []): string[][] {
   }
   return out;
 }
-const ROUTES = routes(APP);
+/**
+ * ⚠ [locale] IS TRANSPARENT FOR THE DEFAULT LOCALE. i18n phase 1 moved the
+ * homepage and /tuition under app/[locale]/; with localePrefix "as-needed"
+ * English carries no prefix, so those files still serve /  and /tuition. A
+ * resolver that counted [locale] as a segment would call every one of them
+ * missing and make a working move look like a breakage.
+ */
+const ROUTES = routes(APP).map((r) => (r[0] === "[locale]" ? r.slice(1) : r));
 const hasRoute = (p: string) => {
-  if (p === "/") return existsSync(join(APP, "page.tsx"));
+  if (p === "/") return existsSync(join(APP, "[locale]", "page.tsx"));
   const want = p.split("/").filter(Boolean);
   return ROUTES.some((r) => r.length === want.length && r.every((s, i) => s.startsWith("[") || s === want[i]));
 };

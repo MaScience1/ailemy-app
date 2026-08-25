@@ -92,7 +92,7 @@ console.log("\n=== 1. ⚠ §24 — ONE next-available rule, not five ===");
    * each defensibly.
    */
   const SURFACES = [
-    "src/app/page.tsx", "src/app/calendar/page.tsx", "src/app/tuition/page.tsx",
+    "src/app/[locale]/page.tsx", "src/app/calendar/page.tsx", "src/app/[locale]/tuition/page.tsx",
     "src/components/home/HeroAvailability.tsx", "src/components/calendar/CalendarShortcuts.tsx",
   ];
   for (const f of SURFACES) {
@@ -142,7 +142,7 @@ console.log("\n=== 2. ⚠ §79 — no fabricated availability, on THIS feature =
     "src/lib/booking/next-available.ts",
     "src/components/home/HeroAvailability.tsx",
     "src/components/calendar/CalendarShortcuts.tsx",
-    "src/app/tuition/one-to-one/page.tsx",
+    "src/app/[locale]/tuition/one-to-one/page.tsx",
   ];
   const TIME = /["'>]\s*\d{1,2}[:.]\d{2}\s*(?:–|-|—)?\s*(?:\d{1,2}[:.]\d{2})?\s*(?:AM|PM|am|pm)?\s*["'<]/;
   const DATE = /(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/;
@@ -286,14 +286,21 @@ console.log("\n=== 6. §78 — nothing that worked was broken ===");
     }
     return out;
   }
-  const ROUTES = routes(APP);
+  /**
+ * ⚠ [locale] IS TRANSPARENT FOR THE DEFAULT LOCALE. i18n phase 1 moved the
+ * homepage and /tuition under app/[locale]/; with localePrefix "as-needed"
+ * English carries no prefix, so those files still serve /  and /tuition. A
+ * resolver that counted [locale] as a segment would call every one of them
+ * missing and make a working move look like a breakage.
+ */
+const ROUTES = routes(APP).map((r) => (r[0] === "[locale]" ? r.slice(1) : r));
   const has = (p: string) => {
     const want = p.split("/").filter(Boolean);
     return ROUTES.some((r) => r.length === want.length && r.every((s, i) => s.startsWith("[") || s === want[i]));
   };
   for (const p of ["/calendar", "/tuition", "/tuition/one-to-one", "/tuition/interest",
                    "/tuition/[cohort]/roadmap", "/admin/availability", "/profile", "/"]) {
-    t(`§78 — ${p} still resolves`, p === "/" ? existsSync(join(APP, "page.tsx")) : has(p));
+    t(`§78 — ${p} still resolves`, p === "/" ? existsSync(join(APP, "[locale]", "page.tsx")) : has(p));
   }
   t("§78 — no URL moved, so nothing was owed a redirect",
     !/redirect\(|permanentRedirect/.test(code(readFileSync("src/app/calendar/page.tsx", "utf8"))));

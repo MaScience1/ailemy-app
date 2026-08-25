@@ -40,12 +40,30 @@ function routes(dir: string, prefix: string[] = []): string[][] {
   }
   return out;
 }
-const ROUTES = routes(APP);
+/**
+ * ⚠ [locale] IS NOT A URL SEGMENT FOR THE DEFAULT LOCALE.
+ *
+ * i18n phase 1 moved the homepage and /tuition under app/[locale]/. With
+ * localePrefix "as-needed" English carries NO prefix, so
+ * app/[locale]/tuition/page.tsx serves /tuition — the live URL is unchanged,
+ * which is the entire point of that setting. A walker counting [locale] as a
+ * segment reports every one of those routes as missing and makes a working
+ * move look like a breakage.
+ */
+/**
+ * ⚠ THE ENGLISH CATALOGUE IS THE SOURCE OF THE NAV WORDS. Reading it here keeps
+ * these assertions checking what a visitor sees rather than what a constant in
+ * the test says — if a key is renamed and the catalogue is not updated, this
+ * resolves to MISSING:<key> and fails loudly.
+ */
+const EN = JSON.parse(readFileSync("messages/en.json", "utf8")) as { nav: Record<string, string> };
+
+const ROUTES = routes(APP).map((r) => (r[0] === "[locale]" ? r.slice(1) : r));
 const hasRoute = (p: string) => {
-  // ⚠ THE ROOT IS src/app/page.tsx AND THE WALKER NEVER EMITS IT — it only
-  // records pages found inside a DIRECTORY it descended into. Checked directly
-  // rather than by teaching the walker a special case it needs nowhere else.
-  if (p === "/") return existsSync(join(APP, "page.tsx"));
+  // ⚠ THE ROOT IS THE HOMEPAGE, now at app/[locale]/page.tsx, which the walker
+  // never emits — it only records pages found inside a DIRECTORY it descended
+  // into. Checked directly rather than teaching the walker a special case.
+  if (p === "/") return existsSync(join(APP, "[locale]", "page.tsx"));
   const want = p.split("/").filter(Boolean);
   return ROUTES.some((r) => r.length === want.length && r.every((s, i) => s.startsWith("[") || s === want[i]));
 };
@@ -75,7 +93,8 @@ console.log("\n=== 1. ⚠ §58 — nothing that worked was deleted ===");
   // "Live Tuition" became "Online Tuition" — while /tuition stayed /tuition,
   // which is exactly what §51 asks for: no route churn for a rename.
   t("⚠ §51 — the tuition route is unchanged; only its LABEL moved",
-    NAV.includes('href: "/tuition"') && NAV.includes('label: "Online Tuition"'));
+    NAV.includes('href: "/tuition"') && NAV.includes('labelKey: "onlineTuition"')
+      && EN.nav.onlineTuition === "Online Tuition");
   t("§51 — /calendar is unchanged", hasRoute("/calendar") && NAV.includes('"/calendar"'));
 }
 
@@ -84,7 +103,16 @@ console.log("\n=== 2. the header is four products, and only four ===");
 // ============================================================================
 {
   const block = NAV.slice(NAV.indexOf("const NAV_LINKS"), NAV.indexOf("const SUBJECT_LINKS"));
-  const labels = [...block.matchAll(/label:\s*"([^"]+)"/g)].map((m) => m[1]);
+  /**
+   * ⚠ THE LABEL IS A CATALOGUE KEY NOW, RESOLVED THROUGH messages/en.json.
+   * i18n phase 1 replaced the literal in NAV_LINKS with labelKey, so the nav
+   * can be translated without editing the data structure. The assertion reads
+   * the same words it always did — it just follows the key to get them, which
+   * also means a key with no English string fails here rather than rendering
+   * the key itself on the page.
+   */
+  const labels = [...block.matchAll(/labelKey:\s*"([^"]+)"/g)]
+    .map((m) => (EN.nav as Record<string, string>)[m[1]] ?? `MISSING:${m[1]}`);
 
   t("exactly four primary destinations", labels.length === 4, labels.join(" | "));
   t("in the order Resources → Past Papers → Exam Builder → Online Tuition",
@@ -115,8 +143,11 @@ console.log("\n=== 3. ⚠ §34 — active state follows the product, not the URL
    * ACTIVE PREFIXES are read out of the nav source and checked against it.
    */
   const block = NAV.slice(NAV.indexOf("const NAV_LINKS"), NAV.indexOf("const SUBJECT_LINKS"));
-  const entries = [...block.matchAll(/label:\s*"([^"]+)"[\s\S]*?activePrefixes:\s*\[([^\]]*)\]/g)]
-    .map((m) => ({ label: m[1], prefixes: [...m[2].matchAll(/"([^"]+)"/g)].map((x) => x[1]) }));
+  const entries = [...block.matchAll(/labelKey:\s*"([^"]+)"[\s\S]*?activePrefixes:\s*\[([^\]]*)\]/g)]
+    .map((m) => ({
+      label: (EN.nav as Record<string, string>)[m[1]] ?? `MISSING:${m[1]}`,
+      prefixes: [...m[2].matchAll(/"([^"]+)"/g)].map((x) => x[1]),
+    }));
 
   const isActive = (pathname: string, prefixes: string[]) =>
     prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -168,7 +199,7 @@ console.log("\n=== 4. ⚠ §2 — Exam Builder is honest about being unbuilt ===
 
   t("⚠ it says plainly that it is not built yet", /not built yet/i.test(src));
   t("§24 — it is a full primary nav item, not hidden in a dropdown",
-    NAV.includes('label: "Exam Builder"'));
+    NAV.includes('labelKey: "examBuilder"') && EN.nav.examBuilder === "Exam Builder");
   t("…carrying an honest marker so the click is informed", NAV.includes('marker: "Soon"'));
 
   // ⚠ NO FAKE PRODUCT. The rejected design was selectors and a Build button
@@ -234,7 +265,7 @@ console.log("\n=== 6. ⚠ §30 — tuition availability is derived, not declared
   t("⚠ §30 — enrolment is claimed only where a cohort can actually be joined",
     anyPayable === claims.length > 0, `payable: ${anyPayable}, claiming: ${claims.join(",") || "none"}`);
 
-  const TUI = readFileSync("src/app/tuition/page.tsx", "utf8");
+  const TUI = readFileSync("src/app/[locale]/tuition/page.tsx", "utf8");
   t("§30 — the page asks the derivation rather than hard-coding a status",
     TUI.includes("availabilityFor(slug, cohorts)") && !/Enrolment open</.test(TUI));
 }
