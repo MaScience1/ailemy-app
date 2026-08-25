@@ -181,6 +181,22 @@ export const CTA_SOURCES = [
   "hero_chip_past_papers",
   "hero_chip_marked_feedback",
   "hero_chip_resources",
+  /**
+   * ⚠ THE COMING-SOON CHIPS ARE DECLARED TOO, AND THAT IS DELIBERATE. They
+   * carry a data-cta but no href, so they are never clicked — nothing will
+   * ever fire these. They exist so that declared == rendered holds for the
+   * whole chip family in BOTH directions: without them the integrity check
+   * would report four undeclared values in the markup, and the only way to
+   * silence it would be to stop labelling row 2 at all.
+   *
+   * ⚠ AND IF ONE IS EVER PROMOTED TO ROW 1, its name is already here — so the
+   * promotion fails on the destination guard, which is the check that matters,
+   * rather than on a missing analytics declaration that would be fixed by rote.
+   */
+  "hero_chip_soon_flashcards",
+  "hero_chip_soon_exam_builder",
+  "hero_chip_soon_question_bank",
+  "hero_chip_soon_progress",
   "floating_start_learning",
   "floating_continue_studying",
   // ⚠ THE TWO STATES OF TuitionCta ARE SEPARATE SOURCES, NOT ONE. A click on

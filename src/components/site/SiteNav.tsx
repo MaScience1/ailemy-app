@@ -349,6 +349,22 @@ export function SiteNav({ session = null }: { session?: NavSession }) {
           )}
         </div>
 
+        {/* ⚠ THE LANGUAGE TOGGLE IS VISIBLE AT PHONE WIDTH, BESIDE THE
+            HAMBURGER — NOT ONLY INSIDE THE MENU.
+            ============================================================
+            Its desktop render site sits in a `hidden … md:flex` container, so
+            below md it was in the DOM with zero visible size: measured at 375,
+            two toggle anchors present and ZERO visible. Arabic exists for
+            families who are overwhelmingly on phones, and a reader who cannot
+            read the current language cannot be asked to find the control behind
+            a hamburger labelled in that language.
+
+            ⚠ md:hidden HERE, because the desktop bar already renders one —
+            without it the toggle would appear twice, side by side, above md. */}
+        <div className="md:hidden">
+          <LanguageToggle />
+        </div>
+
         {/* Mobile toggle */}
         <button
           type="button"

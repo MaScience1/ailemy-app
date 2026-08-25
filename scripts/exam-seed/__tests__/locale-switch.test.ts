@@ -158,6 +158,26 @@ console.log("\n=== 6. the toggle is REACHABLE, not merely present ===");
    * links would be a second place for the doubling bug to return, and would
    * not inherit localeSwitchPath's strip.
    */
+  /**
+   * ⚠ VISIBLE AT 375, NOT MERELY PRESENT IN THE DOM. This is the distinction
+   * that hid the defect for a week: the toggle had exactly one render site,
+   * inside `hidden … md:flex`, so below the md breakpoint it existed with zero
+   * visible size. Every href assertion passed the whole time.
+   *
+   * Visibility itself needs a browser, which the gate does not have — so this
+   * asserts the structural fact that makes it visible: a render site whose
+   * wrapper is `md:hidden`, i.e. shown BELOW md and hidden above. A site inside
+   * `hidden md:flex` is the opposite and would not satisfy it. The measured
+   * count at 375 is reported separately and was 2.
+   */
+  const mobileSite = /className="md:hidden">\s*<LanguageToggle\s*\/>/.test(nav)
+    || /<div className="md:hidden">[\s\S]{0,80}<LanguageToggle/.test(nav);
+  t("⚠ a render site is visible BELOW md — not only inside `hidden md:flex`",
+    mobileSite, "no md:hidden wrapper around LanguageToggle");
+  t("⚠ and the desktop bar still has its own, inside `hidden … md:flex`",
+    /hidden[^"]*md:flex/.test(nav) && (nav.match(/<LanguageToggle\s*\/>/g) ?? []).length >= 2,
+    `${(nav.match(/<LanguageToggle\s*\/>/g) ?? []).length} render site(s)`);
+
   t("⚠ LanguageToggle is still the ONLY thing emitting a locale link",
     (code(readFileSync("src/components/i18n/LanguageToggle.tsx", "utf8")).match(/hrefLang/g) ?? []).length >= 1
     && !/hrefLang/.test(nav));

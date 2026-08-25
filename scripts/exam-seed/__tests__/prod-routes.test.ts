@@ -22,6 +22,7 @@
  * outage.
  */
 import { spawn, spawnSync } from "node:child_process";
+import { LIVE_CHIPS } from "../../../src/lib/home/hero-chips.ts";
 import { createServer } from "node:net";
 import { existsSync, statSync, readdirSync } from "node:fs";
 import { join } from "node:path";
@@ -231,9 +232,15 @@ async function main() {
      * matched the label would have said nothing about either.
      */
     {
-      const CHIP_HREFS = [
-        "/learn", "/resources", "/past-papers", "/#try",
-      ];
+      /**
+       * ⚠ DERIVED FROM THE MODULE, NEVER TYPED HERE. A hardcoded list checks
+       * the four destinations that were true when the test was written — so
+       * promoting a coming-soon chip into row 1 with a stub href would sail
+       * past it, which is precisely the change this guard exists to stop.
+       * Reading LIVE_CHIPS means the guard fetches whatever the page actually
+       * links to, including a bad one added tomorrow.
+       */
+      const CHIP_HREFS = [...new Set(LIVE_CHIPS.map((c) => c.href))];
       /** Copy that means "this is not finished" wherever it appears. */
       const NOT_BUILT = [
         "is not built yet",
@@ -299,7 +306,60 @@ async function main() {
        * destinations would pass if the chips vanished entirely.
        */
       const chipCtas = (home.match(/data-cta="hero_chip_[a-z_]+"/g) ?? []);
-      t("all four hero chips render on the homepage", chipCtas.length === 4, `${chipCtas.length} chip(s)`);
+      const liveCtas = chipCtas.filter((c) => !c.includes("hero_chip_soon_"));
+      const soonCtas = chipCtas.filter((c) => c.includes("hero_chip_soon_"));
+      t("all four LIVE hero chips render", liveCtas.length === 4, `${liveCtas.length}`);
+      t("all four COMING-SOON hero chips render", soonCtas.length === 4, `${soonCtas.length}`);
+
+      /**
+       * ⚠ ROW 2 CARRIES NO href AND NO FOCUS STOP.
+       * ========================================================
+       * These four name things that do not exist — Flashcards has no tables,
+       * /exam-builder says "This is not built yet.", there is no question-bank
+       * route, and Progress reads a table with zero writers. Rendering them as
+       * muted LINKS would still make them tappable, still put four dead stops
+       * in the keyboard order, and still announce them as links.
+       *
+       * This reads the rendered element for each soon-chip and requires it to
+       * be a non-anchor with no href. Promoting one into row 1 without building
+       * the thing fails here AND on the destination check above.
+       */
+      for (const raw of soonCtas) {
+        const cta = raw.replace(/^data-cta="|"$/g, "");
+        /** The whole element that carries this data-cta, tag included. */
+        const m = home.match(new RegExp(`<([a-z]+)([^>]*data-cta="${cta}"[^>]*)>`));
+        t(`⚠ soon-chip ${cta} is not an anchor`, !!m && m[1] !== "a", m ? `<${m[1]}>` : "not found");
+        t(`⚠ soon-chip ${cta} has no href`, !!m && !/\shref=/.test(m[2]), m ? m[2].slice(0, 60) : "not found");
+        t(`⚠ soon-chip ${cta} is marked aria-disabled`, !!m && /aria-disabled="true"/.test(m[2]));
+        t(`⚠ soon-chip ${cta} is not focusable`, !!m && !/tabindex="0"/i.test(m[2]));
+      }
+
+      /**
+       * ⚠ AND NO ROW-2 LABEL MAY APPEAR INSIDE AN ANCHOR ANYWHERE IN THE HERO.
+       * The per-element check above would pass if somebody added a SECOND,
+       * linked copy of the same label rather than changing the existing one.
+       */
+      /**
+       * ⚠ SCOPED TO ROW 2'S OWN LIST, NOT "THE HERO". The first version scanned
+       * everything above the CTAs and failed on the site nav's own "Exam
+       * Builder" link — a real and separate problem, reported to the founder,
+       * but not this guard's business. Widening a guard until it catches
+       * unrelated things is how a guard gets weakened later to shut it up.
+       *
+       * The assertion is now the strongest form available: row 2's list element
+       * contains no anchor at all.
+       */
+      const soonUlStart = home.indexOf(`aria-label="${"Coming soon"}"`);
+      const soonUl = soonUlStart > 0
+        ? home.slice(soonUlStart, home.indexOf("</ul>", soonUlStart))
+        : "";
+      t("the coming-soon list was found (else the checks below are vacuous)",
+        soonUl.length > 50, `${soonUl.length} chars`);
+      t("⚠ row 2 contains NO anchor element at all", soonUl.length > 50 && !/<a[\s>]/.test(soonUl),
+        (soonUl.match(/<a[^>]*>/g) ?? []).slice(0, 2).join(" "));
+      for (const label of ["Flashcards", "Exam Builder", "Question Bank", "Progress"]) {
+        t(`⚠ "${label}" appears in row 2, unlinked`, soonUl.includes(label));
+      }
 
       /**
        * ⚠ FOUR LABELS, FOUR DESTINATIONS — no label may resolve to a surface it
@@ -308,10 +368,15 @@ async function main() {
        * something the app does not have. That is the same broken promise as a
        * link to a stub, made more quietly, and this fails if it comes back.
        */
+      /**
+       * ⚠ COMPARED AGAINST THE LIVE CHIPS ONLY. Row 2 has no destinations by
+       * design, so counting all eight would make this permanently red and the
+       * obvious "fix" would be to delete the check.
+       */
       const uniqueDestinations = new Set(CHIP_HREFS);
-      t("⚠ every chip has its own destination — no label over a shared surface",
-        uniqueDestinations.size === chipCtas.length,
-        `${uniqueDestinations.size} destination(s) for ${chipCtas.length} chip(s)`);
+      t("⚠ every LIVE chip has its own destination — no label over a shared surface",
+        uniqueDestinations.size === liveCtas.length,
+        `${uniqueDestinations.size} destination(s) for ${liveCtas.length} live chip(s)`);
 
       /**
        * ⚠ THE QUALIFICATION LINE STAYS ONE LINE AT 375. It cannot be measured
