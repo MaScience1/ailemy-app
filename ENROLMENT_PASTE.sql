@@ -7,7 +7,19 @@
 --    SECTION 2, and so on. A long paste into the Supabase SQL Editor has
 --    already applied PARTIALLY and reported success once in this project.
 --
--- ⚠ FOUR VALUES VARY, NOT TWO. The brief said student email and cohort slug.
+-- ⚠ THIS PASTE WRITES TWO ROWS, IN TWO TABLES. cohort_enrolments buys the live
+--    seat; student_courses is what makes /profile's "My courses" section — and
+--    the whole Academic Overview behind it — render at all. Nothing in the
+--    application ever writes student_courses (one reference in src/, a SELECT),
+--    so without this row a paying student reads "You are not studying any
+--    courses yet." forever.
+--
+-- ⚠ AND student_courses.student_id REFERENCES profiles(id), NOT auth.users(id).
+--    A profiles row is normally created by the on_auth_user_created trigger,
+--    but that trigger swallows its own exceptions (0002) — so an account CAN
+--    exist with no profiles row, and Section 1 counts it rather than assuming.
+--
+-- ⚠ FIVE VALUES VARY, NOT TWO. The brief said student email and cohort slug.
 --    `amount_pence` and `stripe_ref` also vary per payment, and they are NOT
 --    optional: cohort_seats_taken() (0063:83-88) requires
 --        status='active' AND amount_pence > 0 AND stripe_ref IS NOT NULL
@@ -82,6 +94,12 @@
 --                   ⚠ UNIT IS AN OPEN QUESTION — see the end of the runbook.
 --                     850 QAR as QAR minor units = 85000.
 --   stripe_ref    — the Stripe payment / session reference, for the audit trail.
+--   course_slug   — which catalogue course the student is studying. This is a
+--                   FIFTH input and it cannot be derived: `cohorts` has NO
+--                   course_id column, so nothing links a cohort to a course.
+--                   For the AS cohort this is 'edexcel-ial-as-chemistry'.
+--                   Other seeded slugs: edexcel-ial-a2-chemistry,
+--                   edexcel-gcse-chemistry, cie-igcse-chemistry.
 
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -96,7 +114,8 @@ WITH input AS (
     'STUDENT@EXAMPLE.COM'              ::text    AS student_email,
     'ial-chemistry-as-sep-2026'        ::text    AS cohort_slug,
     85000                              ::integer AS amount_minor,
-    'STRIPE_REFERENCE'                 ::text    AS stripe_ref
+    'STRIPE_REFERENCE'                 ::text    AS stripe_ref,
+    'edexcel-ial-as-chemistry'         ::text    AS course_slug
 )
 SELECT
   (SELECT count(*) FROM auth.users u, input i
@@ -106,7 +125,13 @@ SELECT
   (SELECT count(*) FROM public.cohort_enrolments e
      JOIN public.cohorts c ON c.id = e.cohort_id, input i
     WHERE c.slug = i.cohort_slug
-      AND btrim(lower(e.email)) = btrim(lower(i.student_email)))            AS already_enrolled;
+      AND btrim(lower(e.email)) = btrim(lower(i.student_email)))        AS already_enrolled,
+  (SELECT count(*) FROM public.profiles p, input i
+    WHERE p.id = (SELECT u.id FROM auth.users u
+                   WHERE btrim(lower(u.email)) = btrim(lower(i.student_email))))
+                                                                       AS profiles_found,
+  (SELECT count(*) FROM public.courses c, input i
+    WHERE c.slug = i.course_slug)                                      AS courses_found;
 
 -- accounts_found  = 1 → good.
 --                 = 0 → the student has NOT signed up. Send them to /signup.
@@ -116,6 +141,12 @@ SELECT
 --                       STOP and decide which is the student.
 -- cohorts_found   = 1 → good.  = 0 → wrong slug; check the three above.
 -- already_enrolled= 0 → good.  > 0 → they already have a seat. STOP.
+-- profiles_found  = 1 → good.
+--                 = 0 → the account exists but has NO profiles row. The
+--                       on_auth_user_created trigger swallows its own errors
+--                       (0002), so this happens silently. Section 3's second
+--                       INSERT would insert nothing. Fix the profile first.
+-- courses_found   = 1 → good.  = 0 → wrong course slug; see Section 0.
 
 
 -- ════════════════════════════════════════════════════════════════════════════
@@ -132,7 +163,8 @@ WITH input AS (
     'STUDENT@EXAMPLE.COM'              ::text    AS student_email,
     'ial-chemistry-as-sep-2026'        ::text    AS cohort_slug,
     85000                              ::integer AS amount_minor,
-    'STRIPE_REFERENCE'                 ::text    AS stripe_ref
+    'STRIPE_REFERENCE'                 ::text    AS stripe_ref,
+    'edexcel-ial-as-chemistry'         ::text    AS course_slug
 )
 SELECT
   (SELECT count(*)
@@ -163,7 +195,8 @@ WITH input AS (
     'STUDENT@EXAMPLE.COM'              ::text    AS student_email,
     'ial-chemistry-as-sep-2026'        ::text    AS cohort_slug,
     85000                              ::integer AS amount_minor,
-    'STRIPE_REFERENCE'                 ::text    AS stripe_ref
+    'STRIPE_REFERENCE'                 ::text    AS stripe_ref,
+    'edexcel-ial-as-chemistry'         ::text    AS course_slug
 )
 INSERT INTO public.cohort_enrolments
   (cohort_id, user_id, email, status, amount_pence, stripe_ref, source_tag)
@@ -185,6 +218,35 @@ RETURNING id, cohort_id, user_id, email, status, amount_pence, stripe_ref;
 
 
 -- ════════════════════════════════════════════════════════════════════════════
+-- SECTION 3b — THE COURSE ROW. Expect EXACTLY ONE row back.
+-- ════════════════════════════════════════════════════════════════════════════
+-- Without this, /profile's "My courses" reads "You are not studying any courses
+-- yet." and the entire Academic Overview behind it never renders — for a family
+-- that has paid. Nothing in the application writes this table.
+--
+-- Fail-closed the same way: it JOINs profiles and courses, so a missing profile
+-- or a wrong slug inserts nothing and returns no rows rather than erroring.
+-- ON CONFLICT is deliberately absent — a second run should tell you it collided
+-- (23505 on the composite PK) rather than reporting a silent success.
+
+WITH input AS (
+  SELECT
+    'STUDENT@EXAMPLE.COM'              ::text    AS student_email,
+    'ial-chemistry-as-sep-2026'        ::text    AS cohort_slug,
+    85000                              ::integer AS amount_minor,
+    'STRIPE_REFERENCE'                 ::text    AS stripe_ref,
+    'edexcel-ial-as-chemistry'         ::text    AS course_slug
+)
+INSERT INTO public.student_courses (student_id, course_id)
+SELECT p.id, c.id
+FROM input i
+JOIN auth.users     u ON btrim(lower(u.email)) = btrim(lower(i.student_email))
+JOIN public.profiles p ON p.id = u.id
+JOIN public.courses  c ON c.slug = i.course_slug
+RETURNING student_id, course_id, enrolled_at;
+
+
+-- ════════════════════════════════════════════════════════════════════════════
 -- SECTION 4 — POSITIVE CONTROL, AFTER. Proves access changed, not just a row.
 -- ════════════════════════════════════════════════════════════════════════════
 
@@ -193,7 +255,8 @@ WITH input AS (
     'STUDENT@EXAMPLE.COM'              ::text    AS student_email,
     'ial-chemistry-as-sep-2026'        ::text    AS cohort_slug,
     85000                              ::integer AS amount_minor,
-    'STRIPE_REFERENCE'                 ::text    AS stripe_ref
+    'STRIPE_REFERENCE'                 ::text    AS stripe_ref,
+    'edexcel-ial-as-chemistry'         ::text    AS course_slug
 )
 SELECT
   (SELECT count(*)

@@ -169,6 +169,22 @@ with an **Email about my enrolment** button to `mascience15@gmail.com`.
 
 If they are not signed in at all, they get the sign-in screen instead.
 
+### The join link — deferred, by decision
+
+**There is no join/meeting URL column anywhere in the schema**, and none is
+being built. `tuition_sessions`, `cohort_schedules` and `cohorts` all lack one,
+and the day panel shows an enrolled student the words "You're enrolled" and no
+control.
+
+**The link travels by WhatsApp.** That is a decision, not a gap. The obvious
+in-app alternative — publishing it as an announcement — was considered and
+rejected: `announcements` has no cohort or audience column
+([0022](supabase/migrations/0022_announcements.sql)), so a join link posted
+there is visible to every signed-in user, and it would leak across cohorts the
+moment a second one runs.
+
+Revisit only if announcements gain an audience column.
+
 ### 5 · What the student sees AFTER
 
 Immediately on their next page load. **No re-login, no cache clear** — every
@@ -184,6 +200,27 @@ page", not "sign out and back in".
 - The **public seat counter** increments — but only if you followed trap 1.
 
 ---
+
+---
+
+## ⚠ Never set a live cohort `is_public = false`
+
+**It blanks the calendar for every student already enrolled on it.**
+
+An enrolled student's own sessions are not resolved from their enrolment. They
+are resolved through the *public* cohort list, which filters
+`.eq("is_public", true)` ([readers.ts:96](src/lib/public/readers.ts:96)). Turn
+the flag off and `loadMyTuition` finds no cohort for them, so `/profile` shows
+an empty calendar and "Next lesson —", while their `cohort_enrolments` row sits
+there perfectly valid.
+
+**This becomes tempting at exactly the wrong moment.** The obvious reason to
+un-publish a cohort is that all 20 seats are gone and you no longer want it
+advertised. That is precisely when twenty families are relying on it to tell
+them when their next lesson is.
+
+If you need to stop advertising a full cohort, change what the *catalogue* shows
+— not `is_public`. Leave the flag alone until the cohort has actually finished.
 
 ---
 
