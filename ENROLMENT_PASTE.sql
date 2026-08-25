@@ -37,6 +37,14 @@
 --    realistic-looking literal, so a missed one shows up as a preflight count
 --    of 0 in Section 1 rather than as a syntax error deep in the run.
 --
+-- ⚠ EMAILS ARE COMPARED WITH btrim(lower(...)) ON BOTH SIDES, EVERYWHERE.
+--    /signup stores whatever was typed, with no .trim() (signup/page.tsx:144),
+--    while the magic-link path trims (sign-in-form.tsx:32). So an account can
+--    exist with trailing whitespace, and a plain `=` would miss it. Note that
+--    claim_enrolment() itself uses only lower() (0009:77) — which does not
+--    matter here, because this paste sets user_id directly rather than relying
+--    on the claim.
+--
 -- ⚠ RLS WILL NOT GET IN YOUR WAY, AND is_staff() IS A RED HERRING HERE. The
 --    write policy on this table is `for all using (public.is_staff())`
 --    (0009:186), and is_staff() reads auth.uid(), which is NULL for the
@@ -92,13 +100,13 @@ WITH input AS (
 )
 SELECT
   (SELECT count(*) FROM auth.users u, input i
-    WHERE lower(u.email) = lower(i.student_email))            AS accounts_found,
+    WHERE btrim(lower(u.email)) = btrim(lower(i.student_email)))            AS accounts_found,
   (SELECT count(*) FROM public.cohorts c, input i
     WHERE c.slug = i.cohort_slug)                             AS cohorts_found,
   (SELECT count(*) FROM public.cohort_enrolments e
      JOIN public.cohorts c ON c.id = e.cohort_id, input i
     WHERE c.slug = i.cohort_slug
-      AND lower(e.email) = lower(i.student_email))            AS already_enrolled;
+      AND btrim(lower(e.email)) = btrim(lower(i.student_email)))            AS already_enrolled;
 
 -- accounts_found  = 1 → good.
 --                 = 0 → the student has NOT signed up. Send them to /signup.
@@ -132,7 +140,7 @@ SELECT
      JOIN public.cohorts c ON c.id = e.cohort_id, input i
     WHERE c.slug = i.cohort_slug
       AND e.user_id = (SELECT u.id FROM auth.users u
-                        WHERE lower(u.email) = lower(i.student_email))
+                        WHERE btrim(lower(u.email)) = btrim(lower(i.student_email)))
       AND e.status IN ('paid','active','completed'))     AS access_would_pass,
   (SELECT public.cohort_seats_taken(i.cohort_slug) FROM input i)
                                                           AS public_seats_taken;
@@ -162,7 +170,7 @@ INSERT INTO public.cohort_enrolments
 SELECT
   c.id,
   u.id,                       -- ⚠ NOT NULL: group tuition never self-links
-  lower(i.student_email),
+  btrim(lower(i.student_email)),
   'active',                   -- ⚠ NOT the 'paid' default, and not 'completed'.
   i.amount_minor,             --    'active' is the ONLY status accepted by all
                               --    of: is_enrolled (0009:86), /profile
@@ -172,7 +180,7 @@ SELECT
   'manual-paylink'
 FROM input i
 JOIN public.cohorts   c ON c.slug = i.cohort_slug
-JOIN auth.users       u ON lower(u.email) = lower(i.student_email)
+JOIN auth.users       u ON btrim(lower(u.email)) = btrim(lower(i.student_email))
 RETURNING id, cohort_id, user_id, email, status, amount_pence, stripe_ref;
 
 
@@ -193,7 +201,7 @@ SELECT
      JOIN public.cohorts c ON c.id = e.cohort_id, input i
     WHERE c.slug = i.cohort_slug
       AND e.user_id = (SELECT u.id FROM auth.users u
-                        WHERE lower(u.email) = lower(i.student_email))
+                        WHERE btrim(lower(u.email)) = btrim(lower(i.student_email)))
       AND e.status IN ('paid','active','completed'))     AS access_would_pass,
   (SELECT public.cohort_seats_taken(i.cohort_slug) FROM input i)
                                                           AS public_seats_taken,
