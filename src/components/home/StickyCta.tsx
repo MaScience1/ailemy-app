@@ -104,7 +104,7 @@ export function StickyCta({
       className={[
         "pointer-events-none fixed inset-x-0 bottom-0 z-40 transition-opacity duration-300",
         shown ? "opacity-100" : "opacity-0",
-        "sm:inset-x-auto sm:bottom-6 sm:right-6",
+        "sm:inset-x-auto sm:bottom-6 sm:end-6",
       ].join(" ")}
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
@@ -124,7 +124,7 @@ export function StickyCta({
            */
           shown ? "pointer-events-auto" : "pointer-events-none",
           "flex items-center gap-3 border-t border-ink/10 bg-parchment/95 px-4 py-3 backdrop-blur",
-          "sm:rounded-full sm:border sm:px-2 sm:py-2 sm:pl-5 sm:shadow-[0_8px_28px_-12px_rgba(15,20,25,0.28)]",
+          "sm:rounded-full sm:border sm:px-2 sm:py-2 sm:ps-5 sm:shadow-[0_8px_28px_-12px_rgba(15,20,25,0.28)]",
           "motion-safe:transition-transform motion-safe:duration-300",
           shown ? "translate-y-0" : "translate-y-2",
         ].join(" ")}

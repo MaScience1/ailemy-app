@@ -115,7 +115,7 @@ export function accountLabel(session: AccountSession): string {
  * clipped by the panel edge it sits against.
  */
 const ITEM_BASE = [
-  "flex w-full gap-2.5 rounded px-3 text-left",
+  "flex w-full gap-2.5 rounded px-3 text-start",
   "transition-colors duration-150",
   "hover:bg-ink/[0.06] focus-visible:bg-ink/[0.06]",
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-ink",
@@ -329,7 +329,7 @@ export function AccountMenu({
           aria-label={`Account: ${session.name ?? session.email}`}
           ref={menuRef}
           onKeyDown={onMenuKeyDown}
-          className="absolute right-0 top-full z-50 mt-2 w-[17rem] rounded-md border border-ink/10 bg-parchment p-1 shadow-[0_8px_24px_-12px_rgba(15,20,25,0.18)]"
+          className="absolute end-0 top-full z-50 mt-2 w-[17rem] rounded-md border border-ink/10 bg-parchment p-1 shadow-[0_8px_24px_-12px_rgba(15,20,25,0.18)]"
         >
           {/* ⚠ role="none" ON EVERYTHING THAT IS NOT AN ITEM. A role="menu" whose
               children are arbitrary divs is a malformed widget; the identity

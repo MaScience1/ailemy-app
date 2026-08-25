@@ -206,7 +206,7 @@ export function QuickSignup({ trigger }: {
                     >
                       {/* ⚠ THE TICK, NOT ONLY THE COLOUR (§34). A selected chip
                           must be distinguishable without seeing the tint. */}
-                      {on && <span aria-hidden className="mr-1">✓</span>}
+                      {on && <span aria-hidden className="me-1">✓</span>}
                       {c.name}
                     </button>
                   );
