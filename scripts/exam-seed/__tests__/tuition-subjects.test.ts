@@ -129,7 +129,14 @@ console.log("\n=== 6. the proposed schema, and its erasure ===");
    * been a CREATE TABLE and was deliberately not; a raw scan reads that
    * explanation as the thing it is warning about. Ninth time in this repo.
    */
-  const sqlCode = sql.replace(/^\s*--.*$/gm, " ");
+  /**
+   * ⚠ BOTH COMMENT SYNTAXES. The file now carries a plpgsql function whose
+   * body is documented with block comments, and those comments name the very
+   * statements asserted below. Stripping only `--` would let prose satisfy a
+   * code assertion — which is exactly how this file shipped an erase_user
+   * extension that did not exist.
+   */
+  const sqlCode = sql.replace(/\/\*[\s\S]*?\*\//g, " ").replace(/^\s*--.*$/gm, " ");
   t("⚠ it is UNNUMBERED and says it is not applied",
     !/^\d{4}_/.test(P.split("/").pop() ?? "") && /NOT APPLIED/.test(sql));
   /**
@@ -138,10 +145,26 @@ console.log("\n=== 6. the proposed schema, and its erasure ===");
    */
   t("⚠ it ALTERs the existing table rather than creating a parallel one",
     /ALTER TABLE public\.interest_registrations/.test(sqlCode) && !/CREATE TABLE/.test(sqlCode));
-  t("override 4 — the erase_user extension is in the SAME file",
-    /ERASE_USER/.test(sql) && /DELETE FROM public\.interest_registrations WHERE user_id = p_user_id/.test(sql));
+  /**
+   * ⚠ THIS ASSERTION USED TO PASS ON PROSE, AND ON PROSE THAT WAS WRONG.
+   * It matched `WHERE user_id = p_user_id` in a comment block — an identifier
+   * that appears nowhere in erase_user, whose parameters are `target` and
+   * `target_email`. The draft could never have been pasted in as written, and
+   * the guard reported the extension as present for as long as it did not
+   * exist. It now reads comment-stripped code and names the real statement.
+   */
+  t("override 4 — the erase_user extension is EXECUTABLE, in the SAME file",
+    /CREATE OR REPLACE FUNCTION public\.erase_user/.test(sqlCode)
+    && /interest_registrations WHERE user_id = \$1/.test(sqlCode));
+  /**
+   * ⚠ THE ACCOUNT-LESS ROWS, AND WHY THE SHAPE CHANGED. The prose proposed
+   * `WHERE user_id IS NULL AND lower(email) = ...`. What v5 already does, and
+   * v6 keeps, is the unconditional email match — strictly wider coverage: it
+   * reaches an account-less lead AND a lead whose row was later claimed. The
+   * user_id arm is additive, not a replacement, so both must be present.
+   */
   t("⚠ and it also reaches rows with no account, matched by email",
-    /user_id IS NULL AND lower\(email\)/.test(sql));
+    /DELETE FROM public\.interest_registrations WHERE lower\(email\) = lower\(target_email\)/.test(sqlCode));
   t("override 8 — marketing consent is separate and defaults false",
     /consent_to_marketing boolean NOT NULL DEFAULT false/.test(sql));
   t("§12 — the upsert key is partial on user_id and includes the mode",
