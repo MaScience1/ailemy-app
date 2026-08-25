@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
 import { ExplorePanel } from "@/components/home/ExplorePanel";
+import { nextClass } from "@/lib/home/next-class";
 import { LIVE_CHIPS, SOON_CHIPS } from "@/lib/home/hero-chips";
 import { loadSubjectHoldings, holdingsLabel } from "@/lib/qualifications/tree";
 import { HeroAvailability, isHeroMode, type HeroMode } from "@/components/home/HeroAvailability";
@@ -43,7 +44,7 @@ import { TimezoneSync } from "@/components/public/TimezoneSync";
 import { loadCalendarEvents } from "@/lib/calendar/readers";
 import { parseDate, rangeFor, readState } from "@/lib/calendar/grid";
 import { emptyCalendarMessage } from "@/lib/calendar/types";
-import { CANONICAL_TZ, calendarDate, dualTime, formatDay } from "@/lib/schedule/timezone";
+import { CANONICAL_TZ, calendarDate, dualTime, formatDay, formatTime } from "@/lib/schedule/timezone";
 import { viewerTimeZone } from "@/lib/schedule/viewer-tz";
 
 /**
@@ -266,6 +267,15 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
     : { events: [] as typeof calendarEvents };
 
   const upcomingLesson = nextSession(aheadEvents, new Date(), dayKeyOf, todayISO);
+  /**
+   * ⚠ THE NEXT CLASS, NOT THE NEXT EVENT. See src/lib/home/next-class.ts —
+   * onboarding is a real session and a wrong answer to "when is your first
+   * lesson". Reads the 120-day window so it still resolves before term.
+   */
+  const upcomingClass = nextClass(
+    aheadEvents.length > 0 ? aheadEvents : calendarEvents,
+    new Date(),
+  );
   const nextLesson = upcomingLesson.kind === "session"
     ? {
         title: upcomingLesson.event.title,
@@ -539,6 +549,76 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         </div>
         </div>
       </header>
+
+      {/* ══ §4 · COMPACT TUITION ACCESS — IMMEDIATELY AFTER THE HERO ═══════
+          ⚠ THE TWO THINGS A PARENT CAME FOR, BEFORE ANY GRID OR TIMETABLE.
+          Ailemy is both a platform and a place to book a teacher, and the
+          second was previously buried under a month calendar the visitor had
+          to interpret. This states the choice in two words each and gets out
+          of the way; the full calendar lives further down for the reader who
+          wants to browse rather than decide. */}
+      <section aria-labelledby="live-tuition-heading" className="ai-band">
+        <div className="mx-auto max-w-6xl px-6 py-9 sm:py-12">
+          <h2 id="live-tuition-heading" className="font-display text-2xl font-medium tracking-tight sm:text-3xl">
+            {t("home.liveTuitionTitle")}
+          </h2>
+          <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-ink/70 sm:text-base">
+            {t("home.liveTuitionBodyV2")}
+          </p>
+
+          <div className="mt-5 flex flex-wrap gap-2.5">
+            <Link
+              href="/tuition?mode=one-to-one"
+              data-cta="home_tuition_one_to_one"
+              className="group inline-flex min-h-[44px] items-center rounded-full border border-ink/20 px-5 py-2.5 text-sm font-medium transition-colors duration-200 hover:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            >
+              {t("home.liveTuitionOneToOne")}
+            </Link>
+            <Link
+              href="/tuition?mode=group"
+              data-cta="home_tuition_group"
+              className="group inline-flex min-h-[44px] items-center rounded-full border border-ink/20 px-5 py-2.5 text-sm font-medium transition-colors duration-200 hover:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+            >
+              {t("home.liveTuitionGroup")}
+            </Link>
+          </div>
+
+          {/* ⚠ DERIVED, AND ABSENT WHEN NOTHING RESOLVES (governing §3).
+              nextClass filters on tuition_sessions.kind, so the AS cohort's
+              "Onboarding & diagnostics" on Sun 13 Sep is excluded and the first
+              CLASS — Tue 15 Sep — is what shows. Matching the title instead
+              would break the first time a session is renamed and would start
+              showing the wrong date silently rather than failing.
+
+              If nothing resolves this renders NOTHING. A placeholder date on a
+              page a parent is deciding from is worse than an absent one, and
+              this product has shipped a fabricated-slot incident once already. */}
+          {upcomingClass ? (
+            <p className="mt-5 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[13px] text-ink/60">
+              <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink/45">
+                {t("home.nextLessonLabel")}
+              </span>
+              <span className="text-ink/80">
+                {formatDay(upcomingClass.startsAt, CANONICAL_TZ)}
+                {" · "}
+                {formatTime(upcomingClass.startsAt, CANONICAL_TZ)}
+              </span>
+              <span dir="auto" className="text-ink/55">{upcomingClass.title}</span>
+            </p>
+          ) : null}
+
+          <p className="mt-5">
+            <Link
+              href="/calendar"
+              data-cta="home_tuition_timetable"
+              className="group inline-flex items-center gap-1.5 text-sm text-ink/70 underline-offset-4 transition-colors hover:text-ink hover:underline"
+            >
+              {t("home.liveTuitionTimetable")}
+              <span aria-hidden className="transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">→</span>
+            </Link>
+          </p>
+        </div>
+      </section>
 
       {/* ── 4a. the four products (§16, §17) ─────────────────────────────
           ============================================================

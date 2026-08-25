@@ -48,7 +48,7 @@ const ev = (o: Partial<CalendarEvent> & { key: string; at: string }): CalendarEv
   title: o.title ?? "IAL Chemistry AS",
   subject: o.subject ?? "chemistry",
   qualification: "ial-as", yearGroup: null, cohortSlug: "ial-chemistry-as-sep-2026",
-  teacherName: null, cancelledReason: null,
+  teacherName: null, cancelledReason: null, kind: "teaching",
 });
 
 console.log("\n=== 1. the soonest scheduled group lesson wins ===");

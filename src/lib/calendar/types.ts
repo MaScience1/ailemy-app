@@ -1,4 +1,5 @@
 import type { Cohort } from "../public/catalogue.ts";
+import type { SessionKind } from "@/lib/schedule/recurrence";
 
 /**
  * The one event shape every calendar surface renders.
@@ -64,6 +65,18 @@ export type CalendarEvent = {
 
   /** Set only when status is 'cancelled'. */
   cancelledReason: string | null;
+  /**
+   * ⚠ WHAT KIND OF SESSION THIS IS — teaching, onboarding, revision, mock or
+   * clinic. Carried because "the next lesson" is not the next EVENT: the AS
+   * cohort's first calendar entry is "Onboarding & diagnostics" on Sun 13 Sep,
+   * and the first CLASS is Tue 15 Sep. A teaser that said 13 September would be
+   * telling a parent their child's first lesson is a diagnostic session.
+   *
+   * The schedule layer has always had this on Occurrence; it was dropped here,
+   * so every consumer downstream had to guess from the title. Null only for
+   * events that are not cohort sessions at all.
+   */
+  kind: SessionKind | null;
 
   /** Present for group events, so a cell can show price and cohort state. */
   cohort?: Cohort;

@@ -197,6 +197,16 @@ export const CTA_SOURCES = [
   "hero_chip_soon_exam_builder",
   "hero_chip_soon_question_bank",
   "hero_chip_soon_progress",
+  /**
+   * ⚠ THE COMPACT TUITION BLOCK (§4). Three separate sources because the
+   * question worth answering is WHICH of the three a visitor takes — 1-to-1,
+   * group, or "show me the timetable first". Folding them into one
+   * home_tuition_clicked would answer only that somebody wanted tuition, which
+   * the section's existence already implies.
+   */
+  "home_tuition_one_to_one",
+  "home_tuition_group",
+  "home_tuition_timetable",
   "floating_start_learning",
   "floating_continue_studying",
   // ⚠ THE TWO STATES OF TuitionCta ARE SEPARATE SOURCES, NOT ONE. A click on
