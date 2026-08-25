@@ -35,6 +35,7 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
+import { continueHref } from "./continue-href";
 import { courseCompletion, type CourseAccess, type CourseCompletion } from "./course-state";
 import type { Unavailable } from "@/lib/exam/results-insights";
 
@@ -59,6 +60,12 @@ export type ProfileCourse = {
   targetGrade: string | null;
   access: CourseAccess;
   completion: CourseCompletion;
+  /**
+   * ⚠ WHERE "Continue course" GOES. A real lesson when one is published,
+   * otherwise that course's lessons index, otherwise the catalogue root —
+   * never a URL built from a lesson that would render "coming soon".
+   */
+  continueHref: string;
 };
 
 export type CoursesLoad =
@@ -99,7 +106,7 @@ export async function loadProfileCourses(studentId: string): Promise<CoursesLoad
     .from("student_courses")
     .select(
       "course_id, year_group, exam_session, academic_year, enrollment_status, target_grade, " +
-      "courses!inner(id, slug, name, level, curricula(short_name), subjects(name, slug))",
+      "courses!inner(id, slug, name, level, pathway, curricula(short_name), subjects(name, slug))",
     )
     .eq("student_id", studentId);
 
@@ -159,7 +166,20 @@ export async function loadProfileCourses(studentId: string): Promise<CoursesLoad
       },
       completion: courseCompletion({
         completed: completed.get(id) ?? 0,
-        published: lessonCounts.get(id) ?? 0,
+        published: lessonCounts.counts.get(id) ?? 0,
+      }),
+      /**
+       * ⚠ THE DEEP LINK, DERIVED HERE RATHER THAN IN THE COMPONENT. Every piece
+       * of it is already on this row — subject, pathway, course — and the live
+       * lesson slug comes from the same read that counts published lessons, so
+       * it costs no extra query. MyCourses hardcoded "/learn" because a
+       * component cannot know which lesson is live; this can.
+       */
+      continueHref: continueHref({
+        subjectSlug: str(subject?.slug),
+        pathway: str((r.courses as Record<string, unknown> | null)?.pathway),
+        courseSlug: slug,
+        liveLessonSlug: lessonCounts.firstLive.get(id) ?? null,
       }),
     });
   }
@@ -174,20 +194,39 @@ type Db = Awaited<ReturnType<typeof createClient>>;
  * of null that `?? 0` turns into a confident zero. A zero denominator then
  * renders as "no lessons published", which is indistinguishable from the truth.
  */
-async function liveLessonsByCourse(db: Db, courseIds: string[]): Promise<Map<string, number>> {
-  const out = new Map<string, number>();
-  if (courseIds.length === 0) return out;
+async function liveLessonsByCourse(
+  db: Db,
+  courseIds: string[],
+): Promise<{ counts: Map<string, number>; firstLive: Map<string, string> }> {
+  const counts = new Map<string, number>();
+  /**
+   * ⚠ THE FIRST LIVE LESSON, BY lesson_number — the one a student would start.
+   * Ordering matters: without it "first" is whatever Postgres happened to
+   * return, and two students on the same course would be sent to different
+   * lessons from the same button.
+   */
+  const firstLive = new Map<string, string>();
+  const firstNumber = new Map<string, number>();
+  if (courseIds.length === 0) return { counts, firstLive };
   const { data, error } = await db
     .from("lessons")
-    .select("id, course_id, status")
+    .select("id, course_id, status, slug, lesson_number")
     .in("course_id", courseIds);
-  if (error) return out; // every completion becomes Unavailable — the honest fallback
+  if (error) return { counts, firstLive }; // completion becomes Unavailable — the honest fallback
   for (const row of (data ?? []) as unknown as Record<string, unknown>[]) {
     if (row.status !== "live") continue;
     const cid = str(row.course_id);
-    if (cid) out.set(cid, (out.get(cid) ?? 0) + 1);
+    if (!cid) continue;
+    counts.set(cid, (counts.get(cid) ?? 0) + 1);
+    const slug = str(row.slug);
+    if (!slug) continue;
+    const n = typeof row.lesson_number === "number" ? row.lesson_number : Number.MAX_SAFE_INTEGER;
+    if (!firstLive.has(cid) || n < (firstNumber.get(cid) ?? Number.MAX_SAFE_INTEGER)) {
+      firstLive.set(cid, slug);
+      firstNumber.set(cid, n);
+    }
   }
-  return out;
+  return { counts, firstLive };
 }
 
 /**

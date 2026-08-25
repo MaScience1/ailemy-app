@@ -84,7 +84,19 @@ export async function loadMyTuition(now = new Date()): Promise<MyTuition> {
   const iso = (d: number) => new Date(now.getTime() + d * 86_400_000).toISOString().slice(0, 10);
   const groupSessions: MyTuition["groupSessions"] = [];
   for (const slug of slugs) {
-    const cal = await loadCalendar({ from: iso(0), to: iso(56), cohortSlug: slug, includeCancelled: true });
+    /**
+     * ⚠ entitledSlugs IS WHAT KEEPS A FULL COHORT VISIBLE TO ITS OWN STUDENTS.
+     * `slugs` came from THIS viewer's cohort_enrolments rows a few lines above,
+     * read under their own session — so passing them here says "this person
+     * belongs to these cohorts", and the catalogue read stops requiring
+     * is_public for them. Setting a sold-out cohort non-public, the obvious
+     * admin action once 20 seats are gone, used to blank the calendar of every
+     * student on it with nothing on screen connecting the two.
+     */
+    const cal = await loadCalendar({
+      from: iso(0), to: iso(56), cohortSlug: slug, includeCancelled: true,
+      entitledSlugs: slugs,
+    });
     groupSessions.push(...cal.sessions);
   }
   groupSessions.sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());

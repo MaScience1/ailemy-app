@@ -64,6 +64,14 @@ export type CalendarQuery = {
   subject?: string;
   /** Cohort slug filter, for a single-cohort page. */
   cohortSlug?: string;
+  /**
+   * ⚠ COHORTS THE VIEWER IS ENROLLED ON. Supplied by loadMyTuition from that
+   * viewer's own cohort_enrolments rows. Without it a non-public cohort is
+   * absent from the catalogue read, `scoped` comes back empty, and the
+   * student's calendar renders "no cohorts match the query" — blank, for
+   * somebody who has paid, with nothing on screen linking it to is_public.
+   */
+  entitledSlugs?: readonly string[];
   includeCancelled?: boolean;
 };
 
@@ -141,7 +149,7 @@ function overrideFromRow(row: Record<string, unknown>): SessionOverride | string
 }
 
 export async function loadCalendar(q: CalendarQuery): Promise<CalendarLoad> {
-  const { data: cohorts } = await loadCohorts();
+  const { data: cohorts } = await loadCohorts({ entitledSlugs: q.entitledSlugs });
   const byId = new Map(cohorts.map((c) => [c.slug, c]));
 
   const scoped = cohorts.filter(
@@ -210,7 +218,19 @@ export async function loadCalendar(q: CalendarQuery): Promise<CalendarLoad> {
   for (const c of scoped) { cohortKey.set(c.slug, c); }
   const idToSlug = new Map<string, string>();
   if (source === "database") {
-    const idRows = await db!.from("cohorts").select("id,slug").eq("is_public", true);
+    /**
+       * ⚠ THE SECOND is_public FILTER — the one that would have survived a fix
+       * applied only to loadCohorts. This map turns a rule's cohort_id into a
+       * slug; a cohort missing from it resolves to undefined and its sessions
+       * are dropped even though the cohort itself loaded fine. Both filters had
+       * to move together, or the bug looks fixed and stays.
+       */
+      const entitled = (q.entitledSlugs ?? []).filter((x) => /^[a-z0-9-]+$/.test(x));
+      const idRows = await db!.from("cohorts").select("id,slug").or(
+        entitled.length > 0
+          ? `is_public.eq.true,slug.in.(${entitled.join(",")})`
+          : "is_public.eq.true",
+      );
     for (const row of (idRows.data ?? []) as unknown as { id: string; slug: string }[]) {
       idToSlug.set(row.id, row.slug);
     }

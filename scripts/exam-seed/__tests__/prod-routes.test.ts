@@ -164,6 +164,55 @@ async function main() {
 
     /**
      * ==========================================================================
+     * ⚠ THE "CONTINUE COURSE" DEEP LINK MUST LAND ON REAL LESSON CONTENT.
+     * ==========================================================================
+     * continueHref resolves to a published lesson when one exists. The whole
+     * point is that a paying student stops being sent to the catalogue root —
+     * so the destination has to be a lesson that actually teaches, not the
+     * "We're organising this lesson now" placeholder with its disabled Notify
+     * me button. That placeholder is what 81 of 82 lesson URLs render, so
+     * building the URL correctly and landing on a stub is the likely failure,
+     * not a hypothetical one.
+     *
+     * ⚠ FETCHED AND READ, not asserted from source — same discipline as the
+     * chip guard. A source test would pass while the lesson was unpublished.
+     */
+    {
+      const LIVE_LESSON =
+        "/learn/chemistry/international-a-level/edexcel-ial-as-chemistry/definitions-formulae-and-the-mole";
+      let status = 0, html = "";
+      try {
+        const res = await fetch(BASE + LIVE_LESSON, { signal: AbortSignal.timeout(30_000) });
+        status = res.status;
+        html = await res.text();
+      } catch { /* asserted below */ }
+
+      t("the deep-link lesson resolves", status === 200, `HTTP ${status}`);
+
+      const body = html
+        .replace(/<script[\s\S]*?<\/script>/gi, " ")
+        .replace(/<style[\s\S]*?<\/style>/gi, " ");
+      const PLACEHOLDER = [
+        "We&#x27;re organising this lesson now",
+        "We're organising this lesson now",
+        "Form wiring coming in a later session",
+      ];
+      const hit = PLACEHOLDER.filter((m) => body.includes(m));
+      t("⚠ the deep-link destination is a real lesson, not the coming-soon placeholder",
+        status === 200 && hit.length === 0,
+        hit.length ? `placeholder shown: ${hit[0]}` : `HTTP ${status}`);
+
+      /**
+       * ⚠ AND IT IS NOT VACUOUS. A page that 200s with nothing on it would pass
+       * the check above; a real lesson carries its own title.
+       */
+      t("and it renders lesson content, not an empty shell",
+        /Definitions, formulae and the mole/i.test(body),
+        `${body.length} bytes`);
+    }
+
+    /**
+     * ==========================================================================
      * ⚠ NO HERO CHIP MAY LEAD TO A SURFACE THAT IS NOT BUILT.
      * ==========================================================================
      * The six chips sit above the fold on the first screen a parent sees after

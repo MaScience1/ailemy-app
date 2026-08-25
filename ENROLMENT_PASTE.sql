@@ -271,12 +271,34 @@ SELECT
   (SELECT count(*)
      FROM public.cohort_enrolments e
      JOIN public.cohorts c ON c.id = e.cohort_id, input i
-    WHERE c.slug = i.cohort_slug AND e.user_id IS NULL)   AS orphan_rows_on_cohort;
+    WHERE c.slug = i.cohort_slug AND e.user_id IS NULL)   AS orphan_rows_on_cohort,
+  /**
+   * ⚠ AND THE COURSE ROW, WHICH IS A SEPARATE FAILURE. The seat and the course
+   * are two rows in two tables; Section 3b can insert nothing and return no
+   * rows while Section 3 succeeded, and the student would then have working
+   * lessons access and an empty "My courses" panel. Counted through profiles,
+   * because student_courses.student_id references profiles(id) and NOT
+   * auth.users(id) — matching on the wrong id inserts against a person who
+   * does not exist and reports success.
+   */
+  (SELECT count(*)
+     FROM public.student_courses sc
+     JOIN public.courses c2 ON c2.id = sc.course_id, input i
+    WHERE c2.slug = i.course_slug
+      AND sc.student_id = (SELECT p.id FROM public.profiles p
+                            JOIN auth.users u ON u.id = p.id
+                           WHERE btrim(lower(u.email)) = btrim(lower(i.student_email))))
+                                                          AS course_row_present;
 
 -- access_would_pass     MUST now be 1.  Still 0 → the row has a NULL user_id
 --                       or a status outside the three; read Section 3's output.
 -- public_seats_taken    MUST be Section 2's number + 1. Unchanged → status is
 --                       not 'active', or amount_pence/stripe_ref is NULL.
+-- course_row_present    MUST be 1. A 0 here with access_would_pass = 1 is the
+--                       split state: they can open lessons but /profile says
+--                       "You are not studying any courses yet." Re-read
+--                       Section 3b's output — it returns no rows rather than
+--                       erroring when the profile or the course slug is wrong.
 -- orphan_rows_on_cohort SHOULD be 0. Anything above 0 is a row that will never
 --                       grant group access on its own — worth clearing up.
 
