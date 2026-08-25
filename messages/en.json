@@ -57,5 +57,25 @@
   "common": {
     "loading": "Loading…",
     "somethingWentWrong": "Something went wrong. Please try again."
+  },
+  "subjects": {
+    "chemistry": "Chemistry",
+    "biology": "Biology",
+    "physics": "Physics",
+    "maths": "Maths",
+    "english": "English",
+    "chooseSubject": "Choose a subject",
+    "statusActive": "Active",
+    "statusComingSoon": "Coming soon",
+    "liveTuitionAvailable": "Live tuition available",
+    "registerInterest": "Register interest",
+    "comingSoonTitle": "{subject} tuition",
+    "comingSoonBadge": "Coming soon",
+    "comingSoonBlurbOneToOne": "Tell us what you're studying and we'll let you know when Ailemy {subject} 1-to-1 tuition opens.",
+    "comingSoonBlurbGroup": "We'll form cohorts around qualification, exam board and compatible schedules.",
+    "helpUsDecide": "Register your interest and help us decide which classes open first.",
+    "registerYourInterest": "Register your interest",
+    "exploreResources": "Explore {subject} resources",
+    "interestUnavailable": "Interest registration is not open yet. Please check back shortly."
   }
 }

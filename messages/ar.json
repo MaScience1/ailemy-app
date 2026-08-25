@@ -64,5 +64,26 @@
     "__status": "UNREVIEWED",
     "loading": "جارٍ التحميل…",
     "somethingWentWrong": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
+  },
+  "subjects": {
+    "__status": "UNREVIEWED",
+    "chemistry": "الكيمياء",
+    "biology": "الأحياء",
+    "physics": "الفيزياء",
+    "maths": "الرياضيات",
+    "english": "اللغة الإنجليزية",
+    "chooseSubject": "اختر المادة",
+    "statusActive": "متاحة",
+    "statusComingSoon": "قريبًا",
+    "liveTuitionAvailable": "دروس مباشرة متاحة",
+    "registerInterest": "سجّل اهتمامك",
+    "comingSoonTitle": "دروس {subject}",
+    "comingSoonBadge": "قريبًا",
+    "comingSoonBlurbOneToOne": "أخبرنا بما يدرسه ابنك وسنُعلمك عند افتتاح دروس {subject} الفردية في Ailemy.",
+    "comingSoonBlurbGroup": "سنُشكّل المجموعات وفق المؤهل ومجلس الامتحان والجداول المتوافقة.",
+    "helpUsDecide": "سجّل اهتمامك وساعدنا في تحديد الصفوف التي تُفتتح أولًا.",
+    "registerYourInterest": "سجّل اهتمامك",
+    "exploreResources": "استعرض مصادر {subject}",
+    "interestUnavailable": "تسجيل الاهتمام غير متاح بعد. يرجى المحاولة لاحقًا."
   }
 }

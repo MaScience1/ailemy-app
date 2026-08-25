@@ -226,3 +226,186 @@ rather than hidden by scoping the guard to nothing.
 - **No migrations, no SQL, no Stripe, no env vars, no `viewport-fit`.**
   `availabilityFor` untouched. Prices still read live from Stripe: the Arabic
   page shows the same numbers as the English page.
+
+---
+---
+
+# HANDOVER — Multi-subject tuition + Register Interest, Phase 1
+
+Branch `feat/tuition-multi-subject`, off `feat/i18n-arabic-phase-1`. **Not merged, no PR.**
+This section is appended; the Arabic phase-1 handover above is unchanged.
+
+**Status: partial. The subject selector, status model, coming-soon funnel and
+proposed schema are built and green. The interest FORM, admin demand dashboard,
+"My interests" area and CSV export are NOT built.** Details in §14 below.
+
+## 1. Files changed
+
+`src/lib/tuition/subjects.ts` (new) · `src/lib/tuition/interest-capability.ts` (new) ·
+`src/components/tuition/SubjectSelector.tsx` (new) ·
+`src/components/tuition/SubjectComingSoon.tsx` (new) ·
+`src/app/[locale]/tuition/page.tsx` · `src/lib/analytics/events.ts` ·
+`messages/en.json` · `messages/ar.json` ·
+`scripts/exam-seed/__tests__/tuition-subjects.test.ts` (new) ·
+`supabase/migrations/_PROPOSED_tuition_subject_interest.sql` (new, unnumbered, unapplied)
+
+## 2–3. Subject selector and status model
+
+Five subjects: chemistry, biology, physics, maths, english. **Status is derived,
+not declared.** `subjectState()` counts real cohort rows for the subject and calls
+`availabilityFor` — which is read, never modified. A subject with cohorts is
+ACTIVE; one without is INTEREST. Seed a Biology cohort and the badge changes on
+the next read, with no code edit. A test asserts exactly that.
+
+`SubjectKey` in the design system stays `chemistry | biology | physics`. Widening
+it would push two contentless subjects into Resources, Past Papers and the lesson
+trees (§36), so maths and english live in the tuition list and render on the
+neutral card treatment rather than getting invented brand colours.
+
+**ACTIVE is not the same as purchasable.** Chemistry is ACTIVE and its CTAs still
+read "Register interest", because `availabilityFor` separately requires an
+`enrolment_url`. The two ideas are deliberately distinct.
+
+## 4. URL state
+
+`?subject=` on `/tuition`, defaulting to chemistry. `/tuition?mode=group` and
+`/tuition?mode=one-to-one` are unchanged and still land on the live Chemistry
+experience. An unknown value (`?subject=astrology`) falls back to chemistry
+rather than 404ing or rendering an empty picker.
+
+## 6. Questions captured — NOT YET, see §14
+
+## 7–8. Storage approach, and the proposed SQL
+
+**Planning override 3 assumed a new table is needed. Inspection says otherwise,
+and this is the main finding of the job.**
+
+`public.interest_registrations` (0040, extended by 0043) already holds **24 data
+columns**, including subject, qualification, exam_board, student_name,
+parent_name, email, phone, country, timezone, current_grade, target_grade,
+preferred_days, preferred_times, year_group, exam_year, student_notes,
+consent_to_contact and consent_at. It is **live** — the existing
+`/tuition/interest` page inserts into it under the anon key today.
+
+A second table would be the "unnecessary parallel lead database" §20 forbids and
+would split real leads across two stores with no key to join them. So the
+proposed file is an **ALTER**, adding the 11 columns that genuinely do not
+exist: `user_id`, `tuition_mode`, `mode_preference`, `registrant_role`, `goals`,
+`start_timeframe`, `contact_preference`, `consent_to_marketing`,
+`marketing_consent_at`, `phone_e164`, `withdrawn_at` — plus the partial unique
+upsert key and the erasure.
+
+**Founder ruling wanted:** if you would rather have a separate table, say so and
+the file becomes a `CREATE TABLE`. Nothing depends on the choice — nothing is
+applied.
+
+Three things the inspection turned up that would have bitten later:
+
+- `status` is CHECK-pinned to `('new','contacted','converted','declined','duplicate')`,
+  so §13's **withdraw would violate the constraint**. The vocabulary is extended,
+  not replaced.
+- 0040 grants **table-wide UPDATE** to `authenticated`. RLS filters rows but never
+  columns, so a student could rewrite `status` or the staff `notes` on their own
+  row. The proposal narrows it to a column-level grant.
+- The upsert key is **partial on `user_id`**. A plain UNIQUE would collapse every
+  existing anonymous lead into one row.
+
+### erase_user (planning override 4)
+
+Mandatory and included in the same file. The table names real people including
+minors. `ON DELETE CASCADE` is **not sufficient** — 0067 v5 erases in place on
+the retained-account path, so the cascade never fires. Two deletes are proposed:
+by `user_id`, and by lowercased email for the anonymous rows the existing funnel
+writes.
+
+**`email_columns_scanned` will still read 8 after this applies.**
+`interest_registrations.email` already exists and is already counted by 0067's
+gate; this file adds no new email column. If it reads anything other than 8,
+something else moved and the erasure must not be trusted until it is explained.
+
+## 5 + 9–10. Auth flow, admin dashboard, analytics
+
+Auth return-to-form: **not built** (§14). Admin dashboard: **not built** (§14).
+Analytics: `tuition_subject_selected` and `tuition_interest_started` are declared
+in `CTA_SOURCES` and emitted from the selector and the coming-soon CTA. They
+carry subject and mode only — no free text, no contact detail. The remaining §26
+events belong with the form.
+
+## 11–13. Verification
+
+Rendered, by request against the dev server:
+
+| URL | prices | calendar | coming-soon |
+|---|---|---|---|
+| `/tuition?mode=group` (legacy) | £170.90 / £140.74 | yes | no |
+| `?subject=chemistry&mode=one-to-one` | 16 amounts | yes | no |
+| `?subject=biology&mode=group` | none | none | yes |
+| `?subject=maths&mode=one-to-one` | none | none | yes |
+| `?subject=astrology` | falls back to chemistry | | |
+
+**A defect this caught:** the "Choose your time" calendar section sits outside the
+mode component and was rendering on the maths and biology pages — real Chemistry
+slots under a heading implying they were maths slots. Real data, false claim,
+exactly what §6 forbids. Now gated, with an assertion.
+
+Gate: typecheck clean **both** configs, build exit 0, **66 suites**.
+`tuition-subjects.test.ts` adds 42 assertions; four sabotage runs, each made red
+and restored (hardcoded chemistry check; `head:true` probe that swallows 42703;
+a price on the coming-soon panel; the calendar gate removed).
+
+**One failing assertion, pre-existing and not from this branch** — the 0069
+`_PROPOSED_` rename described in the i18n handover §6.0 above. Untouched.
+
+## Arabic review table — new strings (all UNREVIEWED)
+
+| Key | English | Arabic | OK? |
+|---|---|---|---|
+| `subjects.chemistry` | Chemistry | الكيمياء | ☐ |
+| `subjects.biology` | Biology | الأحياء | ☐ |
+| `subjects.physics` | Physics | الفيزياء | ☐ |
+| `subjects.maths` | Maths | الرياضيات | ☐ |
+| `subjects.english` | English | اللغة الإنجليزية | ☐ |
+| `subjects.chooseSubject` | Choose a subject | اختر المادة | ☐ |
+| `subjects.statusActive` | Active | متاحة | ☐ |
+| `subjects.statusComingSoon` | Coming soon | قريبًا | ☐ |
+| `subjects.liveTuitionAvailable` | Live tuition available | دروس مباشرة متاحة | ☐ |
+| `subjects.registerInterest` | Register interest | سجّل اهتمامك | ☐ |
+| `subjects.comingSoonTitle` | {subject} tuition | دروس {subject} | ☐ |
+| `subjects.comingSoonBadge` | Coming soon | قريبًا | ☐ |
+| `subjects.comingSoonBlurbOneToOne` | Tell us what you're studying and we'll let you know when Ailemy {subject} 1-to-1 tuition opens. | أخبرنا بما يدرسه ابنك وسنُعلمك عند افتتاح دروس {subject} الفردية في Ailemy. | ☐ |
+| `subjects.comingSoonBlurbGroup` | We'll form cohorts around qualification, exam board and compatible schedules. | سنُشكّل المجموعات وفق المؤهل ومجلس الامتحان والجداول المتوافقة. | ☐ |
+| `subjects.helpUsDecide` | Register your interest and help us decide which classes open first. | سجّل اهتمامك وساعدنا في تحديد الصفوف التي تُفتتح أولًا. | ☐ |
+| `subjects.registerYourInterest` | Register your interest | سجّل اهتمامك | ☐ |
+| `subjects.exploreResources` | Explore {subject} resources | استعرض مصادر {subject} | ☐ |
+| `subjects.interestUnavailable` | Interest registration is not open yet. Please check back shortly. | تسجيل الاهتمام غير متاح بعد. يرجى المحاولة لاحقًا. | ☐ |
+Least sure: `subjects.english` — "اللغة الإنجليزية" is the language; if the subject
+is English Literature rather than Language the term should differ.
+
+## 14. Not built — and why
+
+- **The interest form itself** (§9, §10) — 13 questions across 4 steps.
+- **Auth return-to-context** (§8) — recon found the login/signup redirect
+  handling; whether it allowlists the redirect target is an **open security
+  question** I have not resolved. Not built rather than built unsafely.
+- **Admin demand dashboard, lead detail, CSV export** (§14–§17).
+- **"My tuition interests"** (§13).
+- **§39 repo-wide audit, §38 multi-width visual review.**
+
+All of it depends on the schema being applied. Override 5 says the feature will
+not work tonight and that is correct: `interestCapability()` probes for the
+`tuition_mode` column with `select(col).limit(1)` — a shape that surfaces a
+missing column as 42703, where `head:true` would report success against a schema
+that cannot hold the data. Today it returns false, so the coming-soon panel
+renders "Interest registration is not open yet" instead of a button. **No stubbed
+success, no localStorage, no JSON fallback.**
+
+## 15. NO Chemistry Stripe Products or Prices were modified.
+
+Read-only throughout. No product, price, Payment Link, webhook or env var was
+created, changed or archived. The 13 live prices and 3 cohort links are untouched,
+and Chemistry pricing renders from the same Stripe Price objects as before.
+
+## 16. NO Biology, Physics, Maths or English Stripe Products/Prices were created.
+
+There is no Stripe identifier anywhere in the new code — a test asserts the
+absence of `prod_`/`price_` in the subject model and the coming-soon panel.
