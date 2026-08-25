@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { publishBlocker, needsSpecPointCheck } from "@/lib/admin/publish-readiness";
 
 import { assertAdmin } from "@/lib/admin/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -363,6 +364,35 @@ export async function setLessonStatus(
   try {
     await assertAdmin();
     const supabase = createAdminClient();
+
+    /**
+     * ⚠ PUBLISHING REQUIRES SPEC POINTS; UNPUBLISHING NEVER DOES.
+     * See src/lib/admin/publish-readiness.ts for why. The refusal is returned
+     * as `error`, which StatusToggle already shows in an alert — the person
+     * pressing the button reads a sentence, not a silent no-op.
+     */
+    if (needsSpecPointCheck(status)) {
+      const { count, error: countErr } = await supabase
+        .from("lesson_spec_points")
+        .select("spec_point_id", { count: "exact", head: true })
+        .eq("lesson_id", lessonId);
+      /**
+       * ⚠ A FAILED COUNT REFUSES. It is not evidence of zero and it is not
+       * evidence of many; publishing on a read we could not make would be
+       * deciding on missing data.
+       */
+      if (countErr) {
+        return { error: `Could not check spec points (${countErr.code ?? "unknown"}); lesson not published.` };
+      }
+      const { data: row } = await supabase
+        .from("lessons").select("title").eq("id", lessonId).maybeSingle();
+      const blocker = publishBlocker({
+        specPointCount: count ?? 0,
+        lessonTitle: (row as { title?: string } | null)?.title ?? null,
+      });
+      if (blocker) return { error: blocker };
+    }
+
     const { error } = await supabase
       .from("lessons")
       .update({ status })
