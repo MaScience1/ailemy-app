@@ -1,69 +1,68 @@
 /**
- * THE SIX FEATURE CHIPS, AND WHERE EACH ONE HONESTLY LEADS.
+ * THE FEATURE CHIPS — TWO ROWS, AND THE SECOND ROW IS NOT A LINK.
  *
  * ============================================================================
- * ⚠ A CHIP IS A PROMISE MADE ON THE FIRST SCREEN A PAYING PARENT SEES.
+ * ⚠ ROW 2 IS THE HONEST WAY TO SHOW AMBITION WITHOUT LYING ABOUT IT.
  * ============================================================================
- * These render in the hero, above the fold, to someone who arrived from a
- * WhatsApp link and is deciding whether this is worth money. A chip that leads
- * to "not built yet" is not a rough edge — it is the moment they stop trusting
- * the rest of the page.
+ * A chip is a promise made on the first screen a parent sees after tapping a
+ * WhatsApp link. Four of the eight things worth naming do not exist yet:
  *
- * ⚠ FOUR SURFACES ARE DELIBERATELY NOT LINKED, each verified as a stub today:
- *   /exam-builder                  "This is not built yet." above the fold
- *   /past-papers/<slug>/test       "Not built yet — nothing you type anywhere
- *                                   on this page is saved"
- *   .../interactive/sit/practice   "Practice mode isn't built yet."
- *   .../interactive/sit/exam       "Nothing is marked yet" + a sign-in wall
- * Flashcards are not here at all: their tables live in an unapplied _PROPOSED_
- * migration, so the feature has no database to run on.
+ *   Flashcards     — its tables live in an unapplied _PROPOSED_ migration, so
+ *                    the feature has no database to run on at all.
+ *   Exam Builder   — /exam-builder renders "This is not built yet." above the
+ *                    fold, in its own words.
+ *   Question Bank  — there is no standalone route. The only candidate needs
+ *                    three path params and renders paper PDFs, not questions.
+ *   Progress       — reads student_courses, which has ZERO writes anywhere in
+ *                    src/. It is permanently empty for every student who pays.
  *
- * ⚠ AND THE DESTINATIONS ARE UNLOCALISED ROOTS ON PURPOSE. /learn, /resources
- * and /past-papers all sit outside the [locale] segment, so SmartLink leaves
- * them unprefixed and they resolve identically on /ar. A chip that 404'd in
- * Arabic would be the same broken promise in a different language.
+ * Naming them as live links is the broken promise. Hiding them entirely loses
+ * the roadmap. Showing them as visibly coming-soon, with no href and no focus
+ * stop, says the true thing: this is the shape of the product, and these four
+ * are not ready.
+ *
+ * ⚠ NO href, aria-disabled, NOT FOCUSABLE. A muted colour alone would still
+ * put four dead stops in the keyboard order and four "links" under a screen
+ * reader. The guard asserts the absence of the href, not the presence of a
+ * class, because a class is a look and an href is a promise.
  */
 export type HeroChip = {
   /** Catalogue key for the label — never a literal, so Arabic gets it too. */
   readonly labelKey: string;
-  readonly href: string;
   readonly cta: string;
 };
 
-/**
- * ⚠ FOUR CHIPS, FOUR DESTINATIONS — ONE LABEL EACH, AND NO LABEL NAMES A
- * SURFACE IT DOES NOT LEAD TO.
- *
- * "Question Bank" and "Exam Practice" were removed outright. Both resolved to
- * /past-papers because no standalone question-bank or exam-practice surface
- * exists — so three labels pointed at one archive and two of them named
- * something the app does not have. A label over a destination it does not name
- * is the same broken promise as a link to a stub, made more quietly.
- *
- * "Revision Notes" became "Resources" for the same reason: /resources is a
- * search and three subject cards, not a notes library. The only real notes are
- * a self-labelled sample deck inside one lesson. Rename it back when notes
- * exist, not before.
- */
-export const HERO_CHIPS: readonly HeroChip[] = [
+/** A chip a reader may tap. Every href is a verified, distinct destination. */
+export type LiveChip = HeroChip & { readonly href: string };
+
+/** A chip that names something real but unbuilt. Deliberately hrefless. */
+export type SoonChip = HeroChip;
+
+export const LIVE_CHIPS: readonly LiveChip[] = [
   { labelKey: "home.chipLessons",        href: "/learn",       cta: "hero_chip_lessons" },
   { labelKey: "home.chipPastPapers",     href: "/past-papers", cta: "hero_chip_past_papers" },
   { labelKey: "home.chipMarkedFeedback", href: "/#try",        cta: "hero_chip_marked_feedback" },
   { labelKey: "home.chipResources",      href: "/resources",   cta: "hero_chip_resources" },
 ] as const;
 
+export const SOON_CHIPS: readonly SoonChip[] = [
+  { labelKey: "home.chipFlashcards",   cta: "hero_chip_soon_flashcards" },
+  { labelKey: "home.chipExamBuilder",  cta: "hero_chip_soon_exam_builder" },
+  { labelKey: "home.chipQuestionBank", cta: "hero_chip_soon_question_bank" },
+  { labelKey: "home.chipProgress",     cta: "hero_chip_soon_progress" },
+] as const;
+
 /**
- * ⚠ THE ROUTES A CHIP MUST NEVER POINT AT. Verified stubs, each with the exact
- * copy a visitor would read. The guard asserts no chip href starts with any of
- * these, so adding one back is a test failure rather than a discovery made by
- * a parent.
+ * ⚠ ROUTES A LIVE CHIP MUST NEVER POINT AT. Each verified as a stub, with the
+ * copy a visitor would actually read. Moving a row-2 chip up without building
+ * the thing first lands here and the guard fails.
  */
 export const STUB_ROUTES: readonly string[] = [
   "/exam-builder",
-  "/past-papers/",   // any per-paper workspace: /test is a stub, /classroom is a teacher tool
+  "/past-papers/",   // per-paper workspaces: /test is a stub, /classroom is staff-only
 ];
 
-/** Distinct destinations, for the redundancy check the guard reports on. */
-export function chipDestinations(): string[] {
-  return [...new Set(HERO_CHIPS.map((c) => c.href))];
+/** Distinct destinations — the guard asserts one per live chip, never shared. */
+export function liveDestinations(): string[] {
+  return [...new Set(LIVE_CHIPS.map((c) => c.href))];
 }

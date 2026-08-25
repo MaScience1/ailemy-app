@@ -113,10 +113,26 @@ const HERO_CHIP_PREFIX = "hero_chip_";
 const heroDeclared = [...declared].filter((v) => v.startsWith(HERO_CHIP_PREFIX)).sort();
 const heroRendered = [...found.keys()].filter((v) => v.startsWith(HERO_CHIP_PREFIX)).sort();
 
-t("⚠ exactly four hero chips are declared — the founder's ruling, not a drifting number",
-  heroDeclared.length === 4, `${heroDeclared.length}: ${heroDeclared.join(", ")}`);
-t("⚠ exactly four hero chips are rendered",
-  heroRendered.length === 4, `${heroRendered.length}: ${heroRendered.join(", ")}`);
+/**
+ * ⚠ THE FAMILY IS NOW TWO ROWS, AND THE SPLIT IS ASSERTED, NOT THE TOTAL.
+ * Eight chips: four live, four coming-soon. Checking only "eight" would be
+ * satisfied by five live and three soon — which is the exact drift that puts an
+ * unbuilt surface behind a tappable link. The prefix separates them because
+ * row 2's names are all hero_chip_soon_*.
+ */
+const liveDeclared = heroDeclared.filter((v) => !v.startsWith("hero_chip_soon_"));
+const soonDeclared = heroDeclared.filter((v) => v.startsWith("hero_chip_soon_"));
+const liveRendered = heroRendered.filter((v) => !v.startsWith("hero_chip_soon_"));
+const soonRendered = heroRendered.filter((v) => v.startsWith("hero_chip_soon_"));
+
+t("⚠ exactly four LIVE chips are declared — a fifth means something was promoted",
+  liveDeclared.length === 4, `${liveDeclared.length}: ${liveDeclared.join(", ")}`);
+t("⚠ exactly four COMING-SOON chips are declared",
+  soonDeclared.length === 4, `${soonDeclared.length}: ${soonDeclared.join(", ")}`);
+t("⚠ exactly four LIVE chips are rendered",
+  liveRendered.length === 4, `${liveRendered.length}: ${liveRendered.join(", ")}`);
+t("⚠ exactly four COMING-SOON chips are rendered",
+  soonRendered.length === 4, `${soonRendered.length}: ${soonRendered.join(", ")}`);
 t("⚠ declared === rendered for hero chips, both directions, no orphans",
   heroDeclared.join("|") === heroRendered.join("|"),
   `declared: ${heroDeclared.join(", ")}\n      rendered: ${heroRendered.join(", ")}`);

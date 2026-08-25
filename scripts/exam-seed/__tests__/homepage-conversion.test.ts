@@ -317,9 +317,22 @@ console.log("\n=== 9. §2/§16 — hierarchy and spacing ===");
   // both inside the brief's 20–35px range.
   // pt-16/sm:pt-24 → pt-10/sm:pt-16 is 24px and 32px off the top, both inside
   // the brief's 20–35px range. The bottom came in for §44 — see the page.
-  t("⚠ §2 — the hero's top padding was reduced",
-    /pt-10 pb-10 sm:pt-16 sm:pb-12/.test(HOME),
-    HOME.match(/max-w-6xl px-6 pt-\d+ pb-\d+ sm:pt-\d+ sm:pb-\d+/)?.[0]);
+  /**
+   * ⚠ §2 — THE PROPERTY, NOT THE LITERAL. This pinned `pt-10 pb-10` exactly,
+   * so any further tightening of the hero failed it — which is what happened
+   * when the mobile pass cut phone padding to fit the fold. The section's own
+   * name is "the top padding was REDUCED", so the check is now a bound: the
+   * phone value must be at or below the original 10, and the desktop values
+   * must be untouched, because "desktop must not regress" is the standing rule
+   * on every one of these mobile passes.
+   */
+  const heroPad = HOME.match(/max-w-6xl px-6 pt-(\d+) pb-(\d+) sm:pt-(\d+) sm:pb-(\d+)/);
+  t("⚠ §2 — the hero's top padding is reduced at phone width",
+    !!heroPad && Number(heroPad[1]) <= 10 && Number(heroPad[2]) <= 10,
+    heroPad?.[0] ?? "hero padding classes not found");
+  t("⚠ §2 — and desktop padding is unchanged",
+    !!heroPad && heroPad[3] === "16" && heroPad[4] === "12",
+    heroPad?.[0] ?? "not found");
   t("⚠ §12 — the hero columns are top-aligned, not centred",
     /lg:items-start/.test(HOME) && !/lg:items-center/.test(HOME));
   /**

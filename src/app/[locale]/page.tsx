@@ -7,7 +7,7 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
 import { ExplorePanel } from "@/components/home/ExplorePanel";
-import { HERO_CHIPS } from "@/lib/home/hero-chips";
+import { LIVE_CHIPS, SOON_CHIPS } from "@/lib/home/hero-chips";
 import { loadSubjectHoldings, holdingsLabel } from "@/lib/qualifications/tree";
 import { HeroAvailability, isHeroMode, type HeroMode } from "@/components/home/HeroAvailability";
 import { SubjectCard } from "@/components/home/SubjectCard";
@@ -326,7 +326,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           above it. pt-10/sm:pt-16 is inside the brief's 20–35px range at both
           breakpoints and still clears the header by a full step of the spacing
           scale — the hero is moved up, not jammed against the nav. */}
-      <header className="mx-auto max-w-6xl px-6 pt-10 pb-10 sm:pt-16 sm:pb-12">
+      <header className="mx-auto max-w-6xl px-6 pt-7 pb-8 sm:pt-16 sm:pb-12">
         <div className="flex flex-col gap-6 lg:gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_480px] lg:grid-rows-[auto_auto] lg:items-start lg:gap-x-10 lg:gap-y-0">
         <div>
         {/* ⚠ ONE LINE AT 375, BY SIZE AND TRACKING — NEVER BY TRUNCATION.
@@ -357,12 +357,30 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
             student_courses, which has zero writers anywhere in the codebase.
             A dense claim nobody can check is worse on a phone than four short
             ones that hold. */}
-        <ul className="mt-5 flex flex-col gap-2 text-[15px] leading-snug text-ink/75 sm:mt-6 sm:gap-2.5 sm:text-base">
+        <p className="mt-3 text-[15px] leading-snug text-ink/70 sm:mt-5 sm:text-base">
+          {t("home.heroLeadIn")}
+        </p>
+
+        {/* ⚠ TWO OF THESE FOUR WERE REWRITTEN BECAUSE THE OLD ONES WERE NOT
+            TRUE. "Build your own exams & practise by topic" names Exam Builder,
+            which renders "This is not built yet." — and topic practice refuses
+            without spec points, which 76 of 81 lessons do not have. "Instant
+            marking, feedback & progress tracking" is the exact claim removed
+            from this hero once already: the progress panel reads a table with
+            no writer. What replaced them is narrower and checkable.
+
+            ⚠ AND EDEXCEL IS GONE FROM THE HERO. Every live cohort is Edexcel,
+            so it was the sharpest specificity here — but it also reads as a
+            door closing to a visitor on any other board, on the one screen
+            that decides whether they keep scrolling. It stays on the tuition
+            and course surfaces where it is a fact about a product, not a
+            filter on the audience. */}
+        <ul className="mt-2.5 flex flex-col gap-1.5 text-[15px] leading-snug text-ink/75 sm:mt-4 sm:gap-2.5 sm:text-base">
           {[
             "home.benefitTuition",
-            "home.benefitLessons",
-            "home.benefitPractice",
-            "home.benefitExaminer",
+            "home.benefitLessonsV2",
+            "home.benefitQuestions",
+            "home.benefitMarkScheme",
           ].map((key) => (
             <li key={key} className="flex items-start gap-2.5">
               <span aria-hidden className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-flask" />
@@ -378,17 +396,42 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
 
             ⚠ EVERY DESTINATION WAS VERIFIED AS NOT-A-STUB. See HERO_CHIPS for
             the four routes deliberately excluded and the copy each one shows. */}
-        <ul aria-label={t("home.chipsLabel")} className="mt-5 grid grid-cols-2 gap-x-3 gap-y-2 sm:mt-6 sm:flex sm:flex-wrap">
-          {HERO_CHIPS.map((chip) => (
+        {/* ── ROW 1 · LIVE ────────────────────────────────────────────────
+            Four labels, four distinct destinations, every one fetched and read
+            by the guard. A 200 on an empty shell fails it. */}
+        <ul aria-label={t("home.chipsLiveLabel")} className="mt-4 grid grid-cols-2 gap-x-2.5 gap-y-1.5 sm:mt-6 sm:flex sm:flex-wrap">
+          {LIVE_CHIPS.map((chip) => (
             <li key={chip.labelKey}>
               <Link
                 href={chip.href}
                 data-cta={chip.cta}
-                className="group inline-flex items-center gap-1.5 rounded-full border border-ink/12 bg-snow/60 ps-2.5 pe-3 py-1.5 text-[12px] leading-none text-ink/75 transition-colors duration-200 hover:border-ink/30 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink sm:text-[13px]"
+                className="group inline-flex w-full items-center gap-1.5 rounded-full border border-ink/12 bg-snow/70 ps-2.5 pe-3 py-1.5 text-[12px] leading-none text-ink/80 transition-colors duration-200 hover:border-ink/30 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink sm:w-auto sm:text-[13px]"
               >
-                <span aria-hidden className="h-1 w-1 shrink-0 rounded-full bg-flask/70" />
+                <span aria-hidden className="h-1 w-1 shrink-0 rounded-full bg-flask" />
                 {t(chip.labelKey)}
               </Link>
+            </li>
+          ))}
+        </ul>
+
+        {/* ── ROW 2 · COMING SOON ──────────────────────────────────────────
+            ⚠ NO href, NO tabIndex, aria-disabled. These are <span>s inside
+            list items, not links with a muted colour: a muted link is still a
+            focus stop, still announced as a link, and still tappable by
+            somebody who does not read colour. The guard asserts the ABSENCE of
+            an href, because a class is a look and an href is a promise. */}
+        <ul aria-label={t("home.chipsSoonLabel")} className="mt-1.5 grid grid-cols-2 gap-x-2.5 gap-y-1.5 sm:flex sm:flex-wrap">
+          {SOON_CHIPS.map((chip) => (
+            <li key={chip.labelKey}>
+              <span
+                aria-disabled="true"
+                data-cta={chip.cta}
+                className="inline-flex w-full items-center gap-1.5 rounded-full border border-dashed border-ink/12 ps-2.5 pe-3 py-1.5 text-[12px] leading-none text-ink/40 sm:w-auto sm:text-[13px]"
+              >
+                <span aria-hidden className="h-1 w-1 shrink-0 rounded-full bg-ink/20" />
+                {t(chip.labelKey)}
+                <span className="sr-only"> — {t("home.chipsSoonLabel")}</span>
+              </span>
             </li>
           ))}
         </ul>
@@ -397,8 +440,8 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
             thin — 1 of 82 lessons published — so this says growing rather than
             complete. It is the sentence that lets the six chips above be read
             as a direction of travel instead of a claim about today. */}
-        <p className="mt-4 max-w-xl text-[13px] leading-relaxed text-ink/55 sm:mt-5 sm:text-sm">
-          {t("home.heroReassurance")}
+        <p className="mt-3 max-w-xl text-[13px] leading-relaxed text-ink/55 sm:mt-5 sm:text-sm">
+          {t("home.heroReassuranceV2")}
         </p>
         {/* ⚠ THE PRIMARY AND SECONDARY HAVE SWAPPED, AND THAT IS THE POINT OF
             §1. Tuition was the filled button, which told every visitor the
@@ -410,7 +453,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
             stranger; "Continue studying" to somebody signed in, who has already
             started and would read an invitation to start as the site forgetting
             them. */}
-        <div className="mt-6 flex flex-wrap gap-3 sm:mt-8">
+        <div className="mt-4 flex flex-wrap gap-3 sm:mt-8">
           <Link
             href={session ? "/profile" : "/past-papers"}
             data-cta="hero_start_free_clicked"
