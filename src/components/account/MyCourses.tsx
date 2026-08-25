@@ -89,7 +89,15 @@ export function MyCourses({
            * its job and not this card's.
            */}
           <Link
-            href={`/learn`}
+            /**
+             * ⚠ THE ROW'S OWN DESTINATION, NOT A LITERAL. This was
+             * href={`/learn`} on a button labelled "Continue course →", which
+             * sent a paying student to the same subject chooser a stranger
+             * sees. continueHref resolves to a published lesson where one
+             * exists, that course's lessons index otherwise, and only falls
+             * back to the catalogue root when a URL cannot be built at all.
+             */
+            href={c.continueHref}
             className="mt-4 inline-block text-sm underline underline-offset-2 hover:text-ink"
           >
             {c.access.entitled ? "Continue course →" : "Open course →"}
