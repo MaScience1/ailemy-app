@@ -6,6 +6,7 @@ import type { PaperInitial } from "@/app/admin/past-papers/_form";
 import { PaperRowControls } from "./_admin-controls";
 import { PaperPreview } from "./_paper-preview";
 import { StartTestModal } from "./_start-test-modal";
+import { canOfferPaperTest } from "@/lib/past-papers/workspaces";
 
 /**
  * Result card for a single filtered paper (spec §1).
@@ -148,11 +149,17 @@ export function SinglePaperView({
           {/* RIGHT — actions */}
           <div className="w-full shrink-0 lg:w-[280px]">
             <div className="flex flex-col gap-2.5">
-              <StartTestModal
-                slug={paper.slug}
-                courseSlug={paper.courseSlug}
-                paperLabel={`${paper.courseName} · ${paper.session} ${paper.year}`}
-              />
+              {/* ⚠ GATED ON canOfferPaperTest(). The modal's primary card
+                  promises a timed exam with saved answers; the workspace it
+                  opens says nothing typed on it is saved. Nothing is deleted —
+                  see USABLE_PAPER_WORKSPACES for the one-line reversal. */}
+              {canOfferPaperTest() ? (
+                <StartTestModal
+                  slug={paper.slug}
+                  courseSlug={paper.courseSlug}
+                  paperLabel={`${paper.courseName} · ${paper.session} ${paper.year}`}
+                />
+              ) : null}
 
               {paper.questionPaperUrl ? (
                 <a

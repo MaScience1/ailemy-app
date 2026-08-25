@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import {
-  COMMITMENT_LABEL, ONE_TO_ONE_LEVEL_LABEL, monthsFor,
+  COMMITMENT_LABEL, ONE_TO_ONE_LEVEL_LABEL, monthsFor, isPurchasable,
   type Commitment, type OneToOneLevel,
 } from "@/lib/tuition/pricing";
 import { savingAgainst, cheapestFor } from "@/lib/tuition/pricing-math";
@@ -254,7 +254,11 @@ function GroupProgramme({
             list was keyed on the discount table, so the set of things you could
             buy was defined by a local percentage map — remove a discount and a
             purchase option silently disappeared. */}
-        {(Object.keys(COMMITMENT_LABEL) as Commitment[]).map((c) => {
+        {/* ⚠ AND THE SET IS THEN GATED ON WHAT CAN BE BOUGHT (isPurchasable).
+            A tab whose price the reader cannot actually pay at the number shown
+            is a mis-sale, so it does not render. Nothing is deleted — restoring
+            it is one edit to PURCHASABLE_COMMITMENTS. */}
+        {(Object.keys(COMMITMENT_LABEL) as Commitment[]).filter(isPurchasable).map((c) => {
           const on = c === commitment;
           return (
             <Link
