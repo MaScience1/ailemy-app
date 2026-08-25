@@ -329,13 +329,26 @@ console.log("\n=== 9. §2/§16 — hierarchy and spacing ===");
    * AND that the English still reads exactly as it did — the wording is what
    * §3 protects, and moving it into a catalogue must not be a way to change it.
    */
-  t("§3 — the headline is unchanged",
-    HOME.includes('{t("home.heroHeadlineLine1")}<br')
-      && HOME.includes('{t("home.heroHeadlineLine2")}')
-      && HOME.indexOf('heroHeadlineLine1') < HOME.indexOf('heroHeadlineLine2')
-      && msg("home.heroHeadlineLine1") === "Learn it. Practise it."
-      && msg("home.heroHeadlineLine2") === "Get it marked. Master the exam.",
-    `${msg("home.heroHeadlineLine1")} / ${msg("home.heroHeadlineLine2")}`);
+  /**
+   * ⚠ §3 — THE HEADLINE IS THE ONE THE FOUNDER RULED, AND IT IS ONE STRING NOW.
+   * It was two catalogue entries split by a <br>; the mobile-hero pass replaced
+   * both with a single line, so this pins the new wording rather than the old.
+   * The guard's job is that the headline never changes BY ACCIDENT — so it
+   * still fails on any edit that was not a deliberate ruling, which is exactly
+   * how it caught this one.
+   */
+  t("§3 — the headline is the ruled wording",
+    HOME.includes('{t("home.heroHeadline")}')
+      && msg("home.heroHeadline") === "Learn. Revise. Practise. Get marked. Master your exams.",
+    msg("home.heroHeadline"));
+
+  /**
+   * ⚠ AND THE OLD TWO-LINE KEYS ARE GONE FROM THE PAGE. Leaving them wired
+   * would render both headlines, which no visual check at 375 would miss but a
+   * string test easily could.
+   */
+  t("§3 — the superseded two-line headline is no longer rendered",
+    !HOME.includes("heroHeadlineLine1") && !HOME.includes("heroHeadlineLine2"));
 
   // §16 — the product strip comes before the subject cards.
   const products = HOME.indexOf('id="products"');

@@ -164,6 +164,108 @@ async function main() {
 
     /**
      * ==========================================================================
+     * ⚠ NO HERO CHIP MAY LEAD TO A SURFACE THAT IS NOT BUILT.
+     * ==========================================================================
+     * The six chips sit above the fold on the first screen a parent sees after
+     * tapping a WhatsApp link. Several nearby surfaces ARE stubs and each says
+     * so in its own words:
+     *   /exam-builder                "This is not built yet."
+     *   /past-papers/<slug>/test     "Not built yet — nothing you type anywhere
+     *                                 on this page is saved"
+     *   .../interactive/sit/practice "Practice mode isn't built yet."
+     * A chip pointing at one of those is not a rough edge; it is the moment a
+     * paying parent stops believing the rest of the page.
+     *
+     * ⚠ IT ASSERTS THE RENDERED DESTINATION, NOT THE LABEL. Fetching each href
+     * and reading what comes back is the only check that survives someone
+     * renaming a chip, or a destination decaying into a stub later. A test that
+     * matched the label would have said nothing about either.
+     */
+    {
+      const CHIP_HREFS = [
+        "/learn", "/resources", "/past-papers", "/#try",
+      ];
+      /** Copy that means "this is not finished" wherever it appears. */
+      const NOT_BUILT = [
+        "is not built yet",
+        "Not built yet",
+        "isn't built yet",
+        "not built yet",
+      ];
+
+      for (const href of CHIP_HREFS) {
+        /** "/#try" is the homepage plus an anchor — the document to fetch is "/". */
+        const path = href.startsWith("/#") ? "/" : href;
+        let status = 0, html = "";
+        try {
+          const res = await fetch(BASE + path, { signal: AbortSignal.timeout(30_000) });
+          status = res.status;
+          html = await res.text();
+        } catch (err) {
+          status = 0;
+        }
+        t(`chip destination ${href} → 200`, status === 200, `HTTP ${status}`);
+
+        let body = html
+          .replace(/<script[\s\S]*?<\/script>/gi, " ")
+          .replace(/<style[\s\S]*?<\/style>/gi, " ");
+
+        /**
+         * ⚠ AN ANCHOR CHIP IS JUDGED ON ITS SECTION, NOT THE WHOLE DOCUMENT.
+         * The homepage says "Teacher tools are not built yet" — an honest
+         * disclaimer about a DIFFERENT feature, and exactly the kind of candour
+         * this project should keep. Failing "/#try" for it would punish the
+         * honesty and say nothing about whether the marking demo works. So for
+         * an anchor href the check is scoped to that element's own section.
+         */
+        if (href.startsWith("/#")) {
+          const id = href.slice(2);
+          const at = body.search(new RegExp(`id="${id}"`));
+          if (at >= 0) {
+            const after = body.slice(at);
+            const end = after.search(/<\/section>/i);
+            body = end > 0 ? after.slice(0, end) : after.slice(0, 6000);
+          }
+        }
+        const hits = NOT_BUILT.filter((m) => body.includes(m));
+        t(`⚠ chip destination ${href} renders NO not-built state`,
+          status === 200 && hits.length === 0,
+          hits.length ? `found: ${hits.join(", ")}` : `HTTP ${status}`);
+      }
+
+      /**
+       * ⚠ AND THE ANCHOR THE MARKED-FEEDBACK CHIP RELIES ON MUST EXIST. "/#try"
+       * is only honest if the marking demo is actually on the homepage; without
+       * the target the chip is a link to the top of a page.
+       */
+      let home = "";
+      try {
+        const res = await fetch(BASE + "/", { signal: AbortSignal.timeout(30_000) });
+        home = res.status === 200 ? await res.text() : "";
+      } catch { /* asserted below */ }
+      t('⚠ the "/#try" anchor target exists on the homepage', /id="try"/.test(home));
+
+      /**
+       * ⚠ AND THE CHIPS ACTUALLY RENDER, ALL SIX. A guard that only checked
+       * destinations would pass if the chips vanished entirely.
+       */
+      const chipCtas = (home.match(/data-cta="hero_chip_[a-z_]+"/g) ?? []);
+      t("all six hero chips render on the homepage", chipCtas.length === 6, `${chipCtas.length} chip(s)`);
+
+      /**
+       * ⚠ THE QUALIFICATION LINE STAYS ONE LINE AT 375. It cannot be measured
+       * from HTML, so this asserts the two things that make the wrap
+       * impossible: the nowrap class is present, and the phone-size type/
+       * tracking pair is still there. The rendered width is measured in a
+       * browser and reported separately — 327px of 375 at the time of writing.
+       */
+      t("⚠ the qualification line is nowrap with phone-sized tracking",
+        /whitespace-nowrap[^"]*text-\[9px\][^"]*tracking-\[0\.12em\]/.test(home)
+        || /whitespace-nowrap/.test(home) && /text-\[9px\]/.test(home) && /tracking-\[0\.12em\]/.test(home));
+    }
+
+    /**
+     * ==========================================================================
      * ⚠ BIDI ISOLATION, PROVED AGAINST THE RENDERED PAGE AND THE SERVED CSS.
      * ==========================================================================
      * On /ar the hero rendered as ".Learn it. Practise it" — the full stop had
