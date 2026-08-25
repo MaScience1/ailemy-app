@@ -248,6 +248,7 @@ export function SiteNav({ session = null }: { session?: NavSession }) {
    * Stripe receipt sees the same words.
    */
   const tNav = useTranslations("nav");
+  const tLang = useTranslations("language");
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -417,6 +418,29 @@ export function SiteNav({ session = null }: { session?: NavSession }) {
                 </li>
               ))}
             </ul>
+            {/**
+              * ⚠ THE LANGUAGE TOGGLE BELONGS HERE TOO, AND ONLY LIVED IN THE
+              * DESKTOP BAR. Its single render site sat inside
+              * `hidden … md:flex`, so below the md breakpoint the control was in
+              * the DOM and invisible — measured at 375 on /ar: two toggle
+              * anchors present, ZERO visible, and zero inside this drawer.
+              * Arabic exists for families who are overwhelmingly on phones, and
+              * on a phone there was no way to reach it at all.
+              *
+              * ⚠ SAME COMPONENT, NOT A SECOND IMPLEMENTATION. LanguageToggle is
+              * the only thing in the repo that emits a locale link, so the
+              * unconditional strip in localeSwitchPath() — the reason /ar/ar is
+              * impossible by construction — governs this render exactly as it
+              * governs the desktop one. Copying its href logic here would be a
+              * second place for the doubling to come back.
+              */}
+            <div className="mt-4 flex items-center justify-between gap-3 border-t border-ink/10 pt-5">
+              <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink/45">
+                {tLang("label")}
+              </span>
+              <LanguageToggle />
+            </div>
+
             <div className="mt-4 flex flex-col gap-3 border-t border-ink/10 pt-5">
               {session ? (
                 <AccountPanel session={session} onNavigate={closeMenu} />
