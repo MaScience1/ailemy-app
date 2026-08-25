@@ -1,10 +1,9 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useParams } from "next/navigation";
 
-import { Link, usePathname } from "@/i18n/navigation";
-import { localeSwitchPath } from "@/i18n/locale-switch";
+import { usePathname } from "@/i18n/navigation";
+import { localeSwitchHref } from "@/i18n/locale-switch";
 import { routing } from "@/i18n/routing";
 
 /**
@@ -28,21 +27,6 @@ export function LanguageToggle({ className = "" }: { className?: string }) {
   const t = useTranslations("language");
   const active = useLocale();
   const pathname = usePathname();
-  /** Dynamic segments must be re-supplied or the typed href cannot be built. */
-  const params = useParams();
-
-  /**
-   * ⚠ NOT `pathname` DIRECTLY. next-intl's Link prefixes whatever it is given,
-   * and twenty-four route folders live outside the locale segment — so on
-   * /calendar this rendered /ar/calendar, which 404s (reproduced on
-   * production, 2026-08-25). localeSwitchPath sends an unlocalisable path to
-   * the locale ROOT instead — a reader who presses العربية gets an Arabic
-   * page, not a 404 and not a dead control — and it strips any locale already
-   * present, so a prefix can never be applied twice.
-   */
-  const target = localeSwitchPath(pathname);
-  /** Dynamic params only belong on a path we are actually keeping. */
-  const localisable = target === pathname;
 
   return (
     <div role="group" aria-label={t("label")} className={`inline-flex items-center gap-1 ${className}`}>
@@ -50,10 +34,31 @@ export function LanguageToggle({ className = "" }: { className?: string }) {
         const on = locale === active;
         const label = locale === "ar" ? t("arabic") : t("english");
         return (
-          <Link
+          /**
+           * ⚠ A PLAIN <a>, DELIBERATELY — THIS ONE NAVIGATION MUST NOT BE
+           * CLIENT-SIDE.
+           * ============================================================
+           * `lang` and `dir` are set on <html> by the ROOT layout, from the
+           * locale resolved on the server. The App Router does not re-render
+           * the root layout on a client-side navigation, so switching locale
+           * with next-intl's Link changed the URL to /ar and left the document
+           * reporting lang="en" dir="ltr" until a manual reload. Measured on
+           * production: after pressing العربية from /calendar the page was at
+           * /ar with 7 Arabic characters on it and an LTR document.
+           *
+           * A full page load re-runs the root layout, so the document, the
+           * font and the direction all change together with the URL. That
+           * costs the smooth transition and buys correctness, which is the
+           * right trade for the one control whose entire job is changing how
+           * the document reads.
+           *
+           * localeSwitchHref computes the final path itself — including the
+           * "as-needed" rule that the default locale carries no prefix — so
+           * nothing here depends on Link's prefixing behaviour any more.
+           */
+          <a
             key={locale}
-            href={(localisable ? { pathname: target, params } : { pathname: target }) as never}
-            locale={locale}
+            href={localeSwitchHref(pathname, locale)}
             hrefLang={locale}
             aria-current={on ? "true" : undefined}
             /**
@@ -70,7 +75,7 @@ export function LanguageToggle({ className = "" }: { className?: string }) {
                 must still be able to find their own. */}
             <span lang={locale} dir={locale === "ar" ? "rtl" : "ltr"}>{label}</span>
             {on && <span className="sr-only"> ({t("label")})</span>}
-          </Link>
+          </a>
         );
       })}
     </div>

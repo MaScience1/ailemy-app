@@ -572,3 +572,56 @@ input, select, textarea {
   direction: ltr;
   unicode-bidi: isolate;
 }
+
+/**
+ * ============================================================================
+ * ⚠ LATIN TEXT INSIDE AN RTL DOCUMENT NEEDS PER-PARAGRAPH BIDI ISOLATION.
+ * ============================================================================
+ * On /ar the hero rendered as ".Learn it. Practise it" — the full stop jumped
+ * to the front. That is the Unicode bidi algorithm doing exactly what it is
+ * told: in an RTL paragraph a trailing neutral belongs to the paragraph
+ * direction, so the period ending an English sentence lands on the left.
+ * Measured on production before this rule: 275 of 276 Latin-script text nodes
+ * on /ar had no isolation at all. The rule above existed to prevent it and
+ * nothing used it.
+ *
+ * ⚠ plaintext, NOT direction: ltr. Forcing a section LTR would throw away the
+ * RTL layout that is already correct. `unicode-bidi: plaintext` resolves EACH
+ * element's paragraph direction from its own first strong character, so an
+ * Arabic string stays RTL and an English one goes LTR on the same page, with
+ * no per-string annotation and no layout change.
+ *
+ * ⚠ IT ALSO COVERS THE STRINGS THAT DELIBERATELY STAY ENGLISH. Qualification
+ * names, paper codes, "Ailemy", a PowerPoint title — all sit in Arabic chrome
+ * by design and all show the same defect. A rule catches them, and catches the
+ * next one somebody adds; 275 hand-written attributes would not.
+ *
+ * ⚠ SCOPED TO BLOCK-LEVEL TEXT CONTAINERS. plaintext sets a PARAGRAPH
+ * direction, so it belongs on elements that establish one. Applying it to
+ * every inline span would isolate fragments meant to flow together; individual
+ * inline runs use dir="auto" or <bdi> instead.
+ */
+.font-arabic :is(h1, h2, h3, h4, h5, h6, p, li, dt, dd, figcaption,
+                 blockquote, caption, th, td, label, summary) {
+  unicode-bidi: plaintext;
+}
+
+/**
+ * ⚠ AND SELF-CONTAINED INLINE LABELS. A link, a button or a badge whose whole
+ * content is one label is a paragraph in every sense that matters here — the
+ * measurement after the block rule above still left 101 unisolated Latin runs
+ * on /ar, and they were all of this shape: "Ailemy", "Soon", "Book tuition",
+ * "1-to-1". plaintext isolates each one and resolves its direction from its own
+ * first strong character, which is exactly the behaviour dir="auto" gives.
+ *
+ * ⚠ AND `span` TOO, after measuring. Excluding it left 72 unisolated runs on
+ * /ar and every one was a self-contained label — "Soon", "Group", "1-to-1",
+ * "Open full timetable". The worry about spans was inline fragments mid
+ * sentence, but plaintext on those is either a no-op (same script, same
+ * resolved direction) or exactly the wanted behaviour (an embedded Latin term
+ * inside Arabic prose is what <bdi> exists for). Isolating an embedded foreign
+ * run is the recommended treatment, not a risk.
+ */
+.font-arabic :is(a, button, span, [role="button"]) {
+  unicode-bidi: plaintext;
+}

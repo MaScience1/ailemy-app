@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { QuickSignup } from "./QuickSignup";
 
@@ -39,6 +40,7 @@ export function StickyCta({
   signedIn: boolean;
   revealAfter?: number;
 }) {
+  const t = useTranslations();
   const [shown, setShown] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [inTuition, setInTuition] = useState(false);
@@ -85,9 +87,9 @@ export function StickyCta({
    * §68). A signed-in student is never invited to create an account; a reader
    * looking at £169 is offered the tuition rather than a free account.
    */
-  const signedInState = { label: "Continue studying", href: "/profile", cta: "floating_continue_studying" as const };
-  const tuitionState = { label: "View live tuition", href: "/tuition", cta: "floating_start_learning" as const };
-  const defaultState = { label: "Start learning free", href: "/signup", cta: "floating_start_learning" as const };
+  const signedInState = { label: t("home.continueStudying"), href: "/profile", cta: "floating_continue_studying" as const };
+  const tuitionState = { label: t("home.viewLiveTuition"), href: "/tuition", cta: "floating_start_learning" as const };
+  const defaultState = { label: t("home.startLearningFree"), href: "/signup", cta: "floating_start_learning" as const };
   const { label, href, cta } = signedIn ? signedInState : inTuition ? tuitionState : defaultState;
   // ⚠ THE MODAL IS THE SIGNUP PATH ONLY. In the tuition state the CTA is a real
   // navigation to /tuition — opening a signup dialog there would answer a
@@ -135,7 +137,7 @@ export function StickyCta({
           {/* ⚠ THE REASSURANCE IS THE POINT OF §19's MICROCOPY. "Free account ·
               no card" removes the objection the button itself creates. */}
           <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-ink/50">
-            {signedIn ? "Your progress is saved" : inTuition ? "Small groups · capped at 20" : "Free account · no card"}
+            {signedIn ? t("home.yourProgressIsSaved") : inTuition ? t("home.smallGroupsCappedAt20") : t("home.freeAccountNoCard")}
           </p>
         </div>
 
@@ -151,7 +153,7 @@ export function StickyCta({
             className="group shrink-0 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-parchment transition-colors duration-200 hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
             <span className="hidden sm:inline">{label} </span>
-            <span className="sm:hidden">{signedIn ? "Continue" : "Tuition"} </span>
+            <span className="sm:hidden">{signedIn ? t("home.continueShort") : t("home.tuitionShort")} </span>
             <span aria-hidden className="inline-block transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">→</span>
           </Link>
         ) : (
@@ -164,7 +166,7 @@ export function StickyCta({
                 className="group shrink-0 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-parchment transition-colors duration-200 hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >
                 <span className="hidden sm:inline">{label} </span>
-                <span className="sm:hidden">Start free </span>
+                <span className="sm:hidden">{t("nav.startFree")} </span>
                 <span aria-hidden className="inline-block transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">→</span>
               </button>
             }
@@ -178,7 +180,7 @@ export function StickyCta({
           type="button"
           onClick={() => setDismissed(true)}
           tabIndex={shown ? undefined : -1}
-          aria-label="Hide this"
+          aria-label={t("common.hideThis")}
           className="shrink-0 rounded-full p-2 text-ink/45 transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
         >
           <span aria-hidden className="block h-3 w-3 leading-3">×</span>

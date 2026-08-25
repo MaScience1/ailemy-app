@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
 import { SmartLink as Link } from "@/components/i18n/SmartLink";
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -62,6 +63,7 @@ type Search = Promise<{
 
 export default async function TuitionPage({ searchParams }: { searchParams: Search }) {
   const params = await searchParams;
+const t = await getTranslations();
   const session = await getNavSession();
   /**
    * ⚠ source AND reason ARE KEPT, NOT DISCARDED — THAT DISCARD COST A DAY.
@@ -274,12 +276,10 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
         data-cohort-refusals={cohortRefusals.length > 0 ? String(cohortRefusals.length) : undefined}
       >
         <h1 className="font-display text-3xl font-medium tracking-tight sm:text-4xl">
-          Learn live with Ailemy
+          {t("tuition.pageHeading")}
         </h1>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink/70">
-          Small-group science tuition built around the exact specification and exam
-          requirements — with the Ailemy platform, marked practice and progress tracking
-          included.
+          {t("tuition.pageIntro")}
         </p>
 
         {offersCurrencyChoice(cohorts) && (
@@ -344,12 +344,12 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
           {/* §27/§34 — the heading follows the chosen product, and the
               calendar below it is already filtered to match. */}
           <h2 className="font-display text-xl font-medium">
-            {mode === "one-to-one" ? "Choose your time" : "See upcoming lessons"}
+            {t(mode === "one-to-one" ? "tuition.chooseYourTime" : "tuition.seeUpcomingLessons")}
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink/70">
-            {mode === "one-to-one"
-              ? "Published 1-to-1 availability. Times in Doha, and in your own timezone where we know it."
-              : "Every scheduled session across the live cohorts. Times in Doha, and in your own timezone where we know it."}
+            {t(mode === "one-to-one"
+              ? "tuition.calendarBlurbOneToOne"
+              : "tuition.calendarBlurbGroup")}
           </p>
           <div className="mt-6">
             <Calendar
@@ -364,15 +364,15 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
                  the interest route rather than an empty grid with no note.
                  §66: there are no rows in teacher_availability, so this is
                  what a visitor in 1-to-1 mode sees today. */
-              emptyMessage={mode === "one-to-one"
-                ? "No 1-to-1 times are published for this period yet. Register for the next available slot and we will contact you with times."
-                : "No timetable has been published for this period. The programmes above show what is opening; register interest and we will tell you the dates as soon as they are set."}
+              emptyMessage={t(mode === "one-to-one"
+                ? "tuition.calendarEmptyOneToOne"
+                : "tuition.calendarEmptyGroup")}
               nextGroupAhead={ahead.kind === "session" ? { event: ahead.event, dateISO: ahead.dateISO } : null}
               nextPrivateAhead={nextAvailableSlot(aheadEvents.length > 0 ? aheadEvents : events, { now: new Date() })}
             />
           </div>
           <Link href="/calendar" className="mt-6 inline-block text-sm underline underline-offset-2 hover:text-ink">
-            Full calendar →
+            {t("tuition.fullCalendarLink")}
           </Link>
         </section>
         )}
@@ -383,12 +383,12 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
             because demoting a nav entry and breaking a shared link are
             different acts. */}
         <section className="mt-14 border-t border-ink/10 pt-10">
-          <h2 className="font-display text-xl font-medium">Intensive programmes</h2>
+          <h2 className="font-display text-xl font-medium">{t("tuition.intensiveHeading")}</h2>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink/70">
             Short, high-intensity courses run ahead of an exam series, separately from the
             termly cohorts above.{" "}
             <Link href="/intensive" className="underline underline-offset-2">
-              See the current intensive →
+              {t("tuition.seeCurrentIntensive")}
             </Link>
           </p>
         </section>
@@ -402,7 +402,7 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
             Biology and Physics, which have no cohort at all. */}
         <section className="mt-14 border-t border-ink/10 pt-10" aria-labelledby="by-subject">
           <h2 id="by-subject" className="font-display text-xl font-medium">
-            Tuition by subject
+            {t("tuition.bySubjectHeading")}
           </h2>
           <ul className="mt-5 grid gap-2 sm:grid-cols-3">
             {["chemistry", "biology", "physics"].map((slug) => {
@@ -412,7 +412,7 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
                   key={slug}
                   className="rounded-lg border border-ink/10 bg-snow px-4 py-3.5"
                 >
-                  <p className="text-sm font-medium capitalize text-ink">{slug}</p>
+                  <p className="text-sm font-medium capitalize text-ink">{t(`subjects.${slug}`)}</p>
                   <p className="mt-1 text-xs text-ink/65">{availabilityLabel(a)}</p>
                   <p className="font-mono mt-1.5 text-[10px] uppercase tracking-[0.14em] text-ink/40">
                     {a.cohorts > 0
@@ -422,7 +422,7 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
                   {a.state !== "enrolling" && (
                     <p className="mt-2 text-xs">
                       <Link href="/tuition/interest" className="underline underline-offset-2">
-                        Register interest →
+                        {t("tuition.registerInterestLink")}
                       </Link>
                     </p>
                   )}
@@ -435,7 +435,7 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
         {/* ⚠ OFF-MENU, AND BELOW THE COHORTS (§24) — present, but not priced
             alongside the group offer where it would undercut it. */}
         <section className="mt-14 border-t border-ink/10 pt-10">
-          <h2 className="font-display text-xl font-medium">Looking for something else?</h2>
+          <h2 className="font-display text-xl font-medium">{t("tuition.lookingForSomethingElse")}</h2>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-ink/70">
             One-to-one Chemistry is available in limited monthly blocks. Availability is
             deliberately small so group teaching stays the focus.{" "}
@@ -443,7 +443,7 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
                 itself decides whether booking is open or whether to offer the
                 interest form — one place makes that call, not every link. */}
             <Link href="/tuition/one-to-one" className="underline underline-offset-2">
-              Ask about availability →
+              {t("tuition.askAboutAvailability")}
             </Link>
           </p>
         </section>
@@ -452,7 +452,7 @@ export default async function TuitionPage({ searchParams }: { searchParams: Sear
             never told which source a page used. */}
         {process.env.NODE_ENV !== "production"
           && (cohortSource !== "database" || cohortRefusals.length > 0) && (
-          <p className="mt-10 font-mono text-[11px] text-ink/40">
+          <p dir="ltr" className="mt-10 font-mono text-[11px] text-ink/40">
             {cohortSource !== "database" && (
               <>cohort source: {cohortSource}{cohortReason ? ` (${cohortReason})` : ""}. </>
             )}

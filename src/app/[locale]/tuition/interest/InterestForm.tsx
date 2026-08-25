@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 
 import { registerInterest, type InterestState } from "./actions";
 
@@ -46,6 +47,7 @@ export function InterestForm({
   hasDemandFields: boolean;
 }) {
   const [state, action, pending] = useActionState(registerInterest, initial);
+  const t = useTranslations("tuition");
   const tz = useRef<HTMLInputElement>(null);
 
   // Their timezone, so "7:00 PM Doha" can be answered in their own hours. Set
@@ -63,7 +65,7 @@ export function InterestForm({
   if (state.status === "ok") {
     return (
       <div className="mt-8 rounded-lg border border-ink/15 bg-snow p-6">
-        <h2 className="font-display text-xl font-medium">Thank you — we have your details.</h2>
+        <h2 className="font-display text-xl font-medium">{t("interestThankYouHeading")}</h2>
         <p className="mt-3 text-sm leading-relaxed text-ink/70">
           We will contact you by email when a cohort opens for your subject and qualification.
           Nothing is charged and nothing is committed.
@@ -80,6 +82,7 @@ export function InterestForm({
       {state.status === "error" && (
         <p
           role="alert"
+          dir="auto"
           className="mt-8 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900"
         >
           {state.error}
@@ -98,50 +101,50 @@ export function InterestForm({
           <input type="hidden" name="preferred_times" defaultValue="one-to-one enquiry" />
         )}
 
-        <Group title="What you need">
-          <Select name="subject" label="Subject" required options={SUBJECTS}
+        <Group title={t("interestGroupWhatYouNeed")}>
+          <Select name="subject" label={t("fieldSubject")} required options={SUBJECTS}
             defaultValue={get("subject") || defaultSubject} />
-          <Select name="qualification" label="Qualification" required options={QUALIFICATIONS}
+          <Select name="qualification" label={t("fieldQualification")} required options={QUALIFICATIONS}
             defaultValue={get("qualification")} />
-          <Select name="exam_board" label="Exam board" options={BOARDS}
+          <Select name="exam_board" label={t("fieldExamBoard")} options={BOARDS}
             defaultValue={get("exam_board")} />
           {!cohort && (
-            <Field name="exam_session" label="Exam session" placeholder="e.g. June 2027"
+            <Field name="exam_session" label={t("fieldExamSession")} placeholder={t("placeholderExamSession")}
               defaultValue={get("exam_session")} />
           )}
         </Group>
 
-        <Group title="Who you are">
-          <Field name="student_name" label="Student name" required defaultValue={get("student_name")} />
-          <Field name="parent_name" label="Parent / guardian name" defaultValue={get("parent_name")} />
-          <Field name="email" label="Email" type="email" required autoComplete="email"
+        <Group title={t("interestGroupWhoYouAre")}>
+          <Field name="student_name" label={t("fieldStudentName")} required defaultValue={get("student_name")} />
+          <Field name="parent_name" label={t("fieldParentName")} defaultValue={get("parent_name")} />
+          <Field name="email" label={t("fieldEmail")} type="email" required autoComplete="email"
             defaultValue={get("email")} />
-          <Field name="phone" label="Phone (with country code)" type="tel" autoComplete="tel"
+          <Field name="phone" label={t("fieldPhone")} type="tel" autoComplete="tel"
             defaultValue={get("phone")} />
-          <Field name="country" label="Country" autoComplete="country-name" defaultValue={get("country")} />
+          <Field name="country" label={t("fieldCountry")} autoComplete="country-name" defaultValue={get("country")} />
         </Group>
 
-        <Group title="Where you are, and when you can study">
+        <Group title={t("interestGroupWhereAndWhen")}>
           {hasDemandFields && (
             <>
-              <Select name="year_group" label="Year group" options={YEAR_GROUPS}
+              <Select name="year_group" label={t("fieldYearGroup")} options={YEAR_GROUPS}
                 defaultValue={get("year_group")} />
-              <Field name="exam_year" label="Exam year" type="number" placeholder="e.g. 2027"
+              <Field name="exam_year" label={t("fieldExamYear")} type="number" placeholder={t("placeholderExamYear")}
                 defaultValue={get("exam_year")} />
             </>
           )}
-          <Field name="current_grade" label="Current grade" defaultValue={get("current_grade")} />
-          <Field name="target_grade" label="Target grade" defaultValue={get("target_grade")} />
-          <Field name="preferred_days" label="Preferred days" defaultValue={get("preferred_days")} />
-          <Field name="preferred_times" label="Preferred times" defaultValue={get("preferred_times")} />
+          <Field name="current_grade" label={t("fieldCurrentGrade")} defaultValue={get("current_grade")} />
+          <Field name="target_grade" label={t("fieldTargetGrade")} defaultValue={get("target_grade")} />
+          <Field name="preferred_days" label={t("fieldPreferredDays")} defaultValue={get("preferred_days")} />
+          <Field name="preferred_times" label={t("fieldPreferredTimes")} defaultValue={get("preferred_times")} />
         </Group>
 
         {hasDemandFields && (
           <label className="block text-sm">
-            <span className="text-ink/75">Anything else we should know?</span>
+            <span className="text-ink/75">{t("fieldStudentNotes")}</span>
             <textarea
               name="student_notes" rows={3} defaultValue={get("student_notes")}
-              placeholder="Topics you find hardest, timing constraints, anything at all."
+              placeholder={t("placeholderStudentNotes")}
               className={inputClass}
             />
           </label>
@@ -150,7 +153,7 @@ export function InterestForm({
         <label className="flex items-start gap-3 text-sm text-ink/75">
           <input type="checkbox" name="ready_to_start" defaultChecked={get("ready_to_start") === "on"}
             className="mt-1 h-4 w-4 shrink-0 accent-ink" />
-          <span>We are ready to start as soon as a cohort opens.</span>
+          <span>{t("interestReadyToStart")}</span>
         </label>
 
         {/* ⚠ NOT PRE-TICKED, AND NOT OPTIONAL. 0040 refuses a row without it and
@@ -168,14 +171,14 @@ export function InterestForm({
           disabled={pending}
           className="rounded-full bg-ink px-6 py-3 text-sm font-medium text-parchment hover:bg-ink/90 disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
         >
-          {pending ? "Sending…" : "Register interest →"}
+          {pending ? t("interestSending") : t("interestSubmit")}
         </button>
       </form>
 
       <p className="mt-8 border-t border-ink/10 pt-6 text-sm text-ink/60">
-        Prefer email?{" "}
+        {t("interestPreferEmail")}{" "}
         <a href={mailto} className="underline underline-offset-2 hover:text-ink">
-          Open a pre-filled message instead
+          {t("interestOpenPrefilledMessage")}
         </a>
         .
       </p>

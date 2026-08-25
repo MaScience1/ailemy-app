@@ -1,4 +1,6 @@
 
+import { useTranslations } from "next-intl";
+
 import { SmartLink as Link } from "@/components/i18n/SmartLink";
 import { subjectColour, subjectVars } from "@/lib/design/subject-colours";
 
@@ -31,6 +33,7 @@ export function NextStep({
   subject: string | null;
   courseSlug: string;
 }) {
+  const t = useTranslations();
   const colour = subjectColour(subject ?? courseName);
 
   return (
@@ -39,7 +42,7 @@ export function NextStep({
       className="rounded-lg border border-ink/10 bg-snow p-6 sm:p-7"
     >
       <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink/45">
-        Your next step
+        {t("home.nextStepEyebrow")}
       </p>
       <h3 className="font-display mt-2 text-xl font-medium tracking-tight">
         You&rsquo;re studying{" "}
@@ -53,7 +56,7 @@ export function NextStep({
           { label: "See your progress", href: "/profile" },
         ].map((a) => (
           <Link
-            key={a.label}
+            key={a.href}
             href={a.href}
             className="group text-sm font-medium underline decoration-transparent underline-offset-4 transition-colors duration-200 hover:decoration-current focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
             style={colour ? { color: "var(--subject-text)" } : undefined}
@@ -65,7 +68,7 @@ export function NextStep({
       </div>
       {/* courseSlug is carried so a later revision can deep-link without
           re-deriving it from the name — never rendered. */}
-      <span className="sr-only">{courseSlug}</span>
+      <span className="sr-only" lang="en" dir="ltr">{courseSlug}</span>
     </div>
   );
 }

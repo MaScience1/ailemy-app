@@ -33,6 +33,7 @@
     "headingAccount": "Account",
     "headingLegal": "Legal",
     "headingStudy": "Study",
+    "location": "Doha, Qatar",
     "navLabel": "Footer",
     "tagline": "Ailemy · Pearson Edexcel GCSE, International GCSE and IAL science."
   },
@@ -345,6 +346,7 @@
     "interestPreferEmail": "Prefer email?",
     "interestReadyToStart": "We are ready to start as soon as a cohort opens.",
     "interestSending": "Sending…",
+    "interestSubmit": "Register interest →",
     "interestThankYouBody": "We will contact you by email when a cohort opens for your subject and qualification. Nothing is charged and nothing is committed.",
     "interestThankYouHeading": "Thank you — we have your details.",
     "kindOfTuition": "Kind of tuition",
@@ -393,6 +395,7 @@
     "qualificationNotSureYet": "Not sure yet",
     "registerInterest": "Register interest",
     "registerInterestInOneToOne": "Register interest in 1-to-1 →",
+    "registerInterestLink": "Register interest →",
     "registerInterestWeWillContact": "Register your interest and we will contact you with times directly — you will be first to know when self-service booking opens.",
     "reserveYourPlace": "Reserve your place",
     "roadmapIntro": "What is taught, in the order it is taught, on the dates it runs.",

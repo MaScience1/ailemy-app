@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import { getTranslations } from "next-intl/server";
 
 import { SmartLink as Link } from "@/components/i18n/SmartLink";
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -81,6 +82,7 @@ const EMPTY_HOLDINGS = { liveLessons: 0, pastPapers: 0, error: null };
 
 export default async function Home({ searchParams }: { searchParams: Search }) {
   const session = await getNavSession();
+  const t = await getTranslations();
   const params = await searchParams;
   const { data: cohorts } = await loadCohorts();
 
@@ -326,7 +328,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
       <header className="mx-auto max-w-6xl px-6 pt-10 pb-10 sm:pt-16 sm:pb-12">
         <div className="flex flex-col gap-6 lg:gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_480px] lg:grid-rows-[auto_auto] lg:items-start lg:gap-x-10 lg:gap-y-0">
         <div>
-        <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink/50">
+        <p dir="auto" className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink/50">
           Pearson Edexcel · GCSE · International GCSE · IAL
         </p>
         {/* ⚠ THE HEADLINE IS THE PRODUCT, NOT A SLOGAN (§1). "Master science.
@@ -335,12 +337,10 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
             them — and the third one is the differentiator, because everybody
             else stops at "practise". */}
         <h1 className="font-display mt-5 max-w-3xl text-4xl font-medium leading-[1.05] tracking-tight sm:text-6xl">
-          Learn it. Practise it.<br className="hidden sm:block" /> Get it marked. Master the exam.
+          {t("home.heroHeadlineLine1")}<br className="hidden sm:block" /> {t("home.heroHeadlineLine2")}
         </h1>
         <p className="mt-6 max-w-2xl text-base leading-relaxed text-ink/70 sm:text-lg">
-          Specification-mapped lessons, revision resources, past papers, exam practice,
-          intelligent marking, progress tracking and expert live tuition — all in one
-          science platform.
+          {t("home.heroLede")}
         </p>
         {/* ⚠ THE PRIMARY AND SECONDARY HAVE SWAPPED, AND THAT IS THE POINT OF
             §1. Tuition was the filled button, which told every visitor the
@@ -358,7 +358,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
             data-cta="hero_start_free_clicked"
             className="group rounded-full bg-ink px-6 py-3 text-sm font-medium text-parchment transition-colors duration-200 hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
-            {session ? "Continue studying" : "Start practising free"}{" "}
+            {session ? t("home.continueStudying") : t("home.startPractisingFree")}{" "}
             <span aria-hidden className="inline-block transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">→</span>
           </Link>
           {/* ⚠ §5 — THE LABEL COMES FROM heroTuitionOffer, NOT FROM THE BRIEF.
@@ -460,40 +460,40 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           ⚠ EXAM BUILDER SAYS "IN DEVELOPMENT" HERE FOR THE SAME REASON ITS
           PAGE DOES. A pillar that reads like the other three would be the
           fourth working product this site does not have. */}
-      <Section id="products" title="Four ways to use Ailemy">
+      <Section id="products" title={t("home.productsTitle")}>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
             {
-              href: "/resources", cta: "pillar_resources_clicked", label: "Resources",
-              eyebrow: "Learn and revise",
-              body: "Lessons, revision notes, flashcards, definitions, formulae and worked examples.",
-              action: "Explore Resources",
+              href: "/resources", cta: "pillar_resources_clicked", label: t("nav.resources"),
+              eyebrow: t("home.pillarResourcesEyebrow"),
+              body: t("home.pillarResourcesBody"),
+              action: t("home.pillarResourcesAction"),
             },
             {
-              href: "/past-papers", cta: "pillar_past_papers_clicked", label: "Past Papers",
-              eyebrow: "Prepare with real exams",
-              body: "Work through real papers, practise exam technique, and have your answers marked against the mark scheme.",
-              action: "Explore Past Papers",
+              href: "/past-papers", cta: "pillar_past_papers_clicked", label: t("nav.pastPapers"),
+              eyebrow: t("home.pillarPastPapersEyebrow"),
+              body: t("home.pillarPastPapersBody"),
+              action: t("home.pillarPastPapersAction"),
             },
             {
-              href: "/exam-builder", cta: "pillar_exam_builder_clicked", label: "Exam Builder",
-              eyebrow: "Practise exactly what you need",
-              body: "Choose topics, difficulty, question styles, maths demand and paper length.",
+              href: "/exam-builder", cta: "pillar_exam_builder_clicked", label: t("nav.examBuilder"),
+              eyebrow: t("home.pillarExamBuilderEyebrow"),
+              body: t("home.pillarExamBuilderBody"),
               /* ⚠ NOT "Build an Exam →" (§16). The engine does not exist; the
                  page it opens says so in its first sentence. A pillar promising
                  the verb would be the fake product /exam-builder was written to
                  avoid, three sections higher up the same page. */
-              action: "In development",
+              action: t("home.pillarExamBuilderAction"),
             },
             {
-              href: "/tuition", cta: "pillar_online_tuition_clicked", label: "Online Tuition",
-              eyebrow: "Learn live",
+              href: "/tuition", cta: "pillar_online_tuition_clicked", label: t("nav.onlineTuition"),
+              eyebrow: t("home.pillarTuitionEyebrow"),
               /* ⚠ §2 — "or book available 1-to-1 tuition" was the requested
                  copy; booking is not live, so the sentence tracks the offer. */
               body: tuition.bookable
-                ? "Join a group lesson or book available 1-to-1 tuition."
-                : "Small-group lessons and 1-to-1 teaching, with real times you can see before you commit.",
-              action: "View Online Tuition",
+                ? t("home.pillarTuitionBodyBookable")
+                : t("home.pillarTuitionBody"),
+              action: t("home.pillarTuitionAction"),
             },
           ].map((p) => (
             <Link
@@ -527,8 +527,8 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           the claim it illustrates. */}
       <Section
         id="try"
-        title="Try it. Write an answer and see it marked."
-        lede="This is how Ailemy marks — against the points a real mark scheme awards, with the reason for each one."
+        title={t("home.tryTitle")}
+        lede={t("home.tryLede")}
       >
         <TryAilemy />
       </Section>
@@ -555,8 +555,8 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
       {/* ── 5. the learning system ────────────────────────────────────── */}
       <Section
         id="how"
-        title="Everything between learning the topic and sitting the exam."
-        lede="Ailemy knows what you have studied, what you attempted, where you lost marks and what to do next."
+        title={t("home.howTitle")}
+        lede={t("home.howLede")}
       >
         {/* ⚠ NUMBERED BECAUSE IT IS GENUINELY A SEQUENCE. A student does these
             in this order and each depends on the last — which is the only thing
@@ -564,12 +564,12 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
             features would be decoration pretending to be structure. */}
         <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[
-            ["Learn", "Specification-mapped lessons and expert live teaching."],
-            ["Practise", "Topic questions, worksheets and full past papers."],
-            ["Submit", "Answer inside Ailemy — no scanning, no uploading, no waiting."],
-            ["Get marked", "Marked against the points a real mark scheme awards, with the reason for each."],
-            ["Improve", "See exactly what cost you marks, not just what you scored."],
-            ["Master", "Track a topic until the evidence says you are exam-ready."],
+            [t("home.stepLearn"), t("home.stepLearnBody")],
+            [t("home.stepPractise"), t("home.stepPractiseBody")],
+            [t("home.stepSubmit"), t("home.stepSubmitBody")],
+            [t("home.stepGetMarked"), t("home.stepGetMarkedBody")],
+            [t("home.stepImprove"), t("home.stepImproveBody")],
+            [t("home.stepMaster"), t("home.stepMasterBody")],
           ].map(([step, body], i) => (
             <li key={step} className="rounded-lg border border-ink/10 bg-snow p-6">
               <span className="font-mono text-[11px] text-ink/40">0{i + 1}</span>
@@ -583,8 +583,8 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
       {/* ── 6. live tuition ───────────────────────────────────────────── */}
       <Section
         id="tuition"
-        title="Learn live with Ailemy"
-        lede="Small-group science tuition built around the exact specification and exam requirements."
+        title={t("home.tuitionSectionTitle")}
+        lede={t("home.tuitionSectionLede")}
       >
         {/* ── §67 — VALUE BEFORE PRICE ──────────────────────────────────
             ⚠ ABOVE THE CARDS, NOT INSIDE THEM. A parent reading £169 needs to
@@ -593,12 +593,12 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
             details that differ between programmes. */}
         <div className="mb-6 rounded-lg border border-ink/10 bg-parchment-2/40 px-5 py-4">
           <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink/50">
-            Every programme includes
+            {t("home.everyProgrammeIncludes")}
           </p>
           <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-ink/70">
             {[
-              "Live teaching", "Ailemy platform access", "Homework",
-              "Exam practice", "Marking and feedback", "Progress tracking",
+              t("home.includesLiveTeaching"), t("home.includesPlatformAccess"), t("home.includesHomework"),
+              t("home.includesExamPractice"), t("home.includesMarkingFeedback"), t("home.includesProgressTracking"),
             ].map((v) => (
               <li key={v} className="flex items-center gap-1.5">
                 <span aria-hidden className="h-1 w-1 rounded-full bg-lime" />
@@ -616,9 +616,9 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         {/* ⚠ 1-TO-1 IS OFF-MENU (§24) — mentioned, deliberately not priced
             beside the group cohorts, where it would undercut the offer. */}
         <p className="mt-6 text-sm text-ink/60">
-          Looking for something else?{" "}
+          {t("home.lookingForSomethingElse")}{" "}
           <Link href="/tuition" className="underline underline-offset-2 hover:text-ink">
-            One-to-one Chemistry is available in limited blocks
+            {t("home.oneToOneChemistryLimitedBlocks")}
           </Link>
           .
         </p>
@@ -652,22 +652,20 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
       <Section
         /* The one anchor of the three most likely to have been shared. */
         id="progress"
-        title="Know exactly where you stand."
-        lede="Ailemy does not just return a score. It shows the marks you earned, the ones you missed, and what to do about them."
+        title={t("home.progressTitle")}
+        lede={t("home.progressLede")}
       >
         <div className="grid gap-4 lg:grid-cols-3">
           {/* ── 1. sit the paper ─────────────────────────────────────── */}
           <div className="rounded-lg border border-ink/10 bg-snow p-5">
             <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/40">
-              Sit the paper
+              {t("home.proofSitEyebrow")}
             </p>
             <h3 className="font-display mt-2 text-lg font-medium tracking-tight">
-              Don&rsquo;t just download it.
+              {t("home.proofSitTitle")}
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-ink/70">
-              Answer question by question and have it marked against the mark scheme — or
-              open the original question paper, mark scheme and examiner report as PDFs.
-              Being better than a download repository does not mean removing the downloads.
+              {t("home.proofSitBody")}
             </p>
             <p className="mt-3 text-sm font-medium">
               <Link
@@ -679,7 +677,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
                    unchanged. Same fix as the calendar's selection trail. */
                 className="-my-3.5 inline-block py-3.5 underline underline-offset-4 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >
-                Browse past papers →
+                {t("home.browsePastPapers")} →
               </Link>
             </p>
           </div>
@@ -687,10 +685,10 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           {/* ── 2. where the marks went ──────────────────────────────── */}
           <div className="rounded-lg border border-ink/10 bg-snow p-5">
             <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/40">
-              See the marks
+              {t("home.proofMarksEyebrow")}
             </p>
             <h3 className="font-display mt-2 text-lg font-medium tracking-tight">
-              The mark scheme, not just the topic.
+              {t("home.proofMarksTitle")}
             </h3>
             {/* All four steps kept — this is the substance of the claim. */}
             <ol className="mt-2 space-y-1.5 text-sm leading-relaxed text-ink/70">
@@ -709,7 +707,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
                    unchanged. Same fix as the calendar's selection trail. */
                 className="-my-3.5 inline-block py-3.5 underline underline-offset-4 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >
-                See it mark an answer →
+                {t("home.seeItMarkAnAnswer")} →
               </Link>
             </p>
           </div>
@@ -717,18 +715,16 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           {/* ── 3. what to do next ───────────────────────────────────── */}
           <div className="rounded-lg border border-ink/10 bg-snow p-5">
             <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/40">
-              Know what is next
+              {t("home.proofNextEyebrow")}
             </p>
             <h3 className="font-display mt-2 text-lg font-medium tracking-tight">
-              Progress at specification level.
+              {t("home.proofNextTitle")}
             </h3>
             {/* ⚠ WORDS, NOT A CHART. See the header — nobody has progress yet,
                 so a bar chart here would be four invented percentages behind a
                 caption. This describes what the feature does, which is true. */}
             <p className="mt-2 text-sm leading-relaxed text-ink/70">
-              Every marked answer is recorded against the specification point it tested, so
-              your topic strength is built from questions you actually attempted — not from
-              lessons you clicked through. It appears as you work.
+              {t("home.proofNextBody")}
             </p>
             <p className="mt-3 text-sm font-medium">
               <Link
@@ -740,7 +736,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
                    unchanged. Same fix as the calendar's selection trail. */
                 className="-my-3.5 inline-block py-3.5 underline underline-offset-4 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >
-                Find something to study →
+                {t("home.findSomethingToStudy")} →
               </Link>
             </p>
           </div>
@@ -785,7 +781,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           ⚠ NOTHING WAS DELETED TO DO THIS. The strip and the demonstration are
           both still here, in the two bands directly below, in the order the
           sequence 4 → 4b → 4c spells out. */}
-      <Section id="subjects" title="Three sciences, one platform">
+      <Section id="subjects" title={t("home.subjectsTitle")}>
         <div className="grid gap-4 sm:grid-cols-3">
           {SUBJECTS.map((s) => (
             <SubjectCard
@@ -828,31 +824,31 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
       <section aria-labelledby="audience-heading" className="ai-band">
         <div className="mx-auto max-w-6xl px-6 py-12 sm:py-14">
           <h2 id="audience-heading" className="font-mono text-xs uppercase tracking-[0.2em] text-ink/55">
-            Using Ailemy as a…
+            {t("home.audienceHeading")}
           </h2>
           <ul className="mt-5 grid gap-3 sm:grid-cols-3">
             {[
               {
-                who: "Student",
+                who: t("home.audienceStudent"),
                 cta: "audience_student_clicked",
                 href: "/resources",
-                body: "Learn a topic, revise it with notes and flashcards, practise it, and get every answer marked.",
-                action: "Start learning free",
+                body: t("home.audienceStudentBody"),
+                action: t("home.startLearningFree"),
               },
               {
-                who: "Parent",
+                who: t("home.audienceParent"),
                 cta: "audience_parent_clicked",
                 href: "/tuition",
-                body: "Qualified teaching to a published timetable, with the specification, the marking and the progress all visible.",
-                action: "See how tuition works",
+                body: t("home.audienceParentBody"),
+                action: t("home.audienceParentAction"),
               },
               {
-                who: "Teacher",
+                who: t("home.audienceTeacher"),
                 cta: "audience_teacher_clicked",
                 href: "/resources",
                 /* ⚠ NO CLASS LISTS, NO ASSIGNMENTS, NO ANALYTICS — none exist. */
-                body: "Specification-mapped lessons, real past papers and mark-scheme-informed marking you can point a class at. Teacher tools are not built yet.",
-                action: "Browse the resources",
+                body: t("home.audienceTeacherBody"),
+                action: t("home.audienceTeacherAction"),
               },
             ].map((a) => (
               <li key={a.who}>
@@ -908,15 +904,15 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           ⚠ IT IS A ROW OF WORDS, NOT A ROW OF BADGES. Parents read this strip;
           a line of award-shaped graphics with nothing behind them is exactly
           the advertising clutter §29 warns against. */}
-      <section aria-label="What Ailemy is" className="ai-band">
+      <section aria-label={t("home.trustStripLabel")} className="ai-band">
         <div className="mx-auto max-w-6xl px-6 py-6">
           <ul className="flex flex-wrap items-center gap-x-6 gap-y-2 sm:gap-x-10">
             {[
-              "Specification-mapped",
-              "Mark-scheme-informed",
-              "Every answer marked",
-              "Progress tracked",
-              "Built by subject specialists",
+              t("home.trustSpecificationMapped"),
+              t("home.trustMarkSchemeInformed"),
+              t("home.trustEveryAnswerMarked"),
+              t("home.trustProgressTracked"),
+              t("home.trustBuiltBySpecialists"),
             ].map((claim) => (
               <li
                 key={claim}
@@ -946,15 +942,12 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           the paragraph it replaces. Turning a trust section into bullet points
           is an invitation to add a fourth, stronger-sounding one; there isn't
           a fourth true one, so there are three. */}
-      <Section id="teachers" title="Built by teachers who understand the exam.">
+      <Section id="teachers" title={t("home.teachersTitle")}>
         <div className="grid gap-4 sm:grid-cols-3">
           {[
-            ["Built from real mark schemes",
-             "Ailemy's marking rules are derived from published examination mark schemes — not from a general model's opinion of your answer."],
-            ["Reviewed by subject specialists",
-             "Automated marking rules are human-reviewed before they are used to mark anyone's work."],
-            ["Designed around the exam",
-             "Lessons, questions and feedback follow the specification students are actually assessed on."],
+            [t("home.teacherCardMarkSchemesTitle"), t("home.teacherCardMarkSchemesBody")],
+            [t("home.teacherCardReviewedTitle"), t("home.teacherCardReviewedBody")],
+            [t("home.teacherCardDesignedTitle"), t("home.teacherCardDesignedBody")],
           ].map(([title, body]) => (
             <div key={title} className="rounded-lg border border-ink/10 bg-snow p-6">
               <h3 className="font-display text-lg font-medium tracking-tight">{title}</h3>
@@ -966,9 +959,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
             Edexcel mark schemes" is a statement about a source document, which
             is lawful and true. "Edexcel-approved" would be neither. */}
         <p className="mt-5 max-w-3xl text-[13px] leading-relaxed text-ink/55">
-          Chemistry teaching and mark-scheme rulings are prepared by a specialist chemistry
-          teacher working from the published Edexcel mark schemes. Ailemy is not affiliated with
-          or endorsed by any examination board.
+          {t("home.examBoardDisclaimer")}
         </p>
       </Section>
 
@@ -982,8 +973,8 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           day students start attempting work. */}
       <SocialProof
         metrics={[
-          { label: "Papers completed", value: null, unit: "papers" },
-          { label: "Answers marked", value: null, unit: "answers" },
+          { label: t("home.proofPapersCompleted"), value: null, unit: t("home.proofUnitPapers") },
+          { label: t("home.proofAnswersMarked"), value: null, unit: t("home.proofUnitAnswers") },
         ]}
       />
 
@@ -992,7 +983,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           conversion objections — is it free, do I need tuition, is my board
           supported — and answering them anywhere else means the visitor meets
           the last ask still carrying the doubt. */}
-      <Section id="faq" title="Questions people ask before they start.">
+      <Section id="faq" title={t("home.faqTitle")}>
         <HomeFaq />
       </Section>
 
@@ -1013,14 +1004,14 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           ⚠ AND "Join live tuition" IS NOT A THING A READER CAN DO (§2). It
           reads as a booking; there is none. The label is derived, like every
           other tuition word on this page. */}
-      <Section id="start" title="Ready to improve your grade?">
+      <Section id="start" title={t("home.finalCtaTitle")}>
         <div className="flex flex-wrap gap-3">
           <Link
             href={session ? "/profile" : "/signup"}
             data-cta="final_cta"
             className="group rounded-full bg-ink px-6 py-3 text-sm font-medium text-parchment transition-colors duration-200 hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
-            {session ? "Continue studying" : "Start learning free"}{" "}
+            {session ? t("home.continueStudying") : t("home.startLearningFree")}{" "}
             <span aria-hidden className="inline-block transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">→</span>
           </Link>
           <Link

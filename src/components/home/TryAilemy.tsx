@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { SmartLink as Link } from "@/components/i18n/SmartLink";
 import { SAMPLE, markSample, type SampleResult } from "@/lib/home/try-sample";
@@ -32,6 +33,7 @@ import { subjectColour, subjectVars } from "@/lib/design/subject-colours";
  * add — which teaches keyword-stuffing rather than chemistry.
  */
 export function TryAilemy() {
+  const t = useTranslations();
   const [answer, setAnswer] = useState("");
   const [result, setResult] = useState<SampleResult | null>(null);
   const colour = subjectColour(SAMPLE.subject);
@@ -60,14 +62,14 @@ export function TryAilemy() {
         </p>
 
         <label htmlFor="try-answer" className="mt-5 block font-mono text-[10px] uppercase tracking-[0.16em] text-ink/45">
-          Your answer
+          {t("tryAilemy.yourAnswerLabel")}
         </label>
         <textarea
           id="try-answer"
           value={answer}
           onChange={(e) => { setAnswer(e.target.value); if (result) setResult(null); }}
           rows={4}
-          placeholder="Write your answer as you would in the exam…"
+          placeholder={t("tryAilemy.answerPlaceholder")}
           className="mt-2 w-full rounded-md border border-ink/15 bg-parchment px-3 py-2.5 text-sm leading-relaxed placeholder:text-ink/35 focus-visible:border-ink/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink"
         />
 
@@ -86,7 +88,7 @@ export function TryAilemy() {
               onClick={() => { setAnswer(""); setResult(null); }}
               className="text-sm text-ink/55 underline underline-offset-2 transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
             >
-              Try again
+              {t("common.tryAgain")}
             </button>
           )}
         </div>
@@ -105,18 +107,15 @@ export function TryAilemy() {
         {!result ? (
           <div className="text-sm leading-relaxed text-ink/55">
             <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink/45">
-              How Ailemy marks
+              {t("tryAilemy.howAilemyMarks")}
             </p>
-            <p className="mt-3">
-              Ailemy marks against the points a real mark scheme awards — not a percentage
-              guess. Write an answer and see which points you earned and which you missed.
-            </p>
+            <p className="mt-3">{t("tryAilemy.howAilemyMarksBody")}</p>
           </div>
         ) : result.tooShort ? (
           /* ⚠ NOT "0 / 2". A blank box scored zero reads as a judgement of the
              student; this is the truth about the input. */
           <p className="text-sm leading-relaxed text-ink/70">
-            Write a little more and press mark — there is not enough here to award a point yet.
+            {t("tryAilemy.answerTooShort")}
           </p>
         ) : (
           <>
@@ -140,7 +139,7 @@ export function TryAilemy() {
                       {/* ⚠ THE SCREEN READER GETS THE VERDICT AS A WORD, not as
                           a tick glyph that may or may not be announced. */}
                       <p className="text-sm leading-snug">
-                        <span className="sr-only">{p.awarded ? "Awarded: " : "Not awarded: "}</span>
+                        <span className="sr-only">{p.awarded ? t("tryAilemy.srAwarded") : t("tryAilemy.srNotAwarded")}</span>
                         {p.requirement}
                       </p>
                       {p.awarded ? (
@@ -161,8 +160,7 @@ export function TryAilemy() {
 
             {/* ⚠ THE HONEST LABEL, WHERE THE RESULT IS — not in a footnote. */}
             <p className="mt-5 border-t border-ink/10 pt-3 font-mono text-[10px] leading-relaxed tracking-wide text-ink/40">
-              Sample marking — a fixed mark scheme, shown to demonstrate how Ailemy marks.
-              Marking inside your account runs against the full scheme for the paper you sat.
+              {t("tryAilemy.sampleMarkingDisclaimer")}
             </p>
 
             <Link
@@ -172,7 +170,7 @@ export function TryAilemy() {
               style={colour ? { color: "var(--subject-text)" } : undefined}
             >
               <span className="underline decoration-transparent underline-offset-4 transition-colors group-hover:decoration-current">
-                Create a free account to save your work
+                {t("tryAilemy.createFreeAccount")}
               </span>
               <span aria-hidden className="transition-transform duration-200 motion-safe:group-hover:translate-x-1">→</span>
             </Link>

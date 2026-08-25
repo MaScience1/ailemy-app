@@ -3,6 +3,7 @@ import {
   COMMITMENT_LABEL, ONE_TO_ONE_LEVEL_LABEL, monthsFor, isPurchasable,
   type Commitment, type OneToOneLevel,
 } from "@/lib/tuition/pricing";
+import { getTranslations } from "next-intl/server";
 import { SmartLink as Link } from "@/components/i18n/SmartLink";
 import { savingAgainst, cheapestFor } from "@/lib/tuition/pricing-math";
 import { ONE_TO_ONE, subjectColour, subjectVars } from "@/lib/design/subject-colours";
@@ -39,15 +40,16 @@ export function isTuitionMode(v: string | undefined): v is TuitionMode {
   return v === "one-to-one" || v === "group";
 }
 
-function Segmented({ mode, hrefFor }: { mode: TuitionMode; hrefFor: (m: TuitionMode) => string }) {
+async function Segmented({ mode, hrefFor }: { mode: TuitionMode; hrefFor: (m: TuitionMode) => string }) {
+  const t = await getTranslations();
   return (
-    <nav aria-label="Choose a kind of tuition" className="flex flex-col gap-2 sm:flex-row">
+    <nav aria-label={t("tuition.chooseKindOfTuition")} className="flex flex-col gap-2 sm:flex-row">
       {(["one-to-one", "group"] as const).map((m) => {
         const on = m === mode;
-        const label = m === "one-to-one" ? "1-to-1 Tuition" : "Group Tuition";
-        const sub = m === "one-to-one"
-          ? "Personal lessons, booked around published times."
-          : "Structured weekly teaching, with the platform included.";
+        const label = t(m === "one-to-one" ? "tuitionModes.modeOneToOne" : "tuitionModes.modeGroup");
+        const sub = t(m === "one-to-one"
+          ? "tuitionModes.oneToOneSub"
+          : "tuitionModes.groupSub");
         return (
           <Link
             key={m}
@@ -83,7 +85,8 @@ function Segmented({ mode, hrefFor }: { mode: TuitionMode; hrefFor: (m: TuitionM
  * ⚠ AND AN ABSENT PRICE RENDERS AN HONEST LINE, NOT A ZERO (§19). "0 QAR"
  * against a real product is worse than saying the price could not be loaded.
  */
-function OneToOnePricing({ currency, pricing }: { currency: Currency; pricing: OneToOnePricingProps }) {
+async function OneToOnePricing({ currency, pricing }: { currency: Currency; pricing: OneToOnePricingProps }) {
+  const t = await getTranslations();
   const cur: "qar" | "gbp" = currency === "QAR" ? "qar" : "gbp";
   return (
     <div className="grid gap-6 sm:grid-cols-2">
@@ -110,20 +113,20 @@ function OneToOnePricing({ currency, pricing }: { currency: Currency; pricing: O
             <ul className="mt-3 grid gap-2">
               <li className="rounded-xl border border-ink/10 bg-snow px-4 py-3">
                 <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-sm text-ink/70">Single lesson</span>
+                  <span className="text-sm text-ink/70">{t("tuition.singleLesson")}</span>
                   <span className="font-display text-lg font-medium">
-                    {single ?? <span className="text-sm font-normal text-ink/45">Pricing unavailable</span>}
+                    {single ?? <span className="text-sm font-normal text-ink/45">{t("tuition.pricingUnavailable")}</span>}
                   </span>
                 </div>
                 <p className="font-mono mt-1 text-[10px] uppercase tracking-[0.16em] text-ink/45">
-                  One hour
+                  {t("tuition.oneHour")}
                 </p>
               </li>
               <li className="rounded-xl border border-[var(--subject-accent)] bg-[var(--subject-tint)] px-4 py-3">
                 <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-sm text-ink/70">5-hour package</span>
+                  <span className="text-sm text-ink/70">{t("tuition.fiveHourPackage")}</span>
                   <span className="font-display text-lg font-medium">
-                    {pack ?? <span className="text-sm font-normal text-ink/45">Pricing unavailable</span>}
+                    {pack ?? <span className="text-sm font-normal text-ink/45">{t("tuition.pricingUnavailable")}</span>}
                   </span>
                 </div>
                 {perHour && (
@@ -150,7 +153,7 @@ function OneToOnePricing({ currency, pricing }: { currency: Currency; pricing: O
  * link cannot be reserved, and a button saying otherwise leads nowhere. It
  * flips on its own the moment the link lands.
  */
-function GroupProgramme({
+async function GroupProgramme({
   cohort, commitment, currency, capacity, pricing, hrefFor,
 }: {
   cohort: Cohort;
@@ -160,6 +163,7 @@ function GroupProgramme({
   pricing: Partial<Record<Commitment, PriceCell | undefined>>;
   hrefFor: (c: Commitment) => string;
 }) {
+  const t = await getTranslations();
   // ⚠ THE COHORT'S OWN DATES, NOT A LOOKUP. See pricing.ts: the slug→window
   // map was a second copy of `cohorts.ends_on` and it had one entry, so two
   // live programmes said their dates were unpublished when the row held them.
@@ -209,13 +213,13 @@ function GroupProgramme({
    * whenever the arithmetic does not support a claim.
    */
   const tabHint = (c: Commitment): string | null => {
-    if (best === c) return "Best value";
+    if (best === c) return t("tuition.bestValue");
     if (c === "monthly" || monthlyMinor === null) return null;
     const pay = amount(c);
     if (pay === null) return null;
     const normal = monthlyMinor * (c === "three_month" ? 3 : months);
     const sv = savingAgainst(normal, pay);
-    return sv ? `~${Math.round(sv.pct)}% saving` : null;
+    return sv ? t("tuition.approxSaving", { pct: Math.round(sv.pct) }) : null;
   };
 
   const perMonthMinor = commitment === "monthly" ? monthlyMinor
@@ -230,21 +234,21 @@ function GroupProgramme({
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h3 className="font-display text-xl font-medium tracking-tight">{cohort.title}</h3>
         <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--subject-text)]">
-          Group tuition
+          {t("tuition.groupTuition")}
         </span>
       </div>
 
       {/* §22 — schedule, hours, capacity: the decision facts, once. */}
       <ul className="font-mono mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] uppercase tracking-[0.14em] text-ink/45">
         {cohort.scheduleSummary && <li>{cohort.scheduleSummary}</li>}
-        <li>{cohort.hoursPerWeek} teaching hours a week</li>
+        <li>{t("tuition.teachingHoursAWeek", { hours: cohort.hoursPerWeek })}</li>
         {/* ⚠ §25 — CAPACITY COMES FROM cohort_seats_taken OR IS NOT SHOWN.
             `capacity.known` is false when the RPC is absent; the honest render
             of "we could not count" is the cap alone, never an invented number. */}
         <li>
           {capacity?.known
-            ? `${capacity.taken} of ${cohort.seatCap} places taken`
-            : `Maximum ${cohort.seatCap} students`}
+            ? t("tuition.placesTaken", { taken: capacity.taken, cap: cohort.seatCap })
+            : t("tuition.maximumStudents", { cap: cohort.seatCap })}
         </li>
       </ul>
 
@@ -274,7 +278,7 @@ function GroupProgramme({
                 on ? "border-ink bg-ink text-parchment" : "border-ink/15 text-ink/70 hover:border-ink/35"
               }`}
             >
-              {COMMITMENT_LABEL[c]}
+              {t(`commitment.${c}`)}
               {/**
                 * ⚠ THE HINT IS DERIVED, AND OFTEN THERE ISN'T ONE.
                 * This rendered −{DISCOUNTS[c] * 100}% from a local table, so the
@@ -309,7 +313,7 @@ function GroupProgramme({
                   {fmtMoney(normalMinor, cur)}
                 </span>
                 <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-[var(--subject-text)]">
-                  Save {fmtMoney(saving.saveMinor, cur)}
+                  {t("tuition.saveAmount", { amount: fmtMoney(saving.saveMinor, cur) })}
                 </span>
               </>
             )}
@@ -329,13 +333,13 @@ function GroupProgramme({
           </p>
           {best === commitment && (
             <p className="font-mono mt-1 text-[10px] uppercase tracking-[0.16em] text-[var(--subject-text)]">
-              Best value over {months} months
+              {t("tuition.bestValueOver", { months })}
             </p>
           )}
           {/* §18/§47 — the real dates, never "12 months". */}
           {commitment === "academic_year" && window.firstClassOn && window.lastClassOn && (
             <p className="mt-1 text-xs text-ink/55">
-              Covers teaching from {fmt(window.firstClassOn)} to {fmt(window.lastClassOn)}.
+              {t("tuition.coversTeaching", { from: fmt(window.firstClassOn), to: fmt(window.lastClassOn) })}
             </p>
           )}
         </div>
@@ -348,11 +352,11 @@ function GroupProgramme({
          */
         !window.firstClassOn || !window.lastClassOn ? (
           <p className="mt-4 text-sm text-ink/65">
-            The academic programme dates for this cohort are not published yet.
+            {t("tuition.datesNotPublished")}
           </p>
         ) : (
           <p className="mt-4 text-sm text-ink/65">
-            Pricing temporarily unavailable — please try again shortly.
+            {t("tuition.pricingTemporarilyUnavailable")}
           </p>
         )
       )}
@@ -363,7 +367,7 @@ function GroupProgramme({
           data-cta="tuition_group_programme_selected"
           className="group inline-flex min-h-[44px] items-center gap-1.5 rounded-full bg-ink px-5 py-2.5 text-sm font-medium text-parchment transition-colors duration-200 hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
         >
-          {canReserve ? "Reserve your place" : "Register interest"}
+          {canReserve ? t("tuition.reserveYourPlace") : t("tuition.registerInterest")}
           <span aria-hidden className="transition-transform duration-200 motion-safe:group-hover:translate-x-0.5">→</span>
         </Link>
 
@@ -379,7 +383,7 @@ function GroupProgramme({
           style={subjectVars(ONE_TO_ONE)}
           className="group/r inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-[var(--subject-accent)] bg-[var(--subject-tint)] px-4 py-2 text-sm font-medium text-[var(--subject-text)] transition-all duration-200 ease-out hover:border-ink/40 motion-safe:hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
         >
-          See course roadmap
+          {t("tuition.seeCourseRoadmap")}
           <span aria-hidden className="transition-transform duration-200 motion-safe:group-hover/r:translate-x-0.5">→</span>
         </Link>
       </div>
@@ -420,7 +424,7 @@ function fmtMoney(minor: number, cur: "qar" | "gbp"): string {
   return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(minor / 100);
 }
 
-export function TuitionModes({
+export async function TuitionModes({
   mode, commitment, currency, cohorts, capacityBySlug, hrefForMode, hrefForCommitment,
   oneToOnePricing = {},
   groupPricing = {},
@@ -435,6 +439,7 @@ export function TuitionModes({
   oneToOnePricing?: OneToOnePricingProps;
   groupPricing?: GroupPricingProps;
 }) {
+  const t = await getTranslations();
   return (
     <div className="grid gap-8">
       <Segmented mode={mode} hrefFor={hrefForMode} />
@@ -442,11 +447,10 @@ export function TuitionModes({
       {mode === "one-to-one" ? (
         <section aria-labelledby="oto-heading">
           <h2 id="oto-heading" className="font-display text-2xl font-medium tracking-tight">
-            Personal lessons, on your course.
+            {t("tuitionModes.oneToOneHeading")}
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink/70">
-            Teaching built around one student&rsquo;s specification, their gaps and the exam they
-            are sitting — with the same resources, marking and practice the platform provides.
+            {t("tuitionModes.oneToOneBlurb")}
           </p>
           <div className="mt-6">
             <OneToOnePricing currency={currency} pricing={oneToOnePricing} />
@@ -455,11 +459,10 @@ export function TuitionModes({
       ) : (
         <section aria-labelledby="grp-heading">
           <h2 id="grp-heading" className="font-display text-2xl font-medium tracking-tight">
-            Structured weekly teaching, in a small group.
+            {t("tuition.groupHeading")}
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink/70">
-            A whole programme to the specification, with the Ailemy platform, marked practice and
-            progress tracking included.
+            {t("tuition.groupBlurb")}
           </p>
           <div className="mt-6 grid gap-4">
             {cohorts.map((c) => (
