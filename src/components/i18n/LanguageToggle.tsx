@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useParams } from "next/navigation";
 
 import { Link, usePathname } from "@/i18n/navigation";
+import { localeSwitchPath } from "@/i18n/locale-switch";
 import { routing } from "@/i18n/routing";
 
 /**
@@ -30,6 +31,19 @@ export function LanguageToggle({ className = "" }: { className?: string }) {
   /** Dynamic segments must be re-supplied or the typed href cannot be built. */
   const params = useParams();
 
+  /**
+   * ⚠ NOT `pathname` DIRECTLY. next-intl's Link prefixes whatever it is given,
+   * and twenty-four route folders live outside the locale segment — so on
+   * /calendar this rendered /ar/calendar, which 404s (reproduced on
+   * production, 2026-08-25). localeSwitchPath sends an unlocalisable path to
+   * the locale ROOT instead — a reader who presses العربية gets an Arabic
+   * page, not a 404 and not a dead control — and it strips any locale already
+   * present, so a prefix can never be applied twice.
+   */
+  const target = localeSwitchPath(pathname);
+  /** Dynamic params only belong on a path we are actually keeping. */
+  const localisable = target === pathname;
+
   return (
     <div role="group" aria-label={t("label")} className={`inline-flex items-center gap-1 ${className}`}>
       {routing.locales.map((locale) => {
@@ -38,7 +52,7 @@ export function LanguageToggle({ className = "" }: { className?: string }) {
         return (
           <Link
             key={locale}
-            href={{ pathname, params } as never}
+            href={(localisable ? { pathname: target, params } : { pathname: target }) as never}
             locale={locale}
             hrefLang={locale}
             aria-current={on ? "true" : undefined}
