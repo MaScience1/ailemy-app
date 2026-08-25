@@ -1,6 +1,7 @@
-import { getLocale } from "next-intl/server";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 
-import { directionOf } from "@/i18n/routing";
+import { directionOf, routing } from "@/i18n/routing";
 
 import { Analytics } from "@/components/analytics/Analytics";
 import type { Metadata } from "next";
@@ -96,7 +97,42 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const locale = await getLocale();
+  /**
+   * ⚠ GUARDED, AND THE UNGUARDED VERSION PUT A 500 ON PRODUCTION.
+   *
+   * getLocale() throws when there is no next-intl request context. The proxy
+   * deliberately does NOT run next-intl for UNLOCALISED_ROOTS — /calendar,
+   * /resources, /past-papers, /exam-builder and the rest — so for those routes
+   * there is no context and this call threw, taking out every one of them.
+   *
+   * ⚠ IT PASSED LOCALLY AND FAILED IN PRODUCTION. Under `next dev` the call
+   * resolved to "en" quite happily; only a real production build reproduces it.
+   * `next build` exiting 0 proves the code COMPILES, never that a route
+   * RENDERS — which is why prod-routes.test.ts now boots a production server
+   * and fetches all eleven routes on every gate.
+   *
+   * ⚠ AND THE FIX IS HERE, NOT IN THE PROXY. Widening the proxy matcher to run
+   * next-intl over the unlocalised roots would "fix" this by pushing every
+   * out-of-scope route through the locale layer — a different change with its
+   * own blast radius, and not the one that was authorised.
+   */
+  let locale: string = routing.defaultLocale;
+  try {
+    locale = await getLocale();
+  } catch {
+    // No next-intl context: an unlocalised route. English is correct for those.
+  }
+  /**
+   * ⚠ MESSAGES ARE RESOLVED HERE BECAUSE THE PROVIDER LIVES HERE. Guarded for
+   * the same reason getLocale() is: on an unlocalised route there is no
+   * next-intl request context, and English is the right answer there.
+   */
+  let messages: Record<string, unknown>;
+  try {
+    messages = (await getMessages({ locale })) as Record<string, unknown>;
+  } catch {
+    messages = (await import("../../messages/en.json")).default as unknown as Record<string, unknown>;
+  }
   const dir = directionOf(locale);
   return (
     <html
@@ -115,6 +151,8 @@ export default async function RootLayout({
       } h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {/* ⚠ ROOT-LEVEL, so routes outside app/[locale]/ get messages too. */}
+        <NextIntlClientProvider locale={locale} messages={messages}>
         {/* ⚠ RENDERS NOTHING AND SENDS NOTHING WITHOUT A KEY. See
             lib/analytics/posthog.ts — keyless is the normal state, and the
             privacy policy ships in the same branch as the key. */}
@@ -125,6 +163,7 @@ export default async function RootLayout({
           receive no overlay markup and no overlay JS chunk.
         */}
         <AdminOverlay />
+        </NextIntlClientProvider>
       </body>
     </html>
   );
