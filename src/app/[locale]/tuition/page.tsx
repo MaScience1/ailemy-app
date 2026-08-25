@@ -9,7 +9,7 @@ import { getNavSession } from "@/lib/auth/nav-session";
 import { loadCohorts } from "@/lib/public/readers";
 import { availabilityFor, availabilityLabel } from "@/lib/tuition/availability";
 import { TuitionModes, isTuitionMode, type TuitionMode } from "@/components/tuition/TuitionModes";
-import { DISCOUNTS, effectiveCommitment, type Commitment } from "@/lib/tuition/pricing";
+import { DISCOUNTS, type Commitment } from "@/lib/tuition/pricing";
 
 /** Pure so the suite can check it: an unknown commitment falls back, never throws. */
 function isCommitment(v: string | undefined): v is Commitment {
@@ -185,14 +185,7 @@ const t = await getTranslations();
   if (comingSoon && !interest.canRegister && "reason" in interest && interest.reason) {
     console.error("[tuition] interest funnel unavailable:", interest.reason);
   }
-  /**
-   * ⚠ COERCED, NOT TRUSTED. An unknown value falls back as it always did; a
-   * KNOWN but currently unbuyable one (three_month, academic_year) is pulled to
-   * monthly by effectiveCommitment, so no URL can render a price the reader
-   * cannot pay. See PURCHASABLE_COMMITMENTS for why, and how to reverse it.
-   */
-  const requested: Commitment = isCommitment(params.commitment) ? params.commitment : "monthly";
-  const commitment: Commitment = effectiveCommitment(requested);
+  const commitment: Commitment = isCommitment(params.commitment) ? params.commitment : "monthly";
   const calendarType = params.type
     ? state.type
     : mode === "one-to-one" ? "private" as const : "group" as const;

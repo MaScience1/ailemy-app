@@ -294,7 +294,7 @@ console.log("\n=== 7. ⚠ §7 of the header — nothing was broken ===");
   t("§7 — no URL moved, so nothing was owed a redirect",
     !/redirect\(|permanentRedirect/.test(code(PAGE) + code(MODES)));
   t("preserved — the commitment selector still renders",
-    /Object\.keys\(COMMITMENT_LABEL\)/.test(MODES) && /isPurchasable/.test(MODES));
+    /Object\.keys\(COMMITMENT_LABEL\)/.test(MODES));
   /**
    * ⚠ SAME MOVE ON THE CARD. quote(cohort.pricePence, …) applied a local
    * discount table to a converted column; the card now renders the Stripe
