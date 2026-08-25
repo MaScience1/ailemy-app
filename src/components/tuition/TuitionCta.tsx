@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -59,25 +60,39 @@ const STORAGE_KEY = "ailemy:tuition-cta-collapsed";
 const CLASH_SELECTOR =
   '[data-cta="floating_start_learning"],[data-cta="floating_continue_studying"]';
 
+/**
+ * ⚠ THESE FIELDS HOLD MESSAGE KEYS, NOT ENGLISH.
+ *
+ * TUITION_CTA_COPY is a module constant, evaluated once at import, and
+ * useTranslations() is a hook — so the copy cannot be resolved where it is
+ * declared. The constant carries the key; the component resolves it. A key
+ * changed here without a matching entry in messages/en.json AND
+ * messages/ar.json renders the key path itself on the page.
+ */
 type Copy = {
-  /** The sentence before the control. */
-  lead: string;
+  /** Key for the sentence before the control. */
+  leadKey: string;
   /**
-   * The lead at phone width.
+   * Key for the lead at phone width.
    *
    * ⚠ IT EXISTS BECAUSE THE FULL LEAD DOES NOT FIT, AND A TRUNCATED SENTENCE IS
-   * WORSE THAN A SHORT ONE. Measured at 375px: the bar's padding, the dot, the
-   * control and a 44px dismiss target leave roughly 140px for this line —
-   * "Biology tuition is expanding" needs about 190 and would render as
-   * "Biology tuition is…". Every value below is a complete phrase.
+   * WORSE THAN A SHORT ONE. Measured at 375px in English: the bar's padding,
+   * the dot, the control and a 44px dismiss target leave roughly 140px for this
+   * line — "Biology tuition is expanding" needs about 190 and would render as
+   * "Biology tuition is…".
+   *
+   * ⚠ AND THE MEASUREMENT DOES NOT SURVIVE TRANSLATION. It was taken against
+   * English glyphs; a locale is not exempt from the constraint just because it
+   * was not measured. Every value behind these keys, in EVERY locale, has to be
+   * a complete phrase that fits — re-measure when a locale is added.
    */
-  shortLead: string;
-  /** The control's own words. Never "Book". */
-  action: string;
-  /** The control at phone width. The full ask survives in the aria-label. */
-  short: string;
-  /** What is at the other end. A fact about a page, never a promise. */
-  note: string;
+  shortLeadKey: string;
+  /** Key for the control's own words. Never "Book". */
+  actionKey: string;
+  /** Key for the control at phone width. The full ask survives in the aria-label. */
+  shortKey: string;
+  /** Key for what is at the other end. A fact about a page, never a promise. */
+  noteKey: string;
   /** Verified against the route before it was written here — see below. */
   href: string;
 };
@@ -114,37 +129,37 @@ type Copy = {
  */
 export const TUITION_CTA_COPY = {
   chemistry: {
-    lead: "Need help with Chemistry?",
-    shortLead: "Chemistry tuition",
-    action: "View live tuition",
-    short: "View",
-    note: "Cohorts, prices and the timetable",
+    leadKey: "tuition.ctaLeadChemistry",
+    shortLeadKey: "tuition.ctaShortLeadChemistry",
+    actionKey: "tuition.ctaViewLiveTuition",
+    shortKey: "tuition.ctaViewShort",
+    noteKey: "tuition.ctaNoteCohortsPricesTimetable",
     href: "/tuition?subject=chemistry",
   },
   biology: {
-    lead: "Biology tuition is expanding",
-    shortLead: "Biology tuition",
-    action: "Register interest",
-    short: "Interest",
-    note: "We open cohorts on demand",
+    leadKey: "tuition.ctaLeadBiology",
+    shortLeadKey: "tuition.ctaShortLeadBiology",
+    actionKey: "tuition.registerInterest",
+    shortKey: "tuition.ctaInterestShort",
+    noteKey: "tuition.ctaNoteCohortsOnDemand",
     href: "/tuition/interest?subject=biology",
   },
   physics: {
-    lead: "Physics tuition is expanding",
-    shortLead: "Physics tuition",
-    action: "Register interest",
-    short: "Interest",
-    note: "We open cohorts on demand",
+    leadKey: "tuition.ctaLeadPhysics",
+    shortLeadKey: "tuition.ctaShortLeadPhysics",
+    actionKey: "tuition.registerInterest",
+    shortKey: "tuition.ctaInterestShort",
+    noteKey: "tuition.ctaNoteCohortsOnDemand",
     href: "/tuition/interest?subject=physics",
   },
   /** No subject in context: the neutral ask, promising nothing about any one
    *  science. The lead is /tuition's own description of itself. */
   none: {
-    lead: "Small-group science tuition",
-    shortLead: "Live tuition",
-    action: "View live tuition",
-    short: "View",
-    note: "Cohorts, prices and the timetable",
+    leadKey: "tuition.ctaLeadNeutral",
+    shortLeadKey: "tuition.ctaShortLeadNeutral",
+    actionKey: "tuition.ctaViewLiveTuition",
+    shortKey: "tuition.ctaViewShort",
+    noteKey: "tuition.ctaNoteCohortsPricesTimetable",
     href: "/tuition",
   },
 } satisfies Record<string, Copy>;
@@ -187,6 +202,7 @@ export function TuitionCta({
   bottomGap = 0,
   href,
 }: TuitionCtaProps) {
+  const t = useTranslations();
   const pathname = usePathname();
   const [ready, setReady] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -339,7 +355,7 @@ export function TuitionCta({
           onClick={onActivate}
           data-cta="floating_tuition_collapsed"
           tabIndex={shown ? undefined : -1}
-          aria-label={`${copy.lead} — ${copy.action}`}
+          aria-label={`${t(copy.leadKey)} — ${t(copy.actionKey)}`}
           className={[
             hitbox,
             "m-3 inline-flex min-h-11 items-center gap-2 rounded-full border border-ink/15",
@@ -350,7 +366,7 @@ export function TuitionCta({
           ].join(" ")}
         >
           {dot}
-          <span className="font-medium">Tuition</span>
+          <span className="font-medium">{t("tuition.ctaCollapsedLabel")}</span>
           <span aria-hidden className="text-ink/45">
             →
           </span>
@@ -372,14 +388,14 @@ export function TuitionCta({
 
           <div className="min-w-0 flex-1 sm:flex-none">
             <p className="truncate text-sm font-medium">
-              <span className="sm:hidden">{copy.shortLead}</span>
-              <span className="hidden sm:inline">{copy.lead}</span>
+              <span dir="auto" className="sm:hidden">{t(copy.shortLeadKey)}</span>
+              <span dir="auto" className="hidden sm:inline">{t(copy.leadKey)}</span>
             </p>
             {/* ⚠ THE NOTE IS HIDDEN AT PHONE WIDTH, NOT SHRUNK. Two lines of
                 text plus a button plus a dismiss control in a slim bar is how a
                 bar stops being slim and starts covering the page. */}
             <p className="hidden truncate font-mono text-[10px] uppercase tracking-[0.14em] text-ink/50 sm:block">
-              {copy.note}
+              {t(copy.noteKey)}
             </p>
           </div>
 
@@ -398,15 +414,15 @@ export function TuitionCta({
              * inside the string below, so a voice-control user saying what they
              * can read still hits it.
              */
-            aria-label={`${copy.lead} — ${copy.action}`}
+            aria-label={`${t(copy.leadKey)} — ${t(copy.actionKey)}`}
             className={[
               "group shrink-0 rounded-full bg-ink px-5 py-3 text-sm font-medium text-parchment",
               "transition-colors duration-200 hover:bg-ink/90 sm:py-2.5",
               focusRing,
             ].join(" ")}
           >
-            <span className="hidden sm:inline">{copy.action} </span>
-            <span className="sm:hidden">{copy.short} </span>
+            <span className="hidden sm:inline">{t(copy.actionKey)} </span>
+            <span className="sm:hidden">{t(copy.shortKey)} </span>
             <span
               aria-hidden
               className="inline-block transition-transform duration-200 motion-safe:group-hover:translate-x-0.5"
@@ -422,7 +438,7 @@ export function TuitionCta({
             type="button"
             onClick={collapse}
             tabIndex={shown ? undefined : -1}
-            aria-label="Collapse the live tuition link"
+            aria-label={t("tuition.ctaCollapseAria")}
             className={[
               "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full",
               "text-ink/45 transition-colors hover:text-ink sm:h-9 sm:w-9",

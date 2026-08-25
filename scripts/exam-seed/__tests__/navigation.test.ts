@@ -18,6 +18,21 @@ import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { availabilityFor, availabilityLabel } from "../../../src/lib/tuition/availability.ts";
 
+
+/**
+ * ⚠ THE FOOTER'S HEADINGS MOVED INTO THE CATALOGUE. The group heading used to
+ * be a literal in the data structure; it is now a key, so a grep for
+ * `heading: "Online Tuition"` would have gone green-by-absence. The check
+ * below requires the group to reference the key AND the catalogue to still
+ * call it "Online Tuition" — and keeps the /calendar half unchanged, because
+ * that is a route, not a string, and did not move.
+ */
+const EN_MESSAGES = JSON.parse(readFileSync("messages/en.json", "utf8")) as Record<string, Record<string, string>>;
+const msg = (dotted: string): string => {
+  const i = dotted.indexOf(".");
+  return EN_MESSAGES[dotted.slice(0, i)]?.[dotted.slice(i + 1)] ?? "";
+};
+
 let pass = 0, fail = 0;
 const t = (n: string, c: boolean, got?: unknown) => {
   c ? (pass++, console.log("  ✓ " + n))
@@ -130,7 +145,10 @@ console.log("\n=== 2. the header is four products, and only four ===");
     t(`§53 — ${s} is still linked from the footer`, FOOTER.includes(`"${s}"`));
   }
   t("§33 — Calendar moved into the footer's Online Tuition group",
-    FOOTER.includes('heading: "Online Tuition"') && FOOTER.includes('"/calendar"'));
+    FOOTER.includes('headingKey: "nav.onlineTuition"')
+      && msg("nav.onlineTuition") === "Online Tuition"
+      && FOOTER.includes('"/calendar"'),
+    msg("nav.onlineTuition"));
 }
 
 // ============================================================================

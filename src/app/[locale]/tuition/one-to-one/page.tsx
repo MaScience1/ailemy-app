@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
 import { SmartLink as Link } from "@/components/i18n/SmartLink";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
@@ -55,6 +56,7 @@ export default async function OneToOnePage() {
   const session = await getNavSession();
   const viewerTz = await viewerTimeZone();
   const stripe = stripeConfig();
+  const t = await getTranslations("tuition");
 
   const [{ slots, packages, hasAvailability }, me] = await Promise.all([
     loadOpenSlots({ from: iso(0), to: iso(WEEKS * 7), now: new Date() }),
@@ -90,30 +92,28 @@ export default async function OneToOnePage() {
             rest of the site uses (nav, /calendar, the hero legend, DayPanel),
             so it is the one that survives here. */}
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink/50">
-          1-to-1 tuition
+          {t("oneToOneEyebrow")}
         </p>
         <h1 className="font-display mt-4 text-3xl font-medium tracking-tight sm:text-4xl">
-          1-to-1 Chemistry tuition
+          {t("oneToOneHeading")}
         </h1>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink/70">
-          Personalised support built around one student: their specification, their weakest
-          topics, the questions they keep losing marks on, and the exam they are actually sitting.
+          {t("oneToOneIntro")}
         </p>
 
         {/* ⚠ GROUP STAYS THE HEADLINE OFFER (§20). 1-to-1 is premium support
             alongside it, not a replacement, and the page says so rather than
             competing with the cohorts. */}
         <p className="mt-4 max-w-2xl text-sm leading-relaxed text-ink/60">
-          Most students are best served by a group cohort — it is the scalable core of what
-          Ailemy does, and it costs far less per hour.{" "}
+          {t("oneToOneGroupFirstLead")}{" "}
           <Link href="/tuition" className="underline underline-offset-2 hover:text-ink">
-            See live group tuition
+            {t("seeLiveGroupTuition")}
           </Link>
-          . 1-to-1 is for targeted work on top of that.
+          {t("oneToOneGroupFirstTrail")}
         </p>
 
         <section className="mt-12">
-          <h2 className="font-display text-xl font-medium">What a session covers</h2>
+          <h2 className="font-display text-xl font-medium">{t("whatASessionCovers")}</h2>
           <ul className="mt-4 grid gap-2 text-sm leading-relaxed text-ink/70 sm:grid-cols-2">
             {[
               "Your exact specification, unit by unit",
@@ -127,7 +127,7 @@ export default async function OneToOnePage() {
         </section>
 
         <section className="mt-12">
-          <h2 className="font-display text-xl font-medium">Choose a lesson time</h2>
+          <h2 className="font-display text-xl font-medium">{t("chooseALessonTime")}</h2>
 
           {redeem.ok && (
             <p className="mt-3 rounded border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-900">
@@ -163,10 +163,10 @@ export default async function OneToOnePage() {
                   const end = dualTime(s.endsAt, viewerTz);
                   return (
                     <li key={s.key} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3.5">
-                      <span className="w-24 shrink-0 font-mono text-[11px] uppercase tracking-[0.15em] text-ink/50">
+                      <span dir="ltr" className="w-24 shrink-0 font-mono text-[11px] uppercase tracking-[0.15em] text-ink/50">
                         {formatDay(s.startsAt, CANONICAL_TZ)}
                       </span>
-                      <span className="flex-1 text-sm">
+                      <span dir="ltr" className="flex-1 text-sm">
                         {start.canonical}–{end.canonical}{" "}
                         <span className="font-mono text-[11px] text-ink/50">{start.canonicalLabel}</span>
                         {start.viewer && (
@@ -186,7 +186,10 @@ export default async function OneToOnePage() {
                           unreachable without a credit until checkout exists. */}
                       <BookWithCredit
                         slotKey={s.key}
-                        label={`${formatDay(s.startsAt, CANONICAL_TZ)} at ${start.canonical}`}
+                        label={t("slotDayAtTime", {
+                          day: formatDay(s.startsAt, CANONICAL_TZ),
+                          time: start.canonical,
+                        })}
                       />
                     </li>
                   );
@@ -199,22 +202,21 @@ export default async function OneToOnePage() {
                different and untrue claim. */
             <div className="mt-4 rounded-lg border border-ink/15 bg-snow p-6">
               <p className="font-display text-lg font-medium">
-                1-to-1 booking opens soon
+                {t("oneToOneBookingOpensSoon")}
               </p>
               <p className="mt-3 text-sm leading-relaxed text-ink/70">
                 {!hasAvailability || slots.length === 0
-                  ? "No 1-to-1 times have been published yet."
+                  ? t("noOneToOneTimesPublished")
                   : me.signedIn
-                    ? "Online payment is not switched on yet, and you have no lesson credits to spend."
-                    : "Online payment is not switched on yet."}{" "}
-                Register your interest and we will contact you with times directly — you will be
-                first to know when self-service booking opens.
+                    ? t("paymentOffNoCredits")
+                    : t("paymentNotSwitchedOn")}{" "}
+                {t("registerInterestWeWillContact")}
               </p>
               <Link
                 href="/tuition/interest?subject=chemistry&mode=one-to-one"
                 className="mt-6 inline-block rounded-full bg-ink px-6 py-3 text-sm font-medium text-parchment hover:bg-ink/90"
               >
-                Register interest in 1-to-1 →
+                {t("registerInterestInOneToOne")}
               </Link>
             </div>
           )}
@@ -222,7 +224,7 @@ export default async function OneToOnePage() {
 
         {sellable.length > 0 && (
           <section className="mt-12">
-            <h2 className="font-display text-xl font-medium">Lessons and bundles</h2>
+            <h2 className="font-display text-xl font-medium">{t("lessonsAndBundles")}</h2>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               {sellable.map((p) => (
                 <div key={p.id} className="rounded-lg border border-ink/10 bg-snow p-5">
@@ -232,8 +234,8 @@ export default async function OneToOnePage() {
                     {Math.round(p.priceMinor / 100)}
                   </p>
                   <p className="mt-1 font-mono text-[11px] text-ink/55">
-                    {p.credits} × {p.slotMinutes} minutes
-                    {p.validityMonths ? ` · valid ${p.validityMonths} months` : ""}
+                    {t("creditsTimesMinutes", { credits: p.credits, minutes: p.slotMinutes })}
+                    {p.validityMonths ? t("validForMonths", { months: p.validityMonths }) : ""}
                   </p>
                   {p.description && (
                     <p className="mt-3 text-sm leading-relaxed text-ink/70">{p.description}</p>

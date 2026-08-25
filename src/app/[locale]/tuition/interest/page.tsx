@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import type { Metadata } from "next";
 
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -33,6 +34,8 @@ export default async function InterestPage({
   searchParams: Promise<{ subject?: string; cohort?: string; mode?: string }>;
 }) {
   const session = await getNavSession();
+  const t = await getTranslations("tuition");
+  const tSubjects = await getTranslations("subjects");
   const { subject, cohort, mode } = await searchParams;
   const { hasDemandFields } = await interestCapabilities();
   const known = SUBJECTS.find((s) => s.slug === subject);
@@ -57,7 +60,7 @@ export default async function InterestPage({
       <AnnouncementBar />
       <SiteNav session={session} />
       <main className="mx-auto max-w-3xl px-6 py-14 sm:py-20">
-        <h1 className="font-display text-3xl font-medium tracking-tight">Register interest</h1>
+        <h1 className="font-display text-3xl font-medium tracking-tight">{t("registerInterest")}</h1>
         <p className="mt-4 text-base leading-relaxed text-ink/70">
           We open new cohorts based on genuine demand. Tell us what you need and we will
           contact you when one opens{known ? ` for ${known.name}` : ""}. Nothing is charged

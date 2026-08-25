@@ -3,6 +3,7 @@
 import { Dialog } from "@base-ui/react/dialog";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { SUBJECT_COLOURS, SUBJECT_ORDER } from "@/lib/design/subject-colours";
 
@@ -37,12 +38,19 @@ import { SUBJECT_COLOURS, SUBJECT_ORDER } from "@/lib/design/subject-colours";
  * rather than four hand-rolled effects.
  */
 
+/**
+ * ⚠ labelKey, NOT label. `value` is the WIRE FORMAT — it is written into the
+ * /signup query string by onContinue — so it stays an English slug in every
+ * locale. Only the label is translated, and it is translated at the render
+ * site: a module constant is evaluated once at import, where no hook and no
+ * request locale exist.
+ */
 const YEARS = [
-  { value: "gcse-y10", label: "Year 10 (GCSE / IGCSE)" },
-  { value: "gcse-y11", label: "Year 11 (GCSE / IGCSE)" },
-  { value: "ial-as", label: "IAL AS / Year 12" },
-  { value: "ial-a2", label: "IAL A2 / Year 13" },
-  { value: "other", label: "Something else" },
+  { value: "gcse-y10", labelKey: "quickSignup.yearGcseY10" },
+  { value: "gcse-y11", labelKey: "quickSignup.yearGcseY11" },
+  { value: "ial-as", labelKey: "quickSignup.yearIalAs" },
+  { value: "ial-a2", labelKey: "quickSignup.yearIalA2" },
+  { value: "other", labelKey: "quickSignup.yearOther" },
 ];
 
 const BOARDS = ["Pearson Edexcel", "AQA", "OCR", "Cambridge", "Other", "Not sure"];
@@ -69,6 +77,7 @@ export function QuickSignup({ trigger }: {
   trigger: React.ReactElement;
 }) {
   const router = useRouter();
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -84,7 +93,7 @@ export function QuickSignup({ trigger }: {
 
   function onContinue() {
     setError(null);
-    if (!firstName.trim()) return setError("Please tell us your first name.");
+    if (!firstName.trim()) return setError(t("quickSignup.errorFirstNameRequired"));
     /**
      * ⚠ VALIDATED HERE ONLY TO SAVE A ROUND TRIP, NEVER AS THE REAL CHECK.
      * The server and Supabase both validate again; a client check that the
@@ -92,7 +101,7 @@ export function QuickSignup({ trigger }: {
      * clever email regexes reject real addresses.
      */
     if (!email.includes("@") || email.trim().length < 5) {
-      return setError("That email address does not look right.");
+      return setError(t("quickSignup.errorEmailLooksWrong"));
     }
 
     /**
@@ -135,7 +144,7 @@ export function QuickSignup({ trigger }: {
         <Dialog.Backdrop className="fixed inset-0 z-[9998] bg-ink/50 backdrop-blur-[2px] transition-opacity duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
         <Dialog.Popup className="fixed left-1/2 top-1/2 z-[9999] max-h-[92vh] w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-ink/10 bg-parchment p-6 shadow-[0_24px_64px_-24px_rgba(15,20,25,0.45)] transition-all duration-200 data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0 sm:p-8">
           <Dialog.Title className="font-display text-2xl font-medium tracking-tight">
-            Create your free Ailemy account
+            {t("quickSignup.title")}
           </Dialog.Title>
 
           {/* ⚠ THE BENEFITS ARE THE REASON, AND EVERY ONE IS REAL (§24). No
@@ -143,16 +152,16 @@ export function QuickSignup({ trigger }: {
               something a student can do the day they sign in. */}
           <ul className="mt-4 grid gap-1.5 text-[13px] text-ink/70 sm:grid-cols-2">
             {[
-              "Save your progress",
-              "Get answers marked",
-              "See weak topics",
-              "Practise past papers",
-              "Track your revision",
-              "Join live tuition",
+              "quickSignup.benefitSaveProgress",
+              "quickSignup.benefitAnswersMarked",
+              "quickSignup.benefitWeakTopics",
+              "quickSignup.benefitPastPapers",
+              "quickSignup.benefitTrackRevision",
+              "quickSignup.benefitJoinLiveTuition",
             ].map((b) => (
               <li key={b} className="flex items-start gap-1.5">
                 <span aria-hidden className="mt-px text-ink/35">✓</span>
-                {b}
+                {t(b)}
               </li>
             ))}
           </ul>
@@ -160,33 +169,37 @@ export function QuickSignup({ trigger }: {
           <div className="mt-6 grid gap-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className={LABEL} htmlFor="qs-first">First name</label>
-                <input id="qs-first" className={FIELD} value={firstName}
+                <label className={LABEL} htmlFor="qs-first">{t("quickSignup.firstName")}</label>
+                <input id="qs-first" dir="auto" className={FIELD} value={firstName}
                   onChange={(e) => setFirstName(e.target.value)} autoComplete="given-name" />
               </div>
               <div>
-                <label className={LABEL} htmlFor="qs-last">Last name</label>
-                <input id="qs-last" className={FIELD} value={lastName}
+                <label className={LABEL} htmlFor="qs-last">{t("quickSignup.lastName")}</label>
+                <input id="qs-last" dir="auto" className={FIELD} value={lastName}
                   onChange={(e) => setLastName(e.target.value)} autoComplete="family-name" />
               </div>
             </div>
 
             <div>
-              <label className={LABEL} htmlFor="qs-email">Email</label>
-              <input id="qs-email" type="email" className={FIELD} value={email}
+              <label className={LABEL} htmlFor="qs-email">{t("quickSignup.email")}</label>
+              <input id="qs-email" dir="ltr" type="email" className={FIELD} value={email}
                 onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
             </div>
 
             <div>
-              <label className={LABEL} htmlFor="qs-year">Year group or qualification</label>
+              <label className={LABEL} htmlFor="qs-year">{t("quickSignup.yearGroupOrQualification")}</label>
               <select id="qs-year" className={FIELD} value={year} onChange={(e) => setYear(e.target.value)}>
-                <option value="">Choose…</option>
-                {YEARS.map((y) => <option key={y.value} value={y.value}>{y.label}</option>)}
+                <option value="">{t("quickSignup.choosePlaceholder")}</option>
+                {YEARS.map((y) => (
+                  <option key={y.value} dir="auto" value={y.value}>
+                    {t(y.labelKey)}
+                  </option>
+                ))}
               </select>
             </div>
 
             <fieldset>
-              <legend className={LABEL}>Subjects you are interested in</legend>
+              <legend className={LABEL}>{t("quickSignup.subjectsInterestedIn")}</legend>
               <div className="mt-2 flex flex-wrap gap-2">
                 {SUBJECT_ORDER.map((k) => {
                   const c = SUBJECT_COLOURS[k];
@@ -207,7 +220,7 @@ export function QuickSignup({ trigger }: {
                       {/* ⚠ THE TICK, NOT ONLY THE COLOUR (§34). A selected chip
                           must be distinguishable without seeing the tint. */}
                       {on && <span aria-hidden className="me-1">✓</span>}
-                      {c.name}
+                      {t(`subjects.${k}`)}
                     </button>
                   );
                 })}
@@ -216,13 +229,13 @@ export function QuickSignup({ trigger }: {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className={LABEL} htmlFor="qs-country">Country</label>
-                <input id="qs-country" className={FIELD} value={country}
+                <label className={LABEL} htmlFor="qs-country">{t("quickSignup.country")}</label>
+                <input id="qs-country" dir="auto" className={FIELD} value={country}
                   onChange={(e) => setCountry(e.target.value)} autoComplete="country-name" />
               </div>
               <div>
                 <label className={LABEL} htmlFor="qs-board">
-                  Exam board <span className="normal-case tracking-normal text-ink/35">(optional)</span>
+                  {t("quickSignup.examBoard")} <span className="normal-case tracking-normal text-ink/35">{t("quickSignup.optional")}</span>
                 </label>
                 <select id="qs-board" className={FIELD} value={board} onChange={(e) => setBoard(e.target.value)}>
                   <option value="">Choose…</option>
@@ -245,15 +258,15 @@ export function QuickSignup({ trigger }: {
               data-cta="quick_signup_continue"
               className="rounded-full bg-ink px-6 py-3 text-sm font-medium text-parchment transition-colors duration-200 hover:bg-ink/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
             >
-              Continue free →
+              {t("quickSignup.continueFree")}
             </button>
             <Dialog.Close className="text-sm text-ink/55 underline underline-offset-2 transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">
-              Not now
+              {t("quickSignup.notNow")}
             </Dialog.Close>
           </div>
 
           <p className="mt-3 font-mono text-[10px] uppercase tracking-[0.14em] text-ink/40">
-            Free account · no card required
+            {t("quickSignup.freeAccountNoCard")}
           </p>
         </Dialog.Popup>
       </Dialog.Portal>

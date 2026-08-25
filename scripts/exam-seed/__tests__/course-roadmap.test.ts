@@ -21,6 +21,21 @@ import {
   WEEK_KIND_LABEL, type RoadmapWeek,
 } from "../../../src/lib/roadmap/model.ts";
 
+
+/**
+ * ⚠ THE CLAIMS MOVED INTO THE CATALOGUE, SO THE GUARD FOLLOWS THEM THERE.
+ * These greps used to match an English sentence in the JSX. After the Arabic
+ * conversion the sentence is in messages/en.json and the JSX holds a key, so
+ * the old form would have gone green-by-absence — a guard dying quietly.
+ * Each now checks the component references the key AND the catalogue still
+ * carries the claim.
+ */
+const EN_MESSAGES = JSON.parse(readFileSync("messages/en.json", "utf8")) as Record<string, Record<string, string>>;
+const msg = (dotted: string): string => {
+  const i = dotted.indexOf(".");
+  return EN_MESSAGES[dotted.slice(0, i)]?.[dotted.slice(i + 1)] ?? "";
+};
+
 let pass = 0, fail = 0;
 const t = (n: string, c: boolean, got?: unknown) => {
   c ? (pass++, console.log("  ✓ " + n))
@@ -170,15 +185,22 @@ console.log("\n=== 3. ⚠ §5/§22 — price, CTA and capacity are derived ===")
   t("⚠ §21 — and the course is derived from the cohort's qualification, not its slug",
     /courseForQualification\(cohort\.qualification\)/.test(PAGE));
   t("⚠ §5 — the CTA label is derived, not typed",
-    /canReserve \? "Reserve your place" : "Register interest"/.test(PAGE));
+    /canReserve \? t\("reserveYourPlace"\) : t\("registerInterest"\)/.test(PAGE)
+      && msg("tuition.reserveYourPlace") === "Reserve your place"
+      && msg("tuition.registerInterest") === "Register interest",
+    `${msg("tuition.reserveYourPlace")} / ${msg("tuition.registerInterest")}`);
   t("⚠ §5 — from availabilityFor, the same AND every other surface uses",
     /availabilityFor\(cohort\.subject, \[cohort\]\)/.test(PAGE));
   t("§22 — capacity comes from loadCapacity", /loadCapacity\(cohort\.slug/.test(PAGE));
   t("⚠ §22 — cohort_enrolments is never touched", !/cohort_enrolments/.test(ROADMAP_CODE));
   t("⚠ §22 — an unknown count shows the cap alone",
     PAGE.includes("capacity.known")
-      && PAGE.includes("Maximum ${cohort.seatCap} students")
-      && PAGE.includes("${capacity.taken} of ${cohort.seatCap} places taken"));
+      && PAGE.includes('t("maximumStudents"')
+      && PAGE.includes('t("placesTaken"')
+      && msg("tuition.maximumStudents").includes("{cap}")
+      && !msg("tuition.maximumStudents").includes("{taken}")
+      && msg("tuition.placesTaken").includes("{taken}"),
+    `${msg("tuition.maximumStudents")} | ${msg("tuition.placesTaken")}`);
   for (const re of [/only \d+ left/i, /selling fast/i, /hurry/i, /\d+ people/i]) {
     t(`⚠ no fake urgency: ${re.source}`, !re.test(ROADMAP_CODE));
   }
@@ -271,7 +293,8 @@ console.log("\n=== 7. ⚠ §7 of the header — nothing was broken ===");
       && existsSync("src/app/[locale]/tuition/[cohort]/roadmap/page.tsx"));
   t("§7 — no URL moved, so nothing was owed a redirect",
     !/redirect\(|permanentRedirect/.test(code(PAGE) + code(MODES)));
-  t("preserved — the commitment selector still renders", /COMMITMENT_LABEL\[c\]/.test(MODES));
+  t("preserved — the commitment selector still renders",
+    /Object\.keys\(COMMITMENT_LABEL\)/.test(MODES) && /isPurchasable/.test(MODES));
   /**
    * ⚠ SAME MOVE ON THE CARD. quote(cohort.pricePence, …) applied a local
    * discount table to a converted column; the card now renders the Stripe

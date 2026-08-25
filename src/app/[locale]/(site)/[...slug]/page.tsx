@@ -1,5 +1,8 @@
+import type { ReactNode } from "react";
+
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
@@ -28,7 +31,7 @@ import type { PageRow } from "@/components/admin-inline/PageEditor";
  * they can preview a draft before publishing.
  */
 
-type Params = Promise<{ slug: string[] }>;
+type Params = Promise<{ locale: string; slug: string[] }>;
 
 async function loadPage(
   slugParts: string[],
@@ -74,9 +77,10 @@ export async function generateMetadata({
 }: {
   params: Params;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const { locale, slug } = await params;
   const { page } = await loadPage(slug ?? []);
-  if (!page) return { title: "Not found · Ailemy" };
+  const t = await getTranslations({ locale, namespace: "common" });
+  if (!page) return { title: t("notFoundTitle") };
   return { title: `${page.title} · Ailemy` };
 }
 
@@ -90,6 +94,7 @@ export default async function DynamicPage({ params }: { params: Params }) {
   const html = renderMarkdown(page.body_md);
 
   const session = await getNavSession();
+  const t = await getTranslations("common");
 
   return (
     <>
@@ -107,11 +112,15 @@ export default async function DynamicPage({ params }: { params: Params }) {
             </p>
           )}
 
-          <h1 className="font-display mt-6 text-4xl font-medium leading-[1.05] tracking-tight md:text-5xl">
+          <h1
+            dir="auto"
+            className="font-display mt-6 text-4xl font-medium leading-[1.05] tracking-tight md:text-5xl"
+          >
             {page.title}
           </h1>
 
           <article
+            dir="auto"
             className="mt-8 text-base text-ink/80"
             // Safe: renderMarkdown escapes the entire source before
             // re-introducing a fixed set of tags. See lib/pages/markdown.ts.

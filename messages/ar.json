@@ -38,6 +38,7 @@
     "headingAccount": "الحساب",
     "headingLegal": "معلومات قانونية",
     "headingStudy": "الدراسة",
+    "location": "الدوحة، قطر",
     "navLabel": "تذييل الصفحة",
     "tagline": "Ailemy · علوم Pearson Edexcel لشهادات GCSE وInternational GCSE وIAL."
   },
@@ -358,6 +359,7 @@
     "interestPreferEmail": "تفضّل البريد الإلكتروني؟",
     "interestReadyToStart": "نحن مستعدون للبدء فور افتتاح مجموعة جديدة.",
     "interestSending": "جارٍ الإرسال…",
+    "interestSubmit": "سجّل اهتمامك ←",
     "interestThankYouBody": "سنتواصل معك عبر البريد الإلكتروني عند افتتاح مجموعة لمادتك ومؤهلك. لا توجد أي رسوم ولا أي التزام.",
     "interestThankYouHeading": "شكرًا لك — وصلتنا بياناتك.",
     "kindOfTuition": "نوع الدروس",
@@ -406,6 +408,7 @@
     "qualificationNotSureYet": "لست متأكدًا بعد",
     "registerInterest": "سجّل اهتمامك",
     "registerInterestInOneToOne": "سجّل اهتمامك بالدروس الفردية ←",
+    "registerInterestLink": "سجّل اهتمامك ←",
     "registerInterestWeWillContact": "سجّل اهتمامك وسنتواصل معك بالمواعيد مباشرة — وستكون أول من يعلم عند فتح الحجز الذاتي.",
     "reserveYourPlace": "احجز مقعدك",
     "roadmapIntro": "ما يُدرَّس، بالترتيب الذي يُدرَّس به، وفي التواريخ التي يُقام فيها.",

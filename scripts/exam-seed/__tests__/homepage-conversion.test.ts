@@ -23,6 +23,23 @@ import {
 } from "../../../src/lib/tuition/availability.ts";
 import { CTA_SOURCES } from "../../../src/lib/analytics/events.ts";
 
+
+/**
+ * ⚠ THE CLAIMS MOVED INTO THE CATALOGUE, SO THE GUARD FOLLOWS THEM THERE.
+ * §29's three claims and §23's disclaimer used to be greppable sentences in
+ * the JSX. After the Arabic conversion they are catalogue entries and the page
+ * holds keys — so a plain HOME.includes() would have gone green-by-absence,
+ * which is how a guard dies without anyone noticing. Each check below now
+ * requires BOTH that the page references the key AND that the English still
+ * makes the claim. A claim removed from the catalogue now fails here, which
+ * the old string match could not do either.
+ */
+const EN_MESSAGES = JSON.parse(readFileSync("messages/en.json", "utf8")) as Record<string, Record<string, string>>;
+const msg = (dotted: string): string => {
+  const i = dotted.indexOf(".");
+  return EN_MESSAGES[dotted.slice(0, i)]?.[dotted.slice(i + 1)] ?? "";
+};
+
 let pass = 0, fail = 0;
 const t = (n: string, c: boolean, got?: unknown) => {
   c ? (pass++, console.log("  ✓ " + n))
@@ -167,9 +184,18 @@ console.log("\n=== 3. ⚠ §29 — trust claims are true today ===");
                     /\d+% of (our )?students/i, /testimonial/i]) {
     t(`⚠ §29 — no ${re.source}`, !re.test(c), c.match(re)?.[0]);
   }
-  t("§29 — the trust strip exists", HOME.includes('aria-label="What Ailemy is"'));
-  for (const claim of ["Specification-mapped", "Mark-scheme-informed", "Progress tracked"]) {
-    t(`§29 — "${claim}" is claimed, and is checkable`, HOME.includes(claim));
+  t("§29 — the trust strip exists",
+    HOME.includes('aria-label={t("home.trustStripLabel")}')
+      && msg("home.trustStripLabel") === "What Ailemy is",
+    msg("home.trustStripLabel"));
+  const TRUST_CLAIMS: Record<string, string> = {
+    "Specification-mapped": "home.trustSpecificationMapped",
+    "Mark-scheme-informed": "home.trustMarkSchemeInformed",
+    "Progress tracked": "home.trustProgressTracked",
+  };
+  for (const [claim, key] of Object.entries(TRUST_CLAIMS)) {
+    t(`§29 — "${claim}" is claimed, and is checkable`,
+      HOME.includes(`t("${key}")`) && msg(key) === claim, `${key} = ${msg(key)}`);
   }
 }
 
@@ -186,7 +212,9 @@ console.log("\n=== 4. ⚠ §23 — no teacher tools are implied ===");
     t(`⚠ §23 — no ${re.source}`, !re.test(c), c.match(re)?.[0]);
   }
   t("⚠ §23 — it says plainly that teacher tools are not built",
-    /Teacher tools are not built yet/.test(HOME));
+    HOME.includes('t("home.audienceTeacherBody")')
+      && /Teacher tools are not built yet/.test(msg("home.audienceTeacherBody")),
+    msg("home.audienceTeacherBody"));
 }
 
 // ============================================================================
@@ -243,7 +271,9 @@ console.log("\n=== 7. ⚠ §52 — nothing that worked was broken ===");
   ];
   for (const p of PRESERVED) t(`§52 — ${p} still resolves`, hasRoute(p));
 
-  t("§52 — the marking demo is still on the page", HOME.includes("TrySample") || /Try it\./.test(HOME));
+  t("§52 — the marking demo is still on the page",
+    HOME.includes("TrySample") || /Try it\./.test(msg("home.tryTitle")),
+    msg("home.tryTitle"));
   t("§52 — the subject cards survive", HOME.includes('id="subjects"'));
   t("§52 — the FAQ survives", HOME.includes("<HomeFaq"));
   t("§52 — the floating CTA survives", HOME.includes("<StickyCta"));
@@ -292,7 +322,20 @@ console.log("\n=== 9. §2/§16 — hierarchy and spacing ===");
     HOME.match(/max-w-6xl px-6 pt-\d+ pb-\d+ sm:pt-\d+ sm:pb-\d+/)?.[0]);
   t("⚠ §12 — the hero columns are top-aligned, not centred",
     /lg:items-start/.test(HOME) && !/lg:items-center/.test(HOME));
-  t("§3 — the headline is unchanged", /Learn it\. Practise it\./.test(HOME));
+  /**
+   * ⚠ §3 — THE HEADLINE IS UNCHANGED, AND IT IS NOW TWO CATALOGUE ENTRIES.
+   * The <br> split it across two text nodes, so the conversion keyed each half
+   * separately. The guard checks the page still renders both halves in order
+   * AND that the English still reads exactly as it did — the wording is what
+   * §3 protects, and moving it into a catalogue must not be a way to change it.
+   */
+  t("§3 — the headline is unchanged",
+    HOME.includes('{t("home.heroHeadlineLine1")}<br')
+      && HOME.includes('{t("home.heroHeadlineLine2")}')
+      && HOME.indexOf('heroHeadlineLine1') < HOME.indexOf('heroHeadlineLine2')
+      && msg("home.heroHeadlineLine1") === "Learn it. Practise it."
+      && msg("home.heroHeadlineLine2") === "Get it marked. Master the exam.",
+    `${msg("home.heroHeadlineLine1")} / ${msg("home.heroHeadlineLine2")}`);
 
   // §16 — the product strip comes before the subject cards.
   const products = HOME.indexOf('id="products"');

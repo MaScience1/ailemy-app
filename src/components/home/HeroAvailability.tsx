@@ -1,4 +1,6 @@
 
+import { getTranslations } from "next-intl/server";
+
 import { SmartLink as Link } from "@/components/i18n/SmartLink";
 import type { CalendarEvent } from "@/lib/calendar/types";
 import { nextAvailableSlot } from "@/lib/booking/next-available";
@@ -43,9 +45,10 @@ export function isHeroMode(v: string | undefined): v is HeroMode {
   return v === "group" || v === "one-to-one";
 }
 
-function Toggle({ mode, hrefFor }: { mode: HeroMode; hrefFor: (m: HeroMode) => string }) {
+async function Toggle({ mode, hrefFor }: { mode: HeroMode; hrefFor: (m: HeroMode) => string }) {
+  const t = await getTranslations();
   return (
-    <nav aria-label="Kind of tuition" className="inline-flex rounded-full border border-ink/15 p-0.5">
+    <nav aria-label={t("tuition.kindOfTuition")} className="inline-flex rounded-full border border-ink/15 p-0.5">
       {(["one-to-one", "group"] as const).map((m) => {
         const on = m === mode;
         return (
@@ -62,7 +65,7 @@ function Toggle({ mode, hrefFor }: { mode: HeroMode; hrefFor: (m: HeroMode) => s
               on ? "bg-ink text-parchment" : "text-ink/65 hover:text-ink"
             }`}
           >
-            {m === "one-to-one" ? "1-to-1" : "Group"}
+            {m === "one-to-one" ? t("tuition.modeOneToOne") : t("tuition.modeGroup")}
           </Link>
         );
       })}
@@ -70,7 +73,7 @@ function Toggle({ mode, hrefFor }: { mode: HeroMode; hrefFor: (m: HeroMode) => s
   );
 }
 
-export function HeroAvailability({
+export async function HeroAvailability({
   mode, events, viewerTz, now, capacity, group, oneToOne, hrefFor,
 }: {
   mode: HeroMode;
@@ -86,6 +89,7 @@ export function HeroAvailability({
 }) {
   const nextGroup = nextOf(events, "group", now);
   const nextPrivate = nextAvailableSlot(events, { now });
+  const t = await getTranslations();
 
   const when = (e: CalendarEvent) => {
     const t = dualTime(e.startsAt, viewerTz);
@@ -97,10 +101,10 @@ export function HeroAvailability({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="font-display text-xl font-medium tracking-tight">
-            Learn live with an expert.
+            {t("tuition.heroHeading")}
           </h2>
           <p className="mt-1 text-sm leading-snug text-ink/65">
-            Choose personalised 1-to-1 tuition, or join a structured group lesson.
+            {t("tuition.heroSubheading")}
           </p>
         </div>
         <Toggle mode={mode} hrefFor={hrefFor} />
@@ -111,7 +115,7 @@ export function HeroAvailability({
           nextGroup ? (
             <div style={subjectVars(subjectColour(nextGroup.subject))}>
               <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--subject-text)]">
-                Next group lesson
+                {t("tuition.nextGroupLesson")}
               </p>
               <p className="mt-1.5 text-sm font-medium text-ink">
                 {formatDay(nextGroup.startsAt, CANONICAL_TZ)} · {when(nextGroup)}
@@ -126,8 +130,8 @@ export function HeroAvailability({
               {capacity && (
                 <p className="font-mono mt-1.5 text-[10px] uppercase tracking-[0.14em] text-ink/45">
                   {capacity.known
-                    ? `${capacity.taken} of ${capacity.cap} places taken`
-                    : "Small group"}
+                    ? t("tuition.placesTaken", { taken: capacity.taken, cap: capacity.cap })
+                    : t("tuition.smallGroup")}
                 </p>
               )}
               <p className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm">
@@ -151,17 +155,17 @@ export function HeroAvailability({
                   data-cta="hero_calendar_clicked"
                   className="text-ink/65 underline underline-offset-4 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                 >
-                  See group timetable →
+                  {t("tuition.seeGroupTimetable")} →
                 </Link>
               </p>
             </div>
           ) : (
-            <p className="text-sm text-ink/65">No group lessons are scheduled in this period.</p>
+            <p className="text-sm text-ink/65">{t("tuition.noGroupLessonsScheduled")}</p>
           )
         ) : nextPrivate ? (
           <div style={subjectVars(ONE_TO_ONE)}>
             <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--subject-text)]">
-              Next available
+              {t("tuition.nextAvailable")}
             </p>
             <p className="mt-1.5 text-sm font-medium text-ink">
               {formatDay(nextPrivate.startsAt, CANONICAL_TZ)} · {when(nextPrivate)}
@@ -186,10 +190,10 @@ export function HeroAvailability({
            */
           <div style={subjectVars(ONE_TO_ONE)}>
             <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink/45">
-              1-to-1 availability
+              {t("tuition.oneToOneAvailability")}
             </p>
             <p className="mt-1.5 text-sm text-ink/70">
-              No 1-to-1 times are published yet.
+              {t("heroAvailability.noOneToOneTimesPublished")}
             </p>
             <p className="mt-3 text-sm">
               <Link
@@ -197,7 +201,7 @@ export function HeroAvailability({
                 data-cta="hero_book_one_to_one_clicked"
                 className="font-medium underline underline-offset-4 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >
-                Ask about 1-to-1 times →
+                {t("tuition.askAboutOneToOneTimes")} →
               </Link>
             </p>
           </div>

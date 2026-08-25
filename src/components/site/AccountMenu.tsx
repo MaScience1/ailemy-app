@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { CalendarDays, ChevronDown, LogOut, UserRound } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { SmartLink as Link } from "@/components/i18n/SmartLink";
 import { navToneVars } from "@/lib/design/subject-colours";
@@ -83,15 +84,15 @@ export type AccountSession = NonNullable<NavSession>;
  */
 const ACCOUNT_LINKS = [
   {
-    label: "My profile",
+    labelKey: "myProfile",
     href: "/profile",
-    hint: "Courses, calendar, credits and lessons",
+    hintKey: "myProfileHint",
     Icon: UserRound,
   },
   {
-    label: "Calendar",
+    labelKey: "calendar",
     href: "/calendar",
-    hint: "Everything Ailemy has scheduled",
+    hintKey: "calendarHint",
     Icon: CalendarDays,
   },
 ] as const;
@@ -100,9 +101,16 @@ const ACCOUNT_LINKS = [
  * ⚠ THE FALLBACK LABELS THE BUTTON, NOT THE STUDENT. See the header note. This
  * is exported so the desktop trigger and the mobile panel cannot answer the
  * question differently.
+ *
+ * ⚠ THE FALLBACK IS A PARAMETER BECAUSE THIS IS NOT A COMPONENT. It is a plain
+ * function called during render, so it cannot call useTranslations() itself.
+ * Passing nav.myAccount in from the two call sites keeps the one-answer
+ * contract above intact — and because the parameter is required rather than
+ * defaulted, it is the COMPILER that catches a call site which forgets to
+ * translate it, not a reviewer.
  */
-export function accountLabel(session: AccountSession): string {
-  return session.name ?? "My Account";
+export function accountLabel(session: AccountSession, fallback: string): string {
+  return session.name ?? fallback;
 }
 
 /**
@@ -201,7 +209,8 @@ export function AccountMenu({
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const menuId = useId();
-  const label = accountLabel(session);
+  const tNav = useTranslations("nav");
+  const label = accountLabel(session, tNav("myAccount"));
 
   useEffect(() => {
     setOpen(false);
@@ -293,7 +302,7 @@ export function AccountMenu({
         className={`${capsuleClassName} max-w-[16rem] gap-2 text-sm font-medium text-ink/80`}
       >
         <Bubble initials={session.initials} size="sm" />
-        <span className="min-w-0 truncate">{label}</span>
+        <span dir="auto" className="min-w-0 truncate">{label}</span>
         <ChevronDown
           className={`h-3.5 w-3.5 shrink-0 transition-transform duration-150 ${
             open ? "rotate-180" : ""
@@ -326,7 +335,7 @@ export function AccountMenu({
            * accountLabel() is deliberately not touched — the button keeps
            * labelling the button.
            */
-          aria-label={`Account: ${session.name ?? session.email}`}
+          aria-label={tNav("accountMenuLabel", { name: session.name ?? session.email })}
           ref={menuRef}
           onKeyDown={onMenuKeyDown}
           className="absolute end-0 top-full z-50 mt-2 w-[17rem] rounded-md border border-ink/10 bg-parchment p-1 shadow-[0_8px_24px_-12px_rgba(15,20,25,0.18)]"
@@ -337,10 +346,19 @@ export function AccountMenu({
           <div role="none" className="flex items-start gap-2.5 px-3 pb-2.5 pt-2">
             <Bubble initials={session.initials} size="md" />
             <span className="min-w-0">
-              <span className="block truncate text-sm font-medium text-ink">{label}</span>
+              <span dir="auto" className="block truncate text-sm font-medium text-ink">{label}</span>
               {/* ⚠ MONO, SO IT DOES NOT MASQUERADE AS A NAME. Same treatment
                   /profile and /dashboard give an address they have to show. */}
+              {/* ⚠ dir="ltr" BECAUSE AN ADDRESS IS NEVER RTL. In the Arabic
+                  document this span would inherit rtl, which sends `truncate`'s
+                  ellipsis to the wrong end and reorders the neutral @ and dots
+                  around the strong Latin runs. dir="auto" is NOT good enough
+                  here: it resolves from the first strong character, so an
+                  address that opens with digits would still come out rtl. The
+                  name above takes auto precisely because it IS unknowable —
+                  it is whatever the student typed. */}
               <span
+                dir="ltr"
                 className="mt-0.5 block truncate font-mono text-[11px] text-ink/55"
                 title={session.email}
               >
@@ -352,7 +370,7 @@ export function AccountMenu({
           <div role="none" className="border-t border-ink/10" />
 
           <div role="none" className="py-1">
-            {ACCOUNT_LINKS.map(({ label: text, href, hint, Icon }) => (
+            {ACCOUNT_LINKS.map(({ labelKey, href, hintKey, Icon }) => (
               <Link
                 key={href}
                 href={href}
@@ -363,8 +381,8 @@ export function AccountMenu({
               >
                 <Icon className="mt-0.5 h-4 w-4 shrink-0 text-ink/55" aria-hidden="true" />
                 <span className="min-w-0">
-                  <span className="block text-sm font-medium text-ink">{text}</span>
-                  <span className="block text-[11px] leading-snug text-ink/50">{hint}</span>
+                  <span className="block text-sm font-medium text-ink">{tNav(labelKey)}</span>
+                  <span className="block text-[11px] leading-snug text-ink/50">{tNav(hintKey)}</span>
                 </span>
               </Link>
             ))}
@@ -397,15 +415,16 @@ export function AccountPanel({
   onNavigate?: () => void;
 }) {
   const pathname = usePathname();
-  const label = accountLabel(session);
+  const tNav = useTranslations("nav");
+  const label = accountLabel(session, tNav("myAccount"));
 
   return (
     <>
       <div className="flex items-start gap-3">
         <Bubble initials={session.initials} size="md" />
         <div className="min-w-0">
-          <p className="truncate text-base font-medium text-ink">{label}</p>
-          <p className="truncate font-mono text-[11px] text-ink/55" title={session.email}>
+          <p dir="auto" className="truncate text-base font-medium text-ink">{label}</p>
+          <p dir="ltr" className="truncate font-mono text-[11px] text-ink/55" title={session.email}>
             {session.email}
           </p>
         </div>
@@ -413,15 +432,15 @@ export function AccountPanel({
 
       {/* -mx-3 cancels the row padding so a touched row bleeds out to meet the
           panel's own edge, exactly as TAB_MOBILE does for the primary links. */}
-      <nav aria-label="Account" className="-mx-3">
+      <nav aria-label={tNav("account")} className="-mx-3">
         <ul className="space-y-0.5">
-          {ACCOUNT_LINKS.map(({ label: text, href, hint, Icon }) => (
+          {ACCOUNT_LINKS.map(({ labelKey, href, hintKey, Icon }) => (
             <li key={href}>
               <Link href={href} onClick={onNavigate} className={ITEM_MOBILE}>
                 <Icon className="mt-0.5 h-4 w-4 shrink-0 text-ink/55" aria-hidden="true" />
                 <span className="min-w-0">
-                  <span className="block text-[15px] font-medium text-ink">{text}</span>
-                  <span className="block text-[11px] leading-snug text-ink/50">{hint}</span>
+                  <span className="block text-[15px] font-medium text-ink">{tNav(labelKey)}</span>
+                  <span className="block text-[11px] leading-snug text-ink/50">{tNav(hintKey)}</span>
                 </span>
               </Link>
             </li>
@@ -453,6 +472,7 @@ function SignOutForm({
   full?: boolean;
   menuitem?: boolean;
 }) {
+  const tNav = useTranslations("nav");
   return (
     <form method="POST" action="/api/auth/sign-out" role={menuitem ? "none" : undefined}>
       <input type="hidden" name="next" value={next} />
@@ -467,7 +487,7 @@ function SignOutForm({
         }
       >
         <LogOut className={full ? "h-4 w-4" : "h-4 w-4 shrink-0 text-ink/55"} aria-hidden="true" />
-        Sign out
+        {tNav("signOut")}
       </button>
     </form>
   );

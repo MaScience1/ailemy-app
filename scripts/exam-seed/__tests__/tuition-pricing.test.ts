@@ -24,6 +24,22 @@ import {
 import { availabilityFor } from "../../../src/lib/tuition/availability.ts";
 import { FALLBACK_COHORTS } from "../../../src/lib/public/catalogue.ts";
 
+
+/**
+ * ⚠ THE CLAIMS MOVED INTO THE CATALOGUE, SO THE GUARD FOLLOWS THEM THERE.
+ * These assertions used to grep the component for an English sentence. After
+ * the Arabic conversion the sentence lives in messages/en.json and the JSX
+ * holds a key — so the old greps would have gone quietly green-by-absence,
+ * which is the worst way for a guard to die. Each one now checks BOTH halves:
+ * the component references the key, and the catalogue still says the thing the
+ * guard was protecting. That is strictly stronger than the string match was.
+ */
+const EN_MESSAGES = JSON.parse(readFileSync("messages/en.json", "utf8")) as Record<string, Record<string, string>>;
+const msg = (dotted: string): string => {
+  const i = dotted.indexOf(".");
+  return EN_MESSAGES[dotted.slice(0, i)]?.[dotted.slice(i + 1)] ?? "";
+};
+
 let pass = 0, fail = 0;
 const t = (n: string, c: boolean, got?: unknown) => {
   c ? (pass++, console.log("  ✓ " + n))
@@ -321,8 +337,12 @@ console.log("\n=== 3. ⚠ §7 of the header — nine months is DERIVED ===");
   }
 
   t("§18/§47 — the card prints the real dates, never '12 months'",
-    /Covers teaching from \{fmt\(window\.firstClassOn\)\}/.test(MODES)
-      && !/12 months/.test(code(MODES)));
+    /t\("tuition\.coversTeaching", \{ from: fmt\(window\.firstClassOn\)/.test(MODES)
+      && msg("tuition.coversTeaching").includes("{from}")
+      && msg("tuition.coversTeaching").includes("{to}")
+      && !/12 months/.test(code(MODES))
+      && !msg("tuition.coversTeaching").includes("12 months"),
+    msg("tuition.coversTeaching"));
 }
 
 // ============================================================================
@@ -330,10 +350,15 @@ console.log("\n=== 4. ⚠ §5 of the header / §26 — the CTA is derived ===");
 // ============================================================================
 {
   t("⚠ §26 — 'Reserve your place' is conditional, not typed",
-    /canReserve \? "Reserve your place" : "Register interest"/.test(MODES));
+    /canReserve \? t\("tuition\.reserveYourPlace"\) : t\("tuition\.registerInterest"\)/.test(MODES)
+      && msg("tuition.reserveYourPlace") === "Reserve your place"
+      && msg("tuition.registerInterest") === "Register interest",
+    `${msg("tuition.reserveYourPlace")} / ${msg("tuition.registerInterest")}`);
   t("⚠ §26 — and the condition is status AND a payment link",
     /cohort\.status === "enrolling" && !!cohort\.enrolmentUrl/.test(MODES));
-  t("§26 — no unconditional Reserve string", !/>\s*Reserve your place/.test(code(MODES)));
+  t("§26 — no unconditional Reserve string",
+    !/>\s*Reserve your place/.test(code(MODES))
+      && (code(MODES).match(/tuition\.reserveYourPlace/g) ?? []).length === 1);
 
   // The same AND, exercised through the shared availability function.
   t("§26 — a cohort with no link is not enrolable",
@@ -352,8 +377,14 @@ console.log("\n=== 5. ⚠ §10/§25 — capacity from the RPC, never invented ==
   // version of this check looked for `{cohort.seatCap}` and failed against
   // correct code. Checking both halves separately says what it means.
   t("⚠ §25 — an unknown count shows the cap alone, not a number",
-    MODES.includes("capacity?.known") && MODES.includes("Maximum ${cohort.seatCap} students")
-      && MODES.includes("${capacity.taken} of ${cohort.seatCap} places taken"));
+    MODES.includes("capacity?.known")
+      && MODES.includes('t("tuition.maximumStudents"')
+      && MODES.includes('t("tuition.placesTaken"')
+      && msg("tuition.maximumStudents").includes("{cap}")
+      && !/\{taken\}/.test(msg("tuition.maximumStudents"))
+      && msg("tuition.placesTaken").includes("{taken}")
+      && msg("tuition.placesTaken").includes("{cap}"),
+    `${msg("tuition.maximumStudents")} | ${msg("tuition.placesTaken")}`);
   // §58 — no fake urgency anywhere on the surface.
   for (const re of [/only \d+ left/i, /selling fast/i, /countdown/i, /\d+ people (are )?viewing/i, /hurry/i]) {
     t(`⚠ §58 — no ${re.source}`, !re.test(code(MODES) + code(PAGE)));
@@ -388,7 +419,9 @@ console.log("\n=== 7. ⚠ §9/§34 — one calendar, filtered by mode ===");
   t("⚠ §50 — this page also feeds the empty-month panel a real next lesson",
     /nextGroupAhead=\{ahead\.kind === "session"/.test(PAGE));
   t("§59 — 1-to-1 with nothing published says so, and offers the interest route",
-    /No 1-to-1 times are published for this period yet/.test(PAGE));
+    /"tuition\.calendarEmptyOneToOne"/.test(PAGE)
+      && /No 1-to-1 times are published for this period yet/.test(msg("tuition.calendarEmptyOneToOne")),
+    msg("tuition.calendarEmptyOneToOne"));
 }
 
 // ============================================================================

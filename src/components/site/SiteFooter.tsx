@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 
 import { SmartLink as Link } from "@/components/i18n/SmartLink";
 import { DISCLOSURE } from "@/lib/legal/company";
@@ -11,7 +14,7 @@ import { DISCLOSURE } from "@/lib/legal/company";
  * mirrors the top nav. No social icons yet — we don't have accounts set up.
  */
 
-type FooterLink = { label: string; href: string };
+type FooterLink = { labelKey: string; href: string };
 
 /**
  * ⚠ EVERY LINK HERE RESOLVES. §19 lists About, Contact, Terms and Privacy as
@@ -23,13 +26,13 @@ type FooterLink = { label: string; href: string };
  * do". That day is today: /privacy and /terms are real routes, so they are
  * listed. About and Contact still are not, so they still are not.
  */
-const FOOTER_GROUPS: { heading: string; links: FooterLink[] }[] = [
+const FOOTER_GROUPS: { headingKey: string; links: FooterLink[] }[] = [
   {
-    heading: "Subjects",
+    headingKey: "nav.subjects",
     links: [
-      { label: "Chemistry", href: "/chemistry" },
-      { label: "Biology", href: "/biology" },
-      { label: "Physics", href: "/physics" },
+      { labelKey: "subjects.chemistry", href: "/chemistry" },
+      { labelKey: "subjects.biology", href: "/biology" },
+      { labelKey: "subjects.physics", href: "/physics" },
     ],
   },
   /**
@@ -44,51 +47,66 @@ const FOOTER_GROUPS: { heading: string; links: FooterLink[] }[] = [
    * is listed.
    */
   {
-    heading: "Study",
+    headingKey: "footer.headingStudy",
     links: [
-      { label: "Resources", href: "/resources" },
-      { label: "Past Papers", href: "/past-papers" },
-      { label: "Exam Builder", href: "/exam-builder" },
+      { labelKey: "nav.resources", href: "/resources" },
+      { labelKey: "nav.pastPapers", href: "/past-papers" },
+      { labelKey: "nav.examBuilder", href: "/exam-builder" },
     ],
   },
   {
-    heading: "Online Tuition",
+    headingKey: "nav.onlineTuition",
     links: [
-      { label: "Overview", href: "/tuition" },
-      { label: "1-to-1 Tuition", href: "/tuition/one-to-one" },
-      { label: "Timetable & Calendar", href: "/calendar" },
-      { label: "Intensive courses", href: "/intensive" },
+      { labelKey: "nav.overview", href: "/tuition" },
+      { labelKey: "nav.oneToOneTuition", href: "/tuition/one-to-one" },
+      { labelKey: "nav.timetableAndCalendar", href: "/calendar" },
+      { labelKey: "nav.intensiveCourses", href: "/intensive" },
     ],
   },
   {
-    heading: "Account",
+    headingKey: "footer.headingAccount",
     links: [
-      { label: "Login", href: "/login" },
+      { labelKey: "nav.login", href: "/login" },
       // ⚠ /profile, NOT /my-tuition. The latter now redirects here, and a
       // footer link that bounces through a redirect is a link with a stale
       // destination — it works, so nothing ever fixes it.
-      { label: "My tuition", href: "/profile" },
-      { label: "Create an account", href: "/signup" },
+      { labelKey: "nav.myTuition", href: "/profile" },
+      { labelKey: "nav.createAnAccount", href: "/signup" },
     ],
   },
   {
-    heading: "Legal",
+    headingKey: "footer.headingLegal",
     links: [
-      { label: "Privacy Policy", href: "/privacy" },
-      { label: "Terms of Service", href: "/terms" },
+      { labelKey: "nav.privacyPolicy", href: "/privacy" },
+      { labelKey: "nav.termsOfService", href: "/terms" },
     ],
   },
 ];
 
 export function SiteFooter() {
+  /**
+   * ⚠ FLAT ACCESSOR, NO NAMESPACE. FOOTER_GROUPS carries fully-qualified keys
+   * across three namespaces — footer.headingStudy, nav.resources,
+   * subjects.chemistry — so useTranslations("footer") could not reach the nav
+   * keys the header shares with this footer, which is the whole point of
+   * sharing them.
+   *
+   * ⚠ useTranslations, NOT getTranslations, AND THAT IS WHY THIS FILE IS
+   * "use client". SiteFooter renders on /learn/*, /calendar, /privacy and
+   * /resources — all UNLOCALISED_ROOTS, where the proxy runs no next-intl and
+   * a server-side translation call throws. See src/app/layout.tsx:100-124 for
+   * the production 500 that lesson came from. The provider is at the ROOT with
+   * an English fallback, so the client hook resolves on every route.
+   */
+  const t = useTranslations();
   return (
     <footer className="border-t border-ink/10 bg-parchment text-ink">
       <div className="mx-auto w-full max-w-7xl px-6 py-10 sm:px-10">
-        <nav aria-label="Footer" className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <nav aria-label={t("footer.navLabel")} className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {FOOTER_GROUPS.map((group) => (
-            <div key={group.heading}>
+            <div key={group.headingKey}>
               <h2 className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45">
-                {group.heading}
+                {t(group.headingKey)}
               </h2>
               {/*
                 ⚠ space-y IS GONE, REPLACED BY PADDING ON THE LINK ITSELF.
@@ -105,7 +123,7 @@ export function SiteFooter() {
                       href={link.href}
                       className="-mx-1 block rounded px-1 py-1.5 transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink"
                     >
-                      {link.label}
+                      {t(link.labelKey)}
                     </Link>
                   </li>
                 ))}
@@ -115,10 +133,8 @@ export function SiteFooter() {
         </nav>
         <div className="mt-6 border-t border-ink/10 pt-5 text-xs text-ink/50">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p>
-              Ailemy · Pearson Edexcel GCSE, International GCSE and IAL science.
-            </p>
-            <p className="font-mono uppercase tracking-wider">Doha, Qatar</p>
+            <p>{t("footer.tagline")}</p>
+            <p className="font-mono uppercase tracking-wider">{t("footer.location")}</p>
           </div>
           {/* Company disclosure. Assembled in one place so the footer and both
               legal pages cannot drift apart — see src/lib/legal/company.ts. */}

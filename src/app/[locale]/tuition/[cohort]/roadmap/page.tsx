@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 import { SmartLink as Link } from "@/components/i18n/SmartLink";
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -46,17 +47,17 @@ async function findCohort(slug: string) {
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { cohort: slug } = await params;
   const cohort = await findCohort(slug);
-  if (!cohort) return { title: "Not found · Ailemy" };
+  const t = await getTranslations("tuition");
+  if (!cohort) return { title: t("metaNotFound") };
   return {
-    title: `${cohort.title} — course roadmap · Ailemy`,
-    description:
-      `The teaching plan for ${cohort.title}: weekly topics, the order they are taught in, ` +
-      `and the schedule they run to. Online small-group tuition from Ailemy.`,
+    title: t("roadmapMetaTitle", { title: cohort.title }),
+    description: t("roadmapMetaDescription", { title: cohort.title }),
   };
 }
 
 export default async function RoadmapPage({ params }: { params: Params }) {
   const [session, { cohort: slug }] = await Promise.all([getNavSession(), params]);
+  const t = await getTranslations("tuition");
   const cohort = await findCohort(slug);
   if (!cohort) notFound();
 
@@ -84,7 +85,7 @@ export default async function RoadmapPage({ params }: { params: Params }) {
   // §21/§5 — price from the service, label from availability. Never typed.
   const availability = availabilityFor(cohort.subject, [cohort]);
   const canReserve = availability.state === "enrolling";
-  const ctaLabel = canReserve ? "Reserve your place" : "Register interest";
+  const ctaLabel = canReserve ? t("reserveYourPlace") : t("registerInterest");
   const ctaHref = canReserve && cohort.enrolmentUrl
     ? cohort.enrolmentUrl
     : `/tuition/interest?cohort=${cohort.slug}`;
@@ -101,50 +102,50 @@ export default async function RoadmapPage({ params }: { params: Params }) {
         {/* ── §3 hero ──────────────────────────────────────────────────── */}
         <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink/50">
           <Link href="/tuition" className="underline-offset-4 transition-colors hover:text-ink hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">
-            Online Tuition
+            {t("eyebrow")}
           </Link>
           <span aria-hidden> / </span>
-          <span className="text-ink/70">Course roadmap</span>
+          <span className="text-ink/70">{t("courseRoadmap")}</span>
         </p>
         <h1 className="font-display mt-4 text-4xl font-medium leading-[1.05] tracking-tight md:text-5xl">
           {cohort.title}.
         </h1>
         <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink/70">
-          What is taught, in the order it is taught, on the dates it runs.
+          {t("roadmapIntro")}
         </p>
 
         {/* §3/§15 — only chips whose data exists. */}
         <ul className="font-mono mt-5 flex flex-wrap gap-x-4 gap-y-1.5 text-[10px] uppercase tracking-[0.16em] text-ink/45">
           {cohort.scheduleSummary && <li>{cohort.scheduleSummary}</li>}
-          <li>{cohort.hoursPerWeek} teaching hours a week</li>
+          <li>{t("teachingHoursAWeek", { hours: cohort.hoursPerWeek })}</li>
           {cohort.firstClassOn && cohort.lastClassOn && (
             <li>{cohort.firstClassOn} → {cohort.lastClassOn}</li>
           )}
           {/* §22 — real seats or the cap alone. Never invented scarcity. */}
           <li>
             {capacity.known
-              ? `${capacity.taken} of ${cohort.seatCap} places taken`
-              : `Maximum ${cohort.seatCap} students`}
+              ? t("placesTaken", { taken: capacity.taken, cap: cohort.seatCap })
+              : t("maximumStudents", { cap: cohort.seatCap })}
           </li>
           {roadmap.courseName && <li>{roadmap.courseName}</li>}
         </ul>
 
         {/* §10 — a real countdown, or nothing. */}
         {startsIn !== null && startsIn > 0 && (
-          <p className="mt-4 text-sm text-ink/65">Teaching begins in {startsIn} days.</p>
+          <p className="mt-4 text-sm text-ink/65">{t("teachingBeginsInDays", { days: startsIn })}</p>
         )}
 
         {/* ⚠ A FAILED READ IS SAID, NEVER RENDERED AS AN EMPTY ROADMAP. */}
         {roadmap.error && (
           <p role="alert" className="mt-8 rounded-lg border border-ink/15 bg-snow px-4 py-3 text-sm text-ink/75">
-            The roadmap could not be loaded — {roadmap.error}
+            {t("roadmapLoadFailed", { error: roadmap.error })}
           </p>
         )}
 
         {/* ── §6 the roadmap ───────────────────────────────────────────── */}
         {roadmap.phases.length > 0 ? (
           <section className="mt-12" aria-labelledby="roadmap-heading">
-            <h2 id="roadmap-heading" className="sr-only">Weekly teaching plan</h2>
+            <h2 id="roadmap-heading" className="sr-only">{t("weeklyTeachingPlan")}</h2>
             <RoadmapPhases roadmap={roadmap} todayISO={todayISO} />
           </section>
         ) : !roadmap.error ? (
@@ -157,22 +158,22 @@ export default async function RoadmapPage({ params }: { params: Params }) {
            */
           <div className="mt-10 rounded-xl border border-dashed border-ink/15 bg-ink/[0.015] px-5 py-5">
             <h2 className="font-display text-xl font-medium tracking-tight">
-              The weekly plan is not published yet.
+              {t("weeklyPlanNotPublished")}
             </h2>
             {roadmap.gap && <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink/70">{roadmap.gap}</p>}
             {roadmap.lessonCount > 0 && (
               <p className="mt-2 text-sm text-ink/65">
-                The course itself is mapped — {roadmap.lessonCount} lessons are written for it.
+                {t("lessonsWritten", { count: roadmap.lessonCount })}
               </p>
             )}
             <p className="mt-4 flex flex-wrap gap-3 text-sm">
               {roadmap.courseSlug && (
                 <Link href={`/resources/${cohort.subject}/${roadmap.courseSlug}`} className="font-medium underline underline-offset-4 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">
-                  See what the course covers →
+                  {t("seeWhatCourseCovers")} <span aria-hidden>→</span>
                 </Link>
               )}
               <Link href="/calendar" className="text-ink/70 underline underline-offset-4 hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink">
-                Open the timetable →
+                {t("openTheTimetable")} <span aria-hidden>→</span>
               </Link>
             </p>
           </div>
