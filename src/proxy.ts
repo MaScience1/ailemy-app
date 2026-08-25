@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import createMiddleware from "next-intl/middleware";
 
 import { updateSession } from "@/lib/supabase/middleware";
+import { isLocalisedPath } from "@/i18n/localised-paths";
 import { routing } from "@/i18n/routing";
 
 /**
@@ -37,34 +38,6 @@ const intl = createMiddleware(routing);
  * rewrite it to /en/calendar — a route that does not exist under the locale
  * segment — and take a working page down.
  */
-/**
- * ⚠ EVERY ROUTE FOLDER THAT STAYS OUTSIDE THE LOCALE SEGMENT.
- *
- * These resolve to their own static folders and must never be rewritten: a
- * rewrite of /calendar to /en/calendar lands on a route that does not exist
- * under [locale] and takes a working page down. Anything NOT in this list is
- * handled inside the locale segment — which is what keeps the admin-authored
- * pages catch-all reachable after it moved to app/[locale]/(site)/[...slug].
- *
- * ⚠ IF A NEW TOP-LEVEL ROUTE FOLDER IS ADDED, IT BELONGS HERE OR UNDER
- * [locale]. i18n-routing.test.ts fails if a root folder is in neither, so this
- * list cannot silently fall out of step with the filesystem.
- */
-const UNLOCALISED_ROOTS = new Set([
-  "_actions", "admin", "api", "auth", "biology", "calendar", "chemistry",
-  "dashboard", "dev", "exam-builder", "forgot-password", "intensive", "learn",
-  "login", "my-tuition", "past-papers", "physics", "privacy", "profile",
-  "reset-password", "resources", "signup", "terms", "welcome",
-]);
-
-function isLocalised(pathname: string): boolean {
-  if (pathname === "/") return true;
-  const first = pathname.split("/")[1] ?? "";
-  // A path with a file extension is an asset, never a page.
-  if (first.includes(".")) return false;
-  return !UNLOCALISED_ROOTS.has(first);
-}
-
 export async function proxy(request: NextRequest) {
   const authResponse = await updateSession(request);
 
@@ -75,7 +48,7 @@ export async function proxy(request: NextRequest) {
    */
   if (authResponse && authResponse.headers.get("location")) return authResponse;
 
-  if (!isLocalised(request.nextUrl.pathname)) return authResponse;
+  if (!isLocalisedPath(request.nextUrl.pathname)) return authResponse;
 
   /**
    * ⚠ THE AUTH COOKIES ARE CARRIED ONTO THE LOCALE RESPONSE. updateSession

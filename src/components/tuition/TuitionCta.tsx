@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { SmartLink as Link } from "@/components/i18n/SmartLink";
 import { NEUTRAL_SLOT, subjectColour } from "@/lib/design/subject-colours";
 
 /**

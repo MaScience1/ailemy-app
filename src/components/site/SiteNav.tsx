@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
+import { SmartLink as Link } from "@/components/i18n/SmartLink";
 import { LanguageToggle } from "@/components/i18n/LanguageToggle";
 import { usePathname } from "next/navigation";
-import Link from "next/link";
 import { Menu, Search as SearchIcon, X } from "lucide-react";
 
 import { navToneVars, type NavToneKey } from "@/lib/design/subject-colours";

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 
 import { capabilitiesFor } from "./CapabilityStrip";
+
+import { SmartLink as Link } from "@/components/i18n/SmartLink";
 
 /**
  * The seven capabilities, beside the calendar (§1–§9 of the relocation brief).

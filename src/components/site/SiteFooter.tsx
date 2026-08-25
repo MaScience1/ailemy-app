@@ -1,5 +1,5 @@
-import Link from "next/link";
 
+import { SmartLink as Link } from "@/components/i18n/SmartLink";
 import { DISCLOSURE } from "@/lib/legal/company";
 
 /**

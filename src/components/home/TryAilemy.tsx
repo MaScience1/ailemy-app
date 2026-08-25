@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 
+import { SmartLink as Link } from "@/components/i18n/SmartLink";
 import { SAMPLE, markSample, type SampleResult } from "@/lib/home/try-sample";
 import { subjectColour, subjectVars } from "@/lib/design/subject-colours";
 
