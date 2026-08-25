@@ -208,20 +208,6 @@ async function GroupProgramme({
     academic_year: amount("academic_year") ?? undefined,
   });
 
-  /**
-   * ⚠ COMPUTED PER TAB, FROM THE RETRIEVED AMOUNTS. Returns null — no chip —
-   * whenever the arithmetic does not support a claim.
-   */
-  const tabHint = (c: Commitment): string | null => {
-    if (best === c) return t("tuition.bestValue");
-    if (c === "monthly" || monthlyMinor === null) return null;
-    const pay = amount(c);
-    if (pay === null) return null;
-    const normal = monthlyMinor * (c === "three_month" ? 3 : months);
-    const sv = savingAgainst(normal, pay);
-    return sv ? t("tuition.approxSaving", { pct: Math.round(sv.pct) }) : null;
-  };
-
   const perMonthMinor = commitment === "monthly" ? monthlyMinor
     : selectedMinor !== null
       ? Math.round(selectedMinor / (commitment === "three_month" ? 3 : Math.max(1, months)))
@@ -253,7 +239,15 @@ async function GroupProgramme({
       </ul>
 
       {/* ── §15/§40 — one segmented selector, one price panel ─────────────── */}
-      <div className="mt-5 flex flex-wrap gap-1.5">
+      {/* ⚠ ONE ROW ON A PHONE, CONTENT-PROPORTIONAL — NOT EQUAL THIRDS.
+          "Academic year" wrapped to a second line at 375 under flex-wrap.
+          Equal thirds (grid-cols-3) was tried first and MEASURED: 91px columns
+          against a 92px label, so the longest of the three clipped by 3px while
+          the two short ones sat in dead space. flex-auto instead gives every
+          pill its content width and shares the 26px of slack in proportion, so
+          the row is filled edge to edge and the label that needs the room gets
+          it. sm:flex-wrap restores the original desktop behaviour exactly. */}
+      <div className="mt-5 flex flex-nowrap gap-1.5 sm:flex-wrap">
         {/* ⚠ THE TABS COME FROM COMMITMENT_LABEL, NOT FROM DISCOUNTS. The tab
             list was keyed on the discount table, so the set of things you could
             buy was defined by a local percentage map — remove a discount and a
@@ -270,28 +264,20 @@ async function GroupProgramme({
                 : c === "three_month" ? "tuition_group_three_month_selected"
                 : "tuition_group_academic_selected"
               }
-              className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-full border px-4 py-2 text-sm transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
+              /**
+               * ⚠ whitespace-nowrap IS THE HONESTY SWITCH, NOT A COSMETIC.
+               * Without it a label that does not fit re-wraps inside its own
+               * pill and the row still looks deliberate; with it, a bad fit
+               * becomes measurable horizontal overflow that a check can catch.
+               * The mobile-only px-2 and tracking-tight are what buy the fit —
+               * the tap target stays min-h-[44px], and sm: restores px-4 and
+               * normal tracking so nothing above 640px moves.
+               */
+              className={`inline-flex min-h-[44px] flex-auto items-center justify-center whitespace-nowrap rounded-full border px-2 py-2 text-sm transition-colors duration-200 sm:flex-none sm:px-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
                 on ? "border-ink bg-ink text-parchment" : "border-ink/15 text-ink/70 hover:border-ink/35"
               }`}
             >
               {t(`commitment.${c}`)}
-              {/**
-                * ⚠ THE HINT IS DERIVED, AND OFTEN THERE ISN'T ONE.
-                * This rendered −{DISCOUNTS[c] * 100}% from a local table, so the
-                * chip kept claiming a percentage after the Stripe amount moved.
-                * The saving is now computed from the two retrieved amounts, and
-                * "Best value" appears only on whichever option cheapestFor()
-                * actually finds cheapest over this cohort's own teaching window.
-                */}
-              {(() => {
-                const hint = tabHint(c);
-                if (!hint) return null;
-                return (
-                  <span className={`font-mono text-[10px] ${on ? "text-parchment/70" : "text-ink/45"}`}>
-                    {hint}
-                  </span>
-                );
-              })()}
             </Link>
           );
         })}
