@@ -316,8 +316,53 @@ console.log("\n=== 6b. 0069 — the repair, parked and honest about it ===");
   const RP = join("supabase/migrations", R[0] ?? "__missing__");
   const FIX = R.length === 1 ? readFileSync(RP, "utf8") : "";
   const FIX_C = code(FIX);
-  t("⚠ it is PARKED — a plain number would be replayed by a rebuild",
-    /_PROPOSED_/.test(RP) && /NOT APPLIED/.test(FIX));
+  /**
+   * ==========================================================================
+   * ⚠ INVERTED ON 2026-08-25: 0069 IS APPLIED, SO "PARKED" IS NOW THE DEFECT.
+   * ==========================================================================
+   * This asserted `/_PROPOSED_/.test(RP) && /NOT APPLIED/.test(FIX)` — correct
+   * while the repair was parked, and false the moment the founder applied it
+   * and re-headed the file. The premise moved; the assertion follows it.
+   *
+   * ⚠ AND IT DELIBERATELY REFUSES A HEADER THAT SAYS "APPLIED" WITH NO COUNTS.
+   * That is the whole point of the guard: 0063 exists because a file was
+   * renamed off _PROPOSED_ without its header following, and a header that
+   * claims more than was checked is the same failure wearing the other face.
+   * So the counts are required as DIGITS, and the three steps that did NOT run
+   * must still say so. A tidy-up that quietly upgraded "STEP 1 · NOT RUN" to a
+   * pass would go red here.
+   *
+   * ⚠ ASSERTED ON THE RAW FILE, NOT code(FIX). The entire header is SQL
+   * comments, so the stripped form is empty and every one of these would pass
+   * vacuously against nothing.
+   */
+  t("⚠ 0069 is APPLIED — the filename carries no _PROPOSED_",
+    !/_PROPOSED_/.test(RP), RP);
+  t("⚠ and the header says APPLIED, not NOT APPLIED",
+    /\bAPPLIED \d{4}-\d{2}-\d{2}/.test(FIX) && !/NOT APPLIED/.test(FIX));
+  /**
+   * ⚠ EACH VERIFIED STEP MUST CARRY A NUMBER. "STEP 4 · verified" would be a
+   * claim; "STEP 4 · 1 overload · 0 take user_id" is a reading.
+   */
+  t("⚠ STEP 7 records a pre/post count, not a banner",
+    /STEP 7[^\n]*\d\/\d\/\d[^\n]*\d\/\d\/\d/.test(FIX),
+    (FIX.match(/STEP 7[^\n]*/) ?? ["absent"])[0]);
+  for (const step of [4, 5, 6]) {
+    const line = (FIX.match(new RegExp(`STEP ${step}[^\n]*`)) ?? ["absent"])[0];
+    t(`⚠ STEP ${step} records a count`, /\d/.test(line) && !/absent/.test(line), line);
+  }
+  /**
+   * ⚠ AND THE UNRUN STEPS STAY UNRUN. Atomicity and the zero-credit path need
+   * a real authenticated session; the race was measured on a replica, which is
+   * evidence about the SQL and not about production. A header that dropped
+   * these three would be claiming a verification nobody performed.
+   */
+  t("⚠ STEP 1 is still recorded as NOT RUN",
+    /STEP 1[^\n]*NOT RUN/.test(FIX), (FIX.match(/STEP 1[^\n]*/) ?? ["absent"])[0]);
+  t("⚠ STEP 3 is still recorded as NOT RUN",
+    /STEP 3[^\n]*NOT RUN/.test(FIX), (FIX.match(/STEP 3[^\n]*/) ?? ["absent"])[0]);
+  t("⚠ STEP 2 is still recorded as SKIPPED",
+    /STEP 2[^\n]*SKIPPED/.test(FIX), (FIX.match(/STEP 2[^\n]*/) ?? ["absent"])[0]);
   /**
    * ⚠ THE DROP IS THE REASON THIS IS A SEPARATE MIGRATION. Renaming the
    * colliding OUT parameters changes the return type, and CREATE OR REPLACE
