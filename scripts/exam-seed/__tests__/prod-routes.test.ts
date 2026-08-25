@@ -161,6 +161,67 @@ async function main() {
       }
       t(`${route} → 200, lang=ar dir=rtl`, ok, ok ? undefined : detail);
     }
+
+    /**
+     * ==========================================================================
+     * ⚠ THE COMMITMENT GATE, PROVED AGAINST RENDERED HTML.
+     * ==========================================================================
+     * A three-month or academic-year tab shows a total, then sends the reader to
+     * the SAME single Payment Link as the monthly tab — so the number on screen
+     * is not the number charged. commitment-gate.test.ts proves the pure
+     * property; this proves the PAGE. Nothing here reads source, so no comment
+     * and no dead constant can satisfy it — only what a browser would receive.
+     *
+     * The tab pills are the only elements carrying these data-cta values, so
+     * their presence in the document IS the tab rendering.
+     */
+    const CTA_OF: Record<string, string> = {
+      monthly: "tuition_group_one_month_selected",
+      three_month: "tuition_group_three_month_selected",
+      academic_year: "tuition_group_academic_selected",
+    };
+    /** Every price the document shows, in order — derived, never hardcoded. */
+    const pricesIn = (html: string) =>
+      (html.match(/(?:QAR|&pound;|£)\s?[\d,]+(?:\.\d+)?/g) ?? []).join("|");
+
+    let monthlyHtml = "";
+    try {
+      const res = await fetch(BASE + "/tuition?commitment=monthly", { signal: AbortSignal.timeout(30_000) });
+      monthlyHtml = res.status === 200 ? await res.text() : "";
+    } catch { /* the assertions below report it */ }
+
+    t("the monthly tab renders (the page can still sell something)",
+      monthlyHtml.includes(CTA_OF.monthly),
+      monthlyHtml ? "monthly pill absent from /tuition" : "could not fetch /tuition");
+    t("the monthly page shows at least one price (else the comparison below is vacuous)",
+      pricesIn(monthlyHtml).length > 0, pricesIn(monthlyHtml).slice(0, 80));
+
+    for (const hidden of ["three_month", "academic_year"]) {
+      let html = "", status = 0;
+      try {
+        const res = await fetch(BASE + `/tuition?commitment=${hidden}`, { signal: AbortSignal.timeout(30_000) });
+        status = res.status;
+        html = await res.text();
+      } catch {
+        html = ""; status = 0;
+      }
+
+      t(`?commitment=${hidden} → 200, not a 500`, status === 200, `HTTP ${status}`);
+
+      /** ⚠ THE MIS-SALE GUARD. If the tab renders, its pill is in the document. */
+      t(`?commitment=${hidden} does NOT render the ${hidden} tab`,
+        status === 200 && !html.includes(CTA_OF[hidden]),
+        html.includes(CTA_OF[hidden]) ? `${CTA_OF[hidden]} is in the HTML` : undefined);
+
+      /**
+       * ⚠ AND IT RENDERS THE MONTHLY PRICES — derived by comparison, so this
+       * never hardcodes an amount and cannot go stale when Stripe changes one.
+       * If the page honoured the hidden commitment, the totals would differ.
+       */
+      t(`?commitment=${hidden} shows exactly the monthly prices`,
+        status === 200 && pricesIn(html) === pricesIn(monthlyHtml) && pricesIn(html).length > 0,
+        `hidden=${pricesIn(html).slice(0, 60)} monthly=${pricesIn(monthlyHtml).slice(0, 60)}`);
+    }
   } finally {
     stop();
   }

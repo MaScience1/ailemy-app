@@ -67,6 +67,47 @@ export const COMMITMENT_MONTHS: Record<Commitment, number | "programme"> = {
 };
 
 /**
+ * ⚠ WHICH COMMITMENTS CAN ACTUALLY BE BOUGHT TODAY — A RENDER GATE, NOT A DELETION.
+ * ============================================================================
+ * Every commitment above is fully priced, and `resolvePrice` maps all three to
+ * real Stripe prices. But the "Reserve your place" CTA is a single Payment Link
+ * held in `cohorts.enrolment_url` (TuitionModes.tsx) with no package dimension,
+ * so all three tabs send the reader to the SAME checkout. A tab that displays a
+ * three-month or academic-year total while the link charges something else is a
+ * price the reader cannot buy at the number shown.
+ *
+ * ⚠ THIS IS DELIBERATELY NOT KEYED ON `DISCOUNTS` OR `COMMITMENT_LABEL`.
+ * The tab list used to be derived from the discount table, so removing a
+ * discount silently removed a purchase option — see the warning in
+ * TuitionModes.tsx. Purchasability is a different fact from price, and it gets
+ * its own declaration so neither can quietly redefine the other.
+ *
+ * ⚠ TO RESTORE A TAB, ADD IT BACK TO THIS ARRAY — and nothing else. No pricing,
+ * mapping or query-string handling was removed. That one edit is the whole
+ * reversal, and it must not happen until a commitment-aware checkout exists:
+ * today a group payment writes no duration and no gate reads the row it writes.
+ */
+export const PURCHASABLE_COMMITMENTS: readonly Commitment[] = ["monthly"];
+
+/** Whether a commitment may be shown as buyable. */
+export function isPurchasable(c: Commitment): boolean {
+  return PURCHASABLE_COMMITMENTS.includes(c);
+}
+
+/**
+ * The commitment a page should actually render for a requested one.
+ *
+ * ⚠ COERCE, DO NOT REDIRECT. A redirect would rewrite the URL of a live,
+ * payable page and has to compose with the `[locale]` prefix; coercion cannot
+ * loop and cannot interact with routing. A stale `?commitment=` is inert
+ * because the tab bar renders only purchasable commitments, so no control on
+ * screen ever disagrees with what is priced.
+ */
+export function effectiveCommitment(requested: Commitment): Commitment {
+  return isPurchasable(requested) ? requested : "monthly";
+}
+
+/**
  * ⚠ THERE IS NO PROGRAMME_WINDOW CONSTANT, AND THERE MUST NEVER BE ONE AGAIN.
  * ============================================================================
  * This module used to hold a slug→{first,last} map, on the belief that the
