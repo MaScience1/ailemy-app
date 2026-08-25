@@ -164,6 +164,57 @@ async function main() {
 
     /**
      * ==========================================================================
+     * ⚠ THE LOCALE-AWARE LINK LAYER, PROVED AGAINST RENDERED HTML.
+     * ==========================================================================
+     * Two failures, opposite directions, both invisible to a build:
+     *   1. A localised link rendered WITHOUT the prefix drops an Arabic reader
+     *      into English mid-journey — the exact thing a language toggle exists
+     *      to prevent, and the defect phase 1 shipped with.
+     *   2. A link to one of the unlocalised roots rendered WITH the prefix
+     *      points at /ar/login, which does not exist. That is a 404 on a page
+     *      that works in English.
+     * SmartLink decides per href at runtime; this proves both directions on the
+     * one page Arabic was actually built for.
+     */
+    {
+      let ar = "";
+      try {
+        const res = await fetch(BASE + "/ar/tuition", { signal: AbortSignal.timeout(30_000) });
+        ar = res.status === 200 ? await res.text() : "";
+      } catch { /* asserted below */ }
+
+      t("/ar/tuition fetched for link inspection", ar.length > 0);
+
+      /** Localised: the mode tabs must keep the reader in Arabic. */
+      t("⚠ /ar/tuition — internal tuition links carry the /ar prefix",
+        /href="\/ar\/tuition/.test(ar),
+        ar ? "no /ar/tuition href found" : "page not fetched");
+
+      /**
+       * ⚠ Unlocalised: these roots live outside the locale segment. Finding a
+       * prefixed one means SmartLink sent a reader to a route that cannot exist.
+       */
+      const prefixedUnlocalised = ["login", "signup", "resources", "past-papers",
+        "exam-builder", "calendar", "profile", "intensive"]
+        .filter((root) => ar.includes(`href="/ar/${root}"`));
+      t("⚠ /ar/tuition — NO unlocalised root is given a locale prefix",
+        ar.length > 0 && prefixedUnlocalised.length === 0,
+        prefixedUnlocalised.length ? `/ar/${prefixedUnlocalised.join(", /ar/")}` : undefined);
+
+      /** And the unprefixed forms are still present, so they were not simply dropped. */
+      t("/ar/tuition — unlocalised links still render, unprefixed",
+        /href="\/(login|signup|resources)"/.test(ar));
+
+      /**
+       * ⚠ THE PAYMENT LINK IS NEVER TOUCHED. cohort.enrolmentUrl is an absolute
+       * Stripe URL; prefixing or rewriting it would break a live, payable CTA.
+       */
+      t("⚠ /ar/tuition — the external Reserve link is left absolute",
+        !/href="\/ar\/https?:/.test(ar) && !/href="\/https?:/.test(ar));
+    }
+
+    /**
+     * ==========================================================================
      * ⚠ THE COMMITMENT GATE, PROVED AGAINST RENDERED HTML.
      * ==========================================================================
      * A three-month or academic-year tab shows a total, then sends the reader to

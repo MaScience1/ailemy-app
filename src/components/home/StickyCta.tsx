@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { QuickSignup } from "./QuickSignup";
+
+import { SmartLink as Link } from "@/components/i18n/SmartLink";
 
 /**
  * The persistent conversion CTA (§19, §20).

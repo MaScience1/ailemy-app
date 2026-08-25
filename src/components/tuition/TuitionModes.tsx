@@ -1,9 +1,9 @@
-import Link from "next/link";
 
 import {
   COMMITMENT_LABEL, ONE_TO_ONE_LEVEL_LABEL, monthsFor, isPurchasable,
   type Commitment, type OneToOneLevel,
 } from "@/lib/tuition/pricing";
+import { SmartLink as Link } from "@/components/i18n/SmartLink";
 import { savingAgainst, cheapestFor } from "@/lib/tuition/pricing-math";
 import { ONE_TO_ONE, subjectColour, subjectVars } from "@/lib/design/subject-colours";
 import type { Currency } from "@/lib/public/currency";

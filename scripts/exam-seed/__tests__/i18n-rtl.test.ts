@@ -182,7 +182,20 @@ console.log("\n=== 3. The locale contract ===");
   const roots = readdirSync("src/app", { withFileTypes: true })
     .filter((d) => d.isDirectory() && !d.name.startsWith("[") && !d.name.startsWith("("))
     .map((d) => d.name);
-  const declared = (readFileSync("src/proxy.ts", "utf8").match(/UNLOCALISED_ROOTS = new Set\(\[([\s\S]*?)\]\)/) ?? [])[1] ?? "";
+  /**
+   * ⚠ ONE DECLARATION, READ FROM ITS ONE HOME. The list used to live in
+   * proxy.ts, where only the proxy could see it — so the link layer guessed,
+   * and next-intl's Link happily produced /ar/login for a route that exists
+   * only at /login. Both sides now import src/i18n/localised-paths.ts, and the
+   * duplicate check below fails if a second copy is ever reintroduced.
+   */
+  const declared = (readFileSync("src/i18n/localised-paths.ts", "utf8")
+    .match(/UNLOCALISED_ROOTS = new Set\(\[([\s\S]*?)\]\)/) ?? [])[1] ?? "";
+  t("⚠ the unlocalised list is declared exactly once, and the proxy imports it",
+    declared.length > 0
+    && /from "@\/i18n\/localised-paths"/.test(proxy)
+    && !/UNLOCALISED_ROOTS\s*=/.test(proxy),
+    declared.length === 0 ? "no declaration found" : "proxy still holds its own copy");
   const missing = roots.filter((r) => !declared.includes(`"${r}"`));
   t("⚠ every unlocalised top-level route folder is declared in the proxy",
     missing.length === 0, `undeclared: ${missing.join(", ")}`);

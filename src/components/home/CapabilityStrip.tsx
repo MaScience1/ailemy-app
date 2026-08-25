@@ -1,4 +1,5 @@
-import Link from "next/link";
+
+import { SmartLink as Link } from "@/components/i18n/SmartLink";
 
 /**
  * The product capability strip (§2).

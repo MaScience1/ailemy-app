@@ -1,5 +1,5 @@
-import Link from "next/link";
 
+import { SmartLink as Link } from "@/components/i18n/SmartLink";
 import type { CalendarEvent } from "@/lib/calendar/types";
 import { nextAvailableSlot } from "@/lib/booking/next-available";
 import { nextOf } from "@/lib/calendar/upcoming";

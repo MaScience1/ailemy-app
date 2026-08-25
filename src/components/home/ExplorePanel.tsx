@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 import { capabilitiesFor } from "./CapabilityStrip";
+
+import { SmartLink as Link } from "@/components/i18n/SmartLink";
 
 /**
  * The seven capabilities, beside the calendar (§1–§9 of the relocation brief).
@@ -35,9 +37,14 @@ import { capabilitiesFor } from "./CapabilityStrip";
  * feature invisible to them and to every touch device.
  */
 
-const DEFAULT_BLURB = "Choose a feature to explore Ailemy.";
-
 export function ExplorePanel({ signedIn }: { signedIn: boolean }) {
+  const t = useTranslations();
+  /**
+   * ⚠ THE DEFAULT BLURB MOVED IN HERE FROM MODULE SCOPE. A translation is a
+   * per-request value and a module constant is evaluated once, at import — so
+   * the old `const DEFAULT_BLURB = "..."` could never be localised where it sat.
+   */
+  const DEFAULT_BLURB = t("home.exploreDefaultBlurb");
   const items = capabilitiesFor(signedIn);
   const [active, setActive] = useState<string | null>(null);
   const blurb = items.find((c) => c.label === active)?.blurb ?? DEFAULT_BLURB;

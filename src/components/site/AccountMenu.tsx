@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import Link from "next/link";
 import { CalendarDays, ChevronDown, LogOut, UserRound } from "lucide-react";
 
+import { SmartLink as Link } from "@/components/i18n/SmartLink";
 import { navToneVars } from "@/lib/design/subject-colours";
 import type { NavSession } from "@/lib/auth/nav-session";
 
