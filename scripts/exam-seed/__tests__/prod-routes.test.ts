@@ -164,6 +164,107 @@ async function main() {
 
     /**
      * ==========================================================================
+     * ⚠ BIDI ISOLATION, PROVED AGAINST THE RENDERED PAGE AND THE SERVED CSS.
+     * ==========================================================================
+     * On /ar the hero rendered as ".Learn it. Practise it" — the full stop had
+     * jumped to the front, because a trailing neutral in an RTL paragraph
+     * belongs to the paragraph direction. Measured before the fix: 275 of 276
+     * Latin-script text nodes on /ar had no isolation of any kind.
+     *
+     * ⚠ THE COVERED TAG SET IS READ OUT OF THE SERVED STYLESHEET, NOT TYPED
+     * HERE. The guard parses `.font-arabic :is(…) { unicode-bidi: plaintext }`
+     * from the CSS the browser actually downloads, then checks the rendered
+     * HTML against THAT set. So deleting a tag from the rule does not quietly
+     * shrink what the guard demands — it makes the guard fail on the text that
+     * tag was carrying. A test with its own hardcoded list would have passed.
+     */
+    {
+      let arHtml = "";
+      try {
+        const res = await fetch(BASE + "/ar", { signal: AbortSignal.timeout(30_000) });
+        arHtml = res.status === 200 ? await res.text() : "";
+      } catch { /* asserted below */ }
+      t("/ar fetched for bidi inspection", arHtml.length > 0);
+
+      /** Every stylesheet the page links, concatenated. */
+      const hrefs = [...arHtml.matchAll(/href="(\/_next\/static\/[^"]+\.css)"/g)].map((m) => m[1]);
+      let css = "";
+      for (const h of hrefs) {
+        try {
+          const r = await fetch(BASE + h, { signal: AbortSignal.timeout(30_000) });
+          if (r.status === 200) css += await r.text();
+        } catch { /* ignored */ }
+      }
+      t("the served stylesheet was fetched", css.length > 1000, `${hrefs.length} file(s), ${css.length} bytes`);
+
+      /** ⚠ DERIVED. Which tags does the shipped rule actually isolate? */
+      const covered = new Set<string>();
+      /**
+       * ⚠ PARSED FROM THE BUILT CSS, WHICH IS NOT THE SHAPE THAT WAS AUTHORED.
+       * The build merges the two authored rules into one selector list —
+       * `.font-arabic :is(h1,…),.font-arabic :is(a,button,span,…){…}` — so the
+       * parser takes every :is() group in the selector that precedes a
+       * unicode-bidi:plaintext declaration, not the first one.
+       */
+      for (const m of css.matchAll(/([^{}]*)\{([^}]*unicode-bidi\s*:\s*plaintext[^}]*)\}/g)) {
+        const selector = m[1];
+        if (!/\.font-arabic/.test(selector)) continue;
+        for (const g of selector.matchAll(/:is\(([^)]*)\)/g)) {
+          for (const raw of g[1].split(",")) {
+            const tag = raw.trim().replace(/\[[^\]]*\]/g, "").trim().toLowerCase();
+            if (/^[a-z][a-z0-9]*$/.test(tag)) covered.add(tag);
+          }
+        }
+      }
+      t("⚠ the isolation rule is present in the served CSS",
+        covered.size > 0, `${covered.size} covered tag(s)`);
+      t("it covers block text containers", covered.has("h1") && covered.has("p") && covered.has("li"));
+
+      /**
+       * ⚠ NOW THE RENDERED PAGE. Strip script/style/noscript — those are not
+       * rendered text and counting them made an earlier measurement report 44
+       * phantom failures. Then find Latin-script runs and check the element
+       * that directly holds each one.
+       */
+      /**
+       * ⚠ BODY ONLY. <title> is document metadata, not rendered text — it has
+       * no paragraph and cannot show the defect. The browser probe walked
+       * document.body; this matches it rather than flagging the tab label.
+       */
+      const bodyStart = arHtml.search(/<body[^>]*>/i);
+      const body = (bodyStart >= 0 ? arHtml.slice(bodyStart) : arHtml)
+        .replace(/<script[\s\S]*?<\/script>/gi, " ")
+        .replace(/<style[\s\S]*?<\/style>/gi, " ")
+        .replace(/<noscript[\s\S]*?<\/noscript>/gi, " ")
+        .replace(/<!--[\s\S]*?-->/g, " ");
+
+      const offenders: string[] = [];
+      let latinRuns = 0;
+      for (const m of body.matchAll(/<([a-z][a-z0-9]*)\b([^>]*)>([^<]+)</g)) {
+        const [, tag, attrs, text] = m;
+        const trimmed = text.replace(/&[a-z#0-9]+;/gi, " ").trim();
+        if (trimmed.length < 4) continue;
+        if (!/[A-Za-z]/.test(trimmed)) continue;
+        if (/[\u0600-\u06FF]/.test(trimmed)) continue;      // Arabic — not the case under test
+        latinRuns++;
+        const explicit = /\sdir="(auto|ltr)"/.test(attrs) || tag === "bdi";
+        if (!explicit && !covered.has(tag)) offenders.push(`<${tag}> "${trimmed.slice(0, 40)}"`);
+      }
+
+      t("the page actually carries Latin text (else this is vacuous)",
+        latinRuns > 20, `${latinRuns} run(s)`);
+      /**
+       * ⚠ THE GUARD. A Latin string in an RTL document, in an element the
+       * isolation rule does not reach and with no dir of its own, is the exact
+       * shape that produced ".Learn it. Practise it".
+       */
+      t("⚠ NO Latin-script text renders on /ar without bidi isolation",
+        offenders.length === 0,
+        `${offenders.length} unisolated: ${offenders.slice(0, 5).join(" | ")}`);
+    }
+
+    /**
+     * ==========================================================================
      * ⚠ THE LOCALE-AWARE LINK LAYER, PROVED AGAINST RENDERED HTML.
      * ==========================================================================
      * Two failures, opposite directions, both invisible to a build:

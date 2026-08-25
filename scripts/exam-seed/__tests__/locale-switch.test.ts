@@ -112,9 +112,16 @@ console.log("\n=== 4. localised paths are PRESERVED, not flattened ===");
 console.log("\n=== 5. the component actually routes through it ===");
 {
   const toggle = code(readFileSync("src/components/i18n/LanguageToggle.tsx", "utf8"));
-  t("the toggle imports localeSwitchPath", /localeSwitchPath/.test(toggle));
-  t("⚠ and the href is built from its result, not from the raw pathname",
-    /pathname:\s*target/.test(toggle) && !/href=\{\{\s*pathname,\s*params\s*\}/.test(toggle));
+  /**
+   * ⚠ THE HREF IS NOW BUILT END TO END, not handed to a prefixing Link.
+   * localeSwitchHref computes the final path itself — including the as-needed
+   * rule that the default locale carries no prefix — so nothing about the
+   * result depends on next-intl's Link behaviour any more. That is what makes
+   * the plain anchor safe.
+   */
+  t("the toggle builds the final href itself", /localeSwitchHref\(/.test(toggle));
+  t("⚠ and never hands a raw pathname to a prefixing Link",
+    !/href=\{\{\s*pathname,\s*params\s*\}/.test(toggle) && !/locale=\{locale\}/.test(toggle));
 }
 
 console.log("\n=== 6. the toggle is REACHABLE, not merely present ===");
@@ -154,6 +161,42 @@ console.log("\n=== 6. the toggle is REACHABLE, not merely present ===");
   t("⚠ LanguageToggle is still the ONLY thing emitting a locale link",
     (code(readFileSync("src/components/i18n/LanguageToggle.tsx", "utf8")).match(/hrefLang/g) ?? []).length >= 1
     && !/hrefLang/.test(nav));
+}
+
+console.log("\n=== 7. switching locale must change the DOCUMENT, not just the URL ===");
+{
+  /**
+   * ⚠ THE DEFECT THIS CLOSES. `lang` and `dir` live on <html>, set by the ROOT
+   * layout from the server-resolved locale. The App Router does not re-render
+   * the root layout on a client-side navigation, so switching locale with
+   * next-intl's Link changed the URL to /ar and left the document reporting
+   * lang="en" dir="ltr" until a manual reload. Measured on production: after
+   * pressing العربية from /calendar the page sat at /ar with 7 Arabic
+   * characters and an LTR document.
+   *
+   * ⚠ WHY THIS CANNOT BE ASSERTED FROM HTML ALONE. next/link and a plain <a>
+   * both render as <a href>. The served markup cannot tell you which one will
+   * do a client-side navigation. So the guard checks the two halves that ARE
+   * checkable: the component no longer routes through the client-side Link,
+   * and the href it emits leads somewhere that really is Arabic. The rendered
+   * half of that pair lives in prod-routes.test.ts, which has a live server.
+   */
+  const toggle = code(readFileSync("src/components/i18n/LanguageToggle.tsx", "utf8"));
+  t("⚠ the toggle does NOT use next-intl's client-side Link",
+    !/<Link\b/.test(toggle) && !/from "@\/i18n\/navigation"[\s\S]{0,80}\bLink\b/.test(toggle));
+  t("⚠ it emits a plain anchor, which forces a document load",
+    /<a\b/.test(toggle) && /href=\{localeSwitchHref\(/.test(toggle));
+  t("and it still reads the locale-stripped pathname",
+    /usePathname\(\)/.test(toggle));
+
+  /**
+   * ⚠ AND THE TARGET IS A REAL ARABIC PAGE, for every unlocalised root. If the
+   * switch sent a reader to a path that does not render Arabic, a hard
+   * navigation would just be a slower way to be wrong.
+   */
+  const targets = new Set(UNLOCALISED_SAMPLE.map((p) => localeSwitchHref(p, "ar")));
+  t("⚠ every unlocalised root switches to exactly one target", targets.size === 1, [...targets].join(", "));
+  t("and that target is the Arabic root", [...targets][0] === "/ar");
 }
 
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);
