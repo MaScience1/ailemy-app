@@ -1,8 +1,30 @@
 -- ============================================================================
 -- 0070_drop_courses_curriculum_subject_level_unique.sql
 -- ----------------------------------------------------------------------------
--- ⚠ NOT YET APPLIED. Written 2026-08-27. Number issued by the project owner.
---    Author holds no database credentials; nothing in this file has been run.
+-- ⚠ APPLIED 2026-08-27. Number issued by the project owner. Author holds no
+--    database credentials; the owner ran it and reported the results.
+--
+--    Sections A-C and E: VERIFIED as written.
+--        triple_constraint_remaining 0
+--        slug_unique_remaining       1
+--        courses_row_count          42
+--        control_rows_left_behind    0
+--
+-- ⚠ SECTION D DID NOT RUN. It failed with 23502 — its control INSERT omitted
+--    `pathway`, which 0005:95 tightened to NOT NULL. The omission is fixed
+--    below FOR THE RECORD ONLY. DO NOT RE-RUN IT: both facts it was written to
+--    prove were then established behaviourally by the real workload, which is
+--    better evidence than a synthetic control:
+--
+--      the triple constraint is gone — edexcel-gce-as-biology-a and
+--        edexcel-gce-as-biology-b BOTH landed on (edexcel-alevel, biology, AS).
+--        Two live rows in one slot the constraint used to permit one of.
+--
+--      slug's UNIQUE survives — COURSE_INSERT_PASTE Section 3 ran ON CONFLICT
+--        (slug) without raising 42P10. Postgres throws that when no unique or
+--        exclusion constraint matches the ON CONFLICT target, so a clean run IS
+--        the proof the index exists. It also correctly no-op'd six pre-existing
+--        slugs, which is that index doing its job on real data.
 --
 -- ⚠ RUN ORDER: THIS FILE FIRST, THEN COURSE_INSERT_PASTE.sql.
 --    The course paste inserts fourteen rows, four of which violate the
@@ -108,8 +130,13 @@ SELECT
 
 
 -- ════════════════════════════════════════════════════════════════════════════
--- SECTION D — NEGATIVE CONTROL. Both halves, one transaction, rolled back.
+-- SECTION D — NEGATIVE CONTROL. ⚠ DO NOT RUN. Kept for the record only.
 -- ════════════════════════════════════════════════════════════════════════════
+-- ⚠ THIS BLOCK FAILED WITH 23502 ON THE REAL RUN and proved nothing. The
+--    omitted `pathway` is fixed below so the file is correct as a record, but
+--    both facts it targets are already established by the live workload — see
+--    the header. Re-running it would add nothing and touch a table that now
+--    holds forty-two real rows.
 -- ⚠ NOTHING HERE PERSISTS. The block ends in ROLLBACK, and DDL and DML are both
 --    transactional in Postgres. Run it, read the NOTICEs, move on.
 --
@@ -139,11 +166,14 @@ BEGIN
   END IF;
 
   -- ── HALF ONE: the same triple twice, different slugs. MUST now succeed. ──
-  INSERT INTO public.courses (id, curriculum_id, subject_id, slug, name, level, status)
+  -- ⚠ pathway IS SUPPLIED. 0005 adds it "nullable for backfill" at line 47 and
+  --    tightens it to NOT NULL at line 95. Reading only the first of those is
+  --    what made the original of this block fail with 23502.
+  INSERT INTO public.courses (id, curriculum_id, subject_id, slug, name, level, pathway, status)
   VALUES ('0070aaaa-0000-4000-8000-000000000001', v_curriculum, v_subject,
-          'zz-0070-control-spec-a', '0070 control Spec A', 'AS', 'coming_soon'),
+          'zz-0070-control-spec-a', '0070 control Spec A', 'AS', 'uk-a-level'::pathway_type, 'coming_soon'),
          ('0070aaaa-0000-4000-8000-000000000002', v_curriculum, v_subject,
-          'zz-0070-control-spec-b', '0070 control Spec B', 'AS', 'coming_soon');
+          'zz-0070-control-spec-b', '0070 control Spec B', 'AS', 'uk-a-level'::pathway_type, 'coming_soon');
 
   SELECT count(*) INTO n FROM public.courses WHERE slug LIKE 'zz-0070-control-%';
   IF n <> 2 THEN
@@ -153,9 +183,9 @@ BEGIN
 
   -- ── HALF TWO: a duplicate SLUG. MUST still fail with 23505. ──
   BEGIN
-    INSERT INTO public.courses (id, curriculum_id, subject_id, slug, name, level, status)
+    INSERT INTO public.courses (id, curriculum_id, subject_id, slug, name, level, pathway, status)
     VALUES ('0070aaaa-0000-4000-8000-000000000003', v_curriculum, v_subject,
-            'zz-0070-control-spec-a', '0070 control duplicate slug', 'AS', 'coming_soon');
+            'zz-0070-control-spec-a', '0070 control duplicate slug', 'AS', 'uk-a-level'::pathway_type, 'coming_soon');
     RAISE EXCEPTION
       '⚠ SABOTAGE FAILED: a DUPLICATE SLUG was ACCEPTED. courses.slug has no UNIQUE index. '
       'STOP — do NOT run COURSE_INSERT_PASTE.sql; its ON CONFLICT (slug) DO NOTHING is not idempotent without it.';

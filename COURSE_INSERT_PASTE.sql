@@ -135,10 +135,12 @@ SELECT count(*) AS courses_before FROM public.courses;
 
 
 -- ════════════════════════════════════════════════════════════════════════════
--- SECTION 3 — THE INSERT. Idempotent. Expect UP TO 14 rows back.
+-- SECTION 3 — THE INSERT, GATED. All fourteen or nothing.
 -- ════════════════════════════════════════════════════════════════════════════
--- EXPECT: 14 rows, minus any Section 1c already showed as existing.
--- ZERO rows = all fourteen already exist. That is a valid outcome, not a failure.
+-- EXPECT: one NOTICE — "GATE PASSED — all 14 present...".
+-- The INSERT reports no row count of its own: it sits inside a transaction with
+-- the gate, and the number inserted is deliberately NOT the success signal. On
+-- the first real run it inserted 8 and no-op'd 6, and 8 was the correct answer.
 --
 -- ⚠ IDS ARE FIXED LITERALS, so Section 5 deletes by id with nothing to copy
 --    across and no "newest row" heuristic. This project erased the wrong account
@@ -151,6 +153,29 @@ SELECT count(*) AS courses_before FROM public.courses;
 --
 -- ⚠ status = 'coming_soon' ON EVERY ROW. Not 'live'. Nothing here changes what
 --    a visitor sees until you say so.
+--
+-- ============================================================================
+-- THE GATE ASSERTS PRESENCE AND SHAPE, NOT "14 ROWS INSERTED"
+-- ============================================================================
+-- "14 inserted" is the wrong assertion and it would have fired falsely on the
+-- first real run: that run inserted 8 and correctly no-op'd 6 whose slugs
+-- already existed. Eight was right, and it read like a half-failure.
+--
+-- So the gate asks what actually matters: are all fourteen NOW PRESENT, and
+-- does each carry the shape the importer will demand? A row ON CONFLICT skipped
+-- is fine if it matches and a hard stop if it does not — bulk-import-papers.ts
+-- asserts course slug and level agree or it aborts, so a wrongly-shaped
+-- pre-existing row becomes a failure displaced from here to the import.
+--
+-- ⚠ THE INSERT AND THE GATE ARE ONE TRANSACTION. If the gate raises, the INSERT
+--    rolls back with it and courses is left exactly as it was. That is the
+--    refuse-rather-than-half-apply requirement.
+--
+-- ⚠ THE EXPECTED SHAPE IS WRITTEN TWICE ON PURPOSE — once in the INSERT VALUES
+--    and once in the gate. Neither is derived from the other, so a typo in one
+--    is caught by the other instead of agreeing with itself.
+
+BEGIN;
 
 INSERT INTO public.courses (id, curriculum_id, subject_id, slug, name, level, pathway, status, sort_order)
 SELECT v.id::uuid, cu.id, su.id, v.slug, v.name, v.level, v.pathway::pathway_type, 'coming_soon'::content_status, v.sort_order
@@ -176,8 +201,64 @@ SELECT v.id::uuid, cu.id, su.id, v.slug, v.name, v.level, v.pathway::pathway_typ
   ) AS v(id, curriculum_slug, subject_slug, slug, name, level, pathway, sort_order)
   JOIN public.curricula cu ON cu.slug = v.curriculum_slug
   JOIN public.subjects  su ON su.slug = v.subject_slug
-ON CONFLICT (slug) DO NOTHING
-RETURNING id, slug, name, level, pathway, status;
+ON CONFLICT (slug) DO NOTHING;
+
+-- -- THE GATE -----------------------------------------------------------------
+DO $$
+DECLARE
+  n_present integer;
+  n_bad     integer;
+  detail    text;
+BEGIN
+  WITH expected(slug, level, pathway, curriculum, subject) AS (VALUES
+    ('edexcel-gce-as-chemistry','AS','uk-a-level','edexcel-alevel','chemistry'),
+    ('edexcel-gce-a2-chemistry','A2','uk-a-level','edexcel-alevel','chemistry'),
+    ('edexcel-gce-as-physics','AS','uk-a-level','edexcel-alevel','physics'),
+    ('edexcel-gce-a2-physics','A2','uk-a-level','edexcel-alevel','physics'),
+    ('edexcel-gce-as-biology-a','AS','uk-a-level','edexcel-alevel','biology'),
+    ('edexcel-gce-a2-biology-a','A2','uk-a-level','edexcel-alevel','biology'),
+    ('edexcel-gce-as-biology-b','AS','uk-a-level','edexcel-alevel','biology'),
+    ('edexcel-gce-a2-biology-b','A2','uk-a-level','edexcel-alevel','biology'),
+    ('edexcel-gcse-chemistry','GCSE','uk-gcse','edexcel-gcse','chemistry'),
+    ('edexcel-gcse-biology','GCSE','uk-gcse','edexcel-gcse','biology'),
+    ('edexcel-gcse-physics','GCSE','uk-gcse','edexcel-gcse','physics'),
+    ('edexcel-igcse-chemistry','IGCSE','igcse','edexcel-igcse','chemistry'),
+    ('edexcel-igcse-biology','IGCSE','igcse','edexcel-igcse','biology'),
+    ('edexcel-igcse-physics','IGCSE','igcse','edexcel-igcse','physics')
+  ),
+  checked AS (
+    SELECT e.slug,
+           (c.id IS NOT NULL) AS present,
+           (c.id IS NOT NULL
+            AND c.level         = e.level
+            AND c.pathway::text = e.pathway
+            AND cu.slug         = e.curriculum
+            AND su.slug         = e.subject) AS ok,
+           coalesce(c.level,'-')||'/'||coalesce(c.pathway::text,'-')||'/'||
+           coalesce(cu.slug,'-')||'/'||coalesce(su.slug,'-') AS actual
+      FROM expected e
+      LEFT JOIN public.courses   c  ON c.slug = e.slug
+      LEFT JOIN public.curricula cu ON cu.id  = c.curriculum_id
+      LEFT JOIN public.subjects  su ON su.id  = c.subject_id
+  )
+  SELECT count(*) FILTER (WHERE present),
+         count(*) FILTER (WHERE NOT ok),
+         string_agg(slug || ' [' || actual || ']', ', ') FILTER (WHERE NOT ok)
+    INTO n_present, n_bad, detail
+    FROM checked;
+
+  IF n_present <> 14 OR n_bad > 0 THEN
+    RAISE EXCEPTION
+      'GATE FAILED - nothing was written. present %/14, wrong shape %. Offenders: %. '
+      'A wrongly-shaped course row makes bulk-import-papers.ts abort mid-import; '
+      'fix the row, then re-run this section.',
+      n_present, n_bad, coalesce(detail, '(none)');
+  END IF;
+
+  RAISE NOTICE 'GATE PASSED - all 14 present, all 14 match expected level/pathway/curriculum/subject';
+END $$;
+
+COMMIT;
 
 
 -- ════════════════════════════════════════════════════════════════════════════
