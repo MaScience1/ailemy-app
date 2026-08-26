@@ -337,7 +337,12 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           breakpoints and still clears the header by a full step of the spacing
           scale — the hero is moved up, not jammed against the nav. */}
       <header className="mx-auto max-w-6xl px-6 pt-7 pb-8 sm:pt-16 sm:pb-12">
-        <div className="flex flex-col gap-6 lg:gap-10 lg:grid lg:grid-cols-[minmax(0,1fr)_480px] lg:grid-rows-[auto_auto] lg:items-start lg:gap-x-10 lg:gap-y-0">
+        {/* ⚠ ONE COLUMN NOW, AT EVERY WIDTH. This was a two-column grid whose
+            second column was the 480px calendar; with the calendar moved out
+            (§5) a grid would leave half the hero empty on desktop. The copy is
+            the better tenant of that space anyway — the removed comment below
+            recorded it running 419px against the calendar's 735px. */}
+        <div className="flex flex-col gap-6 lg:gap-10">
         <div>
         {/* ⚠ ONE LINE AT 375, BY SIZE AND TRACKING — NEVER BY TRUNCATION.
             Four qualification names in 44 characters do not fit at the old
@@ -488,63 +493,21 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
 
         </div>
 
-        {/* ⚠ SECOND COLUMN ON DESKTOP, BELOW THE CTAs ON A PHONE. The order in
-            the DOM is copy → CTAs → card, which is the reading order a phone
-            gets for free and the one a screen reader gets everywhere. */}
-        <div id="hero-calendar" className="lg:col-start-2 lg:row-start-1 lg:row-span-2 lg:justify-self-end">
-          {/* ── §9/§12 — WHAT YOU CAN BOOK, THEN THE CALENDAR ───────────────
-              The month grid used to lead this column, which asked a stranger
-              to interpret an empty August before seeing anything bookable.
-              The availability card states the next real session and what to do
-              about it; the grid stays underneath as supporting detail, reading
-              the same events. */}
-          <HeroAvailability
-            mode={heroMode}
-            /* ⚠ FORWARD-LOOKING, NOT THE VISIBLE MONTH — the same defect the
-               calendar shortcuts had. Fed the month window, this said "no
-               group lessons are scheduled" for the whole of August, because
-               teaching starts on 13 September. aheadEvents is the 120-day read
-               this page already performs, so it costs no extra query. */
-            events={calendarEvents.length > 0 ? calendarEvents : aheadEvents}
-            viewerTz={viewerTz}
-            now={new Date()}
-            capacity={heroCapacity}
-            group={group}
-            oneToOne={oneToOne}
-            /* ⚠ qs() ALREADY APPENDS #hero-calendar — adding it again produced
-               /?tuition=group#hero-calendar#hero-calendar, which is not a
-               valid fragment and would have scrolled nowhere. */
-            hrefFor={(m) => qs({ tuition: m })}
-          />
-
-          <div className="mt-4">
-          <HeroCalendarCard
-            events={calendarEvents}
-            state={calendarState}
-            todayISO={todayISO}
-            viewerTz={viewerTz}
-            openHref={openCalendarHref}
-            eventCount={calendarEvents.length}
-            next={nextLesson}
-          />
-          </div>
-        </div>
+        {/* ⚠ THE CALENDAR COLUMN IS NO LONGER IN THE HERO (§5). It stacked
+            BELOW the CTAs on a phone, so a month grid a stranger had to
+            interpret sat between the hero and everything else — measured, it
+            pushed the compact tuition block to y=2416. It now lives with the
+            detailed tuition section below Subjects, which is the reader who
+            actually wants to browse dates rather than decide. */}
 
         {/* ── THE RELOCATED CAPABILITIES (§1, §13, §14) ───────────────────
-            ⚠ AFTER THE CALENDAR IN THE DOM, BESIDE IT ON DESKTOP.
-            §14 wants the phone to read calendar → explore, and DOM order is
-            what a stacked flex column follows — so the panel is written after
-            the card and needs no `order` class to get there. On desktop the
-            explicit placement puts it back in column one, row two, with the
-            calendar spanning both rows so it sits alongside rather than
-            beneath. One DOM order, correct at both breakpoints.
-
-            ⚠ AND IT FILLS THE SPACE THAT IS ACTUALLY EMPTY. The brief
-            describes filling space to the calendar's right; measured at
-            1920px there is none — the card ends 24px from the container edge.
-            The gap is here: the copy column ran 419px against the calendar's
-            735px. */}
-        <div className="lg:col-start-1 lg:row-start-2 lg:pt-10">
+            ⚠ THE EXPLICIT GRID PLACEMENT IS GONE WITH THE GRID. This carried
+            lg:col-start-1 lg:row-start-2 to sit under the copy and beside the
+            calendar; with the hero a single column at every width, the same
+            position now comes from DOM order alone. Keeping the placement
+            classes against a non-grid parent would be dead code that reads as
+            intent. */}
+        <div className="lg:pt-10">
           <ExplorePanel signedIn={session !== null} />
         </div>
         </div>
@@ -761,49 +724,13 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         </ol>
       </Section>
 
-      {/* ── 6. live tuition ───────────────────────────────────────────── */}
-      <Section
-        id="tuition"
-        title={t("home.tuitionSectionTitle")}
-        lede={t("home.tuitionSectionLede")}
-      >
-        {/* ── §67 — VALUE BEFORE PRICE ──────────────────────────────────
-            ⚠ ABOVE THE CARDS, NOT INSIDE THEM. A parent reading £169 needs to
-            already know it is not four Zoom hours. Repeating this list in each
-            card would be three copies of the same sentence competing with the
-            details that differ between programmes. */}
-        <div className="mb-6 rounded-lg border border-ink/10 bg-parchment-2/40 px-5 py-4">
-          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink/50">
-            {t("home.everyProgrammeIncludes")}
-          </p>
-          <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-ink/70">
-            {[
-              t("home.includesLiveTeaching"), t("home.includesPlatformAccess"), t("home.includesHomework"),
-              t("home.includesExamPractice"), t("home.includesMarkingFeedback"), t("home.includesProgressTracking"),
-            ].map((v) => (
-              <li key={v} className="flex items-center gap-1.5">
-                <span aria-hidden className="h-1 w-1 rounded-full bg-lime" />
-                {v}
-              </li>
-            ))}
-          </ul>
-        </div>
-        {showToggle && <div className="mb-6"><CurrencyToggle current={currency} /></div>}
-        <div className="grid gap-4 lg:grid-cols-3">
-          {chemistryCohorts.map((c) => (
-            <CohortCard key={c.slug} cohort={c} currency={currency} capacity={cohortCapacity.get(c.slug) ?? null} />
-          ))}
-        </div>
-        {/* ⚠ 1-TO-1 IS OFF-MENU (§24) — mentioned, deliberately not priced
-            beside the group cohorts, where it would undercut the offer. */}
-        <p className="mt-6 text-sm text-ink/60">
-          {t("home.lookingForSomethingElse")}{" "}
-          <Link href="/tuition" className="underline underline-offset-2 hover:text-ink">
-            {t("home.oneToOneChemistryLimitedBlocks")}
-          </Link>
-          .
-        </p>
-      </Section>
+      {/* ⚠ THE LIVE-TUITION SECTION USED TO SIT HERE, AND IT NOW SITS BELOW
+          SUBJECTS (§5). A reader met three priced cohort cards before the page
+          had said which sciences Ailemy teaches — so a parent looking for
+          Biology was asked to consider a Chemistry price before learning
+          Biology is demand-triggered. The compact tuition block after the hero
+          answers "can I book?" early; this answers "what exactly, and how
+          much?" after the subject question is settled. */}
 
       {/* ── PROOF: ONE SECTION WHERE THERE WERE THREE (§28, §30) ─────────
           ============================================================
@@ -981,6 +908,96 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
               dataCta="subject_selected"
             />
           ))}
+        </div>
+      </Section>
+
+      {/* ── 6. live tuition, AND THE CALENDAR THAT USED TO BE IN THE HERO ──
+          §5 puts this after Subjects: "what exactly, and how much?" is the
+          question a reader has AFTER "do you teach my subject?", not before
+          it. The compact block under the hero already answered "can I book?" */}
+      <Section
+        id="tuition"
+        title={t("home.tuitionSectionTitle")}
+        lede={t("home.tuitionSectionLede")}
+      >
+        {/* ── §67 — VALUE BEFORE PRICE ──────────────────────────────────
+            ⚠ ABOVE THE CARDS, NOT INSIDE THEM. A parent reading £169 needs to
+            already know it is not four Zoom hours. Repeating this list in each
+            card would be three copies of the same sentence competing with the
+            details that differ between programmes. */}
+        <div className="mb-6 rounded-lg border border-ink/10 bg-parchment-2/40 px-5 py-4">
+          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink/50">
+            {t("home.everyProgrammeIncludes")}
+          </p>
+          <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-ink/70">
+            {[
+              t("home.includesLiveTeaching"), t("home.includesPlatformAccess"), t("home.includesHomework"),
+              t("home.includesExamPractice"), t("home.includesMarkingFeedback"), t("home.includesProgressTracking"),
+            ].map((v) => (
+              <li key={v} className="flex items-center gap-1.5">
+                <span aria-hidden className="h-1 w-1 rounded-full bg-lime" />
+                {v}
+              </li>
+            ))}
+          </ul>
+        </div>
+        {showToggle && <div className="mb-6"><CurrencyToggle current={currency} /></div>}
+        <div className="grid gap-4 lg:grid-cols-3">
+          {chemistryCohorts.map((c) => (
+            <CohortCard key={c.slug} cohort={c} currency={currency} capacity={cohortCapacity.get(c.slug) ?? null} />
+          ))}
+        </div>
+        {/* ⚠ 1-TO-1 IS OFF-MENU (§24) — mentioned, deliberately not priced
+            beside the group cohorts, where it would undercut the offer. */}
+        <p className="mt-6 text-sm text-ink/60">
+          {t("home.lookingForSomethingElse")}{" "}
+          <Link href="/tuition" className="underline underline-offset-2 hover:text-ink">
+            {t("home.oneToOneChemistryLimitedBlocks")}
+          </Link>
+          .
+        </p>
+
+        {/* ⚠ THE ID TRAVELS WITH THE ELEMENT, NOT WITH THE HERO. qs() appends
+            #hero-calendar to the mode links, so the anchor must stay attached
+            to this div wherever it lives — renaming it would break a fragment
+            that is already generated in two places. */}
+        <div id="hero-calendar" className="mt-8">
+          {/* ── §9/§12 — WHAT YOU CAN BOOK, THEN THE CALENDAR ───────────────
+              The month grid used to lead this column, which asked a stranger
+              to interpret an empty August before seeing anything bookable.
+              The availability card states the next real session and what to do
+              about it; the grid stays underneath as supporting detail, reading
+              the same events. */}
+          <HeroAvailability
+            mode={heroMode}
+            /* ⚠ FORWARD-LOOKING, NOT THE VISIBLE MONTH — the same defect the
+               calendar shortcuts had. Fed the month window, this said "no
+               group lessons are scheduled" for the whole of August, because
+               teaching starts on 13 September. aheadEvents is the 120-day read
+               this page already performs, so it costs no extra query. */
+            events={calendarEvents.length > 0 ? calendarEvents : aheadEvents}
+            viewerTz={viewerTz}
+            now={new Date()}
+            capacity={heroCapacity}
+            group={group}
+            oneToOne={oneToOne}
+            /* ⚠ qs() ALREADY APPENDS #hero-calendar — adding it again produced
+               /?tuition=group#hero-calendar#hero-calendar, which is not a
+               valid fragment and would have scrolled nowhere. */
+            hrefFor={(m) => qs({ tuition: m })}
+          />
+
+          <div className="mt-4">
+          <HeroCalendarCard
+            events={calendarEvents}
+            state={calendarState}
+            todayISO={todayISO}
+            viewerTz={viewerTz}
+            openHref={openCalendarHref}
+            eventCount={calendarEvents.length}
+            next={nextLesson}
+          />
+          </div>
         </div>
       </Section>
 

@@ -333,8 +333,18 @@ console.log("\n=== 9. §2/§16 — hierarchy and spacing ===");
   t("⚠ §2 — and desktop padding is unchanged",
     !!heroPad && heroPad[3] === "16" && heroPad[4] === "12",
     heroPad?.[0] ?? "not found");
-  t("⚠ §12 — the hero columns are top-aligned, not centred",
-    /lg:items-start/.test(HOME) && !/lg:items-center/.test(HOME));
+  /**
+   * ⚠ §12 INVERTED WITH THE §5 REORDER. This required lg:items-start, because
+   * the hero was two columns and the invariant was "neither column hangs below
+   * the other". The calendar column has been moved out to the detailed tuition
+   * section, so the hero is a single column and there is nothing left to align
+   * against anything. What replaces it is the reason the alignment mattered:
+   * the headline must still start at the top of the hero, with no empty corner
+   * above it. Kept as an assertion rather than deleted — see home-calendar for
+   * the calendar's own new positional coverage.
+   */
+  t("⚠ §12 — the hero is a single column, so no column alignment is declared",
+    !/lg:grid-cols-\[minmax\(0,1fr\)_480px\]/.test(HOME));
   /**
    * ⚠ §3 — THE HEADLINE IS UNCHANGED, AND IT IS NOW TWO CATALOGUE ENTRIES.
    * The <br> split it across two text nodes, so the conversion keyed each half
@@ -419,8 +429,18 @@ console.log("\n=== 10. ⚠ the capabilities were RELOCATED, not duplicated ===")
   t("§7 — the lift is guarded for reduced motion", /motion-safe:hover:-translate-y-px/.test(PANEL));
   t("§17 — every pill is a real link with a visible focus state",
     /<Link/.test(PANEL) && /focus-visible:outline\b/.test(PANEL));
-  t("§14 — the panel follows the calendar in the DOM",
-    HOME.indexOf("<HeroCalendarCard") < HOME.indexOf("<ExplorePanel"));
+  /**
+   * ⚠ §14 INVERTED WITH THE §5 REORDER. It required the panel to follow the
+   * calendar, because both lived in the hero and a phone read them in DOM
+   * order: calendar → explore. The calendar is now in the detailed tuition
+   * section far below, so the panel necessarily PRECEDES it — and the rule
+   * §14 actually protects is that the phone meets the explore panel while
+   * still in the hero, rather than after a month grid it has to interpret.
+   */
+  t("⚠ §14 — the explore panel is still in the hero, and now precedes the calendar",
+    HOME.indexOf("<ExplorePanel") > 0
+    && HOME.indexOf("<ExplorePanel") < HOME.indexOf("<HeroCalendarCard")
+    && HOME.indexOf("<ExplorePanel") < HOME.indexOf("</header>"));
 }
 
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);
