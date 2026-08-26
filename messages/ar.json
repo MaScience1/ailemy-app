@@ -136,7 +136,7 @@
     "pillarTuitionBody": "دروس في مجموعات صغيرة ودروس فردية، بمواعيد حقيقية تطّلع عليها قبل أن تلتزم.",
     "pillarTuitionBodyBookable": "انضم إلى درس جماعي أو احجز درسًا فرديًا متاحًا.",
     "pillarTuitionEyebrow": "تعلّم مباشرة",
-    "productsTitle": "أربع طرق للاستفادة من Ailemy",
+    "productsTitle": "استكشف Ailemy",
     "progressLede": "لا يعطيك Ailemy درجة فحسب. يوضّح لك الدرجات التي حصلت عليها، والتي فاتتك، وما تفعله حيالها.",
     "progressTitle": "اعرف موقعك بالضبط.",
     "proofAnswersMarked": "إجابات مُصحَّحة",
@@ -188,7 +188,8 @@
     "tuitionSectionTitle": "تعلّم مباشرة مع Ailemy",
     "tuitionShort": "الدروس",
     "viewLiveTuition": "اطّلع على الدروس المباشرة",
-    "yourProgressIsSaved": "تقدّمك محفوظ"
+    "yourProgressIsSaved": "تقدّمك محفوظ",
+    "productsLede": "أربعة أشياء يمكنك فعلها اليوم، وما الذي تحصل عليه من كل واحد."
   },
   "language": {
     "__status": "UNREVIEWED",

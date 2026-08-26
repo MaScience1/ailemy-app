@@ -6,7 +6,6 @@ import { SmartLink as Link } from "@/components/i18n/SmartLink";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
 import { AnnouncementBar } from "@/components/public/AnnouncementBar";
-import { ExplorePanel } from "@/components/home/ExplorePanel";
 import { nextClass } from "@/lib/home/next-class";
 import { LIVE_CHIPS, SOON_CHIPS } from "@/lib/home/hero-chips";
 import { loadSubjectHoldings, holdingsLabel } from "@/lib/qualifications/tree";
@@ -580,22 +579,6 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
         </div>
       </section>
 
-      {/* ── THE RELOCATED CAPABILITIES (§1, §13, §14) ───────────────────
-          ⚠ OUT OF THE HERO, AND DIRECTLY ABOVE THE PILLARS IT INTRODUCES.
-          §14 wanted the phone to read hero → explore, and while the calendar
-          was the hero's second column that meant writing the panel after it.
-          Both have now left the hero (§5), so the same reading order comes
-          from section order instead: hero → compact tuition → explore → the
-          four products. The panel and the pillars are the same idea at two
-          levels of detail, so they belong adjacent rather than a screen apart.
-
-          ⚠ NO GRID PLACEMENT CLASSES. It carried lg:col-start-1 lg:row-start-2
-          to sit under the copy and beside the calendar. Against a non-grid
-          parent those are dead code that reads as intent. */}
-      <div className="mx-auto max-w-6xl px-6 pt-8 sm:pt-10">
-        <ExplorePanel signedIn={session !== null} />
-      </div>
-
       {/* ── 4a. the four products (§16, §17) ─────────────────────────────
           ============================================================
           ⚠ MOVED DIRECTLY BELOW THE HERO, AHEAD OF THE SUBJECT CARDS
@@ -617,7 +600,20 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           ⚠ EXAM BUILDER SAYS "IN DEVELOPMENT" HERE FOR THE SAME REASON ITS
           PAGE DOES. A pillar that reads like the other three would be the
           fourth working product this site does not have. */}
-      <Section id="products" title={t("home.productsTitle")}>
+      {/* ⚠ ONE EXPLORE SECTION, NOT TWO (§6). The ExplorePanel sat directly
+          above this and listed seven capabilities as pills — Lessons, Revision,
+          Past papers, Exam questions, Online marking, Progress tracking, Live
+          tuition — six of which resolved to a destination one of these four
+          cards already owns. Two adjacent surfaces answering "what is Ailemy"
+          is the repeated idea §6 forbids, and the pill list was the weaker of
+          the two: a label and an arrow, against a card that says what the thing
+          does and what you get. The cards win and the pills are gone.
+
+          ⚠ AND THE PILLS WERE NEVER TRANSLATED. Their labels and blurbs were
+          hardcoded English in CapabilityStrip.tsx, so /ar rendered "LESSONS →
+          REVISION → PAST PAPERS" in the middle of an Arabic page. Every string
+          in this section is a catalogue key. */}
+      <Section id="products" title={t("home.productsTitle")} lede={t("home.productsLede")}>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
             {

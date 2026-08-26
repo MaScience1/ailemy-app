@@ -416,8 +416,25 @@ console.log("\n=== 10. ⚠ the capabilities were RELOCATED, not duplicated ===")
   // §13 — one presentation, not two.
   t("⚠ §13 — the old band is gone from the page",
     !/What you can do on Ailemy/.test(HOME));
-  t("⚠ §13 — and the FOUR PRODUCT PILLARS are untouched",
-    HOME.includes('id="products"') && HOME.includes("Four ways to use Ailemy"));
+  /**
+   * ⚠ THIS WAS GREEN-BY-ABSENCE AND HAD BEEN FOR SOME TIME. It read
+   * HOME.includes("Four ways to use Ailemy") against the RAW file. The i18n
+   * conversion moved that string to the catalogue, so the only copy left in
+   * page.tsx was inside an explanatory COMMENT — and the assertion went on
+   * passing by matching its own prose. The section title was then changed to
+   * "Explore Ailemy" and this did not notice.
+   *
+   * Fixed the way this repo already fixes it elsewhere: check the page
+   * references the KEY, with comments stripped, AND that the catalogue carries
+   * a value for it. Both halves are needed — the key alone passes when the
+   * catalogue entry is deleted, the value alone passes when nothing renders it.
+   */
+  t("⚠ §13 — the four product pillars are still a section, keyed not literal",
+    code(HOME).includes('id="products"')
+    && code(HOME).includes('t("home.productsTitle")'),
+    code(HOME).includes('id="products"') ? "productsTitle key not referenced" : "no id=products");
+  t("⚠ §13 — …and the catalogue actually carries that title",
+    msg("home.productsTitle").length > 0, JSON.stringify(msg("home.productsTitle")));
   t("§13 — the strip component is retained, not deleted",
     existsSync("src/components/home/CapabilityStrip.tsx"));
 
@@ -445,13 +462,31 @@ console.log("\n=== 10. ⚠ the capabilities were RELOCATED, not duplicated ===")
    * ⚠ ORDER IS ASSERTED AGAINST BOTH NEIGHBOURS, NOT ONE. "after the hero"
    * alone is satisfied by a panel at the bottom of the page.
    */
-  const panelAt = HOME.indexOf("<ExplorePanel");
-  t("⚠ §14 — the explore panel is out of the hero",
-    panelAt > 0 && panelAt > HOME.indexOf("</header>"), panelAt);
-  t("⚠ §14 — …after the compact tuition block, and BEFORE the four pillars",
-    panelAt > HOME.indexOf('id="live-tuition-heading"')
-    && panelAt < HOME.indexOf('<Section id="products"'),
-    `panel ${panelAt}, tuition ${HOME.indexOf('id="live-tuition-heading"')}, products ${HOME.indexOf('<Section id="products"')}`);
+  /**
+   * ⚠ §14 HAS INVERTED A THIRD TIME, AND THIS TIME THE PANEL IS GONE.
+   * It required the panel to follow the calendar; then to precede it; then to
+   * sit out of the hero between compact tuition and the pillars. §6 has now
+   * removed the pill list outright — seven pills, six of whose destinations one
+   * of the four cards already owned, plus hardcoded English labels that
+   * rendered untranslated on /ar.
+   *
+   * The invariant that survives all four versions: ONE explore surface, met
+   * early, and it is the card grid. So that is what is asserted — the pill
+   * list is absent, and the grid holds the position the panel used to.
+   *
+   * ⚠ THE ABSENCE IS CHECKED ON STRIPPED SOURCE. The comment explaining the
+   * removal names ExplorePanel, so a raw-file search would match the very
+   * prose that documents it being gone — the same trap §13 above was caught in.
+   */
+  t("⚠ §6 — the seven-pill explore panel no longer renders on the homepage",
+    !code(HOME).includes("<ExplorePanel"), "still rendered");
+  const productsAt = code(HOME).indexOf('<Section id="products"');
+  t("⚠ §14 — the explore card grid is out of the hero",
+    productsAt > 0 && productsAt > code(HOME).indexOf("</header>"), productsAt);
+  t("⚠ §14 — …after the compact tuition block, and BEFORE the marking demo",
+    productsAt > code(HOME).indexOf('id="live-tuition-heading"')
+    && productsAt < code(HOME).indexOf('id="try"'),
+    `products ${productsAt}, tuition ${code(HOME).indexOf('id="live-tuition-heading"')}, try ${code(HOME).indexOf('id="try"')}`);
 }
 
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);
