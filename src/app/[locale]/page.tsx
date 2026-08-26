@@ -1379,10 +1379,34 @@ function CohortCard({
           {capacity.label}
         </p>
       )}
-      <p className="mt-4 text-sm leading-relaxed text-ink/70">{cohort.summary}</p>
-      <ul className="mt-4 flex-1 space-y-1 text-sm text-ink/65">
-        {cohort.features.map((f) => <li key={f}>· {f}</li>)}
-      </ul>
+      <p className="mt-4 flex-1 text-sm leading-relaxed text-ink/70">{cohort.summary}</p>
+      {/* ⚠ THE FEATURE BULLETS ARE NOT RENDERED (§6), AND THE COLUMN IS UNTOUCHED.
+          ============================================================
+          Read off the live page, all three cohorts, in English: every bullet
+          repeated something already on the card or in the band above it.
+
+            AS, 7 bullets — "4 live teaching hours a week, as 2 × 2-hour
+            sessions" and "Founding cohort capped at 20" restate the mono line
+            THREE lines above ("4 live hrs/week · 2 sessions · cap 20"); the
+            other five — platform, homework and exam practice, marking,
+            progress tracking, exam preparation — are the "Every programme
+            includes" band, verbatim in meaning.
+
+            Y11, 4 bullets — hours and "Maximum 20" restate the mono line,
+            "GCSE and International GCSE" restates the title, and only
+            "Board-specific practice" said anything new.
+
+            Y10, 3 bullets — hours and maximum restate the mono line,
+            "Foundation and building programme" restates its own summary.
+
+          That is 14 bullets carrying roughly one fact, at 1,688px across the
+          grid. The shared band states what every programme includes ONCE, which
+          is the point of having it; the card states what differs.
+
+          ⚠ cohorts.features IS STILL READ, STILL SEEDED AND STILL TYPED. This
+          removes a render, not a column — the one distinct bullet, Y11's
+          board-specific practice, is a content fix in the row rather than an
+          argument for keeping thirteen redundant ones on screen. */}
       {/* ⚠ §65 — A FULL COHORT OFFERS THE LIST INSTEAD OF A DEAD CTA. It does
           not promise a place, and it only appears when capacity is genuinely
           known to be full — never on an unread or empty figure. */}
