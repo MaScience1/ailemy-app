@@ -500,16 +500,13 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
             detailed tuition section below Subjects, which is the reader who
             actually wants to browse dates rather than decide. */}
 
-        {/* ── THE RELOCATED CAPABILITIES (§1, §13, §14) ───────────────────
-            ⚠ THE EXPLICIT GRID PLACEMENT IS GONE WITH THE GRID. This carried
-            lg:col-start-1 lg:row-start-2 to sit under the copy and beside the
-            calendar; with the hero a single column at every width, the same
-            position now comes from DOM order alone. Keeping the placement
-            classes against a non-grid parent would be dead code that reads as
-            intent. */}
-        <div className="lg:pt-10">
-          <ExplorePanel signedIn={session !== null} />
-        </div>
+        {/* ⚠ THE EXPLORE PANEL IS NO LONGER IN THE HERO EITHER (§5). It was the
+            last thing between the hero copy and the compact tuition block, and
+            it was 543px of it on a phone — measured, removing it moves that
+            block from y=1310 to y=767. It now opens the "explore" run directly
+            above the four product pillars it introduces, which is where the
+            §5 order puts Explore Ailemy: after compact tuition, not inside the
+            hero. */}
         </div>
       </header>
 
@@ -582,6 +579,22 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           </p>
         </div>
       </section>
+
+      {/* ── THE RELOCATED CAPABILITIES (§1, §13, §14) ───────────────────
+          ⚠ OUT OF THE HERO, AND DIRECTLY ABOVE THE PILLARS IT INTRODUCES.
+          §14 wanted the phone to read hero → explore, and while the calendar
+          was the hero's second column that meant writing the panel after it.
+          Both have now left the hero (§5), so the same reading order comes
+          from section order instead: hero → compact tuition → explore → the
+          four products. The panel and the pillars are the same idea at two
+          levels of detail, so they belong adjacent rather than a screen apart.
+
+          ⚠ NO GRID PLACEMENT CLASSES. It carried lg:col-start-1 lg:row-start-2
+          to sit under the copy and beside the calendar. Against a non-grid
+          parent those are dead code that reads as intent. */}
+      <div className="mx-auto max-w-6xl px-6 pt-8 sm:pt-10">
+        <ExplorePanel signedIn={session !== null} />
+      </div>
 
       {/* ── 4a. the four products (§16, §17) ─────────────────────────────
           ============================================================

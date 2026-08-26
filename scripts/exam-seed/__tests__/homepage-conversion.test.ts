@@ -430,17 +430,28 @@ console.log("\n=== 10. ⚠ the capabilities were RELOCATED, not duplicated ===")
   t("§17 — every pill is a real link with a visible focus state",
     /<Link/.test(PANEL) && /focus-visible:outline\b/.test(PANEL));
   /**
-   * ⚠ §14 INVERTED WITH THE §5 REORDER. It required the panel to follow the
-   * calendar, because both lived in the hero and a phone read them in DOM
-   * order: calendar → explore. The calendar is now in the detailed tuition
-   * section far below, so the panel necessarily PRECEDES it — and the rule
-   * §14 actually protects is that the phone meets the explore panel while
-   * still in the hero, rather than after a month grid it has to interpret.
+   * ⚠ §14 HAS NOW INVERTED TWICE, AND THE RULE UNDERNEATH NEVER MOVED.
+   * Originally: the panel must FOLLOW the calendar, because both were in the
+   * hero and a phone read them in DOM order. Then the calendar left the hero,
+   * so the panel necessarily preceded it. Now the panel has left the hero too,
+   * and sits between the compact tuition block and the four product pillars.
+   *
+   * Through all three the invariant is the same: a phone must meet the explore
+   * panel EARLY — before the academic explanations — and adjacent to the
+   * pillars, which are the same idea at more detail. What changed each time is
+   * which neighbours express "early", so the assertion names them explicitly
+   * rather than pinning one relative pair that keeps going stale.
+   *
+   * ⚠ ORDER IS ASSERTED AGAINST BOTH NEIGHBOURS, NOT ONE. "after the hero"
+   * alone is satisfied by a panel at the bottom of the page.
    */
-  t("⚠ §14 — the explore panel is still in the hero, and now precedes the calendar",
-    HOME.indexOf("<ExplorePanel") > 0
-    && HOME.indexOf("<ExplorePanel") < HOME.indexOf("<HeroCalendarCard")
-    && HOME.indexOf("<ExplorePanel") < HOME.indexOf("</header>"));
+  const panelAt = HOME.indexOf("<ExplorePanel");
+  t("⚠ §14 — the explore panel is out of the hero",
+    panelAt > 0 && panelAt > HOME.indexOf("</header>"), panelAt);
+  t("⚠ §14 — …after the compact tuition block, and BEFORE the four pillars",
+    panelAt > HOME.indexOf('id="live-tuition-heading"')
+    && panelAt < HOME.indexOf('<Section id="products"'),
+    `panel ${panelAt}, tuition ${HOME.indexOf('id="live-tuition-heading"')}, products ${HOME.indexOf('<Section id="products"')}`);
 }
 
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);
