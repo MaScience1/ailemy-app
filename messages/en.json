@@ -282,12 +282,9 @@
   "tuition": {
     "aMonth": "a month",
     "aMonthForMonths": "{amount} a month · {months} months",
-    "approxSaving": "~{pct}% saving",
     "askAboutAvailability": "Ask about availability →",
     "askAboutOneToOneTimes": "Ask about 1-to-1 times",
     "availabilityRecheckedOnBooking": "Availability is re-checked the moment you book, so a time can be taken while this list is open.",
-    "bestValue": "Best value",
-    "bestValueOver": "Best value over {months} months",
     "bySubjectHeading": "Tuition by subject",
     "calendarBlurbGroup": "Every scheduled session across the live cohorts. Times in Doha, and in your own timezone where we know it.",
     "calendarBlurbOneToOne": "Published 1-to-1 availability. Times in Doha, and in your own timezone where we know it.",
