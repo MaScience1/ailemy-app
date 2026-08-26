@@ -72,7 +72,7 @@
     "continueShort": "Continue",
     "continueStudying": "Continue studying",
     "everyProgrammeIncludes": "Every programme includes",
-    "examBoardDisclaimer": "Chemistry teaching and mark-scheme rulings are prepared by a specialist chemistry teacher working from the published Edexcel mark schemes. Ailemy is not affiliated with or endorsed by any examination board.",
+    "examBoardDisclaimer": "Ailemy is not affiliated with or endorsed by any examination board.",
     "exploreDefaultBlurb": "Choose a feature to explore Ailemy.",
     "exploreEyebrow": "Explore Ailemy",
     "exploreHeading": "Everything you need to learn, practise and improve.",
@@ -166,7 +166,7 @@
     "teacherCardDesignedTitle": "Designed around the exam",
     "teacherCardMarkSchemesBody": "Ailemy's marking rules are derived from published examination mark schemes — not from a general model's opinion of your answer.",
     "teacherCardMarkSchemesTitle": "Built from real mark schemes",
-    "teacherCardReviewedBody": "Automated marking rules are human-reviewed before they are used to mark anyone's work.",
+    "teacherCardReviewedBody": "Marking rules are written and reviewed by a specialist chemistry teacher before they mark anyone’s work.",
     "teacherCardReviewedTitle": "Reviewed by subject specialists",
     "teachersTitle": "Built by teachers who understand the exam.",
     "trustBuiltBySpecialists": "Built by subject specialists",
@@ -175,7 +175,7 @@
     "trustProgressTracked": "Progress tracked",
     "trustSpecificationMapped": "Specification-mapped",
     "trustStripLabel": "What Ailemy is",
-    "tryLede": "This is how Ailemy marks — against the points a real mark scheme awards, with the reason for each one.",
+    "tryLede": "Write an answer below and watch it marked, point by point.",
     "tryTitle": "Try it. Write an answer and see it marked.",
     "tuitionSectionLede": "Small-group science tuition built around the exact specification and exam requirements.",
     "tuitionSectionTitle": "Learn live with Ailemy",
@@ -278,7 +278,9 @@
     "sampleMarkingDisclaimer": "Sample marking — a fixed mark scheme, shown to demonstrate how Ailemy marks. Marking inside your account runs against the full scheme for the paper you sat.",
     "srAwarded": "Awarded: ",
     "srNotAwarded": "Not awarded: ",
-    "yourAnswerLabel": "Your answer"
+    "yourAnswerLabel": "Your answer",
+    "resultPending": "Your result",
+    "resultPendingBody": "Write an answer above and it is marked here, point by point."
   },
   "tuition": {
     "aMonth": "a month",

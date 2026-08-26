@@ -79,7 +79,7 @@
     "continueShort": "متابعة",
     "continueStudying": "تابع الدراسة",
     "everyProgrammeIncludes": "كل برنامج يشمل",
-    "examBoardDisclaimer": "يُعدّ تدريسَ الكيمياء وقراراتِ التصحيح معلّمُ كيمياء متخصص، اعتمادًا على نماذج إجابة Edexcel المنشورة. Ailemy غير تابع لأي مجلس امتحانات ولا معتمَد منه.",
+    "examBoardDisclaimer": "‏Ailemy غير تابعة لأي هيئة امتحانات ولا معتمدة منها.",
     "exploreDefaultBlurb": "اختر ميزة لتستكشف Ailemy.",
     "exploreEyebrow": "استكشف Ailemy",
     "exploreHeading": "كل ما تحتاجه للتعلّم والتدرّب والتقدّم.",
@@ -173,7 +173,7 @@
     "teacherCardDesignedTitle": "مصمَّم حول الامتحان",
     "teacherCardMarkSchemesBody": "قواعد التصحيح في Ailemy مستخلصة من نماذج الإجابة الرسمية المنشورة — لا من رأي نموذج ذكاء اصطناعي عام في إجابتك.",
     "teacherCardMarkSchemesTitle": "مبني على نماذج إجابة حقيقية",
-    "teacherCardReviewedBody": "تُراجَع قواعد التصحيح الآلي بشريًا قبل استخدامها في تصحيح عمل أي طالب.",
+    "teacherCardReviewedBody": "يكتب قواعدَ التصحيح ويراجعها معلّم كيمياء متخصص قبل أن تُصحَّح بها أعمال أي أحد.",
     "teacherCardReviewedTitle": "مراجَعة من متخصصين في المادة",
     "teachersTitle": "من إعداد معلّمين يفهمون الامتحان.",
     "trustBuiltBySpecialists": "من إعداد متخصصين في المادة",
@@ -182,7 +182,7 @@
     "trustProgressTracked": "تتبُّع التقدّم",
     "trustSpecificationMapped": "مرتبط بالمنهج المقرر",
     "trustStripLabel": "ما هو Ailemy",
-    "tryLede": "هكذا يصحّح Ailemy — وفق النقاط التي يمنحها نموذج الإجابة الحقيقي، مع سبب كل نقطة.",
+    "tryLede": "اكتب إجابة في الأسفل وشاهد تصحيحها نقطة بنقطة.",
     "tryTitle": "جرّبها. اكتب إجابة وشاهد تصحيحها.",
     "tuitionSectionLede": "دروس علوم في مجموعات صغيرة مبنية على المنهج المقرر ومتطلبات الامتحان بالتحديد.",
     "tuitionSectionTitle": "تعلّم مباشرة مع Ailemy",
@@ -290,7 +290,9 @@
     "sampleMarkingDisclaimer": "تصحيح تجريبي — نموذج تصحيح ثابت، معروض لتوضيح كيف تصحّح Ailemy. أما التصحيح داخل حسابك فيجري وفق النموذج الكامل للورقة التي أدّيتها.",
     "srAwarded": "مُنحت النقطة: ",
     "srNotAwarded": "لم تُمنح النقطة: ",
-    "yourAnswerLabel": "إجابتك"
+    "yourAnswerLabel": "إجابتك",
+    "resultPending": "نتيجتك",
+    "resultPendingBody": "اكتب إجابة في الأعلى وسيجري تصحيحها هنا، نقطة بنقطة."
   },
   "tuition": {
     "__status": "UNREVIEWED",

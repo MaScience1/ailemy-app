@@ -653,7 +653,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
               key={p.href}
               href={p.href}
               data-cta={p.cta}
-              className="flex h-full flex-col justify-between gap-4 rounded-xl border border-ink/10 bg-snow p-5 transition-all duration-300 hover:border-ink/30 motion-safe:hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              className="flex h-full flex-col justify-between gap-4 rounded-lg border border-ink/10 bg-snow p-5 sm:p-6 transition-all duration-300 hover:border-ink/30 motion-safe:hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
             >
               <div>
                 <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/45">
@@ -731,7 +731,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
             [t("home.stepGetMarked"), t("home.stepGetMarkedBody")],
             [t("home.stepImprove"), t("home.stepImproveBody")],
           ].map(([step, body], i) => (
-            <li key={step} className="rounded-lg border border-ink/10 bg-snow p-6">
+            <li key={step} className="rounded-lg border border-ink/10 bg-snow p-5 sm:p-6">
               <span className="font-mono text-[11px] text-ink/40">0{i + 1}</span>
               <h3 className="font-display mt-3 text-xl font-medium">{step}</h3>
               <p className="mt-2 text-sm leading-relaxed text-ink/70">{body}</p>
@@ -781,7 +781,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
       >
         <div className="grid gap-4 lg:grid-cols-3">
           {/* ── 1. sit the paper ─────────────────────────────────────── */}
-          <div className="rounded-lg border border-ink/10 bg-snow p-5">
+          <div className="rounded-lg border border-ink/10 bg-snow p-5 sm:p-6">
             <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/40">
               {t("home.proofSitEyebrow")}
             </p>
@@ -807,7 +807,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           </div>
 
           {/* ── 2. where the marks went ──────────────────────────────── */}
-          <div className="rounded-lg border border-ink/10 bg-snow p-5">
+          <div className="rounded-lg border border-ink/10 bg-snow p-5 sm:p-6">
             <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/40">
               {t("home.proofMarksEyebrow")}
             </p>
@@ -837,7 +837,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
           </div>
 
           {/* ── 3. what to do next ───────────────────────────────────── */}
-          <div className="rounded-lg border border-ink/10 bg-snow p-5">
+          <div className="rounded-lg border border-ink/10 bg-snow p-5 sm:p-6">
             <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-ink/40">
               {t("home.proofNextEyebrow")}
             </p>
@@ -1069,7 +1069,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
                 <Link
                   href={a.href}
                   data-cta={a.cta}
-                  className="group flex h-full flex-col justify-between gap-4 rounded-xl border border-ink/10 bg-snow p-5 transition-all duration-200 ease-out hover:border-ink/30 motion-safe:hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                  className="group flex h-full flex-col justify-between gap-4 rounded-lg border border-ink/10 bg-snow p-5 sm:p-6 transition-all duration-200 ease-out hover:border-ink/30 motion-safe:hover:-translate-y-0.5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                 >
                   <div>
                     <h3 className="font-display text-lg font-medium tracking-tight">{a.who}</h3>
@@ -1163,7 +1163,7 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
             [t("home.teacherCardReviewedTitle"), t("home.teacherCardReviewedBody")],
             [t("home.teacherCardDesignedTitle"), t("home.teacherCardDesignedBody")],
           ].map(([title, body]) => (
-            <div key={title} className="rounded-lg border border-ink/10 bg-snow p-6">
+            <div key={title} className="rounded-lg border border-ink/10 bg-snow p-5 sm:p-6">
               <h3 className="font-display text-lg font-medium tracking-tight">{title}</h3>
               <p className="mt-2 text-sm leading-relaxed text-ink/70">{body}</p>
             </div>
@@ -1422,7 +1422,7 @@ function CohortCard({
 
   if (full) {
     return (
-      <div className="flex flex-col rounded-lg border border-ink/10 bg-snow p-5 sm:p-7">
+      <div className="flex flex-col rounded-lg border border-ink/10 bg-snow p-5 sm:p-6">
         {body}
         <WaitlistForm cohortSlug={cohort.slug} />
       </div>
@@ -1435,7 +1435,7 @@ function CohortCard({
       dataCta="chemistry_course"
       ariaLabel={`${cta.label} — ${cohort.title}`}
       cta={cta.label}
-      className="p-5 sm:p-7"
+      className="p-5 sm:p-6"
     >
       {body}
     </InteractiveCard>

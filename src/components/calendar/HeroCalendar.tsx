@@ -57,7 +57,7 @@ export function HeroCalendarCard({
             ? `Open the Ailemy calendar. ${eventCount} ${eventCount === 1 ? "lesson" : "lessons"} in view this month.`
             : "Open the Ailemy calendar."
         }
-        className="group block rounded-xl border border-ink/12 bg-snow p-4 shadow-[0_1px_3px_rgba(15,20,25,0.06)]
+        className="group block rounded-lg border border-ink/12 bg-snow p-4 shadow-[0_1px_3px_rgba(15,20,25,0.06)]
           transition-[transform,box-shadow] duration-150 ease-out
           hover:-translate-y-0.5 hover:shadow-[0_8px_28px_-12px_rgba(15,20,25,0.28)]
           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink

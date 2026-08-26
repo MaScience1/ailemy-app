@@ -97,7 +97,7 @@ export async function HeroAvailability({
   };
 
   return (
-    <div className="rounded-xl border border-ink/10 bg-snow p-5">
+    <div className="rounded-lg border border-ink/10 bg-snow p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="font-display text-xl font-medium tracking-tight">
