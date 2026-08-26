@@ -7,7 +7,7 @@ import { resolvePrice } from "./stripe-products";
  * be two formatters that drift.
  */
 import { formatMinor } from "./pricing-math";
-export { formatMinor, savingAgainst, cheapestFor, type Saving } from "./pricing-math";
+export { formatMinor, savingAgainst, type Saving } from "./pricing-math";
 import type { Course, Mode, Package, Currency, PriceView } from "./tuition-types";
 import { PACKAGES_FOR } from "./tuition-types";
 

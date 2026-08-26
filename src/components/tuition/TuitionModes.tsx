@@ -5,7 +5,7 @@ import {
 } from "@/lib/tuition/pricing";
 import { getTranslations } from "next-intl/server";
 import { SmartLink as Link } from "@/components/i18n/SmartLink";
-import { savingAgainst, cheapestFor } from "@/lib/tuition/pricing-math";
+import { savingAgainst } from "@/lib/tuition/pricing-math";
 import { ONE_TO_ONE, subjectColour, subjectVars } from "@/lib/design/subject-colours";
 import type { Currency } from "@/lib/public/currency";
 import type { Cohort } from "@/lib/public/catalogue";
@@ -197,17 +197,16 @@ async function GroupProgramme({
     ? savingAgainst(normalMinor, selectedMinor) : null;
 
   /**
-   * ⚠ THE BADGE MUST EARN ITSELF (§8 of the guards). On this catalogue three
-   * 3-month AS packages cover nine months for 6,900 QAR against 7,000 for the
-   * academic year — so at nine months the academic year is NOT best value and
-   * gets no badge. cheapestFor() decides; nothing here assumes.
+   * ⚠ THERE IS NO "BEST VALUE" ANYWHERE ON THIS CARD, BY FOUNDER RULING.
+   * cheapestFor() used to decide which commitment earned the claim, and it was
+   * honest arithmetic — it correctly refused to badge the AS academic year,
+   * because 7,000 QAR loses to three 3-month blocks at 3 x 2,300 = 6,900. The
+   * ruling is that the site should not be making the comparison at all while
+   * that price stands. The helper is deleted, not left unused: an unused
+   * "which is cheapest" function beside a price list is an invitation to wire
+   * it back up. The saving line below stays — "Save 250 QAR" is a subtraction,
+   * not a judgement. See COMMITMENT_TABS_NOTE.md.
    */
-  const best = cheapestFor(months, {
-    monthly: monthlyMinor ?? undefined,
-    three_month: amount("three_month") ?? undefined,
-    academic_year: amount("academic_year") ?? undefined,
-  });
-
   const perMonthMinor = commitment === "monthly" ? monthlyMinor
     : selectedMinor !== null
       ? Math.round(selectedMinor / (commitment === "three_month" ? 3 : Math.max(1, months)))
@@ -313,11 +312,6 @@ async function GroupProgramme({
                 ? `${fmtMoney(perMonthMinor, cur)} a month · ${commitment === "three_month" ? 3 : months} months`
                 : `${commitment === "three_month" ? 3 : months} months upfront`}
           </p>
-          {best === commitment && (
-            <p className="font-mono mt-1 text-[10px] uppercase tracking-[0.16em] text-[var(--subject-text)]">
-              {t("tuition.bestValueOver", { months })}
-            </p>
-          )}
           {/* §18/§47 — the real dates, never "12 months". */}
           {commitment === "academic_year" && window.firstClassOn && window.lastClassOn && (
             <p className="mt-1 text-xs text-ink/55">

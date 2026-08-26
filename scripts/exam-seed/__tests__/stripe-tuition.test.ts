@@ -21,7 +21,7 @@ import { createHmac } from "node:crypto";
 import {
   selectApprovedPrice, EXPECTED_KIND, type SelectableProduct,
 } from "../../../src/lib/tuition/price-selection.ts";
-import { formatMinor, savingAgainst, cheapestFor } from "../../../src/lib/tuition/pricing-math.ts";
+import { formatMinor, savingAgainst } from "../../../src/lib/tuition/pricing-math.ts";
 import { grantFor, idempotencyKeyFor } from "../../../src/lib/tuition/entitlements.ts";
 import {
   parseSelection, packageFitsMode, PACKAGES_FOR, COURSES, MODES, PACKAGES, CURRENCIES,
@@ -309,18 +309,6 @@ console.log("\n=== 8. GUARD 8 — savings are derived, never asserted ===");
    */
   t("⚠ a package that is not cheaper yields NO saving", savingAgainst(230000, 255000) === null);
   t("⚠ and an equal price yields no saving either", savingAgainst(230000, 230000) === null);
-
-  /**
-   * ⚠ THE ACADEMIC YEAR DOES NOT WIN ON THIS CATALOGUE AT NINE MONTHS, and the
-   * badge must follow the arithmetic rather than the intuition: three 3-month
-   * packages cover nine months of AS for 6,900 against 7,000.
-   */
-  const AS = { monthly: 85000, three_month: 230000, academic_year: 700000 };
-  t("⚠ at 9 months the AS academic year is NOT best value", cheapestFor(9, AS) === "three_month",
-    String(cheapestFor(9, AS)));
-  t("⚠ at 12 months it is", cheapestFor(12, AS) === "academic_year", String(cheapestFor(12, AS)));
-  t("a tie awards nothing", cheapestFor(3, { monthly: 100000, three_month: 300000 }) === null);
-  t("one option alone is not 'best value'", cheapestFor(9, { monthly: 85000 }) === null);
 }
 
 // ============================================================================
