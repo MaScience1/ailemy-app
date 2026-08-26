@@ -115,7 +115,23 @@ import {
 // ============================================================================
 
 type PaperCodeInfo = {
-  unitNumber: number;
+  /**
+   * ⚠ OPTIONAL, AND ITS ABSENCE IS THE WHOLE BRANCH.
+   * ==========================================================================
+   * IAL is the only qualification here where the paper code IS the unit:
+   * WCH11..WCH16 are units 1..6, one code per unit, one entry ("01") each.
+   *
+   * Nothing else works that way. Read off the corpus:
+   *     8CH0  entries 01 02            GCE AS      — two papers, one code
+   *     9CH0  entries 01 02 03         GCE A level — three papers, one code
+   *     1CH0  entries 1F 1H 2F 2H      GCSE        — two papers x two tiers
+   *     4CH1  entries 1C 1CR 2C 2CR    IGCSE       — two papers x two variants
+   *
+   * A single unitNumber cannot describe a code that spans two to four distinct
+   * papers, so all fourteen new codes omit it. Absent means: resolve the course
+   * directly by slug, write NULL unit_id, and slug the paper by its entry.
+   */
+  unitNumber?: number;
   courseSlug: string;
   level: string;
 };
@@ -276,6 +292,98 @@ export const SUBJECTS: Record<string, SubjectConfig> = {
       5: { durationMinutes: 105, totalMarks: 90, verified: true },
       6: { durationMinutes: 80, totalMarks: 50, verified: true },
     },
+  },
+  // ==========================================================================
+  // BATCH 1 — GCE, GCSE and International GCSE. Every code here is UNIT-LESS.
+  // ==========================================================================
+  // ⚠ ONE CONFIG PER (QUALIFICATION, SUBJECT), NOT PER COURSE. A GCE config
+  //   holds both its AS and its A-level code, because one --root walk over
+  //   folder 2's Chemistry tree contains both and each code names its own
+  //   courseSlug. Ten configs, fourteen codes, fourteen courses.
+  //
+  // ⚠ unitNumber IS OMITTED THROUGHOUT, and that is read off the corpus rather
+  //   than assumed: 8CH0 sits entries 01/02, 9CH0 sits 01/02/03, 1CH0 sits
+  //   1F/1H/2F/2H and 4CH1 sits 1C/1CR/2C/2CR. One code spans two to four
+  //   distinct papers, so no single unit number describes it.
+  //
+  // ⚠ unitMetadata IS EMPTY, DELIBERATELY. duration_minutes and total_marks
+  //   import as NULL. A GCSE Foundation and Higher paper of the same code do
+  //   not share a mark total, so any per-code figure would be wrong for half
+  //   the rows it wrote. Absent is honest; invented is not.
+
+  "gce-chemistry": {
+    label: "Edexcel GCE Chemistry (2015)",
+    paperCodes: {
+      "8CH0": { courseSlug: "edexcel-gce-as-chemistry", level: "AS" },
+      "9CH0": { courseSlug: "edexcel-gce-a2-chemistry", level: "A2" },
+    },
+    unitMetadata: {},
+  },
+
+  "gce-physics": {
+    label: "Edexcel GCE Physics (2015)",
+    paperCodes: {
+      "8PH0": { courseSlug: "edexcel-gce-as-physics", level: "AS" },
+      "9PH0": { courseSlug: "edexcel-gce-a2-physics", level: "A2" },
+    },
+    unitMetadata: {},
+  },
+
+  // ⚠ SPEC A IS 8BN0/9BN0 AND SPEC B IS 8BI0/9BI0 — confirmed from the mark
+  //   schemes themselves ("GCE in Biology Spec A (8BN0)", "Spec B (8BI0)"),
+  //   not from the code letters, which read the other way round.
+  "gce-biology-a": {
+    label: "Edexcel GCE Biology A (2015)",
+    paperCodes: {
+      "8BN0": { courseSlug: "edexcel-gce-as-biology-a", level: "AS" },
+      "9BN0": { courseSlug: "edexcel-gce-a2-biology-a", level: "A2" },
+    },
+    unitMetadata: {},
+  },
+
+  "gce-biology-b": {
+    label: "Edexcel GCE Biology B (2015)",
+    paperCodes: {
+      "8BI0": { courseSlug: "edexcel-gce-as-biology-b", level: "AS" },
+      "9BI0": { courseSlug: "edexcel-gce-a2-biology-b", level: "A2" },
+    },
+    unitMetadata: {},
+  },
+
+  "gcse-chemistry": {
+    label: "Edexcel GCSE (9-1) Chemistry",
+    paperCodes: { "1CH0": { courseSlug: "edexcel-gcse-chemistry", level: "GCSE" } },
+    unitMetadata: {},
+  },
+
+  "gcse-biology": {
+    label: "Edexcel GCSE (9-1) Biology",
+    paperCodes: { "1BI0": { courseSlug: "edexcel-gcse-biology", level: "GCSE" } },
+    unitMetadata: {},
+  },
+
+  "gcse-physics": {
+    label: "Edexcel GCSE (9-1) Physics",
+    paperCodes: { "1PH0": { courseSlug: "edexcel-gcse-physics", level: "GCSE" } },
+    unitMetadata: {},
+  },
+
+  "igcse-chemistry": {
+    label: "Edexcel International GCSE (9-1) Chemistry",
+    paperCodes: { "4CH1": { courseSlug: "edexcel-igcse-chemistry", level: "IGCSE" } },
+    unitMetadata: {},
+  },
+
+  "igcse-biology": {
+    label: "Edexcel International GCSE (9-1) Biology",
+    paperCodes: { "4BI1": { courseSlug: "edexcel-igcse-biology", level: "IGCSE" } },
+    unitMetadata: {},
+  },
+
+  "igcse-physics": {
+    label: "Edexcel International GCSE (9-1) Physics",
+    paperCodes: { "4PH1": { courseSlug: "edexcel-igcse-physics", level: "IGCSE" } },
+    unitMetadata: {},
   },
 };
 
@@ -661,7 +769,13 @@ function parseFile(
 // CATALOGUE RESOLUTION
 // ============================================================================
 
-type Resolved = { unitId: string; courseId: string };
+/**
+ * ⚠ unitId IS NULLABLE. past_papers.unit_id has been nullable since 0007
+ * ("unit_id uuid REFERENCES units(id) ON DELETE SET NULL"), so a unit-less
+ * paper writes NULL rather than pointing at a units row invented to satisfy a
+ * lookup. No units rows are created for GCE, GCSE or IGCSE.
+ */
+type Resolved = { unitId: string | null; courseId: string };
 
 /**
  * Turn every paper code the run actually needs into real ids, and abort if any
@@ -678,13 +792,54 @@ async function loadCatalogue(
   needed: Set<string>,
   config: SubjectConfig,
 ): Promise<Map<string, Resolved>> {
-  const { data, error } = await db
-    .from("units")
-    .select("id, code, name, course:courses(id, slug, level)")
-    .in("code", [...needed]);
+  /**
+   * ⚠ TWO RESOLUTION PATHS, CHOSEN BY WHETHER THE CODE DECLARES A UNIT.
+   * ==========================================================================
+   * UNIT PATH (IAL, unchanged): units.code holds the paper code, the unit
+   *   carries its own course_id, and the declared unit number is asserted
+   *   against units.name. All 233 existing rows came through here.
+   *
+   * COURSE PATH (GCE / GCSE / IGCSE): there is no unit and none is invented.
+   *   The course is read straight from courses.slug and unitId is NULL.
+   *   The unit-number assertion does not run — there is no unit to assert.
+   *
+   * The split is on config, not on data: a code either declares unitNumber or
+   * it does not. That keeps the IAL path byte-identical rather than making it a
+   * special case of a looser one.
+   */
+  const unitCodes = [...needed].filter((c) => config.paperCodes[c]?.unitNumber !== undefined);
+  const courseOnlyCodes = [...needed].filter((c) => config.paperCodes[c]?.unitNumber === undefined);
+
+  const { data, error } = unitCodes.length
+    ? await db
+        .from("units")
+        .select("id, code, name, course:courses(id, slug, level)")
+        .in("code", unitCodes)
+    : { data: [], error: null };
 
   if (error) {
     fail(`Could not read units from the database: ${error.message}`);
+  }
+
+  /**
+   * ⚠ COURSES ARE READ BY SLUG, AND ONLY THE SLUGS THIS RUN NEEDS. The declared
+   * level is then asserted against the row exactly as the unit path does, so a
+   * course whose level disagrees with the config stops the run rather than
+   * importing papers under the wrong qualification.
+   */
+  const wantedCourseSlugs = [...new Set(courseOnlyCodes.map((c) => config.paperCodes[c]!.courseSlug))];
+  const courseBySlug = new Map<string, { id: string; slug: string; level: string }>();
+  if (wantedCourseSlugs.length) {
+    const { data: courseRows, error: courseError } = await db
+      .from("courses")
+      .select("id, slug, level")
+      .in("slug", wantedCourseSlugs);
+    if (courseError) {
+      fail(`Could not read courses from the database: ${courseError.message}`);
+    }
+    for (const row of (courseRows ?? []) as { id: string; slug: string; level: string }[]) {
+      courseBySlug.set(row.slug, row);
+    }
   }
 
   type Row = {
@@ -716,6 +871,29 @@ async function loadCatalogue(
       problems.push(`${code}: not a paper code this subject declares`);
       continue;
     }
+
+    /**
+     * ⚠ THE COURSE PATH. No units lookup, no unit-number assertion, NULL
+     * unitId. The level check is kept because it is the one assertion that
+     * still means something without a unit: it catches a GCSE code pointed at
+     * an AS course.
+     */
+    if (expected.unitNumber === undefined) {
+      const course = courseBySlug.get(expected.courseSlug);
+      if (!course) {
+        problems.push(`${code}: no course row with slug ${expected.courseSlug}`);
+        continue;
+      }
+      if (course.level !== expected.level) {
+        problems.push(
+          `${code}: expected level ${expected.level}, database says ${course.level}`,
+        );
+        continue;
+      }
+      resolved.set(code, { unitId: null, courseId: course.id });
+      continue;
+    }
+
     const row = byCode.get(code);
     if (!row) {
       problems.push(`${code}: no unit row with that code`);
@@ -764,17 +942,20 @@ async function loadCatalogue(
 type PlannedRow = {
   id: string;
   courseId: string;
-  unitId: string;
+  /** NULL for GCE / GCSE / IGCSE — no units row is created for them. */
+  unitId: string | null;
   code: string;
-  unitNumber: number;
+  /** undefined for a unit-less code; see PaperCodeInfo.unitNumber. */
+  unitNumber: number | undefined;
   entry: string;
   slug: string;
   session: string;
   year: number;
   paperCode: string;
   paperName: string;
-  durationMinutes: number;
-  totalMarks: number;
+  /** NULL where unitMetadata has no entry — recorded as absent, never guessed. */
+  durationMinutes: number | null;
+  totalMarks: number | null;
   metadataVerified: boolean;
   questionPaper: ParsedFile;
   markScheme: ParsedFile;
@@ -899,20 +1080,47 @@ function planRows(
       continue;
     }
     const { unitNumber } = codeInfo;
-    const meta = config.unitMetadata[unitNumber];
-    if (!meta) {
+    const session = SESSION_BY_MONTH[questionPaper.month];
+
+    /**
+     * ⚠ DURATION AND MARKS ARE NULL FOR A UNIT-LESS CODE, NOT INVENTED.
+     * ========================================================================
+     * unitMetadata is keyed by unit number and there is no unit, so there is no
+     * entry to read and none is added. past_papers.duration_minutes and
+     * total_marks are both nullable (0007) with a CHECK that only bites on a
+     * non-null non-positive value (0015), so NULL is a legal, honest "not
+     * recorded". A GCSE Foundation and Higher paper do not even share a mark
+     * total, so a per-code figure would be wrong for half the rows it wrote.
+     */
+    const meta = unitNumber === undefined ? null : config.unitMetadata[unitNumber];
+    if (unitNumber !== undefined && !meta) {
       for (const f of all) {
         skips.push({ path: f.relPath, reason: `no duration/marks configured for unit ${unitNumber}` });
       }
       continue;
     }
 
-    const session = SESSION_BY_MONTH[questionPaper.month];
-    const slug = `unit-${unitNumber}-${slugify(session)}-${questionPaper.year}`;
+    /**
+     * ⚠ TWO SLUG SCHEMES, AND THE IAL ONE IS UNTOUCHED.
+     * ========================================================================
+     * IAL keeps unit-<n>-<session>-<year>. All 233 existing rows carry that
+     * shape and past_papers.slug is user-facing at /past-papers/<slug>, so
+     * changing it would break live URLs for a rename.
+     *
+     * A unit-less code needs the ENTRY in the slug or its papers collide: 9CH0
+     * sits entries 01, 02 and 03 in one session, and 1CH0 sits 1F, 1H, 2F and
+     * 2H. Under the IAL scheme all three 9CH0 papers would mint the same slug
+     * and the clash handler below would refuse all of them — Foundation and
+     * Higher are two different papers, not an ambiguity.
+     */
+    const slug = unitNumber === undefined
+      ? `${questionPaper.code}-${questionPaper.entry}-${slugify(session)}-${questionPaper.year}`.toLowerCase()
+      : `unit-${unitNumber}-${slugify(session)}-${questionPaper.year}`;
 
-    // The slug deliberately omits the entry code, so two entries of the same
-    // unit and sitting collapse onto one slug. Refuse both rather than let the
-    // second silently lose to a unique-constraint skip.
+    // On the IAL path the slug deliberately omits the entry code, so two entries
+    // of the same unit and sitting collapse onto one slug. Refuse both rather
+    // than let the second silently lose to a unique-constraint skip. On the
+    // course path the entry IS in the slug, so a clash here is a real duplicate.
     const clash = bySlug.get(slug);
     if (clash) {
       for (const f of all) {
@@ -950,11 +1158,25 @@ function planRows(
       session,
       year: questionPaper.year,
       paperCode: `${questionPaper.code}/${questionPaper.entry}`,
-      // Matches the ten rows already in the table, en dash included.
-      paperName: `${session} ${questionPaper.year} ${NAME_DASH} Unit ${unitNumber} Question Paper`,
-      durationMinutes: meta.durationMinutes,
-      totalMarks: meta.totalMarks,
-      metadataVerified: meta.verified,
+      /**
+       * Matches the ten rows already in the table, en dash included. A unit-less
+       * paper is named by its entry instead, because "Unit undefined" is worse
+       * than saying which paper it actually is.
+       */
+      paperName: unitNumber === undefined
+        ? `${session} ${questionPaper.year} ${NAME_DASH} Paper ${questionPaper.entry.toUpperCase()} Question Paper`
+        : `${session} ${questionPaper.year} ${NAME_DASH} Unit ${unitNumber} Question Paper`,
+      durationMinutes: meta ? meta.durationMinutes : null,
+      totalMarks: meta ? meta.totalMarks : null,
+      /**
+       * ⚠ NULL METADATA IS "VERIFIED" IN THE ONLY SENSE THAT MATTERS HERE — it
+       * asserts nothing, so it cannot assert something wrong. The
+       * --allow-unverified-metadata gate exists to stop a WRONG number being
+       * written to hundreds of rows; an absent number is not that risk, and
+       * making it fail the gate would block every GCE/GCSE/IGCSE paper on a
+       * flag whose purpose is unrelated.
+       */
+      metadataVerified: meta ? meta.verified : true,
       questionPaper,
       markScheme,
       examinerReport,
@@ -966,9 +1188,16 @@ function planRows(
     bySlug.set(slug, row);
   }
 
+  /**
+   * ⚠ UNIT-LESS ROWS SORT BY CODE THEN ENTRY, because they have no unit number
+   * to sort on and `undefined - undefined` is NaN, which makes a comparator
+   * return NaN and leaves the order unspecified. The IAL ordering is unchanged.
+   */
   return rows.sort(
     (a, b) =>
-      a.unitNumber - b.unitNumber ||
+      (a.unitNumber ?? Number.MAX_SAFE_INTEGER) - (b.unitNumber ?? Number.MAX_SAFE_INTEGER) ||
+      a.code.localeCompare(b.code) ||
+      a.entry.localeCompare(b.entry) ||
       a.year - b.year ||
       a.session.localeCompare(b.session),
   );
@@ -1070,14 +1299,23 @@ async function auditRows(
     // Gate: duration and marks must be real, not placeholders. A value that is
     // present but unverified is treated as missing: it is a guess, and a wrong
     // mark total is invisible once several hundred rows carry it.
-    const meta = config.unitMetadata[row.unitNumber];
-    if (!meta) reasons.push(`no duration/marks configured for unit ${row.unitNumber}`);
-    else if (!meta.durationMinutes || !meta.totalMarks) {
-      reasons.push(`unit ${row.unitNumber}: duration_minutes or total_marks is empty`);
-    } else if (!meta.verified) {
-      reasons.push(
-        `unit ${row.unitNumber}: duration_minutes=${meta.durationMinutes} / total_marks=${meta.totalMarks} are UNVERIFIED placeholders`,
-      );
+    /**
+     * ⚠ THE GATE ONLY APPLIES WHERE A NUMBER IS BEING CLAIMED. It exists to stop
+     * a WRONG duration or mark total reaching hundreds of rows. A unit-less
+     * paper claims neither — both columns go in NULL — so there is nothing to
+     * be wrong about, and failing it here would block every GCE/GCSE/IGCSE
+     * paper on a flag about placeholder accuracy.
+     */
+    if (row.unitNumber !== undefined) {
+      const meta = config.unitMetadata[row.unitNumber];
+      if (!meta) reasons.push(`no duration/marks configured for unit ${row.unitNumber}`);
+      else if (!meta.durationMinutes || !meta.totalMarks) {
+        reasons.push(`unit ${row.unitNumber}: duration_minutes or total_marks is empty`);
+      } else if (!meta.verified) {
+        reasons.push(
+          `unit ${row.unitNumber}: duration_minutes=${meta.durationMinutes} / total_marks=${meta.totalMarks} are UNVERIFIED placeholders`,
+        );
+      }
     }
 
     // Gate: no duplicate against an existing row.
@@ -1092,14 +1330,24 @@ async function auditRows(
       (row.examinerReport
         ? `              ${row.examinerReport.relPath}  (${pageCounts["examiner report"] ?? "-"}p)\n`
         : `              (no examiner report)\n`) +
-      `    parsed  : ${row.paperCode}   ${row.session}   ${row.year}   unit ${row.unitNumber}\n` +
+      `    parsed  : ${row.paperCode}   ${row.session}   ${row.year}   ` +
+      `${row.unitNumber === undefined ? "(no unit)" : `unit ${row.unitNumber}`}\n` +
       `    storage : ${row.paperPath}\n` +
       `              ${row.markschemePath}\n` +
       (row.examinerReportPath ? `              ${row.examinerReportPath}\n` : "") +
       `    row     : slug=${row.slug}  paper_code=${row.paperCode}  session=${row.session}  year=${row.year}\n` +
       `              paper_name=${JSON.stringify(row.paperName)}\n` +
-      `              duration_minutes=${row.durationMinutes}  total_marks=${row.totalMarks}` +
-      `  (${meta?.verified ? "verified" : "UNVERIFIED"})\n` +
+      /**
+       * ⚠ READ OFF THE ROW, NOT OFF A `meta` THAT NO LONGER EXISTS HERE. The
+       * metadata lookup is now inside the unit-only branch above, and
+       * row.metadataVerified already carries its answer. NULL/NULL prints as
+       * "not recorded" rather than "UNVERIFIED", because they are different
+       * claims: one says nothing, the other says something unchecked.
+       */
+      `              duration_minutes=${row.durationMinutes ?? "NULL"}  total_marks=${row.totalMarks ?? "NULL"}` +
+      `  (${row.durationMinutes === null && row.totalMarks === null
+            ? "not recorded"
+            : row.metadataVerified ? "verified" : "UNVERIFIED"})\n` +
       `    -> ${reasons.length ? "BLOCKED — " + reasons.join("; ") : "ready"}`,
     );
 

@@ -174,17 +174,37 @@ console.log("\n=== 2. GUARD (a) — what the regex must still REJECT, as counts 
     ialAccepted.filter((n) => !/_\d{4}_(QU|MS|ER)/i.test(n)).slice(0, 3).join(", "));
 
   /**
-   * ⚠ AND THE GAP, ASSERTED AS A NUMBER RATHER THAN LEFT AS A FOOTNOTE.
-   * Zero of the 2,811 in-scope files are accepted today. Widening the entry
-   * group was necessary and is NOT sufficient: SUBJECTS must also declare the
-   * GCE / GCSE / IGCSE paper codes. When that lands this assertion FAILS, and
-   * it is meant to — whoever extends SUBJECTS must come here and say what the
-   * new number is, rather than discovering later that the guard quietly stopped
-   * describing the code.
+   * ⚠ THE IN-SCOPE ACCEPTANCE COUNT, AND THIS ASSERTION HAS ALREADY DONE ITS
+   * JOB ONCE.
+   * ==========================================================================
+   * It was written as "accepts 0" while SUBJECTS declared only the eighteen IAL
+   * codes, explicitly so that extending SUBJECTS would red it and force the new
+   * number to be stated rather than discovered later. Extending SUBJECTS red'd
+   * it, and this is the restatement: 1,370 of 2,119 unique in-scope basenames.
+   *
+   * The remaining 749 are the deferred and non-released material — 1SC0
+   * Combined Science, 4SS0 Single Science, 1BIZ/1CHZ/1PHZ Progress Assessments,
+   * plus SAM/EAM/ADDSAM, the ISO-date conventions and the MSC type. Every one
+   * of those is separately counted above.
+   *
+   * ⚠ IT STILL REDS ON ANY FUTURE CHANGE, which is the point. Declare 1SC0 and
+   * the number moves; widen the regex and the number moves.
    */
   const inScopeAccepted = UNIQUE.filter(anyAccepts);
-  t("⚠ folders 2/4/8 accept 0 today — SUBJECTS declares only IAL codes (UPDATE THIS WHEN IT DOES NOT)",
-    inScopeAccepted.length === 0, inScopeAccepted.slice(0, 3).join(", ") || inScopeAccepted.length);
+  t("⚠ folders 2/4/8 now accept exactly 1,370 of 2,119 unique basenames",
+    inScopeAccepted.length === 1370, `${inScopeAccepted.length} of ${UNIQUE.length}`);
+
+  /** Per code, so a regression names the qualification rather than a total. */
+  const perCode = new Map<string, number>();
+  for (const n of inScopeAccepted) {
+    const c = n.split("_")[0].toUpperCase();
+    perCode.set(c, (perCode.get(c) ?? 0) + 1);
+  }
+  t("⚠ all fourteen declared codes are represented (none silently matches zero)",
+    perCode.size === 14, [...perCode.keys()].sort().join(","));
+  t("⚠ no deferred code appears among the accepted",
+    !["1SC0", "4SS0", "1BIZ", "1CHZ", "1PHZ"].some((c) => perCode.has(c)),
+    [...perCode.keys()].filter((c) => ["1SC0", "4SS0", "1BIZ", "1CHZ", "1PHZ"].includes(c)).join(", "));
 }
 
 // ============================================================================
