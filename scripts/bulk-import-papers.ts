@@ -971,6 +971,39 @@ function slugify(session: string): string {
 }
 
 /**
+ * The past_papers slug for one sitting. THE ONLY PLACE EITHER SCHEME IS WRITTEN.
+ *
+ * ============================================================================
+ * ⚠ EXPORTED SO THE REGRESSION TEST MINTS THROUGH THIS FUNCTION RATHER THAN
+ * REBUILDING THE TEMPLATE. It was inline in planRows; a test would then have had
+ * to re-type `unit-${n}-${session}-${year}`, and a copy of a format string
+ * agrees with itself for ever — the exact failure AGENTS.md names. Extracting it
+ * changes no behaviour and makes the two schemes assertable.
+ *
+ * ⚠ THE IAL SCHEME IS LOAD-BEARING ON LIVE URLS. All 233 existing rows carry
+ * unit-<n>-<session>-<year> and past_papers.slug is user-facing at
+ * /past-papers/<slug>. Changing it renames live pages.
+ *
+ * ⚠ THE UNIT-LESS SCHEME MUST CARRY THE ENTRY. 9CH0 sits entries 01/02/03 in one
+ * session and 1CH0 sits 1F/1H/2F/2H; without the entry all of them mint one
+ * slug and planRows' clash handler refuses every one, because for IAL two
+ * entries of one unit genuinely ARE ambiguous and for GCSE they are not.
+ *
+ * ⚠ THE TWO SCHEMES CANNOT COLLIDE BY CONSTRUCTION: the IAL form begins with the
+ * literal "unit-", the unit-less form begins with a lowercased Edexcel paper
+ * code, and no Edexcel code is the string "unit". import-slugs.test.ts asserts
+ * that over the whole corpus rather than trusting the argument.
+ */
+export function paperSlug(
+  args: { unitNumber: number | undefined; code: string; entry: string; session: string; year: number },
+): string {
+  const { unitNumber, code, entry, session, year } = args;
+  return unitNumber === undefined
+    ? `${code}-${entry}-${slugify(session)}-${year}`.toLowerCase()
+    : `unit-${unitNumber}-${slugify(session)}-${year}`;
+}
+
+/**
  * Of several files claiming the same slot, take the one with a clean name.
  *
  * "…_QU.pdf" always beats "…_QU (1).pdf". Only when every candidate is a
@@ -1113,9 +1146,13 @@ function planRows(
      * and the clash handler below would refuse all of them — Foundation and
      * Higher are two different papers, not an ambiguity.
      */
-    const slug = unitNumber === undefined
-      ? `${questionPaper.code}-${questionPaper.entry}-${slugify(session)}-${questionPaper.year}`.toLowerCase()
-      : `unit-${unitNumber}-${slugify(session)}-${questionPaper.year}`;
+    const slug = paperSlug({
+      unitNumber,
+      code: questionPaper.code,
+      entry: questionPaper.entry,
+      session,
+      year: questionPaper.year,
+    });
 
     // On the IAL path the slug deliberately omits the entry code, so two entries
     // of the same unit and sitting collapse onto one slug. Refuse both rather
