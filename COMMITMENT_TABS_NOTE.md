@@ -24,6 +24,31 @@ Three links, one per cohort — not one shared link. Within each cohort the
 commitment tab is presentational: on AS the page shows 850 / 2,300 / 7,000 QAR
 and sends all three to the 850 checkout.
 
+## What the pill row IS guarded on, since 26 Aug
+
+`prod-routes.test.ts` now reads `/tuition` from a real response and asserts, per
+cohort — 29 assertions across the three:
+
+- the pill row was **located** (so no count below can be vacuously green)
+- **exactly three** pills, and exactly the three expected `data-cta` values
+- each pill's text **equals** `1 month` / `3 months` / `Academic year` — equality,
+  not "contains", because "contains" is satisfied by `3 months Best value`
+- no pill carries a value claim (`best value`, `saving`, `save`, `~n%`)
+- `1 month` is selected **and is the only one** selected
+
+Re-confirm it bites with either sabotage — both were run, both went red, both
+restored green:
+
+| sabotage | result |
+|---|---|
+| hardcoded `Best value` span on the 3-month pill | **6 red** (label equality + value claim, x3 cohorts) |
+| delete the Academic-year pill | **12 red** (row located + count + label + claim, x3) |
+
+⚠ **The mis-sale assertions are still deliberately absent, and must stay absent.**
+This guard covers the row EXISTING and being CLEAN. It says nothing about
+price-vs-link, because the exposure below is knowingly accepted. Do not "restore
+the missing four" here — read the next section first.
+
 ## What was removed to allow it
 
 Both were deleted, not skipped — a disabled guard reads as coverage.
@@ -50,8 +75,15 @@ the i18n commit, not by the hide branch, so it was invisible in the diff.
    tab a parent selects determines what Stripe charges. Today `cohorts.enrolment_url`
    holds one link and has no package dimension.
 2. **The AS academic-year price corrected.** At 7,000 QAR it is beaten by three
-   3-month blocks at **3 × 2,300 = 6,900**. `cheapestFor()` already refuses to
-   badge it — AS shows "Best value" on 3-month and `~8% saving` on the academic
-   year. The badge is honest; the price is the thing that is wrong.
+   3-month blocks at **3 × 2,300 = 6,900**.
+
+   ⚠ **This arithmetic no longer exists anywhere in the code.** `cheapestFor()`
+   used to encode it and refused to badge the AS academic year; on 26 Aug the
+   founder ruled the site should not make the comparison at all while that price
+   stands, so the helper, its five tests and `tuition.bestValueOver` were all
+   deleted. This paragraph is now the only record. The price is still wrong.
+
+   `tuition.saveAmount` ("Save 250 QAR") was kept: it is a subtraction between
+   two Stripe amounts in one currency, not a judgement about which to buy.
 
 Until both hold, restoring the guards will correctly go red.

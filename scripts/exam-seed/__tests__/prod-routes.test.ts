@@ -541,6 +541,127 @@ async function main() {
       t("⚠ /ar/tuition — the external Reserve link is left absolute",
         !/href="\/ar\/https?:/.test(ar) && !/href="\/https?:/.test(ar));
     }
+
+    /**
+     * ==========================================================================
+     * ⚠ THE COMMITMENT PILL ROW, READ FROM A REAL RESPONSE.
+     * ==========================================================================
+     * This closes a hole that was open and PROVEN open: after the mis-sale
+     * section was removed, deleting the Academic-year pill outright still passed
+     * the whole gate, and so did re-adding a hardcoded "Best value" badge. The
+     * pill row had no rendered-HTML coverage at all, so two founder rulings
+     * could have regressed without a single red.
+     *
+     * ⚠ WHAT THIS DOES NOT DO. It does NOT re-assert that a hidden tab is absent
+     * or that every tab prices as monthly. Standing founder ruling: all three
+     * commitments render, and all three send the reader to the same Payment
+     * Link, knowingly. This guard is about the row EXISTING and being CLEAN.
+     * See COMMITMENT_TABS_NOTE.md before adding anything price-vs-link here.
+     *
+     * ⚠ IT READS EACH PILL'S OWN MARKUP, NOT THE CARD'S. "Save 250 QAR" is a
+     * legitimate line in the price panel below and stays; a card-wide search for
+     * /Save/ would fail on it and the guard would have to be weakened to pass —
+     * which is how a guard ends up asserting nothing.
+     */
+    {
+      /** The three pills, in the order the page must render them. */
+      const PILLS = [
+        { cta: "tuition_group_one_month_selected", label: "1 month" },
+        { cta: "tuition_group_three_month_selected", label: "3 months" },
+        { cta: "tuition_group_academic_selected", label: "Academic year" },
+      ] as const;
+      /** Any claim of comparative worth. The pills carry their label only. */
+      const CLAIM = /best value|saving|\bsave\b|~\s*\d+\s*%/i;
+
+      let html = "", status = 0;
+      try {
+        const res = await fetch(BASE + "/tuition", { signal: AbortSignal.timeout(30_000) });
+        status = res.status;
+        html = await res.text();
+      } catch { /* the assertions below report it */ }
+      t("/tuition → 200 (every pill assertion below needs a real page)",
+        status === 200, `HTTP ${status}`);
+
+      /**
+       * ⚠ THE COHORT COUNT IS ASSERTED FIRST, because every per-cohort loop
+       * below is vacuously green over an empty list. A page that rendered no
+       * cards at all — a failed read, an empty catalogue — would otherwise pass
+       * this entire section without executing one assertion.
+       */
+      const cards = html.split(/<article\b/).slice(1)
+        .filter((c) => c.includes(PILLS[0].cta));
+      t("⚠ at least one group cohort card renders (else the loop below proves nothing)",
+        cards.length > 0, `${cards.length} cards`);
+
+      for (const card of cards) {
+        const name = ((card.match(/<h3[^>]*>([^<]{2,90})<\/h3>/) ?? [])[1] ?? "?")
+          .replace(/&amp;/g, "&").trim().slice(0, 34);
+
+        /**
+         * ⚠ THE ROW IS LOCATED STRUCTURALLY, NOT BY CLASS NAME. The card also
+         * holds "Reserve your place" as data-cta="tuition_group_programme_selected"
+         * — the first draft of this guard matched it as a fourth pill, which is
+         * how the row came to be scoped properly. Matching on the row's Tailwind
+         * classes instead would silently stop finding anything the next time the
+         * row is restyled, and this whole section would pass on an empty slice.
+         *
+         * The pills are direct <a> children with no nested <div>, so the first
+         * </div> after the first pill closes the row.
+         */
+        const firstAt = card.indexOf(`data-cta="${PILLS[0].cta}"`);
+        const rowStart = firstAt < 0 ? -1 : card.lastIndexOf("<div", firstAt);
+        const rowEnd = firstAt < 0 ? -1 : card.indexOf("</div>", firstAt);
+        const row = rowStart < 0 || rowEnd < 0 ? "" : card.slice(rowStart, rowEnd);
+        t(`${name} — ⚠ the pill row was located (else every count below is vacuous)`,
+          row.length > 0 && PILLS.every((p) => row.includes(p.cta)),
+          row.length ? `${row.length} chars` : "row not found");
+
+        /** Every pill in the row, by data-cta, in DOM order. */
+        const rendered = [...row.matchAll(/data-cta="([a-z_]+)"/g)].map((m) => m[1]);
+        t(`${name} — exactly three commitment pills, and exactly the expected three`,
+          rendered.length === 3 && rendered.every((c, i) => c === PILLS[i].cta),
+          rendered.join(",") || "(none)");
+
+        /** One pill's own markup: from its opening <a to its closing </a>. */
+        const markupOf = (cta: string): string | null => {
+          const at = card.indexOf(`data-cta="${cta}"`);
+          if (at < 0) return null;
+          const open = card.lastIndexOf("<a", at);
+          const close = card.indexOf("</a>", at);
+          return open < 0 || close < 0 ? null : card.slice(open, close);
+        };
+        const textOf = (m: string) => m.replace(/<[^>]*>/g, " ")
+          .replace(/&nbsp;|&#160;| /g, " ").replace(/\s+/g, " ").trim();
+
+        for (const { cta, label } of PILLS) {
+          const markup = markupOf(cta);
+          const text = markup === null ? null : textOf(markup);
+          /**
+           * ⚠ EQUALITY, NOT "CONTAINS". A pill whose text merely CONTAINS its
+           * label is satisfied by "3 months Best value", which is the exact
+           * thing this exists to catch.
+           */
+          t(`${name} — the ${cta.replace(/^tuition_group_|_selected$/g, "")} pill reads exactly "${label}"`,
+            text === label, text === null ? "pill absent" : JSON.stringify(text));
+          t(`${name} — the "${label}" pill carries no value claim`,
+            markup !== null && !CLAIM.test(textOf(markup)),
+            markup === null ? "pill absent" : JSON.stringify(text));
+        }
+
+        /**
+         * ⚠ THE DEFAULT IS ASSERTED IN BOTH DIRECTIONS. "monthly is current" is
+         * satisfied by a page that marks all three current; the second half is
+         * what makes it mean "selected".
+         */
+        const currentOf = (cta: string) => {
+          const m = markupOf(cta);
+          return m !== null && /aria-current="true"/.test(m);
+        };
+        t(`${name} — "1 month" is the selected default, and it is the only one`,
+          currentOf(PILLS[0].cta) && !currentOf(PILLS[1].cta) && !currentOf(PILLS[2].cta),
+          PILLS.filter((p) => currentOf(p.cta)).map((p) => p.label).join(",") || "(none current)");
+      }
+    }
   } finally {
     stop();
   }
