@@ -88,6 +88,7 @@ export async function loadCalendarEvents(q: CalendarQuery): Promise<CalendarLoad
         cohortSlug: s.cohort.slug,
         teacherName: null,
         cancelledReason: s.cancelledReason,
+        kind: s.kind,
         cohort: s.cohort,
       });
     }
@@ -129,6 +130,8 @@ export async function loadCalendarEvents(q: CalendarQuery): Promise<CalendarLoad
         cohortSlug: null,
         teacherName: null,
         cancelledReason: null,
+        /** Not a cohort session — no session kind applies. */
+        kind: null,
         priceMinor: cheapest ? Math.round(cheapest.priceMinor / cheapest.credits) : null,
         currency: cheapest?.currency ?? null,
         bookable,
@@ -171,7 +174,7 @@ export async function loadCalendarEvents(q: CalendarQuery): Promise<CalendarLoad
         endsAt: b.endsAt,
         title: b.reason ?? "Unavailable",
         subject: null, qualification: null, yearGroup: null,
-        cohortSlug: null, teacherName: null, cancelledReason: null,
+        cohortSlug: null, teacherName: null, cancelledReason: null, kind: null,
       });
     }
   }
@@ -306,6 +309,7 @@ export async function loadPersonalCalendar(range: { from: string; to: string }):
       cohortSlug: s.cohort.slug,
       teacherName: null,
       cancelledReason: s.cancelledReason,
+      kind: s.kind,
       cohort: s.cohort,
     });
   }
@@ -329,6 +333,7 @@ export async function loadPersonalCalendar(range: { from: string; to: string }):
       cohortSlug: null,
       teacherName: null,
       cancelledReason: null,
+      kind: null,
       // ⚠ 0051 IS APPLIED, so this is a real AIL- reference now. Still nullable
       // in the type: a reader that assumes it exists would break the page for
       // any row written before the backfill, and `null` renders as an omitted

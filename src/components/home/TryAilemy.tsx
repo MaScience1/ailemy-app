@@ -105,11 +105,23 @@ export function TryAilemy() {
         className="rounded-lg border border-ink/10 bg-parchment-2/40 p-6"
       >
         {!result ? (
+          /**
+           * ⚠ THE EMPTY STATE SAYS WHAT IS ABOUT TO HAPPEN, NOT WHAT THE
+           * PRODUCT IS (§6). It used to read "Ailemy marks against the points a
+           * real mark scheme awards — not a percentage guess…" — 28 words
+           * restating the section lede 40px above it, which in turn restated
+           * step 03 of #how further up. Three statements of one claim on one
+           * page. The demo below is the claim; this box only has to tell you
+           * where the result will land.
+           *
+           * resultPending* replaces howAilemyMarks*, which are left in the
+           * catalogue as named orphans rather than swept mid-pass.
+           */
           <div className="text-sm leading-relaxed text-ink/55">
             <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-ink/45">
-              {t("tryAilemy.howAilemyMarks")}
+              {t("tryAilemy.resultPending")}
             </p>
-            <p className="mt-3">{t("tryAilemy.howAilemyMarksBody")}</p>
+            <p className="mt-3">{t("tryAilemy.resultPendingBody")}</p>
           </div>
         ) : result.tooShort ? (
           /* ⚠ NOT "0 / 2". A blank box scored zero reads as a judgement of the

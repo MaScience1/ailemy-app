@@ -126,15 +126,21 @@ export function StickyCta({
            * thumb uses — the one nearly everybody uses.
            */
           shown ? "pointer-events-auto" : "pointer-events-none",
-          "flex items-center gap-3 border-t border-ink/10 bg-parchment/95 px-4 py-3 backdrop-blur",
+          "flex items-center gap-3 border-t border-ink/10 bg-parchment/95 px-4 py-2.5 backdrop-blur",
           "sm:rounded-full sm:border sm:px-2 sm:py-2 sm:ps-5 sm:shadow-[0_8px_28px_-12px_rgba(15,20,25,0.28)]",
           "motion-safe:transition-transform motion-safe:duration-300",
           shown ? "translate-y-0" : "translate-y-2",
         ].join(" ")}
       >
         <div className="min-w-0 flex-1 sm:flex-none">
-          <p className="truncate text-sm font-medium sm:hidden">{label}</p>
-          {/* ⚠ THE REASSURANCE IS THE POINT OF §19's MICROCOPY. "Free account ·
+          {/* ⚠ THE LABEL LINE IS GONE (§10 — "minimal, not bulky"). It was
+              sm:hidden, so it rendered ONLY on a phone — directly beside a
+              button reading "Start free →". Two instructions, the same
+              instruction, 8px apart, in the one place with least room for
+              either. The button carries the verb; this line carries the thing
+              the button cannot say.
+
+              ⚠ THE REASSURANCE IS THE POINT OF §19's MICROCOPY. "Free account ·
               no card" removes the objection the button itself creates. */}
           <p className="truncate font-mono text-[10px] uppercase tracking-[0.14em] text-ink/50">
             {signedIn ? t("home.yourProgressIsSaved") : inTuition ? t("home.smallGroupsCappedAt20") : t("home.freeAccountNoCard")}

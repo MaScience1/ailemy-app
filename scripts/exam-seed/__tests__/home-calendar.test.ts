@@ -255,33 +255,34 @@ console.log("\n── PLACEMENT — hierarchy stays intact ──");
     cta("hero_start_free_clicked") < at("hero-calendar")
     && cta("hero_book_tuition_clicked") < at("hero-calendar"));
   /**
-   * ⚠ THIS PINNED subjects BEFORE tuition, WHICH §3 DELIBERATELY REVERSED.
-   * The rule the assertion protects is that the HERO LEADS — a calendar that
-   * ends up below the fold's content is the regression worth catching. The
-   * relative order of two sections further down was incidental to the layout
-   * that happened to exist when it was written, and the redesign moved tuition
-   * up on purpose: a visitor now meets it after experiencing the product and
-   * before scrolling through every academic explanation.
-   */
-  t("…so the hero still leads both of them",
-    at("hero-calendar") < at("subjects") && at("hero-calendar") < at("tuition"));
-  t("the two-column split is at lg (1024px), stacking below it",
-    /lg:grid-cols-\[minmax\(0,1fr\)_480px\]/.test(code));
-  /**
-   * ⚠ THIS ASSERTION INVERTED, AND THE REASON MATTERS MORE THAN THE VALUE.
-   * It used to require lg:items-center, because the calendar card was the
-   * SHORTER column and centring stopped it hanging off the top of the copy.
-   * The conversion build added a tuition heading and two actions above the
-   * card, which made the right column the TALLER one — and centring then
-   * answered by pushing the h1 84px down the page, opening an empty top-left
-   * corner on the first screen. Measured, not guessed.
+   * ==========================================================================
+   * ⚠ THE CALENDAR IS NO LONGER IN THE HERO, AND THESE THREE INVERTED WITH IT.
+   * ==========================================================================
+   * They pinned the hero's two-column grid: the calendar led the second column,
+   * the split was lg:grid-cols-[minmax(0,1fr)_480px], and lg:items-start kept
+   * the columns from hanging. §5 moved the calendar out — on a phone that grid
+   * stacked, so a month grid a stranger had to interpret sat between the hero
+   * and everything below it, measured at pushing the compact tuition block to
+   * y=2416.
    *
-   * So the invariant was never "centre it"; it was "neither column hangs".
-   * With the right column taller, top alignment is what satisfies it, and it
-   * also puts the headline and "Learn live with an expert" on the same line.
+   * ⚠ REPLACED, NOT DELETED. Each still asserts the thing it was protecting,
+   * against the layout that now exists. Dropping them would leave the calendar
+   * with no positional coverage at all, which is how the pill row ended up
+   * unguarded two branches ago.
    */
-  t("…and the two columns start together, so neither hangs below the other",
-    /lg:items-start/.test(code) && !/lg:items-center/.test(code));
+  t("⚠ the calendar now sits BELOW subjects, not above it (§5 reorder)",
+    at("hero-calendar") > at("subjects") && at("subjects") > 0);
+  t("⚠ …and inside the detailed tuition section, which is its new home",
+    at("hero-calendar") > at("tuition") && at("tuition") > 0);
+  /**
+   * ⚠ THE HERO IS ONE COLUMN AT EVERY WIDTH NOW. With the 480px column gone, a
+   * surviving grid would leave half the hero empty on desktop — so the absence
+   * of the split IS the invariant, not an incidental cleanup.
+   */
+  t("⚠ the hero no longer declares a two-column grid",
+    !/lg:grid-cols-\[minmax\(0,1fr\)_480px\]/.test(code));
+  t("⚠ …and no orphaned grid placement classes are left behind in it",
+    !/lg:col-start-2/.test(code) && !/lg:row-span-2/.test(code));
 }
 
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);

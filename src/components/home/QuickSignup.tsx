@@ -142,7 +142,7 @@ export function QuickSignup({ trigger }: {
       <Dialog.Trigger render={trigger} />
       <Dialog.Portal>
         <Dialog.Backdrop className="fixed inset-0 z-[9998] bg-ink/50 backdrop-blur-[2px] transition-opacity duration-200 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0" />
-        <Dialog.Popup className="fixed left-1/2 top-1/2 z-[9999] max-h-[92vh] w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl border border-ink/10 bg-parchment p-6 shadow-[0_24px_64px_-24px_rgba(15,20,25,0.45)] transition-all duration-200 data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0 sm:p-8">
+        <Dialog.Popup className="fixed left-1/2 top-1/2 z-[9999] max-h-[92vh] w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-lg border border-ink/10 bg-parchment p-6 shadow-[0_24px_64px_-24px_rgba(15,20,25,0.45)] transition-all duration-200 data-[ending-style]:scale-95 data-[ending-style]:opacity-0 data-[starting-style]:scale-95 data-[starting-style]:opacity-0 sm:p-8">
           <Dialog.Title className="font-display text-2xl font-medium tracking-tight">
             {t("quickSignup.title")}
           </Dialog.Title>
