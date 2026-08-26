@@ -56,6 +56,7 @@ import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { promisify } from "node:util";
 import { basename, join, relative, resolve, sep } from "node:path";
+import { pathToFileURL } from "node:url";
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
@@ -146,7 +147,7 @@ type SubjectConfig = {
   unitMetadata: Record<number, UnitMetadata>;
 };
 
-const SUBJECTS: Record<string, SubjectConfig> = {
+export const SUBJECTS: Record<string, SubjectConfig> = {
   chemistry: {
     label: "Edexcel IAL Chemistry",
     paperCodes: {
@@ -402,8 +403,28 @@ function parseArgs(argv: string[]): Options {
   const root = flags.get("root")?.[0];
   if (!root) fail(`--root is required.\n${USAGE}`);
 
-  // Chemistry stays the default so every command already in use keeps working.
-  const subject = (flags.get("subject")?.[0] || "chemistry").toLowerCase();
+  /**
+   * ⚠ --subject IS REQUIRED. IT USED TO DEFAULT TO CHEMISTRY.
+   * ==========================================================================
+   * That default was safe when the map held three IAL subjects and every
+   * command in use passed --subject anyway. It stops being safe now: the
+   * catalogue spans fourteen courses across three qualifications, and a
+   * forgotten flag would point a GCSE root at the IAL Chemistry config, match
+   * nothing, and report "0 papers" as though the folder were empty. A silent
+   * wrong answer, not an error.
+   *
+   * There is no defensible default across fourteen courses, so there is no
+   * default. The failure is now a one-line message before anything is read.
+   */
+  const subjectFlag = flags.get("subject")?.[0];
+  if (!subjectFlag) {
+    fail(
+      `--subject is required. One of: ${Object.keys(SUBJECTS).join(", ")}\n` +
+        `  It no longer defaults to chemistry: with fourteen courses in the catalogue,\n` +
+        `  a forgotten flag would silently import nothing and report success.\n${USAGE}`,
+    );
+  }
+  const subject = subjectFlag.toLowerCase();
   const config = SUBJECTS[subject];
   if (!config) {
     fail(`--subject must be one of: ${Object.keys(SUBJECTS).join(", ")} (got "${subject}")`);
@@ -540,10 +561,28 @@ type Skip = { path: string; reason: string };
  * tolerate because the suffix is captured and, where a sitting somehow offers
  * both forms, planRows prefers the clean one rather than calling it ambiguous.
  */
-function buildFilenameRe(config: SubjectConfig): RegExp {
+export function buildFilenameRe(config: SubjectConfig): RegExp {
   const codes = Object.keys(config.paperCodes).join("|");
+  /**
+   * ⚠ THE ENTRY GROUP IS ALPHANUMERIC, NOT TWO DIGITS. IAL entries are all
+   * "01", which is why (\d{2}) held for four folders. GCSE and International
+   * GCSE encode the TIER in the entry — 1F/1H, 2BF, 1BR, 2C — so a digits-only
+   * group rejects every one of them, and it does so on top of the code
+   * alternation rejecting them, which is why the failure looked like one
+   * problem rather than two.
+   *
+   * ⚠ {1,3} IS A CEILING, NOT A GUESS. The longest entry in the corpus is three
+   * characters (1SC0's 2BF/2CH/2PH). Leaving it unbounded would let the date
+   * group's digits be swallowed by the entry group on a malformed name.
+   *
+   * ⚠ EVERYTHING ELSE IS UNCHANGED, AND THAT IS WHAT KEEPS THE REJECTIONS. The
+   * date group stays (\d{2})(\d{2}), so SAM / EAM / ADDSAM / ADDSAM2 in the date
+   * slot still fail, and the 8-digit ISO forms still fail. The type alternation
+   * stays (QU|MS|ER), so que/rms/pef and MSC still fail. filename-guard.test.ts
+   * asserts those as counts against the real corpus.
+   */
   return new RegExp(
-    `^(${codes})_(\\d{2})_(\\d{2})(\\d{2})_(QU|MS|ER)(?: \\((\\d+)\\))?\\.pdf$`,
+    `^(${codes})_([0-9A-Z]{1,3})_(\\d{2})(\\d{2})_(QU|MS|ER)(?: \\((\\d+)\\))?\\.pdf$`,
     "i",
   );
 }
@@ -840,7 +879,26 @@ function planRows(
     const resolved = catalogue.get(questionPaper.code);
     if (!resolved) continue; // loadCatalogue already aborted on anything missing.
 
-    const { unitNumber } = config.paperCodes[questionPaper.code];
+    /**
+     * ⚠ GUARDED, BECAUSE THE UNGUARDED FORM WAS A TypeError WAITING FOR A
+     * MISSPELLING. This read `const { unitNumber } = config.paperCodes[code]`
+     * with no check — an unknown code destructures undefined and crashes the
+     * whole run mid-import, after some uploads have already happened. :1008
+     * already guards the same lookup; this now matches it.
+     *
+     * loadCatalogue aborts earlier on anything unknown, so in practice this is
+     * unreachable today — which is exactly why it was easy to leave unguarded,
+     * and exactly why it must not stay that way once fourteen courses share the
+     * path. Skip and report; never throw, never insert.
+     */
+    const codeInfo = config.paperCodes[questionPaper.code];
+    if (!codeInfo) {
+      for (const f of all) {
+        skips.push({ path: f.relPath, reason: `unknown paper code ${questionPaper.code} — not declared by ${config.label}` });
+      }
+      continue;
+    }
+    const { unitNumber } = codeInfo;
     const meta = config.unitMetadata[unitNumber];
     if (!meta) {
       for (const f of all) {
@@ -1457,7 +1515,27 @@ async function writeReport(
   console.log(`\nReport written to ${options.reportPath}`);
 }
 
-main().catch((err) => {
-  console.error("\n✖ Unhandled failure:", err);
-  process.exit(1);
-});
+/**
+ * ⚠ main() RUNS ONLY WHEN THIS FILE IS THE ENTRY POINT.
+ * ============================================================================
+ * It used to run on import. filename-guard.test.ts imports buildFilenameRe and
+ * SUBJECTS so it tests the REAL regex rather than a copy of it — AGENTS.md is
+ * explicit that a model of production behaviour has to be the production thing
+ * or it agrees with itself for ever. Without this guard, importing the module
+ * to read one function would START AN IMPORT RUN, which reads a disk tree,
+ * talks to the database, and with --commit uploads to Storage.
+ *
+ * The comparison is against process.argv[1] resolved to a file URL, so it holds
+ * whether the script is invoked by path, by relative path, or through a
+ * symlink.
+ */
+const isEntryPoint =
+  process.argv[1] !== undefined &&
+  import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isEntryPoint) {
+  main().catch((err) => {
+    console.error("\n✖ Unhandled failure:", err);
+    process.exit(1);
+  });
+}
