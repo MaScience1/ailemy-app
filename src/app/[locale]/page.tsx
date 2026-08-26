@@ -715,14 +715,21 @@ export default async function Home({ searchParams }: { searchParams: Search }) {
             in this order and each depends on the last — which is the only thing
             that justifies 01/02/03 markers. Numbering a set of unordered
             features would be decoration pretending to be structure. */}
-        <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {/* ⚠ FOUR STAGES, NOT SIX (§6 — "2-4 bullets max"). Submit and Master
+            were not stages a student does separately: "answer inside Ailemy, no
+            scanning" is HOW you practise, and "track a topic until you are
+            exam-ready" is what improving IS. Both were real claims and neither
+            was dropped — each is folded into the stage it belonged to, so the
+            sequence still reads learn → practise → get marked → improve without
+            two cards that restate their neighbours. stepSubmit* and stepMaster*
+            stay in the catalogue rather than being deleted mid-pass; they are
+            listed in the commit as orphan keys for a later sweep. */}
+        <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
             [t("home.stepLearn"), t("home.stepLearnBody")],
             [t("home.stepPractise"), t("home.stepPractiseBody")],
-            [t("home.stepSubmit"), t("home.stepSubmitBody")],
             [t("home.stepGetMarked"), t("home.stepGetMarkedBody")],
             [t("home.stepImprove"), t("home.stepImproveBody")],
-            [t("home.stepMaster"), t("home.stepMasterBody")],
           ].map(([step, body], i) => (
             <li key={step} className="rounded-lg border border-ink/10 bg-snow p-6">
               <span className="font-mono text-[11px] text-ink/40">0{i + 1}</span>
