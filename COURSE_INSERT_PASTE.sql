@@ -1,0 +1,326 @@
+-- ============================================================================
+-- BATCH 1 COURSE ROWS — GCE, GCSE and International GCSE
+-- ============================================================================
+-- Written 2026-08-27 for the folders 2 / 4 / 8 paper import.
+-- Author holds no database credentials. NOTHING HERE HAS BEEN RUN.
+-- Every number below is an EXPECTATION and is labelled as one.
+--
+-- ⚠ RUN ONE SECTION AT A TIME and read the result before the next. A long
+--    paste into the Supabase SQL Editor has silently half-applied on this
+--    project before (0029-0035).
+--
+-- ⚠ RUN ORDER: 0070_drop_courses_curriculum_subject_level_unique.sql FIRST,
+--    THEN THIS FILE. Four of the fourteen rows below violate the constraint
+--    0070 removes. Running this first fails two of them with 23505 and leaves
+--    the batch half-applied.
+--
+-- ⚠ THIS INSERTS ALL FOURTEEN. An earlier draft inserted twelve; the two Edexcel GCE
+--    Biology Spec B rows were blocked by UNIQUE (curriculum_id, subject_id,
+--    level), and 0070 drops that constraint because it is factually wrong about
+--    the exam board. They now use the uuids ...07 and ...08 that were reserved
+--    for exactly this.
+--
+-- ⚠ NOTHING BECOMES VISIBLE TO A VISITOR. Every row is written with
+--    status = 'coming_soon', which is not 'live', and the lesson page refuses
+--    everything but 'live'. Check /learn yourself before flipping any of them.
+--
+-- ============================================================================
+-- WHAT A RIGHT-REASON RED LOOKS LIKE  (stop and read)
+-- ============================================================================
+--   Section 1 shows a curriculum slug missing
+--       edexcel-alevel / edexcel-gcse / edexcel-igcse must all exist.
+--       courses.curriculum_id is NOT NULL, so Section 3 cannot invent one.
+--   Section 1 shows a subject slug missing
+--       chemistry / biology / physics must all exist. Same reason.
+--   Section 1 shows a slug already present
+--       Expected for at least edexcel-gcse-chemistry, which ENROLMENT_PASTE.sql
+--       names as already seeded. Section 3 skips whatever exists.
+--   Section 3 returns fewer rows than 14
+--       Some already existed. Compare with Section 1, not with 14.
+--   Section 4 total is not Section 2 total + Section 3 rows
+--       Something else wrote to courses while you were running this.
+--
+-- ============================================================================
+-- WHAT A WRONG-REASON RED LOOKS LIKE  (the run proved nothing)
+-- ============================================================================
+--   42501  permission denied              — not running as owner.
+--   23502  null value in curriculum_id    — Section 1 was not read. A slug in
+--                                           curricula or subjects is missing.
+--   23505  duplicate key … courses_slug   — re-run after a partial apply. Safe:
+--                                           Section 3 is ON CONFLICT DO NOTHING.
+--   23505  courses_curriculum_id_subject_id_level_key
+--                                         — 0070 HAS NOT BEEN RUN. Run it first,
+--                                           then re-run this file; ON CONFLICT
+--                                           makes the re-run safe.
+--   22P02  invalid input syntax for uuid  — a literal below was edited.
+--
+-- ============================================================================
+-- THE BIOLOGY A/B COLLISION — RESOLVED BY 0070, NOT WORKED AROUND
+-- ============================================================================
+-- Edexcel UK GCE Biology is TWO specifications sat at the SAME level:
+--     Spec A  8BN0 (AS) / 9BN0 (A2)
+--     Spec B  8BI0 (AS) / 9BI0 (A2)
+--
+-- Both are (curriculum edexcel-alevel, subject biology, level AS), and again at
+-- A2. courses' UNIQUE (curriculum_id, subject_id, level) permitted one per
+-- triple, so Spec B could not be inserted — 132 real PDFs blocked behind a
+-- constraint asserting something false about how Edexcel works.
+--
+-- 0070 drops it. slug keeps its own UNIQUE, which is the key every reader
+-- actually uses. Neither alternative was taken: encoding the spec in `level`
+-- would render a specification wherever level renders, and inventing an
+-- edexcel-alevel-b curriculum would manufacture a Pearson qualification that
+-- does not exist.
+--
+-- ⚠ SPEC A AND SPEC B ARE TWO COURSES UNDER ONE SUBJECT, distinguished by slug
+--    alone. subjects stays at three — chemistry, biology, physics. There is no
+--    biology-b subject row and no spec column, by founder ruling.
+--
+-- ⚠ IF 0070 HAS NOT RUN, rows ...05/...06 land and ...07/...08 fail with 23505
+--    on courses_curriculum_id_subject_id_level_key. That is the right-reason red
+--    for running these two files out of order.
+-- ============================================================================
+
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- SECTION 1 — PREFLIGHT. Read all three result sets before going on.
+-- ════════════════════════════════════════════════════════════════════════════
+-- EXPECT: curricula 3 of 3 found, subjects 3 of 3 found, and a list showing
+--         which of the 14 slugs already exist (at least edexcel-gcse-chemistry
+--         may). Anything missing in the first two is a hard stop.
+
+-- 1a. The three curricula this batch needs.
+SELECT 'curriculum' AS kind, s.slug,
+       (SELECT count(*) FROM public.curricula c WHERE c.slug = s.slug) AS found
+  FROM (VALUES ('edexcel-alevel'), ('edexcel-gcse'), ('edexcel-igcse')) AS s(slug)
+ ORDER BY s.slug;
+
+-- 1b. The three subjects this batch needs.
+SELECT 'subject' AS kind, s.slug,
+       (SELECT count(*) FROM public.subjects x WHERE x.slug = s.slug) AS found
+  FROM (VALUES ('chemistry'), ('biology'), ('physics')) AS s(slug)
+ ORDER BY s.slug;
+
+-- 1c. Which of the FOURTEEN slugs already exist. All fourteen are inserted by
+--     Section 3; the two Spec B rows depend on 0070 having run.
+SELECT s.slug,
+       (SELECT count(*) FROM public.courses c WHERE c.slug = s.slug) AS already_exists,
+       CASE WHEN s.slug LIKE '%biology-b' THEN 'needs 0070 applied first' ELSE 'in batch' END AS status
+  FROM (VALUES
+    ('edexcel-gce-as-chemistry'), ('edexcel-gce-a2-chemistry'),
+    ('edexcel-gce-as-physics'),   ('edexcel-gce-a2-physics'),
+    ('edexcel-gce-as-biology-a'), ('edexcel-gce-a2-biology-a'),
+    ('edexcel-gce-as-biology-b'), ('edexcel-gce-a2-biology-b'),
+    ('edexcel-gcse-chemistry'),   ('edexcel-gcse-biology'), ('edexcel-gcse-physics'),
+    ('edexcel-igcse-chemistry'),  ('edexcel-igcse-biology'), ('edexcel-igcse-physics')
+  ) AS s(slug)
+ ORDER BY s.slug;
+
+-- 1d. ⚠ AFTER 0070 THIS IS INFORMATIONAL, NOT A GATE. A triple at 2 is now
+--     legal and expected for (edexcel-alevel, biology, AS) once Spec A and
+--     Spec B are both in. Before 0070 a triple at 1 would have blocked.
+SELECT cu.slug AS curriculum, su.slug AS subject, c.level, count(*) AS rows_in_slot
+  FROM public.courses c
+  JOIN public.curricula cu ON cu.id = c.curriculum_id
+  JOIN public.subjects  su ON su.id = c.subject_id
+ WHERE cu.slug IN ('edexcel-alevel','edexcel-gcse','edexcel-igcse')
+ GROUP BY cu.slug, su.slug, c.level
+ ORDER BY 1,2,3;
+
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- SECTION 2 — COUNT BEFORE. Write the number down.
+-- ════════════════════════════════════════════════════════════════════════════
+SELECT count(*) AS courses_before FROM public.courses;
+
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- SECTION 3 — THE INSERT, GATED. All fourteen or nothing.
+-- ════════════════════════════════════════════════════════════════════════════
+-- EXPECT: one NOTICE — "GATE PASSED — all 14 present...".
+-- The INSERT reports no row count of its own: it sits inside a transaction with
+-- the gate, and the number inserted is deliberately NOT the success signal. On
+-- the first real run it inserted 8 and no-op'd 6, and 8 was the correct answer.
+--
+-- ⚠ IDS ARE FIXED LITERALS, so Section 5 deletes by id with nothing to copy
+--    across and no "newest row" heuristic. This project erased the wrong account
+--    once by letting a destructive block default its target.
+--
+-- ⚠ curriculum_id AND subject_id ARE RESOLVED BY SLUG, NOT TYPED. Both columns
+--    are NOT NULL, so a missing curriculum or subject makes the row vanish from
+--    the SELECT rather than inserting against a wrong id. Section 3 returning
+--    fewer rows than expected with Section 1 all-green means exactly that.
+--
+-- ⚠ status = 'coming_soon' ON EVERY ROW. Not 'live'. Nothing here changes what
+--    a visitor sees until you say so.
+--
+-- ============================================================================
+-- THE GATE ASSERTS PRESENCE AND SHAPE, NOT "14 ROWS INSERTED"
+-- ============================================================================
+-- "14 inserted" is the wrong assertion and it would have fired falsely on the
+-- first real run: that run inserted 8 and correctly no-op'd 6 whose slugs
+-- already existed. Eight was right, and it read like a half-failure.
+--
+-- So the gate asks what actually matters: are all fourteen NOW PRESENT, and
+-- does each carry the shape the importer will demand? A row ON CONFLICT skipped
+-- is fine if it matches and a hard stop if it does not — bulk-import-papers.ts
+-- asserts course slug and level agree or it aborts, so a wrongly-shaped
+-- pre-existing row becomes a failure displaced from here to the import.
+--
+-- ⚠ THE INSERT AND THE GATE ARE ONE TRANSACTION. If the gate raises, the INSERT
+--    rolls back with it and courses is left exactly as it was. That is the
+--    refuse-rather-than-half-apply requirement.
+--
+-- ⚠ THE EXPECTED SHAPE IS WRITTEN TWICE ON PURPOSE — once in the INSERT VALUES
+--    and once in the gate. Neither is derived from the other, so a typo in one
+--    is caught by the other instead of agreeing with itself.
+
+BEGIN;
+
+INSERT INTO public.courses (id, curriculum_id, subject_id, slug, name, level, pathway, status, sort_order)
+SELECT v.id::uuid, cu.id, su.id, v.slug, v.name, v.level, v.pathway::pathway_type, 'coming_soon'::content_status, v.sort_order
+  FROM (VALUES
+    -- GCE (folder 2) — curriculum edexcel-alevel, pathway uk-a-level
+    ('c0025e00-0000-4000-8000-000000000001','edexcel-alevel','chemistry','edexcel-gce-as-chemistry','Edexcel GCE Chemistry (AS)','AS','uk-a-level',10),
+    ('c0025e00-0000-4000-8000-000000000002','edexcel-alevel','chemistry','edexcel-gce-a2-chemistry','Edexcel GCE Chemistry (A level)','A2','uk-a-level',11),
+    ('c0025e00-0000-4000-8000-000000000003','edexcel-alevel','physics','edexcel-gce-as-physics','Edexcel GCE Physics (AS)','AS','uk-a-level',12),
+    ('c0025e00-0000-4000-8000-000000000004','edexcel-alevel','physics','edexcel-gce-a2-physics','Edexcel GCE Physics (A level)','A2','uk-a-level',13),
+    ('c0025e00-0000-4000-8000-000000000005','edexcel-alevel','biology','edexcel-gce-as-biology-a','Edexcel GCE Biology A (AS)','AS','uk-a-level',14),
+    ('c0025e00-0000-4000-8000-000000000006','edexcel-alevel','biology','edexcel-gce-a2-biology-a','Edexcel GCE Biology A (A level)','A2','uk-a-level',15),
+    -- ⚠ THESE TWO NEED 0070. Same (curriculum, subject, level) as 05/06 above.
+    ('c0025e00-0000-4000-8000-000000000007','edexcel-alevel','biology','edexcel-gce-as-biology-b','Edexcel GCE Biology B (AS)','AS','uk-a-level',16),
+    ('c0025e00-0000-4000-8000-000000000008','edexcel-alevel','biology','edexcel-gce-a2-biology-b','Edexcel GCE Biology B (A level)','A2','uk-a-level',17),
+    -- GCSE (folder 4) — curriculum edexcel-gcse, pathway uk-gcse
+    ('c0025e00-0000-4000-8000-000000000009','edexcel-gcse','chemistry','edexcel-gcse-chemistry','Edexcel GCSE (9-1) Chemistry','GCSE','uk-gcse',20),
+    ('c0025e00-0000-4000-8000-000000000010','edexcel-gcse','biology','edexcel-gcse-biology','Edexcel GCSE (9-1) Biology','GCSE','uk-gcse',21),
+    ('c0025e00-0000-4000-8000-000000000011','edexcel-gcse','physics','edexcel-gcse-physics','Edexcel GCSE (9-1) Physics','GCSE','uk-gcse',22),
+    -- International GCSE (folder 8) — curriculum edexcel-igcse, pathway igcse
+    ('c0025e00-0000-4000-8000-000000000012','edexcel-igcse','chemistry','edexcel-igcse-chemistry','Edexcel International GCSE (9-1) Chemistry','IGCSE','igcse',30),
+    ('c0025e00-0000-4000-8000-000000000013','edexcel-igcse','biology','edexcel-igcse-biology','Edexcel International GCSE (9-1) Biology','IGCSE','igcse',31),
+    ('c0025e00-0000-4000-8000-000000000014','edexcel-igcse','physics','edexcel-igcse-physics','Edexcel International GCSE (9-1) Physics','IGCSE','igcse',32)
+  ) AS v(id, curriculum_slug, subject_slug, slug, name, level, pathway, sort_order)
+  JOIN public.curricula cu ON cu.slug = v.curriculum_slug
+  JOIN public.subjects  su ON su.slug = v.subject_slug
+ON CONFLICT (slug) DO NOTHING;
+
+-- -- THE GATE -----------------------------------------------------------------
+DO $$
+DECLARE
+  n_present integer;
+  n_bad     integer;
+  detail    text;
+BEGIN
+  WITH expected(slug, level, pathway, curriculum, subject) AS (VALUES
+    ('edexcel-gce-as-chemistry','AS','uk-a-level','edexcel-alevel','chemistry'),
+    ('edexcel-gce-a2-chemistry','A2','uk-a-level','edexcel-alevel','chemistry'),
+    ('edexcel-gce-as-physics','AS','uk-a-level','edexcel-alevel','physics'),
+    ('edexcel-gce-a2-physics','A2','uk-a-level','edexcel-alevel','physics'),
+    ('edexcel-gce-as-biology-a','AS','uk-a-level','edexcel-alevel','biology'),
+    ('edexcel-gce-a2-biology-a','A2','uk-a-level','edexcel-alevel','biology'),
+    ('edexcel-gce-as-biology-b','AS','uk-a-level','edexcel-alevel','biology'),
+    ('edexcel-gce-a2-biology-b','A2','uk-a-level','edexcel-alevel','biology'),
+    ('edexcel-gcse-chemistry','GCSE','uk-gcse','edexcel-gcse','chemistry'),
+    ('edexcel-gcse-biology','GCSE','uk-gcse','edexcel-gcse','biology'),
+    ('edexcel-gcse-physics','GCSE','uk-gcse','edexcel-gcse','physics'),
+    ('edexcel-igcse-chemistry','IGCSE','igcse','edexcel-igcse','chemistry'),
+    ('edexcel-igcse-biology','IGCSE','igcse','edexcel-igcse','biology'),
+    ('edexcel-igcse-physics','IGCSE','igcse','edexcel-igcse','physics')
+  ),
+  checked AS (
+    SELECT e.slug,
+           (c.id IS NOT NULL) AS present,
+           (c.id IS NOT NULL
+            AND c.level         = e.level
+            AND c.pathway::text = e.pathway
+            AND cu.slug         = e.curriculum
+            AND su.slug         = e.subject) AS ok,
+           coalesce(c.level,'-')||'/'||coalesce(c.pathway::text,'-')||'/'||
+           coalesce(cu.slug,'-')||'/'||coalesce(su.slug,'-') AS actual
+      FROM expected e
+      LEFT JOIN public.courses   c  ON c.slug = e.slug
+      LEFT JOIN public.curricula cu ON cu.id  = c.curriculum_id
+      LEFT JOIN public.subjects  su ON su.id  = c.subject_id
+  )
+  SELECT count(*) FILTER (WHERE present),
+         count(*) FILTER (WHERE NOT ok),
+         string_agg(slug || ' [' || actual || ']', ', ') FILTER (WHERE NOT ok)
+    INTO n_present, n_bad, detail
+    FROM checked;
+
+  IF n_present <> 14 OR n_bad > 0 THEN
+    RAISE EXCEPTION
+      'GATE FAILED - nothing was written. present %/14, wrong shape %. Offenders: %. '
+      'A wrongly-shaped course row makes bulk-import-papers.ts abort mid-import; '
+      'fix the row, then re-run this section.',
+      n_present, n_bad, coalesce(detail, '(none)');
+  END IF;
+
+  RAISE NOTICE 'GATE PASSED - all 14 present, all 14 match expected level/pathway/curriculum/subject';
+END $$;
+
+COMMIT;
+
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- SECTION 4 — COUNT AFTER, AND PROVE ALL FOURTEEN RESOLVE.
+-- ════════════════════════════════════════════════════════════════════════════
+-- EXPECT: courses_after = Section 2's number + the rows Section 3 returned.
+--         batch1_present = 14.
+
+SELECT (SELECT count(*) FROM public.courses) AS courses_after,
+       (SELECT count(*) FROM public.courses WHERE slug IN (
+          'edexcel-gce-as-chemistry','edexcel-gce-a2-chemistry',
+          'edexcel-gce-as-physics','edexcel-gce-a2-physics',
+          'edexcel-gce-as-biology-a','edexcel-gce-a2-biology-a',
+          'edexcel-gce-as-biology-b','edexcel-gce-a2-biology-b',
+          'edexcel-gcse-chemistry','edexcel-gcse-biology','edexcel-gcse-physics',
+          'edexcel-igcse-chemistry','edexcel-igcse-biology','edexcel-igcse-physics'
+       )) AS batch1_present,
+       (SELECT count(*) FROM public.courses WHERE status = 'live') AS live_courses_unchanged;
+
+-- The fourteen, as the importer will see them.
+SELECT c.slug, c.level, c.pathway, c.status, cu.slug AS curriculum, su.slug AS subject
+  FROM public.courses c
+  JOIN public.curricula cu ON cu.id = c.curriculum_id
+  JOIN public.subjects  su ON su.id = c.subject_id
+ WHERE c.id::text LIKE 'c0025e00-%'
+ ORDER BY c.sort_order;
+
+
+-- ════════════════════════════════════════════════════════════════════════════
+-- SECTION 5 — TEARDOWN. Deletes BY ID and by nothing else.
+-- ════════════════════════════════════════════════════════════════════════════
+-- ⚠ RUN THIS ONLY IF YOU ARE ABANDONING THE BATCH. If papers have already been
+--    imported against these courses, past_papers.course_id is ON DELETE CASCADE
+--    (0007) and those rows go with them. Check first:
+--
+--        SELECT count(*) FROM public.past_papers
+--         WHERE course_id::text LIKE 'c0025e00-%';
+--
+--    It must be 0 before you run the delete below.
+--
+-- ⚠ NO SLUG, NO NAME, NO DATE WINDOW. Only the fourteen literals this file minted.
+--    Safe to run twice; deleting nothing returns zero rows.
+
+DELETE FROM public.courses
+ WHERE id IN (
+   'c0025e00-0000-4000-8000-000000000001'::uuid,
+   'c0025e00-0000-4000-8000-000000000002'::uuid,
+   'c0025e00-0000-4000-8000-000000000003'::uuid,
+   'c0025e00-0000-4000-8000-000000000004'::uuid,
+   'c0025e00-0000-4000-8000-000000000005'::uuid,
+   'c0025e00-0000-4000-8000-000000000006'::uuid,
+   'c0025e00-0000-4000-8000-000000000007'::uuid,
+   'c0025e00-0000-4000-8000-000000000008'::uuid,
+   'c0025e00-0000-4000-8000-000000000009'::uuid,
+   'c0025e00-0000-4000-8000-000000000010'::uuid,
+   'c0025e00-0000-4000-8000-000000000011'::uuid,
+   'c0025e00-0000-4000-8000-000000000012'::uuid,
+   'c0025e00-0000-4000-8000-000000000013'::uuid,
+   'c0025e00-0000-4000-8000-000000000014'::uuid
+ )
+RETURNING id, slug;
+
+-- ⚠ IDS 07 AND 08 ARE NOW IN USE. They were reserved while Biology Spec B was
+--    blocked; 0070 unblocked it and they carry the two Spec B courses. The
+--    teardown list is fourteen ids and covers them.
