@@ -52,6 +52,8 @@
  */
 
 import { execFile } from "node:child_process";
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { promisify } from "node:util";
@@ -634,7 +636,7 @@ async function loadEnv(): Promise<{ url: string; serviceKey: string }> {
 // DISCOVERY
 // ============================================================================
 
-type ParsedFile = {
+export type ParsedFile = {
   absPath: string;
   relPath: string;
   fileName: string;
@@ -1012,12 +1014,83 @@ export function paperSlug(
  * remaining one is unambiguous. Returns null when the choice is genuinely
  * undecidable, i.e. two or more equally-clean names.
  */
-function pickOne(candidates: ParsedFile[]): ParsedFile | null {
+/** One tie broken by content identity, recorded so the run can report it. */
+export type TieBreak = {
+  pairKey: string;
+  kind: FileKind;
+  md5: string;
+  chosen: string;
+  discarded: string[];
+  chosenDepth: number;
+  discardedDepth: number;
+};
+
+/**
+ * ⚠ CONTENT IDENTITY, NOT PATH PREFERENCE. This hashes the candidates and only
+ * breaks the tie when every one is byte-identical.
+ *
+ * Folder 4 files the same paper twice: once under a dated tree
+ * (3 - June/Chemistry/2018/Foundation/) and once under a flat mirror
+ * (Chemistry/C1/). Measured across all 96 ambiguous 1CH0 keys, every pair had
+ * the same size, the same page count and the same MD5, and the flat mirror's
+ * byte total was exactly the sum of the two dated trees. Either candidate is
+ * the same document, so the choice cannot change what gets imported.
+ *
+ * ⚠ AND WHEN THEY DIFFER, IT REFUSES. A path rule applied to candidates with
+ * different content would silently pick one version of a document that exists
+ * in two versions — the one failure mode this whole check exists to prevent.
+ * Non-identical candidates return null and block exactly as before.
+ */
+function pickByContent(candidates: ParsedFile[]): { chosen: ParsedFile; tie: TieBreak } | null {
+  const hashes = candidates.map((f) => ({
+    file: f,
+    md5: createHash("md5").update(readFileSync(f.absPath)).digest("hex"),
+    depth: f.relPath.split(sep).length,
+  }));
+  const distinct = new Set(hashes.map((h) => h.md5));
+  if (distinct.size !== 1) return null; // genuine content conflict — block.
+
+  /**
+   * ⚠ DEEPEST PATH WINS, and the tie-break among equal depths is the path
+   * string, so the choice is deterministic run to run. The dated tree carries
+   * session, year and tier in its directories; the flat mirror carries none of
+   * that. Neither is used to derive any field — the filename is authoritative —
+   * but a stable, meaningful choice is easier to audit than an arbitrary one.
+   */
+  const sorted = [...hashes].sort(
+    (a, b) => b.depth - a.depth || a.file.relPath.localeCompare(b.file.relPath),
+  );
+  const chosen = sorted[0];
+  return {
+    chosen: chosen.file,
+    tie: {
+      pairKey: chosen.file.pairKey,
+      kind: chosen.file.kind,
+      md5: chosen.md5,
+      chosen: chosen.file.relPath,
+      discarded: sorted.slice(1).map((h) => h.file.relPath),
+      chosenDepth: chosen.depth,
+      discardedDepth: sorted[1]?.depth ?? -1,
+    },
+  };
+}
+
+export function pickOne(candidates: ParsedFile[], ties?: TieBreak[]): ParsedFile | null {
   if (candidates.length === 0) return null;
   if (candidates.length === 1) return candidates[0];
   const clean = candidates.filter((f) => !f.duplicateSuffix);
   if (clean.length === 1) return clean[0];
-  return null;
+
+  /**
+   * ⚠ THE SUFFIX RULE STILL RUNS FIRST. "…_QU.pdf" beats "…_QU (1).pdf"
+   * without reading either file; only a tie between equally-clean names reaches
+   * the content check, so the common case costs no I/O.
+   */
+  const pool = clean.length > 1 ? clean : candidates;
+  const byContent = pickByContent(pool);
+  if (byContent === null) return null;
+  ties?.push(byContent.tie);
+  return byContent.chosen;
 }
 
 /**
@@ -1034,6 +1107,12 @@ function planRows(
   config: SubjectConfig,
   skips: Skip[],
   now: () => number,
+  /**
+   * ⚠ TIES ARE REPORTED, NEVER SILENT. Every content-identical tie-break is
+   * pushed here and printed by the run. A resolution nobody can see is a
+   * resolution nobody can audit.
+   */
+  ties: TieBreak[] = [],
 ): PlannedRow[] {
   const groups = new Map<
     string,
@@ -1067,8 +1146,8 @@ function planRows(
       }
       continue;
     }
-    const questionPaper = pickOne(group.QU);
-    const markScheme = pickOne(group.MS);
+    const questionPaper = pickOne(group.QU, ties);
+    const markScheme = pickOne(group.MS, ties);
     if (!questionPaper || !markScheme) {
       for (const f of all) {
         skips.push({
@@ -1081,7 +1160,7 @@ function planRows(
 
     // The examiner report is optional, so an ambiguous one costs only itself:
     // the paper still imports, just without an ER rather than not at all.
-    const examinerReport = pickOne(group.ER);
+    const examinerReport = pickOne(group.ER, ties);
     if (!examinerReport && group.ER.length > 0) {
       for (const f of group.ER) {
         skips.push({
@@ -1662,7 +1741,26 @@ async function main() {
   // in a run unique even when the loop runs inside one millisecond.
   const now = () => Date.now() + counter++;
 
-  let rows = planRows(parsed, catalogue, options.config, skips, now);
+  const ties: TieBreak[] = [];
+  let rows = planRows(parsed, catalogue, options.config, skips, now, ties);
+
+  /**
+   * ⚠ EVERY TIE BROKEN BY CONTENT IS PRINTED. The founder's rule is "report the
+   * choice, don't make it silently" — a resolution nobody sees is a resolution
+   * nobody can audit, and this one discards a real file from a real run.
+   *
+   * Only byte-identical candidates reach here; anything else blocked upstream
+   * and appears in the skips list as an ambiguity, unchanged.
+   */
+  if (ties.length) {
+    console.log(`\n${ties.length} tie(s) broken by content identity — candidates were byte-identical:`);
+    for (const t of ties) {
+      console.log(`  ${t.pairKey} ${t.kind}  md5=${t.md5.slice(0, 12)}`);
+      console.log(`      kept    (depth ${t.chosenDepth})  ${t.chosen}`);
+      for (const d of t.discarded) console.log(`      dropped (depth ${t.discardedDepth})  ${d}`);
+    }
+  }
+
   rows = await dropExisting(db, rows, skips);
   if (options.limit !== null && rows.length > options.limit) {
     const dropped = rows.slice(options.limit);
