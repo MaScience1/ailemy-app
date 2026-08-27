@@ -55,10 +55,39 @@ from pypdf.generic import (
     ArrayObject,
     DecodedStreamObject,
     DictionaryObject,
+    IndirectObject,
     NameObject,
     NumberObject,
     TextStringObject,
 )
+
+
+def deref(obj):
+    """
+    Resolve an IndirectObject to the object it points at. Anything else passes
+    through unchanged.
+
+    ============================================================================
+    ⚠ WHY EVERY page.get() IN THIS FILE NEEDS THIS.
+    ============================================================================
+    pypdf's DictionaryObject.__getitem__ resolves indirect references; dict.get()
+    is inherited straight from dict and does NOT. So `page["/Resources"]` gives
+    you the dictionary and `page.get("/Resources")` gives you an IndirectObject
+    pointing at it — same key, same file, different type, and only one of them
+    supports item assignment.
+
+    That is the whole bug: `resources[NameObject("/Font")] = fonts` raised
+    TypeError: 'IndirectObject' object does not support item assignment on any
+    PDF whose producer chose to write /Resources as a reference rather than
+    inline. Both spellings are valid PDF; nothing is wrong with those files.
+
+    ⚠ MUTATING THE RESOLVED OBJECT IS CORRECT, NOT A WORKAROUND. get_object()
+    returns the actual object out of the document's object store, so writing to
+    it writes to the thing the reference names. The reference stays valid and no
+    copy is made. Rebuilding a fresh dictionary instead would DETACH the page
+    from resources it shares with other pages.
+    """
+    return obj.get_object() if isinstance(obj, IndirectObject) else obj
 
 # ---------------------------------------------------------------------------
 # Spec
@@ -227,10 +256,40 @@ def qq_imbalance(data: bytes) -> int:
     return depth
 
 
+def _inherited_resources(page):
+    """
+    The /Resources a page inherits from its parent Pages node, or None.
+
+    ⚠ INHERITANCE IS NOT AN EDGE CASE IN THE SPEC. /Resources, /MediaBox,
+    /CropBox and /Rotate are all inheritable page attributes: a producer may set
+    them once on the Pages node and omit them from every page. pypdf resolves
+    /MediaBox and /CropBox for you via .mediabox/.cropbox; it does NOT resolve
+    /Resources for you via .get().
+
+    So a page with no /Resources key is not necessarily a page with no
+    resources, and minting a fresh empty dictionary for it would shadow the
+    inherited one — the page would keep its content stream and lose every font
+    and XObject that stream refers to. Rendered result: a blank or broken page,
+    written silently, with a correct-looking stamp on it.
+
+    The walk is depth-capped because /Parent chains are producer-controlled and
+    a malformed file can make them cyclic.
+    """
+    node = deref(page.get("/Parent"))
+    seen = 0
+    while node is not None and seen < 64:
+        res = deref(node.get("/Resources")) if hasattr(node, "get") else None
+        if res is not None:
+            return res
+        node = deref(node.get("/Parent")) if hasattr(node, "get") else None
+        seen += 1
+    return None
+
+
 def stamp_page(writer: PdfWriter, page) -> dict:
     width = text_width(TEXT, FONT_SIZE)
     box, used_crop = page_box(page)
-    rotate = int(page.get("/Rotate", 0) or 0)
+    rotate = int(deref(page.get("/Rotate", 0)) or 0)
     a, b, c, d, e, f = anchor_for(box, rotate, width)
 
     # Every parameter the stamp depends on is set explicitly rather than
@@ -291,11 +350,30 @@ def stamp_page(writer: PdfWriter, page) -> dict:
 
     # Font resource. Inlined as a direct dictionary — a standard-14 Type1 needs
     # no descriptor or embedded file.
-    resources = page.get("/Resources")
+    #
+    # ⚠ BOTH LOOKUPS ARE DEREFERENCED. /Resources and /Font are each free to be
+    #   an indirect reference, independently of one another. The reported crash
+    #   was /Resources; /Font is the same class of defect one line later and was
+    #   fixed at the same time rather than waiting for a file that trips it.
+    #
+    # ⚠ AND THE ABSENT CASE IS NOT WHAT IT LOOKS LIKE. A page with no /Resources
+    #   of its own may INHERIT one from its parent Pages node — that is legal and
+    #   the resources are still in force. Creating a fresh empty dictionary here
+    #   would SHADOW the inherited one and strip every font and image the page
+    #   actually uses. So the parent chain is walked before anything is minted,
+    #   and a new dictionary is a last resort for a page that genuinely has none.
+    resources = deref(page.get("/Resources"))
     if resources is None:
-        resources = DictionaryObject()
-        page[NameObject("/Resources")] = resources
-    fonts = resources.get("/Font")
+        inherited = _inherited_resources(page)
+        if inherited is not None:
+            # Attach the inherited dictionary to this page by reference rather
+            # than copying it: other pages share it and must keep sharing it.
+            resources = inherited
+            page[NameObject("/Resources")] = resources
+        else:
+            resources = DictionaryObject()
+            page[NameObject("/Resources")] = resources
+    fonts = deref(resources.get("/Font"))
     if fonts is None:
         fonts = DictionaryObject()
         resources[NameObject("/Font")] = fonts
@@ -353,7 +431,7 @@ def find_stamps(reader: PdfReader) -> list[dict]:
 
     for index, page in enumerate(reader.pages):
         box, _ = page_box(page)
-        rotate = int(page.get("/Rotate", 0) or 0)
+        rotate = int(deref(page.get("/Rotate", 0)) or 0)
         _, _, _, _, want_x, want_y = anchor_for(box, rotate, width)
         top = float(box.top)
         hits: list[tuple[float, float]] = []
@@ -393,7 +471,7 @@ def inspect_pdf(src: Path) -> dict:
             bleed += 1
         else:
             same += 1
-        r = int(page.get("/Rotate", 0) or 0) % 360
+        r = int(deref(page.get("/Rotate", 0)) or 0) % 360
         rotations[r] = rotations.get(r, 0) + 1
 
     stamps = find_stamps(reader)
