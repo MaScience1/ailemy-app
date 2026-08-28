@@ -179,20 +179,26 @@ console.log("\n=== 2. GUARD (a) — what the regex must still REJECT, as counts 
    * ==========================================================================
    * It was written as "accepts 0" while SUBJECTS declared only the eighteen IAL
    * codes, explicitly so that extending SUBJECTS would red it and force the new
-   * number to be stated rather than discovered later. Extending SUBJECTS red'd
-   * it, and this is the restatement: 1,370 of 2,119 unique in-scope basenames.
+   * number to be stated rather than discovered later. It has now done that
+   * TWICE. First restatement: 1,370 of 2,119 when the fourteen GCE/GCSE/IGCSE
+   * codes landed. Second: declaring 1SC0 and 4SS0 red'd it exactly as the note
+   * below predicted, and this is that restatement — 1,878 of 2,119.
    *
-   * The remaining 749 are the deferred and non-released material — 1SC0
-   * Combined Science, 4SS0 Single Science, 1BIZ/1CHZ/1PHZ Progress Assessments,
-   * plus SAM/EAM/ADDSAM, the ISO-date conventions and the MSC type. Every one
-   * of those is separately counted above.
+   * The move is +508, against 564 unique basenames carrying the two new codes.
+   * The 56-file gap is their own SAM/EAM and ISO-date material, rejected on
+   * shape rather than on code; import-newly-declared-codes.test.ts pins both
+   * halves of that arithmetic.
    *
-   * ⚠ IT STILL REDS ON ANY FUTURE CHANGE, which is the point. Declare 1SC0 and
-   * the number moves; widen the regex and the number moves.
+   * The remaining 241 are the still-deferred and non-released material —
+   * 1BIZ/1CHZ/1PHZ Progress Assessments, plus SAM/EAM/ADDSAM, the ISO-date
+   * conventions and the MSC type. Every one is separately counted above.
+   *
+   * ⚠ IT STILL REDS ON ANY FUTURE CHANGE, which is the point. Declare a Z code
+   * and the number moves; widen the regex and the number moves.
    */
   const inScopeAccepted = UNIQUE.filter(anyAccepts);
-  t("⚠ folders 2/4/8 now accept exactly 1,370 of 2,119 unique basenames",
-    inScopeAccepted.length === 1370, `${inScopeAccepted.length} of ${UNIQUE.length}`);
+  t("⚠ folders 2/4/8 now accept exactly 1,878 of 2,119 unique basenames",
+    inScopeAccepted.length === 1878, `${inScopeAccepted.length} of ${UNIQUE.length}`);
 
   /** Per code, so a regression names the qualification rather than a total. */
   const perCode = new Map<string, number>();
@@ -200,11 +206,21 @@ console.log("\n=== 2. GUARD (a) — what the regex must still REJECT, as counts 
     const c = n.split("_")[0].toUpperCase();
     perCode.set(c, (perCode.get(c) ?? 0) + 1);
   }
-  t("⚠ all fourteen declared codes are represented (none silently matches zero)",
-    perCode.size === 14, [...perCode.keys()].sort().join(","));
-  t("⚠ no deferred code appears among the accepted",
-    !["1SC0", "4SS0", "1BIZ", "1CHZ", "1PHZ"].some((c) => perCode.has(c)),
-    [...perCode.keys()].filter((c) => ["1SC0", "4SS0", "1BIZ", "1CHZ", "1PHZ"].includes(c)).join(", "));
+  t("⚠ all sixteen declared codes are represented (none silently matches zero)",
+    perCode.size === 16, [...perCode.keys()].sort().join(","));
+  /**
+   * ⚠ RE-POINTED AT THE THREE Z CODES ONLY, AND NOT WIDENED BACK. 1SC0 and 4SS0
+   * were removed from this list because they are now legitimately declared —
+   * NOT because the assertion was in the way. The guarantee they used to share
+   * with the Z codes did not evaporate: it moved to two dedicated suites,
+   * import-newly-declared-codes.test.ts (these two must resolve) and
+   * import-deferred-z-codes.test.ts (those three must not). Deleting this line
+   * outright would have admitted 18 unreviewed Progress Assessments.
+   */
+  const Z_DEFERRED = ["1BIZ", "1CHZ", "1PHZ"];
+  t("⚠ no deferred Z code appears among the accepted",
+    !Z_DEFERRED.some((c) => perCode.has(c)),
+    [...perCode.keys()].filter((c) => Z_DEFERRED.includes(c)).join(", "));
 }
 
 // ============================================================================

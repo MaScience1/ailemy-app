@@ -13,7 +13,6 @@
  *     scripts/exam-seed/__tests__/schema-probe.test.ts
  */
 import { existsSync, readFileSync } from "node:fs";
-import { createClient } from "@supabase/supabase-js";
 
 import { probeColumn, verifyRequiredColumns } from "../schema-probe.ts";
 
@@ -34,6 +33,23 @@ if (!existsSync(".env.local")) {
   );
   process.exit(2);
 }
+
+/**
+ * ⚠ IMPORTED DYNAMICALLY, AND AFTER THE SKIP CHECK ABOVE — NOT AT THE TOP.
+ *
+ * A static `import { createClient } from "@supabase/supabase-js"` is resolved
+ * before ANY statement in this module runs, so on a machine without node_modules
+ * installed the process died with ERR_MODULE_NOT_FOUND and exit 1 — a hard red —
+ * before it could reach the skip above and report exit 2. That is the same
+ * false-red the skip channel exists to prevent, arriving one line too early to
+ * be caught by it.
+ *
+ * Deferring the resolution to here means the absent-dependency case takes the
+ * skip channel like every other "cannot run" case. The import is still
+ * mandatory once we are past the skip: if credentials exist, this suite must
+ * either ask the database real questions or fail loudly.
+ */
+const { createClient } = await import("@supabase/supabase-js");
 
 const env = new Map<string, string>();
 for (const line of readFileSync(".env.local", "utf8").split("\n")) {
