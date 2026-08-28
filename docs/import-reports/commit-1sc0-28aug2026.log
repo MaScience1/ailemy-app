@@ -1,0 +1,1370 @@
+(node:40230) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/muhammed/dev/ailemy-app/scripts/bulk-import-papers.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/muhammed/dev/ailemy-app/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+Subject: Edexcel GCSE (9-1) Combined Science  (--subject=gcse-combined-science)
+Root   : /Users/muhammed/Desktop/Ailemy/Exams/4 - GCSE (9-1) 
+Mode   : COMMIT — writes to Supabase
+Status : live
+Years  : 2025 and earlier
+
+Found 1620 file(s); 724 match the paper naming scheme.
+Resolved 1 paper code(s) against the catalogue: 1SC0
+
+282 tie(s) broken by content identity — candidates were byte-identical:
+  1SC0_1BF_0618 QU  md5=181973fd913d
+      kept    (depth 5)  3 - June /Combined Science/2018/Foundation/1SC0_1BF_0618_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BF_0618_QU.pdf
+  1SC0_1BF_0618 MS  md5=dcd166bd7886
+      kept    (depth 5)  3 - June /Combined Science/2018/Foundation/1SC0_1BF_0618_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BF_0618_MS.pdf
+  1SC0_1BF_0618 ER  md5=1bdb40e1fe30
+      kept    (depth 5)  3 - June /Combined Science/2018/Foundation/1SC0_1BF_0618_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BF_0618_ER.pdf
+  1SC0_1BF_0619 QU  md5=b18a3237d8fb
+      kept    (depth 5)  3 - June /Combined Science/2019/Foundation/1SC0_1BF_0619_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BF_0619_QU.pdf
+  1SC0_1BF_0619 MS  md5=d9e29964017e
+      kept    (depth 5)  3 - June /Combined Science/2019/Foundation/1SC0_1BF_0619_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BF_0619_MS.pdf
+  1SC0_1BF_0619 ER  md5=ab914b663577
+      kept    (depth 5)  3 - June /Combined Science/2019/Foundation/1SC0_1BF_0619_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BF_0619_ER.pdf
+  1SC0_1BF_0622 QU  md5=caf6eb3b27b2
+      kept    (depth 5)  3 - June /Combined Science/2022/Foundation/1SC0_1BF_0622_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BF_0622_QU.pdf
+  1SC0_1BF_0622 MS  md5=3ad4942ceebd
+      kept    (depth 5)  3 - June /Combined Science/2022/Foundation/1SC0_1BF_0622_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BF_0622_MS.pdf
+  1SC0_1BF_0622 ER  md5=5024affb5cc5
+      kept    (depth 5)  3 - June /Combined Science/2022/Foundation/1SC0_1BF_0622_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BF_0622_ER.pdf
+  1SC0_1BF_0623 QU  md5=cbf5bb66d61a
+      kept    (depth 5)  3 - June /Combined Science/2023/Foundation/1SC0_1BF_0623_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BF_0623_QU.pdf
+  1SC0_1BF_0623 MS  md5=61912f6230f0
+      kept    (depth 5)  3 - June /Combined Science/2023/Foundation/1SC0_1BF_0623_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BF_0623_MS.pdf
+  1SC0_1BF_0623 ER  md5=c2482a5cde9a
+      kept    (depth 5)  3 - June /Combined Science/2023/Foundation/1SC0_1BF_0623_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BF_0623_ER.pdf
+  1SC0_1BF_0624 QU  md5=cb9539221eec
+      kept    (depth 5)  3 - June /Combined Science/2024/Foundation/1SC0_1BF_0624_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BF_0624_QU.pdf
+  1SC0_1BF_0624 MS  md5=79fe89fbff05
+      kept    (depth 5)  3 - June /Combined Science/2024/Foundation/1SC0_1BF_0624_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BF_0624_MS.pdf
+  1SC0_1BF_0624 ER  md5=c2a055af2640
+      kept    (depth 5)  3 - June /Combined Science/2024/Foundation/1SC0_1BF_0624_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BF_0624_ER.pdf
+  1SC0_1BF_1120 QU  md5=7671b9bdc395
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Foundation /1SC0_1BF_1120_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BF_1120_QU.pdf
+  1SC0_1BF_1120 MS  md5=6d0873dc6373
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Foundation /1SC0_1BF_1120_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BF_1120_MS.pdf
+  1SC0_1BF_1120 ER  md5=3f005be83690
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Foundation /1SC0_1BF_1120_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BF_1120_ER.pdf
+  1SC0_1BF_1121 QU  md5=90ec483513d4
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Foundation /1SC0_1BF_1121_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BF_1121_QU.pdf
+  1SC0_1BF_1121 MS  md5=26ade98703e0
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Foundation /1SC0_1BF_1121_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BF_1121_MS.pdf
+  1SC0_1BF_1121 ER  md5=6cf5a0fb826b
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Foundation /1SC0_1BF_1121_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BF_1121_ER.pdf
+  1SC0_1BH_0618 QU  md5=8bac19b8f9e3
+      kept    (depth 5)  3 - June /Combined Science/2018/Higher/1SC0_1BH_0618_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_0618_QU.pdf
+  1SC0_1BH_0618 MS  md5=943e558e5eee
+      kept    (depth 5)  3 - June /Combined Science/2018/Higher/1SC0_1BH_0618_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_0618_MS.pdf
+  1SC0_1BH_0618 ER  md5=10f09210dc9a
+      kept    (depth 5)  3 - June /Combined Science/2018/Higher/1SC0_1BH_0618_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_0618_ER.pdf
+  1SC0_1BH_0619 QU  md5=75df09411be7
+      kept    (depth 5)  3 - June /Combined Science/2019/Higher/1SC0_1BH_0619_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_0619_QU.pdf
+  1SC0_1BH_0619 MS  md5=1aa29c0b8280
+      kept    (depth 5)  3 - June /Combined Science/2019/Higher/1SC0_1BH_0619_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_0619_MS.pdf
+  1SC0_1BH_0619 ER  md5=db25c630b8de
+      kept    (depth 5)  3 - June /Combined Science/2019/Higher/1SC0_1BH_0619_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_0619_ER.pdf
+  1SC0_1BH_0622 QU  md5=b0b30e9e1e90
+      kept    (depth 5)  3 - June /Combined Science/2022/Higher/1SC0_1BH_0622_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_0622_QU.pdf
+  1SC0_1BH_0622 MS  md5=214fdb0cab80
+      kept    (depth 5)  3 - June /Combined Science/2022/Higher/1SC0_1BH_0622_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_0622_MS.pdf
+  1SC0_1BH_0622 ER  md5=cb8488b794ea
+      kept    (depth 5)  3 - June /Combined Science/2022/Higher/1SC0_1BH_0622_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_0622_ER.pdf
+  1SC0_1BH_0623 QU  md5=73177c9ca44c
+      kept    (depth 5)  3 - June /Combined Science/2023/Higher/1SC0_1BH_0623_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_0623_QU.pdf
+  1SC0_1BH_0623 MS  md5=e868a40d8253
+      kept    (depth 5)  3 - June /Combined Science/2023/Higher/1SC0_1BH_0623_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_0623_MS.pdf
+  1SC0_1BH_0623 ER  md5=008805ec31dc
+      kept    (depth 5)  3 - June /Combined Science/2023/Higher/1SC0_1BH_0623_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_0623_ER.pdf
+  1SC0_1BH_0624 QU  md5=77a27ef07e72
+      kept    (depth 5)  3 - June /Combined Science/2024/Higher/1SC0_1BH_0624_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_0624_QU.pdf
+  1SC0_1BH_0624 MS  md5=eacef626f238
+      kept    (depth 5)  3 - June /Combined Science/2024/Higher/1SC0_1BH_0624_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_0624_MS.pdf
+  1SC0_1BH_0624 ER  md5=6473644f9ad8
+      kept    (depth 5)  3 - June /Combined Science/2024/Higher/1SC0_1BH_0624_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_0624_ER.pdf
+  1SC0_1BH_0625 QU  md5=4a9e043bce5d
+      kept    (depth 5)  3 - June /Combined Science/2025/Higher/1SC0_1BH_0625_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_0625_QU.pdf
+  1SC0_1BH_0625 MS  md5=7d3358b6dbea
+      kept    (depth 5)  3 - June /Combined Science/2025/Higher/1SC0_1BH_0625_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_0625_MS.pdf
+  1SC0_1BH_0625 ER  md5=6e8a038c07f7
+      kept    (depth 5)  3 - June /Combined Science/2025/Higher/1SC0_1BH_0625_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_0625_ER.pdf
+  1SC0_1BH_1120 QU  md5=5e7f214f82ec
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Higher/1SC0_1BH_1120_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_1120_QU.pdf
+  1SC0_1BH_1120 MS  md5=0723cb2af191
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Higher/1SC0_1BH_1120_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_1120_MS.pdf
+  1SC0_1BH_1120 ER  md5=9b98dda6a7a4
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Higher/1SC0_1BH_1120_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_1120_ER.pdf
+  1SC0_1BH_1121 QU  md5=215d0c0afd47
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Higher/1SC0_1BH_1121_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_1121_QU.pdf
+  1SC0_1BH_1121 MS  md5=1e8f5d0e0fbe
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Higher/1SC0_1BH_1121_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_1121_MS.pdf
+  1SC0_1BH_1121 ER  md5=547db85a7c71
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Higher/1SC0_1BH_1121_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1BH_1121_ER.pdf
+  1SC0_1CF_0618 QU  md5=d48b8b58bf6b
+      kept    (depth 5)  3 - June /Combined Science/2018/Foundation/1SC0_1CF_0618_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_0618_QU.pdf
+  1SC0_1CF_0618 MS  md5=1b5ac3e814a0
+      kept    (depth 5)  3 - June /Combined Science/2018/Foundation/1SC0_1CF_0618_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_0618_MS.pdf
+  1SC0_1CF_0618 ER  md5=ced18eea057c
+      kept    (depth 5)  3 - June /Combined Science/2018/Foundation/1SC0_1CF_0618_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_0618_ER.pdf
+  1SC0_1CF_0619 QU  md5=bcc5ad47bb57
+      kept    (depth 5)  3 - June /Combined Science/2019/Foundation/1SC0_1CF_0619_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_0619_QU.pdf
+  1SC0_1CF_0619 MS  md5=34b02784aba6
+      kept    (depth 5)  3 - June /Combined Science/2019/Foundation/1SC0_1CF_0619_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_0619_MS.pdf
+  1SC0_1CF_0619 ER  md5=1182e41bf21d
+      kept    (depth 5)  3 - June /Combined Science/2019/Foundation/1SC0_1CF_0619_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_0619_ER.pdf
+  1SC0_1CF_0622 QU  md5=40634235c027
+      kept    (depth 5)  3 - June /Combined Science/2022/Foundation/1SC0_1CF_0622_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_0622_QU.pdf
+  1SC0_1CF_0622 MS  md5=46c10f5bb754
+      kept    (depth 5)  3 - June /Combined Science/2022/Foundation/1SC0_1CF_0622_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_0622_MS.pdf
+  1SC0_1CF_0622 ER  md5=b0417597aeeb
+      kept    (depth 5)  3 - June /Combined Science/2022/Foundation/1SC0_1CF_0622_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_0622_ER.pdf
+  1SC0_1CF_0623 QU  md5=214566b78948
+      kept    (depth 5)  3 - June /Combined Science/2023/Foundation/1SC0_1CF_0623_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_0623_QU.pdf
+  1SC0_1CF_0623 MS  md5=a9b7f52be2ec
+      kept    (depth 5)  3 - June /Combined Science/2023/Foundation/1SC0_1CF_0623_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_0623_MS.pdf
+  1SC0_1CF_0623 ER  md5=551f67287430
+      kept    (depth 5)  3 - June /Combined Science/2023/Foundation/1SC0_1CF_0623_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_0623_ER.pdf
+  1SC0_1CF_0624 QU  md5=3c8be9f4699a
+      kept    (depth 5)  3 - June /Combined Science/2024/Foundation/1SC0_1CF_0624_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_0624_QU.pdf
+  1SC0_1CF_0624 MS  md5=925053729c0d
+      kept    (depth 5)  3 - June /Combined Science/2024/Foundation/1SC0_1CF_0624_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_0624_MS.pdf
+  1SC0_1CF_0624 ER  md5=ddfd4e60cd6f
+      kept    (depth 5)  3 - June /Combined Science/2024/Foundation/1SC0_1CF_0624_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_0624_ER.pdf
+  1SC0_1CF_0625 QU  md5=b52288bd9aad
+      kept    (depth 5)  3 - June /Combined Science/2025/Foundation/1SC0_1CF_0625_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_0625_QU.pdf
+  1SC0_1CF_0625 MS  md5=07b9e9a7d00d
+      kept    (depth 5)  3 - June /Combined Science/2025/Foundation/1SC0_1CF_0625_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_0625_MS.pdf
+  1SC0_1CF_0625 ER  md5=863eb9ea6f46
+      kept    (depth 5)  3 - June /Combined Science/2025/Foundation/1SC0_1CF_0625_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_0625_ER.pdf
+  1SC0_1CF_1120 QU  md5=246ca6757253
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Foundation /1SC0_1CF_1120_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_1120_QU.pdf
+  1SC0_1CF_1120 MS  md5=80b117e80bdb
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Foundation /1SC0_1CF_1120_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_1120_MS.pdf
+  1SC0_1CF_1120 ER  md5=d2b78b963d2b
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Foundation /1SC0_1CF_1120_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_1120_ER.pdf
+  1SC0_1CF_1121 QU  md5=adc8eef3c2e5
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Foundation /1SC0_1CF_1121_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_1121_QU.pdf
+  1SC0_1CF_1121 MS  md5=6ad9a6001910
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Foundation /1SC0_1CF_1121_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_1121_MS.pdf
+  1SC0_1CF_1121 ER  md5=ea8f933ca17c
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Foundation /1SC0_1CF_1121_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CF_1121_ER.pdf
+  1SC0_1CH_0618 QU  md5=cf949c539e68
+      kept    (depth 5)  3 - June /Combined Science/2018/Higher/1SC0_1CH_0618_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_0618_QU.pdf
+  1SC0_1CH_0618 MS  md5=788a5933afd5
+      kept    (depth 5)  3 - June /Combined Science/2018/Higher/1SC0_1CH_0618_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_0618_MS.pdf
+  1SC0_1CH_0618 ER  md5=457fa782433c
+      kept    (depth 5)  3 - June /Combined Science/2018/Higher/1SC0_1CH_0618_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_0618_ER.pdf
+  1SC0_1CH_0619 QU  md5=a761df77d755
+      kept    (depth 5)  3 - June /Combined Science/2019/Higher/1SC0_1CH_0619_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_0619_QU.pdf
+  1SC0_1CH_0619 MS  md5=8c17fe32d450
+      kept    (depth 5)  3 - June /Combined Science/2019/Higher/1SC0_1CH_0619_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_0619_MS.pdf
+  1SC0_1CH_0619 ER  md5=edab62b1c3e8
+      kept    (depth 5)  3 - June /Combined Science/2019/Higher/1SC0_1CH_0619_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_0619_ER.pdf
+  1SC0_1CH_0622 QU  md5=c437c1a915f7
+      kept    (depth 5)  3 - June /Combined Science/2022/Higher/1SC0_1CH_0622_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_0622_QU.pdf
+  1SC0_1CH_0622 MS  md5=104dd656d90b
+      kept    (depth 5)  3 - June /Combined Science/2022/Higher/1SC0_1CH_0622_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_0622_MS.pdf
+  1SC0_1CH_0622 ER  md5=8d73446bec71
+      kept    (depth 5)  3 - June /Combined Science/2022/Higher/1SC0_1CH_0622_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_0622_ER.pdf
+  1SC0_1CH_0623 QU  md5=5f825b46c9ec
+      kept    (depth 5)  3 - June /Combined Science/2023/Higher/1SC0_1CH_0623_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_0623_QU.pdf
+  1SC0_1CH_0623 MS  md5=ad3b94601b51
+      kept    (depth 5)  3 - June /Combined Science/2023/Higher/1SC0_1CH_0623_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_0623_MS.pdf
+  1SC0_1CH_0623 ER  md5=3959350d9b61
+      kept    (depth 5)  3 - June /Combined Science/2023/Higher/1SC0_1CH_0623_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_0623_ER.pdf
+  1SC0_1CH_0624 QU  md5=ec4e17d5104a
+      kept    (depth 5)  3 - June /Combined Science/2024/Higher/1SC0_1CH_0624_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_0624_QU.pdf
+  1SC0_1CH_0624 MS  md5=f8626e66c353
+      kept    (depth 5)  3 - June /Combined Science/2024/Higher/1SC0_1CH_0624_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_0624_MS.pdf
+  1SC0_1CH_0624 ER  md5=00521b5e3d8c
+      kept    (depth 5)  3 - June /Combined Science/2024/Higher/1SC0_1CH_0624_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_0624_ER.pdf
+  1SC0_1CH_0625 QU  md5=811eb01907fc
+      kept    (depth 5)  3 - June /Combined Science/2025/Higher/1SC0_1CH_0625_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_0625_QU.pdf
+  1SC0_1CH_0625 MS  md5=e575a632c84d
+      kept    (depth 5)  3 - June /Combined Science/2025/Higher/1SC0_1CH_0625_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_0625_MS.pdf
+  1SC0_1CH_0625 ER  md5=9070da2e096b
+      kept    (depth 5)  3 - June /Combined Science/2025/Higher/1SC0_1CH_0625_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_0625_ER.pdf
+  1SC0_1CH_1120 QU  md5=caa907affde7
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Higher/1SC0_1CH_1120_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_1120_QU.pdf
+  1SC0_1CH_1120 MS  md5=cde835dbaff8
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Higher/1SC0_1CH_1120_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_1120_MS.pdf
+  1SC0_1CH_1120 ER  md5=2f00eb322086
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Higher/1SC0_1CH_1120_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_1120_ER.pdf
+  1SC0_1CH_1121 QU  md5=2c5396d55392
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Higher/1SC0_1CH_1121_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_1121_QU.pdf
+  1SC0_1CH_1121 MS  md5=a66911915b00
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Higher/1SC0_1CH_1121_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_1121_MS.pdf
+  1SC0_1CH_1121 ER  md5=331a4244ddb6
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Higher/1SC0_1CH_1121_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1CH_1121_ER.pdf
+  1SC0_1PF_0618 QU  md5=5a84bee12b21
+      kept    (depth 5)  3 - June /Combined Science/2018/Foundation/1SC0_1PF_0618_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_0618_QU.pdf
+  1SC0_1PF_0618 MS  md5=d3c2f79f621b
+      kept    (depth 5)  3 - June /Combined Science/2018/Foundation/1SC0_1PF_0618_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_0618_MS.pdf
+  1SC0_1PF_0618 ER  md5=88e35325a734
+      kept    (depth 5)  3 - June /Combined Science/2018/Foundation/1SC0_1PF_0618_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_0618_ER.pdf
+  1SC0_1PF_0619 QU  md5=52de9cc40140
+      kept    (depth 5)  3 - June /Combined Science/2019/Foundation/1SC0_1PF_0619_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_0619_QU.pdf
+  1SC0_1PF_0619 MS  md5=cbff4de981ee
+      kept    (depth 5)  3 - June /Combined Science/2019/Foundation/1SC0_1PF_0619_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_0619_MS.pdf
+  1SC0_1PF_0619 ER  md5=553a86828631
+      kept    (depth 5)  3 - June /Combined Science/2019/Foundation/1SC0_1PF_0619_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_0619_ER.pdf
+  1SC0_1PF_0622 QU  md5=c6c85e846abc
+      kept    (depth 5)  3 - June /Combined Science/2022/Foundation/1SC0_1PF_0622_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_0622_QU.pdf
+  1SC0_1PF_0622 MS  md5=152dc08c31ec
+      kept    (depth 5)  3 - June /Combined Science/2022/Foundation/1SC0_1PF_0622_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_0622_MS.pdf
+  1SC0_1PF_0622 ER  md5=7ebaf9961089
+      kept    (depth 5)  3 - June /Combined Science/2022/Foundation/1SC0_1PF_0622_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_0622_ER.pdf
+  1SC0_1PF_0623 QU  md5=e644bb5e4f99
+      kept    (depth 5)  3 - June /Combined Science/2023/Foundation/1SC0_1PF_0623_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_0623_QU.pdf
+  1SC0_1PF_0623 MS  md5=5f8b829a5ff6
+      kept    (depth 5)  3 - June /Combined Science/2023/Foundation/1SC0_1PF_0623_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_0623_MS.pdf
+  1SC0_1PF_0623 ER  md5=693578e8df95
+      kept    (depth 5)  3 - June /Combined Science/2023/Foundation/1SC0_1PF_0623_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_0623_ER.pdf
+  1SC0_1PF_0624 QU  md5=db3893b9209e
+      kept    (depth 5)  3 - June /Combined Science/2024/Foundation/1SC0_1PF_0624_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_0624_QU.pdf
+  1SC0_1PF_0624 MS  md5=0544b3684472
+      kept    (depth 5)  3 - June /Combined Science/2024/Foundation/1SC0_1PF_0624_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_0624_MS.pdf
+  1SC0_1PF_0624 ER  md5=fcf62258fd8d
+      kept    (depth 5)  3 - June /Combined Science/2024/Foundation/1SC0_1PF_0624_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_0624_ER.pdf
+  1SC0_1PF_0625 QU  md5=0bc554ee993f
+      kept    (depth 5)  3 - June /Combined Science/2025/Foundation/1SC0_1PF_0625_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_0625_QU.pdf
+  1SC0_1PF_0625 MS  md5=f46c0a886969
+      kept    (depth 5)  3 - June /Combined Science/2025/Foundation/1SC0_1PF_0625_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_0625_MS.pdf
+  1SC0_1PF_0625 ER  md5=5444d404c541
+      kept    (depth 5)  3 - June /Combined Science/2025/Foundation/1SC0_1PF_0625_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_0625_ER.pdf
+  1SC0_1PF_1120 QU  md5=1519e061bafe
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Foundation /1SC0_1PF_1120_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_1120_QU.pdf
+  1SC0_1PF_1120 MS  md5=e2552e7e6c30
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Foundation /1SC0_1PF_1120_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_1120_MS.pdf
+  1SC0_1PF_1120 ER  md5=cc6710b41115
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Foundation /1SC0_1PF_1120_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_1120_ER.pdf
+  1SC0_1PF_1121 QU  md5=42b2d51d755e
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Foundation /1SC0_1PF_1121_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_1121_QU.pdf
+  1SC0_1PF_1121 MS  md5=54dc7f566a69
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Foundation /1SC0_1PF_1121_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_1121_MS.pdf
+  1SC0_1PF_1121 ER  md5=800d705d53d2
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Foundation /1SC0_1PF_1121_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PF_1121_ER.pdf
+  1SC0_1PH_0618 QU  md5=5e0290b965ef
+      kept    (depth 5)  3 - June /Combined Science/2018/Higher/1SC0_1PH_0618_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_0618_QU.pdf
+  1SC0_1PH_0618 MS  md5=c50017e507e1
+      kept    (depth 5)  3 - June /Combined Science/2018/Higher/1SC0_1PH_0618_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_0618_MS.pdf
+  1SC0_1PH_0618 ER  md5=965d8ef054f2
+      kept    (depth 5)  3 - June /Combined Science/2018/Higher/1SC0_1PH_0618_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_0618_ER.pdf
+  1SC0_1PH_0619 QU  md5=a700761d5e34
+      kept    (depth 5)  3 - June /Combined Science/2019/Higher/1SC0_1PH_0619_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_0619_QU.pdf
+  1SC0_1PH_0619 MS  md5=495bd9cfcc68
+      kept    (depth 5)  3 - June /Combined Science/2019/Higher/1SC0_1PH_0619_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_0619_MS.pdf
+  1SC0_1PH_0619 ER  md5=81ef6ac1dcfa
+      kept    (depth 5)  3 - June /Combined Science/2019/Higher/1SC0_1PH_0619_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_0619_ER.pdf
+  1SC0_1PH_0622 QU  md5=7f88b5039ec2
+      kept    (depth 5)  3 - June /Combined Science/2022/Higher/1SC0_1PH_0622_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_0622_QU.pdf
+  1SC0_1PH_0622 MS  md5=404905b814a8
+      kept    (depth 5)  3 - June /Combined Science/2022/Higher/1SC0_1PH_0622_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_0622_MS.pdf
+  1SC0_1PH_0622 ER  md5=8f82d393360e
+      kept    (depth 5)  3 - June /Combined Science/2022/Higher/1SC0_1PH_0622_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_0622_ER.pdf
+  1SC0_1PH_0623 QU  md5=902e187026fe
+      kept    (depth 5)  3 - June /Combined Science/2023/Higher/1SC0_1PH_0623_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_0623_QU.pdf
+  1SC0_1PH_0623 MS  md5=90c9153473b9
+      kept    (depth 5)  3 - June /Combined Science/2023/Higher/1SC0_1PH_0623_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_0623_MS.pdf
+  1SC0_1PH_0623 ER  md5=53a9d96d0565
+      kept    (depth 5)  3 - June /Combined Science/2023/Higher/1SC0_1PH_0623_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_0623_ER.pdf
+  1SC0_1PH_0624 QU  md5=5c5f265ae2b6
+      kept    (depth 5)  3 - June /Combined Science/2024/Higher/1SC0_1PH_0624_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_0624_QU.pdf
+  1SC0_1PH_0624 MS  md5=968164e639a9
+      kept    (depth 5)  3 - June /Combined Science/2024/Higher/1SC0_1PH_0624_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_0624_MS.pdf
+  1SC0_1PH_0624 ER  md5=528c94cef5c1
+      kept    (depth 5)  3 - June /Combined Science/2024/Higher/1SC0_1PH_0624_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_0624_ER.pdf
+  1SC0_1PH_0625 QU  md5=739d035fd859
+      kept    (depth 5)  3 - June /Combined Science/2025/Higher/1SC0_1PH_0625_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_0625_QU.pdf
+  1SC0_1PH_0625 MS  md5=1ed2722e24c9
+      kept    (depth 5)  3 - June /Combined Science/2025/Higher/1SC0_1PH_0625_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_0625_MS.pdf
+  1SC0_1PH_0625 ER  md5=3f607e14177f
+      kept    (depth 5)  3 - June /Combined Science/2025/Higher/1SC0_1PH_0625_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_0625_ER.pdf
+  1SC0_1PH_1120 QU  md5=4a35e8437fde
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Higher/1SC0_1PH_1120_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_1120_QU.pdf
+  1SC0_1PH_1120 MS  md5=e93e66b87bbc
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Higher/1SC0_1PH_1120_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_1120_MS.pdf
+  1SC0_1PH_1120 ER  md5=ff2618c43b35
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Higher/1SC0_1PH_1120_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_1120_ER.pdf
+  1SC0_1PH_1121 QU  md5=b832c1d9a497
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Higher/1SC0_1PH_1121_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_1121_QU.pdf
+  1SC0_1PH_1121 MS  md5=ea55b04ac673
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Higher/1SC0_1PH_1121_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_1121_MS.pdf
+  1SC0_1PH_1121 ER  md5=ba06efd8a319
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Higher/1SC0_1PH_1121_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_1PH_1121_ER.pdf
+  1SC0_2BF_0618 QU  md5=4c50cf1d35fb
+      kept    (depth 5)  3 - June /Combined Science/2018/Foundation/1SC0_2BF_0618_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_0618_QU.pdf
+  1SC0_2BF_0618 MS  md5=6464e09b08ee
+      kept    (depth 5)  3 - June /Combined Science/2018/Foundation/1SC0_2BF_0618_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_0618_MS.pdf
+  1SC0_2BF_0618 ER  md5=85c896d25f77
+      kept    (depth 5)  3 - June /Combined Science/2018/Foundation/1SC0_2BF_0618_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_0618_ER.pdf
+  1SC0_2BF_0619 QU  md5=1e78dc2c6744
+      kept    (depth 5)  3 - June /Combined Science/2019/Foundation/1SC0_2BF_0619_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_0619_QU.pdf
+  1SC0_2BF_0619 MS  md5=6857c40692cf
+      kept    (depth 5)  3 - June /Combined Science/2019/Foundation/1SC0_2BF_0619_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_0619_MS.pdf
+  1SC0_2BF_0619 ER  md5=eb0f42422b68
+      kept    (depth 5)  3 - June /Combined Science/2019/Foundation/1SC0_2BF_0619_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_0619_ER.pdf
+  1SC0_2BF_0622 QU  md5=ef1df303209d
+      kept    (depth 5)  3 - June /Combined Science/2022/Foundation/1SC0_2BF_0622_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_0622_QU.pdf
+  1SC0_2BF_0622 MS  md5=068148bd8a65
+      kept    (depth 5)  3 - June /Combined Science/2022/Foundation/1SC0_2BF_0622_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_0622_MS.pdf
+  1SC0_2BF_0622 ER  md5=a8855f68a108
+      kept    (depth 5)  3 - June /Combined Science/2022/Foundation/1SC0_2BF_0622_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_0622_ER.pdf
+  1SC0_2BF_0623 QU  md5=7f45f1e3c6de
+      kept    (depth 5)  3 - June /Combined Science/2023/Foundation/1SC0_2BF_0623_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_0623_QU.pdf
+  1SC0_2BF_0623 MS  md5=803d6c1f110b
+      kept    (depth 5)  3 - June /Combined Science/2023/Foundation/1SC0_2BF_0623_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_0623_MS.pdf
+  1SC0_2BF_0623 ER  md5=331a15331f38
+      kept    (depth 5)  3 - June /Combined Science/2023/Foundation/1SC0_2BF_0623_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_0623_ER.pdf
+  1SC0_2BF_0624 QU  md5=98b7318c8286
+      kept    (depth 5)  3 - June /Combined Science/2024/Foundation/1SC0_2BF_0624_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_0624_QU.pdf
+  1SC0_2BF_0624 MS  md5=c503c2e5c3e2
+      kept    (depth 5)  3 - June /Combined Science/2024/Foundation/1SC0_2BF_0624_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_0624_MS.pdf
+  1SC0_2BF_0624 ER  md5=e842f6585833
+      kept    (depth 5)  3 - June /Combined Science/2024/Foundation/1SC0_2BF_0624_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_0624_ER.pdf
+  1SC0_2BF_0625 QU  md5=af1f19300238
+      kept    (depth 5)  3 - June /Combined Science/2025/Foundation/1SC0_2BF_0625_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_0625_QU.pdf
+  1SC0_2BF_0625 MS  md5=38e7d9245efa
+      kept    (depth 5)  3 - June /Combined Science/2025/Foundation/1SC0_2BF_0625_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_0625_MS.pdf
+  1SC0_2BF_0625 ER  md5=f220fc2a40b6
+      kept    (depth 5)  3 - June /Combined Science/2025/Foundation/1SC0_2BF_0625_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_0625_ER.pdf
+  1SC0_2BF_1120 QU  md5=c5f7282f7e47
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Foundation /1SC0_2BF_1120_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_1120_QU.pdf
+  1SC0_2BF_1120 MS  md5=976b40337c87
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Foundation /1SC0_2BF_1120_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_1120_MS.pdf
+  1SC0_2BF_1120 ER  md5=91af00365232
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Foundation /1SC0_2BF_1120_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_1120_ER.pdf
+  1SC0_2BF_1121 QU  md5=bdd480d31259
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Foundation /1SC0_2BF_1121_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_1121_QU.pdf
+  1SC0_2BF_1121 MS  md5=c919fe399255
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Foundation /1SC0_2BF_1121_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_1121_MS.pdf
+  1SC0_2BF_1121 ER  md5=5f02262c77f2
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Foundation /1SC0_2BF_1121_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BF_1121_ER.pdf
+  1SC0_2BH_0618 QU  md5=da36b046a401
+      kept    (depth 5)  3 - June /Combined Science/2018/Higher/1SC0_2BH_0618_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_0618_QU.pdf
+  1SC0_2BH_0618 MS  md5=c8fe846e98a7
+      kept    (depth 5)  3 - June /Combined Science/2018/Higher/1SC0_2BH_0618_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_0618_MS.pdf
+  1SC0_2BH_0618 ER  md5=4e056e56c234
+      kept    (depth 5)  3 - June /Combined Science/2018/Higher/1SC0_2BH_0618_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_0618_ER.pdf
+  1SC0_2BH_0619 QU  md5=308c50cd0b6a
+      kept    (depth 5)  3 - June /Combined Science/2019/Higher/1SC0_2BH_0619_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_0619_QU.pdf
+  1SC0_2BH_0619 MS  md5=297d0a8b2361
+      kept    (depth 5)  3 - June /Combined Science/2019/Higher/1SC0_2BH_0619_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_0619_MS.pdf
+  1SC0_2BH_0619 ER  md5=290bef837941
+      kept    (depth 5)  3 - June /Combined Science/2019/Higher/1SC0_2BH_0619_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_0619_ER.pdf
+  1SC0_2BH_0622 QU  md5=d4330fa99959
+      kept    (depth 5)  3 - June /Combined Science/2022/Higher/1SC0_2BH_0622_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_0622_QU.pdf
+  1SC0_2BH_0622 MS  md5=d8eb9c49d01f
+      kept    (depth 5)  3 - June /Combined Science/2022/Higher/1SC0_2BH_0622_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_0622_MS.pdf
+  1SC0_2BH_0622 ER  md5=de8dc2bc5731
+      kept    (depth 5)  3 - June /Combined Science/2022/Higher/1SC0_2BH_0622_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_0622_ER.pdf
+  1SC0_2BH_0623 QU  md5=e34adc5cffe3
+      kept    (depth 5)  3 - June /Combined Science/2023/Higher/1SC0_2BH_0623_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_0623_QU.pdf
+  1SC0_2BH_0623 MS  md5=8779749e593e
+      kept    (depth 5)  3 - June /Combined Science/2023/Higher/1SC0_2BH_0623_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_0623_MS.pdf
+  1SC0_2BH_0623 ER  md5=cf424bbb562d
+      kept    (depth 5)  3 - June /Combined Science/2023/Higher/1SC0_2BH_0623_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_0623_ER.pdf
+  1SC0_2BH_0624 QU  md5=bd1acfa55c17
+      kept    (depth 5)  3 - June /Combined Science/2024/Higher/1SC0_2BH_0624_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_0624_QU.pdf
+  1SC0_2BH_0624 MS  md5=c20d3958e5c5
+      kept    (depth 5)  3 - June /Combined Science/2024/Higher/1SC0_2BH_0624_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_0624_MS.pdf
+  1SC0_2BH_0624 ER  md5=d8c97a3a9417
+      kept    (depth 5)  3 - June /Combined Science/2024/Higher/1SC0_2BH_0624_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_0624_ER.pdf
+  1SC0_2BH_0625 QU  md5=b9560e917b1a
+      kept    (depth 5)  3 - June /Combined Science/2025/Higher/1SC0_2BH_0625_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_0625_QU.pdf
+  1SC0_2BH_0625 MS  md5=5a2b353535b1
+      kept    (depth 5)  3 - June /Combined Science/2025/Higher/1SC0_2BH_0625_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_0625_MS.pdf
+  1SC0_2BH_0625 ER  md5=d2b9bf0421ec
+      kept    (depth 5)  3 - June /Combined Science/2025/Higher/1SC0_2BH_0625_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_0625_ER.pdf
+  1SC0_2BH_1120 QU  md5=94b033a7fe7a
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Higher/1SC0_2BH_1120_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_1120_QU.pdf
+  1SC0_2BH_1120 MS  md5=6ea33e824d08
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Higher/1SC0_2BH_1120_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_1120_MS.pdf
+  1SC0_2BH_1120 ER  md5=f77c6adbccb2
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Higher/1SC0_2BH_1120_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_1120_ER.pdf
+  1SC0_2BH_1121 QU  md5=469a282bbcf8
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Higher/1SC0_2BH_1121_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_1121_QU.pdf
+  1SC0_2BH_1121 MS  md5=4646c544c557
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Higher/1SC0_2BH_1121_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_1121_MS.pdf
+  1SC0_2BH_1121 ER  md5=86b8a0baabb9
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Higher/1SC0_2BH_1121_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2BH_1121_ER.pdf
+  1SC0_2CF_0618 QU  md5=224c7020e842
+      kept    (depth 5)  3 - June /Combined Science/2018/Foundation/1SC0_2CF_0618_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_0618_QU.pdf
+  1SC0_2CF_0618 MS  md5=3b3fa1a87c7d
+      kept    (depth 5)  3 - June /Combined Science/2018/Foundation/1SC0_2CF_0618_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_0618_MS.pdf
+  1SC0_2CF_0618 ER  md5=848acd6e37bb
+      kept    (depth 5)  3 - June /Combined Science/2018/Foundation/1SC0_2CF_0618_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_0618_ER.pdf
+  1SC0_2CF_0619 QU  md5=3bb7b143167f
+      kept    (depth 5)  3 - June /Combined Science/2019/Foundation/1SC0_2CF_0619_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_0619_QU.pdf
+  1SC0_2CF_0619 MS  md5=c849f6af7a05
+      kept    (depth 5)  3 - June /Combined Science/2019/Foundation/1SC0_2CF_0619_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_0619_MS.pdf
+  1SC0_2CF_0619 ER  md5=72eb84c952ca
+      kept    (depth 5)  3 - June /Combined Science/2019/Foundation/1SC0_2CF_0619_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_0619_ER.pdf
+  1SC0_2CF_0622 QU  md5=6637def6bc76
+      kept    (depth 5)  3 - June /Combined Science/2022/Foundation/1SC0_2CF_0622_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_0622_QU.pdf
+  1SC0_2CF_0622 MS  md5=293db5efb8bf
+      kept    (depth 5)  3 - June /Combined Science/2022/Foundation/1SC0_2CF_0622_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_0622_MS.pdf
+  1SC0_2CF_0622 ER  md5=7ec77f535098
+      kept    (depth 5)  3 - June /Combined Science/2022/Foundation/1SC0_2CF_0622_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_0622_ER.pdf
+  1SC0_2CF_0623 QU  md5=1b5dbd958d43
+      kept    (depth 5)  3 - June /Combined Science/2023/Foundation/1SC0_2CF_0623_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_0623_QU.pdf
+  1SC0_2CF_0623 MS  md5=25562d3c8e7a
+      kept    (depth 5)  3 - June /Combined Science/2023/Foundation/1SC0_2CF_0623_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_0623_MS.pdf
+  1SC0_2CF_0623 ER  md5=fb3b7d2ebb7c
+      kept    (depth 5)  3 - June /Combined Science/2023/Foundation/1SC0_2CF_0623_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_0623_ER.pdf
+  1SC0_2CF_0624 QU  md5=31760738493e
+      kept    (depth 5)  3 - June /Combined Science/2024/Foundation/1SC0_2CF_0624_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_0624_QU.pdf
+  1SC0_2CF_0624 MS  md5=e2cb4dc4b86e
+      kept    (depth 5)  3 - June /Combined Science/2024/Foundation/1SC0_2CF_0624_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_0624_MS.pdf
+  1SC0_2CF_0624 ER  md5=4045a450e15d
+      kept    (depth 5)  3 - June /Combined Science/2024/Foundation/1SC0_2CF_0624_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_0624_ER.pdf
+  1SC0_2CF_0625 QU  md5=1680a4ca4a30
+      kept    (depth 5)  3 - June /Combined Science/2025/Foundation/1SC0_2CF_0625_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_0625_QU.pdf
+  1SC0_2CF_0625 MS  md5=b47d6d895914
+      kept    (depth 5)  3 - June /Combined Science/2025/Foundation/1SC0_2CF_0625_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_0625_MS.pdf
+  1SC0_2CF_0625 ER  md5=2fcc9b665891
+      kept    (depth 5)  3 - June /Combined Science/2025/Foundation/1SC0_2CF_0625_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_0625_ER.pdf
+  1SC0_2CF_1120 QU  md5=d2bd8f4582cd
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Foundation /1SC0_2CF_1120_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_1120_QU.pdf
+  1SC0_2CF_1120 MS  md5=1991256f5749
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Foundation /1SC0_2CF_1120_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_1120_MS.pdf
+  1SC0_2CF_1120 ER  md5=98d52738c4d5
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Foundation /1SC0_2CF_1120_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_1120_ER.pdf
+  1SC0_2CF_1121 QU  md5=434676c4afd0
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Foundation /1SC0_2CF_1121_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_1121_QU.pdf
+  1SC0_2CF_1121 MS  md5=734f5022e1c7
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Foundation /1SC0_2CF_1121_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_1121_MS.pdf
+  1SC0_2CF_1121 ER  md5=c08a25853f97
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Foundation /1SC0_2CF_1121_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CF_1121_ER.pdf
+  1SC0_2CH_0618 QU  md5=5274f08c3863
+      kept    (depth 5)  3 - June /Combined Science/2018/Higher/1SC0_2CH_0618_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CH_0618_QU.pdf
+  1SC0_2CH_0618 MS  md5=3249a28bb1a2
+      kept    (depth 5)  3 - June /Combined Science/2018/Higher/1SC0_2CH_0618_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CH_0618_MS.pdf
+  1SC0_2CH_0618 ER  md5=770ea489580b
+      kept    (depth 5)  3 - June /Combined Science/2018/Higher/1SC0_2CH_0618_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CH_0618_ER.pdf
+  1SC0_2CH_0619 QU  md5=75b65d498a8a
+      kept    (depth 5)  3 - June /Combined Science/2019/Higher/1SC0_2CH_0619_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CH_0619_QU.pdf
+  1SC0_2CH_0619 MS  md5=a2fc002e25f6
+      kept    (depth 5)  3 - June /Combined Science/2019/Higher/1SC0_2CH_0619_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CH_0619_MS.pdf
+  1SC0_2CH_0619 ER  md5=8bf59c817604
+      kept    (depth 5)  3 - June /Combined Science/2019/Higher/1SC0_2CH_0619_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CH_0619_ER.pdf
+  1SC0_2CH_0622 QU  md5=8b1e209ecd91
+      kept    (depth 5)  3 - June /Combined Science/2022/Higher/1SC0_2CH_0622_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CH_0622_QU.pdf
+  1SC0_2CH_0622 MS  md5=215f5c1621f7
+      kept    (depth 5)  3 - June /Combined Science/2022/Higher/1SC0_2CH_0622_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CH_0622_MS.pdf
+  1SC0_2CH_0622 ER  md5=e55290974023
+      kept    (depth 5)  3 - June /Combined Science/2022/Higher/1SC0_2CH_0622_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CH_0622_ER.pdf
+  1SC0_2CH_0624 QU  md5=7f845d3f5a64
+      kept    (depth 5)  3 - June /Combined Science/2024/Higher/1SC0_2CH_0624_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CH_0624_QU.pdf
+  1SC0_2CH_0624 MS  md5=759c1a29e1ee
+      kept    (depth 5)  3 - June /Combined Science/2024/Higher/1SC0_2CH_0624_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CH_0624_MS.pdf
+  1SC0_2CH_0624 ER  md5=4add1a15d0f8
+      kept    (depth 5)  3 - June /Combined Science/2024/Higher/1SC0_2CH_0624_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CH_0624_ER.pdf
+  1SC0_2CH_0625 QU  md5=8de4117f3e8f
+      kept    (depth 5)  3 - June /Combined Science/2025/Higher/1SC0_2CH_0625_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CH_0625_QU.pdf
+  1SC0_2CH_0625 MS  md5=e10bbc2745e1
+      kept    (depth 5)  3 - June /Combined Science/2025/Higher/1SC0_2CH_0625_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CH_0625_MS.pdf
+  1SC0_2CH_0625 ER  md5=63ef410ea1e9
+      kept    (depth 5)  3 - June /Combined Science/2025/Higher/1SC0_2CH_0625_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CH_0625_ER.pdf
+  1SC0_2CH_1120 QU  md5=8c23aed1ba8c
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Higher/1SC0_2CH_1120_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CH_1120_QU.pdf
+  1SC0_2CH_1120 MS  md5=2d7fff931fb5
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Higher/1SC0_2CH_1120_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CH_1120_MS.pdf
+  1SC0_2CH_1120 ER  md5=a177b014c395
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Higher/1SC0_2CH_1120_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CH_1120_ER.pdf
+  1SC0_2CH_1121 QU  md5=2510d0a07f5e
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Higher/1SC0_2CH_1121_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CH_1121_QU.pdf
+  1SC0_2CH_1121 MS  md5=ea203c122b52
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Higher/1SC0_2CH_1121_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CH_1121_MS.pdf
+  1SC0_2CH_1121 ER  md5=296e11da8a97
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Higher/1SC0_2CH_1121_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2CH_1121_ER.pdf
+  1SC0_2PF_0618 QU  md5=bce9537730a9
+      kept    (depth 5)  3 - June /Combined Science/2018/Foundation/1SC0_2PF_0618_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_0618_QU.pdf
+  1SC0_2PF_0618 MS  md5=9f69fc8fb18c
+      kept    (depth 5)  3 - June /Combined Science/2018/Foundation/1SC0_2PF_0618_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_0618_MS.pdf
+  1SC0_2PF_0618 ER  md5=05d412fccfc7
+      kept    (depth 5)  3 - June /Combined Science/2018/Foundation/1SC0_2PF_0618_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_0618_ER.pdf
+  1SC0_2PF_0619 QU  md5=2c17b9f8a5d7
+      kept    (depth 5)  3 - June /Combined Science/2019/Foundation/1SC0_2PF_0619_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_0619_QU.pdf
+  1SC0_2PF_0619 MS  md5=dd704cae7642
+      kept    (depth 5)  3 - June /Combined Science/2019/Foundation/1SC0_2PF_0619_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_0619_MS.pdf
+  1SC0_2PF_0619 ER  md5=95d30a8eba72
+      kept    (depth 5)  3 - June /Combined Science/2019/Foundation/1SC0_2PF_0619_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_0619_ER.pdf
+  1SC0_2PF_0622 QU  md5=aa7b1c5f9204
+      kept    (depth 5)  3 - June /Combined Science/2022/Foundation/1SC0_2PF_0622_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_0622_QU.pdf
+  1SC0_2PF_0622 MS  md5=a5a24961184e
+      kept    (depth 5)  3 - June /Combined Science/2022/Foundation/1SC0_2PF_0622_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_0622_MS.pdf
+  1SC0_2PF_0622 ER  md5=c8888b7d4117
+      kept    (depth 5)  3 - June /Combined Science/2022/Foundation/1SC0_2PF_0622_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_0622_ER.pdf
+  1SC0_2PF_0623 QU  md5=0d8ecd8792c9
+      kept    (depth 5)  3 - June /Combined Science/2023/Foundation/1SC0_2PF_0623_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_0623_QU.pdf
+  1SC0_2PF_0623 MS  md5=915c6ca5473c
+      kept    (depth 5)  3 - June /Combined Science/2023/Foundation/1SC0_2PF_0623_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_0623_MS.pdf
+  1SC0_2PF_0623 ER  md5=000633351e7a
+      kept    (depth 5)  3 - June /Combined Science/2023/Foundation/1SC0_2PF_0623_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_0623_ER.pdf
+  1SC0_2PF_0624 QU  md5=3386ca60bb38
+      kept    (depth 5)  3 - June /Combined Science/2024/Foundation/1SC0_2PF_0624_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_0624_QU.pdf
+  1SC0_2PF_0624 MS  md5=6cd53d6fb4ff
+      kept    (depth 5)  3 - June /Combined Science/2024/Foundation/1SC0_2PF_0624_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_0624_MS.pdf
+  1SC0_2PF_0624 ER  md5=7689efa7215a
+      kept    (depth 5)  3 - June /Combined Science/2024/Foundation/1SC0_2PF_0624_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_0624_ER.pdf
+  1SC0_2PF_0625 QU  md5=4bc37ada6c6c
+      kept    (depth 5)  3 - June /Combined Science/2025/Foundation/1SC0_2PF_0625_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_0625_QU.pdf
+  1SC0_2PF_0625 MS  md5=076746419c64
+      kept    (depth 5)  3 - June /Combined Science/2025/Foundation/1SC0_2PF_0625_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_0625_MS.pdf
+  1SC0_2PF_0625 ER  md5=441700a549d9
+      kept    (depth 5)  3 - June /Combined Science/2025/Foundation/1SC0_2PF_0625_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_0625_ER.pdf
+  1SC0_2PF_1120 QU  md5=7ad80443f575
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Foundation /1SC0_2PF_1120_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_1120_QU.pdf
+  1SC0_2PF_1120 MS  md5=18ec76135394
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Foundation /1SC0_2PF_1120_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_1120_MS.pdf
+  1SC0_2PF_1120 ER  md5=08f6092d2cfa
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Foundation /1SC0_2PF_1120_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_1120_ER.pdf
+  1SC0_2PF_1121 QU  md5=fc7f999728d9
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Foundation /1SC0_2PF_1121_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_1121_QU.pdf
+  1SC0_2PF_1121 MS  md5=3748ca7d2291
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Foundation /1SC0_2PF_1121_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_1121_MS.pdf
+  1SC0_2PF_1121 ER  md5=8378acea0861
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Foundation /1SC0_2PF_1121_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PF_1121_ER.pdf
+  1SC0_2PH_0618 QU  md5=df436e845442
+      kept    (depth 5)  3 - June /Combined Science/2018/Higher/1SC0_2PH_0618_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_0618_QU.pdf
+  1SC0_2PH_0618 MS  md5=fa67a81093fa
+      kept    (depth 5)  3 - June /Combined Science/2018/Higher/1SC0_2PH_0618_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_0618_MS.pdf
+  1SC0_2PH_0618 ER  md5=2a44838a6ae7
+      kept    (depth 5)  3 - June /Combined Science/2018/Higher/1SC0_2PH_0618_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_0618_ER.pdf
+  1SC0_2PH_0619 QU  md5=a04046115363
+      kept    (depth 5)  3 - June /Combined Science/2019/Higher/1SC0_2PH_0619_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_0619_QU.pdf
+  1SC0_2PH_0619 MS  md5=cf4671fd7b95
+      kept    (depth 5)  3 - June /Combined Science/2019/Higher/1SC0_2PH_0619_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_0619_MS.pdf
+  1SC0_2PH_0619 ER  md5=9dff6ff24354
+      kept    (depth 5)  3 - June /Combined Science/2019/Higher/1SC0_2PH_0619_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_0619_ER.pdf
+  1SC0_2PH_0622 QU  md5=0f4495e75b1b
+      kept    (depth 5)  3 - June /Combined Science/2022/Higher/1SC0_2PH_0622_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_0622_QU.pdf
+  1SC0_2PH_0622 MS  md5=4506157baf99
+      kept    (depth 5)  3 - June /Combined Science/2022/Higher/1SC0_2PH_0622_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_0622_MS.pdf
+  1SC0_2PH_0622 ER  md5=69694147d25f
+      kept    (depth 5)  3 - June /Combined Science/2022/Higher/1SC0_2PH_0622_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_0622_ER.pdf
+  1SC0_2PH_0623 QU  md5=eb7b54f59d9d
+      kept    (depth 5)  3 - June /Combined Science/2023/Higher/1SC0_2PH_0623_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_0623_QU.pdf
+  1SC0_2PH_0623 MS  md5=e689a263499c
+      kept    (depth 5)  3 - June /Combined Science/2023/Higher/1SC0_2PH_0623_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_0623_MS.pdf
+  1SC0_2PH_0623 ER  md5=4452305a29a0
+      kept    (depth 5)  3 - June /Combined Science/2023/Higher/1SC0_2PH_0623_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_0623_ER.pdf
+  1SC0_2PH_0624 QU  md5=b48a55ab3f23
+      kept    (depth 5)  3 - June /Combined Science/2024/Higher/1SC0_2PH_0624_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_0624_QU.pdf
+  1SC0_2PH_0624 MS  md5=aafdf1a82281
+      kept    (depth 5)  3 - June /Combined Science/2024/Higher/1SC0_2PH_0624_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_0624_MS.pdf
+  1SC0_2PH_0624 ER  md5=53a0f68b94ae
+      kept    (depth 5)  3 - June /Combined Science/2024/Higher/1SC0_2PH_0624_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_0624_ER.pdf
+  1SC0_2PH_0625 QU  md5=9f61e07150a2
+      kept    (depth 5)  3 - June /Combined Science/2025/Higher/1SC0_2PH_0625_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_0625_QU.pdf
+  1SC0_2PH_0625 MS  md5=3922bf68fdfe
+      kept    (depth 5)  3 - June /Combined Science/2025/Higher/1SC0_2PH_0625_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_0625_MS.pdf
+  1SC0_2PH_0625 ER  md5=c13ea9d2ee00
+      kept    (depth 5)  3 - June /Combined Science/2025/Higher/1SC0_2PH_0625_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_0625_ER.pdf
+  1SC0_2PH_1120 QU  md5=75f0d1c2325e
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Higher/1SC0_2PH_1120_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_1120_QU.pdf
+  1SC0_2PH_1120 MS  md5=2dafc8155aa5
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Higher/1SC0_2PH_1120_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_1120_MS.pdf
+  1SC0_2PH_1120 ER  md5=3067948fc9d0
+      kept    (depth 5)  4 - Nov/Combined Science/2020/Higher/1SC0_2PH_1120_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_1120_ER.pdf
+  1SC0_2PH_1121 QU  md5=b24c348c53b9
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Higher/1SC0_2PH_1121_QU.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_1121_QU.pdf
+  1SC0_2PH_1121 MS  md5=3808046745bd
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Higher/1SC0_2PH_1121_MS.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_1121_MS.pdf
+  1SC0_2PH_1121 ER  md5=ccc2f75c1700
+      kept    (depth 5)  4 - Nov/Combined Science/2021/Higher/1SC0_2PH_1121_ER.pdf
+      dropped (depth 2)  Combined Science/1SC0_2PH_1121_ER.pdf
+
+96 row(s) to insert:
+
+  #   slug                            paper_code  session           year  dur   marks  question paper        mark scheme           examiner report     
+  ──  ──────────────────────────────  ──────────  ────────────────  ────  ────  ─────  ────────────────────  ────────────────────  ────────────────────
+  1   1sc0-1bf-may-june-2018          1SC0/1BF    May-June          2018  null  null   1SC0_1BF_0618_QU.pdf  1SC0_1BF_0618_MS.pdf  1SC0_1BF_0618_ER.pdf
+  2   1sc0-1bf-may-june-2019          1SC0/1BF    May-June          2019  null  null   1SC0_1BF_0619_QU.pdf  1SC0_1BF_0619_MS.pdf  1SC0_1BF_0619_ER.pdf
+  3   1sc0-1bf-october-november-2020  1SC0/1BF    October-November  2020  null  null   1SC0_1BF_1120_QU.pdf  1SC0_1BF_1120_MS.pdf  1SC0_1BF_1120_ER.pdf
+  4   1sc0-1bf-october-november-2021  1SC0/1BF    October-November  2021  null  null   1SC0_1BF_1121_QU.pdf  1SC0_1BF_1121_MS.pdf  1SC0_1BF_1121_ER.pdf
+  5   1sc0-1bf-may-june-2022          1SC0/1BF    May-June          2022  null  null   1SC0_1BF_0622_QU.pdf  1SC0_1BF_0622_MS.pdf  1SC0_1BF_0622_ER.pdf
+  6   1sc0-1bf-may-june-2023          1SC0/1BF    May-June          2023  null  null   1SC0_1BF_0623_QU.pdf  1SC0_1BF_0623_MS.pdf  1SC0_1BF_0623_ER.pdf
+  7   1sc0-1bf-may-june-2024          1SC0/1BF    May-June          2024  null  null   1SC0_1BF_0624_QU.pdf  1SC0_1BF_0624_MS.pdf  1SC0_1BF_0624_ER.pdf
+  8   1sc0-1bf-may-june-2025          1SC0/1BF    May-June          2025  null  null   1SC0_1BF_0625_QU.pdf  1SC0_1BF_0625_MS.pdf  1SC0_1BF_0625_ER.pdf
+  9   1sc0-1bh-may-june-2018          1SC0/1BH    May-June          2018  null  null   1SC0_1BH_0618_QU.pdf  1SC0_1BH_0618_MS.pdf  1SC0_1BH_0618_ER.pdf
+  10  1sc0-1bh-may-june-2019          1SC0/1BH    May-June          2019  null  null   1SC0_1BH_0619_QU.pdf  1SC0_1BH_0619_MS.pdf  1SC0_1BH_0619_ER.pdf
+  11  1sc0-1bh-october-november-2020  1SC0/1BH    October-November  2020  null  null   1SC0_1BH_1120_QU.pdf  1SC0_1BH_1120_MS.pdf  1SC0_1BH_1120_ER.pdf
+  12  1sc0-1bh-october-november-2021  1SC0/1BH    October-November  2021  null  null   1SC0_1BH_1121_QU.pdf  1SC0_1BH_1121_MS.pdf  1SC0_1BH_1121_ER.pdf
+  13  1sc0-1bh-may-june-2022          1SC0/1BH    May-June          2022  null  null   1SC0_1BH_0622_QU.pdf  1SC0_1BH_0622_MS.pdf  1SC0_1BH_0622_ER.pdf
+  14  1sc0-1bh-may-june-2023          1SC0/1BH    May-June          2023  null  null   1SC0_1BH_0623_QU.pdf  1SC0_1BH_0623_MS.pdf  1SC0_1BH_0623_ER.pdf
+  15  1sc0-1bh-may-june-2024          1SC0/1BH    May-June          2024  null  null   1SC0_1BH_0624_QU.pdf  1SC0_1BH_0624_MS.pdf  1SC0_1BH_0624_ER.pdf
+  16  1sc0-1bh-may-june-2025          1SC0/1BH    May-June          2025  null  null   1SC0_1BH_0625_QU.pdf  1SC0_1BH_0625_MS.pdf  1SC0_1BH_0625_ER.pdf
+  17  1sc0-1cf-may-june-2018          1SC0/1CF    May-June          2018  null  null   1SC0_1CF_0618_QU.pdf  1SC0_1CF_0618_MS.pdf  1SC0_1CF_0618_ER.pdf
+  18  1sc0-1cf-may-june-2019          1SC0/1CF    May-June          2019  null  null   1SC0_1CF_0619_QU.pdf  1SC0_1CF_0619_MS.pdf  1SC0_1CF_0619_ER.pdf
+  19  1sc0-1cf-october-november-2020  1SC0/1CF    October-November  2020  null  null   1SC0_1CF_1120_QU.pdf  1SC0_1CF_1120_MS.pdf  1SC0_1CF_1120_ER.pdf
+  20  1sc0-1cf-october-november-2021  1SC0/1CF    October-November  2021  null  null   1SC0_1CF_1121_QU.pdf  1SC0_1CF_1121_MS.pdf  1SC0_1CF_1121_ER.pdf
+  21  1sc0-1cf-may-june-2022          1SC0/1CF    May-June          2022  null  null   1SC0_1CF_0622_QU.pdf  1SC0_1CF_0622_MS.pdf  1SC0_1CF_0622_ER.pdf
+  22  1sc0-1cf-may-june-2023          1SC0/1CF    May-June          2023  null  null   1SC0_1CF_0623_QU.pdf  1SC0_1CF_0623_MS.pdf  1SC0_1CF_0623_ER.pdf
+  23  1sc0-1cf-may-june-2024          1SC0/1CF    May-June          2024  null  null   1SC0_1CF_0624_QU.pdf  1SC0_1CF_0624_MS.pdf  1SC0_1CF_0624_ER.pdf
+  24  1sc0-1cf-may-june-2025          1SC0/1CF    May-June          2025  null  null   1SC0_1CF_0625_QU.pdf  1SC0_1CF_0625_MS.pdf  1SC0_1CF_0625_ER.pdf
+  25  1sc0-1ch-may-june-2018          1SC0/1CH    May-June          2018  null  null   1SC0_1CH_0618_QU.pdf  1SC0_1CH_0618_MS.pdf  1SC0_1CH_0618_ER.pdf
+  26  1sc0-1ch-may-june-2019          1SC0/1CH    May-June          2019  null  null   1SC0_1CH_0619_QU.pdf  1SC0_1CH_0619_MS.pdf  1SC0_1CH_0619_ER.pdf
+  27  1sc0-1ch-october-november-2020  1SC0/1CH    October-November  2020  null  null   1SC0_1CH_1120_QU.pdf  1SC0_1CH_1120_MS.pdf  1SC0_1CH_1120_ER.pdf
+  28  1sc0-1ch-october-november-2021  1SC0/1CH    October-November  2021  null  null   1SC0_1CH_1121_QU.pdf  1SC0_1CH_1121_MS.pdf  1SC0_1CH_1121_ER.pdf
+  29  1sc0-1ch-may-june-2022          1SC0/1CH    May-June          2022  null  null   1SC0_1CH_0622_QU.pdf  1SC0_1CH_0622_MS.pdf  1SC0_1CH_0622_ER.pdf
+  30  1sc0-1ch-may-june-2023          1SC0/1CH    May-June          2023  null  null   1SC0_1CH_0623_QU.pdf  1SC0_1CH_0623_MS.pdf  1SC0_1CH_0623_ER.pdf
+  31  1sc0-1ch-may-june-2024          1SC0/1CH    May-June          2024  null  null   1SC0_1CH_0624_QU.pdf  1SC0_1CH_0624_MS.pdf  1SC0_1CH_0624_ER.pdf
+  32  1sc0-1ch-may-june-2025          1SC0/1CH    May-June          2025  null  null   1SC0_1CH_0625_QU.pdf  1SC0_1CH_0625_MS.pdf  1SC0_1CH_0625_ER.pdf
+  33  1sc0-1pf-may-june-2018          1SC0/1PF    May-June          2018  null  null   1SC0_1PF_0618_QU.pdf  1SC0_1PF_0618_MS.pdf  1SC0_1PF_0618_ER.pdf
+  34  1sc0-1pf-may-june-2019          1SC0/1PF    May-June          2019  null  null   1SC0_1PF_0619_QU.pdf  1SC0_1PF_0619_MS.pdf  1SC0_1PF_0619_ER.pdf
+  35  1sc0-1pf-october-november-2020  1SC0/1PF    October-November  2020  null  null   1SC0_1PF_1120_QU.pdf  1SC0_1PF_1120_MS.pdf  1SC0_1PF_1120_ER.pdf
+  36  1sc0-1pf-october-november-2021  1SC0/1PF    October-November  2021  null  null   1SC0_1PF_1121_QU.pdf  1SC0_1PF_1121_MS.pdf  1SC0_1PF_1121_ER.pdf
+  37  1sc0-1pf-may-june-2022          1SC0/1PF    May-June          2022  null  null   1SC0_1PF_0622_QU.pdf  1SC0_1PF_0622_MS.pdf  1SC0_1PF_0622_ER.pdf
+  38  1sc0-1pf-may-june-2023          1SC0/1PF    May-June          2023  null  null   1SC0_1PF_0623_QU.pdf  1SC0_1PF_0623_MS.pdf  1SC0_1PF_0623_ER.pdf
+  39  1sc0-1pf-may-june-2024          1SC0/1PF    May-June          2024  null  null   1SC0_1PF_0624_QU.pdf  1SC0_1PF_0624_MS.pdf  1SC0_1PF_0624_ER.pdf
+  40  1sc0-1pf-may-june-2025          1SC0/1PF    May-June          2025  null  null   1SC0_1PF_0625_QU.pdf  1SC0_1PF_0625_MS.pdf  1SC0_1PF_0625_ER.pdf
+  41  1sc0-1ph-may-june-2018          1SC0/1PH    May-June          2018  null  null   1SC0_1PH_0618_QU.pdf  1SC0_1PH_0618_MS.pdf  1SC0_1PH_0618_ER.pdf
+  42  1sc0-1ph-may-june-2019          1SC0/1PH    May-June          2019  null  null   1SC0_1PH_0619_QU.pdf  1SC0_1PH_0619_MS.pdf  1SC0_1PH_0619_ER.pdf
+  43  1sc0-1ph-october-november-2020  1SC0/1PH    October-November  2020  null  null   1SC0_1PH_1120_QU.pdf  1SC0_1PH_1120_MS.pdf  1SC0_1PH_1120_ER.pdf
+  44  1sc0-1ph-october-november-2021  1SC0/1PH    October-November  2021  null  null   1SC0_1PH_1121_QU.pdf  1SC0_1PH_1121_MS.pdf  1SC0_1PH_1121_ER.pdf
+  45  1sc0-1ph-may-june-2022          1SC0/1PH    May-June          2022  null  null   1SC0_1PH_0622_QU.pdf  1SC0_1PH_0622_MS.pdf  1SC0_1PH_0622_ER.pdf
+  46  1sc0-1ph-may-june-2023          1SC0/1PH    May-June          2023  null  null   1SC0_1PH_0623_QU.pdf  1SC0_1PH_0623_MS.pdf  1SC0_1PH_0623_ER.pdf
+  47  1sc0-1ph-may-june-2024          1SC0/1PH    May-June          2024  null  null   1SC0_1PH_0624_QU.pdf  1SC0_1PH_0624_MS.pdf  1SC0_1PH_0624_ER.pdf
+  48  1sc0-1ph-may-june-2025          1SC0/1PH    May-June          2025  null  null   1SC0_1PH_0625_QU.pdf  1SC0_1PH_0625_MS.pdf  1SC0_1PH_0625_ER.pdf
+  49  1sc0-2bf-may-june-2018          1SC0/2BF    May-June          2018  null  null   1SC0_2BF_0618_QU.pdf  1SC0_2BF_0618_MS.pdf  1SC0_2BF_0618_ER.pdf
+  50  1sc0-2bf-may-june-2019          1SC0/2BF    May-June          2019  null  null   1SC0_2BF_0619_QU.pdf  1SC0_2BF_0619_MS.pdf  1SC0_2BF_0619_ER.pdf
+  51  1sc0-2bf-october-november-2020  1SC0/2BF    October-November  2020  null  null   1SC0_2BF_1120_QU.pdf  1SC0_2BF_1120_MS.pdf  1SC0_2BF_1120_ER.pdf
+  52  1sc0-2bf-october-november-2021  1SC0/2BF    October-November  2021  null  null   1SC0_2BF_1121_QU.pdf  1SC0_2BF_1121_MS.pdf  1SC0_2BF_1121_ER.pdf
+  53  1sc0-2bf-may-june-2022          1SC0/2BF    May-June          2022  null  null   1SC0_2BF_0622_QU.pdf  1SC0_2BF_0622_MS.pdf  1SC0_2BF_0622_ER.pdf
+  54  1sc0-2bf-may-june-2023          1SC0/2BF    May-June          2023  null  null   1SC0_2BF_0623_QU.pdf  1SC0_2BF_0623_MS.pdf  1SC0_2BF_0623_ER.pdf
+  55  1sc0-2bf-may-june-2024          1SC0/2BF    May-June          2024  null  null   1SC0_2BF_0624_QU.pdf  1SC0_2BF_0624_MS.pdf  1SC0_2BF_0624_ER.pdf
+  56  1sc0-2bf-may-june-2025          1SC0/2BF    May-June          2025  null  null   1SC0_2BF_0625_QU.pdf  1SC0_2BF_0625_MS.pdf  1SC0_2BF_0625_ER.pdf
+  57  1sc0-2bh-may-june-2018          1SC0/2BH    May-June          2018  null  null   1SC0_2BH_0618_QU.pdf  1SC0_2BH_0618_MS.pdf  1SC0_2BH_0618_ER.pdf
+  58  1sc0-2bh-may-june-2019          1SC0/2BH    May-June          2019  null  null   1SC0_2BH_0619_QU.pdf  1SC0_2BH_0619_MS.pdf  1SC0_2BH_0619_ER.pdf
+  59  1sc0-2bh-october-november-2020  1SC0/2BH    October-November  2020  null  null   1SC0_2BH_1120_QU.pdf  1SC0_2BH_1120_MS.pdf  1SC0_2BH_1120_ER.pdf
+  60  1sc0-2bh-october-november-2021  1SC0/2BH    October-November  2021  null  null   1SC0_2BH_1121_QU.pdf  1SC0_2BH_1121_MS.pdf  1SC0_2BH_1121_ER.pdf
+  61  1sc0-2bh-may-june-2022          1SC0/2BH    May-June          2022  null  null   1SC0_2BH_0622_QU.pdf  1SC0_2BH_0622_MS.pdf  1SC0_2BH_0622_ER.pdf
+  62  1sc0-2bh-may-june-2023          1SC0/2BH    May-June          2023  null  null   1SC0_2BH_0623_QU.pdf  1SC0_2BH_0623_MS.pdf  1SC0_2BH_0623_ER.pdf
+  63  1sc0-2bh-may-june-2024          1SC0/2BH    May-June          2024  null  null   1SC0_2BH_0624_QU.pdf  1SC0_2BH_0624_MS.pdf  1SC0_2BH_0624_ER.pdf
+  64  1sc0-2bh-may-june-2025          1SC0/2BH    May-June          2025  null  null   1SC0_2BH_0625_QU.pdf  1SC0_2BH_0625_MS.pdf  1SC0_2BH_0625_ER.pdf
+  65  1sc0-2cf-may-june-2018          1SC0/2CF    May-June          2018  null  null   1SC0_2CF_0618_QU.pdf  1SC0_2CF_0618_MS.pdf  1SC0_2CF_0618_ER.pdf
+  66  1sc0-2cf-may-june-2019          1SC0/2CF    May-June          2019  null  null   1SC0_2CF_0619_QU.pdf  1SC0_2CF_0619_MS.pdf  1SC0_2CF_0619_ER.pdf
+  67  1sc0-2cf-october-november-2020  1SC0/2CF    October-November  2020  null  null   1SC0_2CF_1120_QU.pdf  1SC0_2CF_1120_MS.pdf  1SC0_2CF_1120_ER.pdf
+  68  1sc0-2cf-october-november-2021  1SC0/2CF    October-November  2021  null  null   1SC0_2CF_1121_QU.pdf  1SC0_2CF_1121_MS.pdf  1SC0_2CF_1121_ER.pdf
+  69  1sc0-2cf-may-june-2022          1SC0/2CF    May-June          2022  null  null   1SC0_2CF_0622_QU.pdf  1SC0_2CF_0622_MS.pdf  1SC0_2CF_0622_ER.pdf
+  70  1sc0-2cf-may-june-2023          1SC0/2CF    May-June          2023  null  null   1SC0_2CF_0623_QU.pdf  1SC0_2CF_0623_MS.pdf  1SC0_2CF_0623_ER.pdf
+  71  1sc0-2cf-may-june-2024          1SC0/2CF    May-June          2024  null  null   1SC0_2CF_0624_QU.pdf  1SC0_2CF_0624_MS.pdf  1SC0_2CF_0624_ER.pdf
+  72  1sc0-2cf-may-june-2025          1SC0/2CF    May-June          2025  null  null   1SC0_2CF_0625_QU.pdf  1SC0_2CF_0625_MS.pdf  1SC0_2CF_0625_ER.pdf
+  73  1sc0-2ch-may-june-2018          1SC0/2CH    May-June          2018  null  null   1SC0_2CH_0618_QU.pdf  1SC0_2CH_0618_MS.pdf  1SC0_2CH_0618_ER.pdf
+  74  1sc0-2ch-may-june-2019          1SC0/2CH    May-June          2019  null  null   1SC0_2CH_0619_QU.pdf  1SC0_2CH_0619_MS.pdf  1SC0_2CH_0619_ER.pdf
+  75  1sc0-2ch-october-november-2020  1SC0/2CH    October-November  2020  null  null   1SC0_2CH_1120_QU.pdf  1SC0_2CH_1120_MS.pdf  1SC0_2CH_1120_ER.pdf
+  76  1sc0-2ch-october-november-2021  1SC0/2CH    October-November  2021  null  null   1SC0_2CH_1121_QU.pdf  1SC0_2CH_1121_MS.pdf  1SC0_2CH_1121_ER.pdf
+  77  1sc0-2ch-may-june-2022          1SC0/2CH    May-June          2022  null  null   1SC0_2CH_0622_QU.pdf  1SC0_2CH_0622_MS.pdf  1SC0_2CH_0622_ER.pdf
+  78  1sc0-2ch-may-june-2023          1SC0/2CH    May-June          2023  null  null   1SC0_2CH_0623_QU.pdf  1SC0_2CH_0623_MS.pdf  1SC0_2CH_0623_ER.pdf
+  79  1sc0-2ch-may-june-2024          1SC0/2CH    May-June          2024  null  null   1SC0_2CH_0624_QU.pdf  1SC0_2CH_0624_MS.pdf  1SC0_2CH_0624_ER.pdf
+  80  1sc0-2ch-may-june-2025          1SC0/2CH    May-June          2025  null  null   1SC0_2CH_0625_QU.pdf  1SC0_2CH_0625_MS.pdf  1SC0_2CH_0625_ER.pdf
+  81  1sc0-2pf-may-june-2018          1SC0/2PF    May-June          2018  null  null   1SC0_2PF_0618_QU.pdf  1SC0_2PF_0618_MS.pdf  1SC0_2PF_0618_ER.pdf
+  82  1sc0-2pf-may-june-2019          1SC0/2PF    May-June          2019  null  null   1SC0_2PF_0619_QU.pdf  1SC0_2PF_0619_MS.pdf  1SC0_2PF_0619_ER.pdf
+  83  1sc0-2pf-october-november-2020  1SC0/2PF    October-November  2020  null  null   1SC0_2PF_1120_QU.pdf  1SC0_2PF_1120_MS.pdf  1SC0_2PF_1120_ER.pdf
+  84  1sc0-2pf-october-november-2021  1SC0/2PF    October-November  2021  null  null   1SC0_2PF_1121_QU.pdf  1SC0_2PF_1121_MS.pdf  1SC0_2PF_1121_ER.pdf
+  85  1sc0-2pf-may-june-2022          1SC0/2PF    May-June          2022  null  null   1SC0_2PF_0622_QU.pdf  1SC0_2PF_0622_MS.pdf  1SC0_2PF_0622_ER.pdf
+  86  1sc0-2pf-may-june-2023          1SC0/2PF    May-June          2023  null  null   1SC0_2PF_0623_QU.pdf  1SC0_2PF_0623_MS.pdf  1SC0_2PF_0623_ER.pdf
+  87  1sc0-2pf-may-june-2024          1SC0/2PF    May-June          2024  null  null   1SC0_2PF_0624_QU.pdf  1SC0_2PF_0624_MS.pdf  1SC0_2PF_0624_ER.pdf
+  88  1sc0-2pf-may-june-2025          1SC0/2PF    May-June          2025  null  null   1SC0_2PF_0625_QU.pdf  1SC0_2PF_0625_MS.pdf  1SC0_2PF_0625_ER.pdf
+  89  1sc0-2ph-may-june-2018          1SC0/2PH    May-June          2018  null  null   1SC0_2PH_0618_QU.pdf  1SC0_2PH_0618_MS.pdf  1SC0_2PH_0618_ER.pdf
+  90  1sc0-2ph-may-june-2019          1SC0/2PH    May-June          2019  null  null   1SC0_2PH_0619_QU.pdf  1SC0_2PH_0619_MS.pdf  1SC0_2PH_0619_ER.pdf
+  91  1sc0-2ph-october-november-2020  1SC0/2PH    October-November  2020  null  null   1SC0_2PH_1120_QU.pdf  1SC0_2PH_1120_MS.pdf  1SC0_2PH_1120_ER.pdf
+  92  1sc0-2ph-october-november-2021  1SC0/2PH    October-November  2021  null  null   1SC0_2PH_1121_QU.pdf  1SC0_2PH_1121_MS.pdf  1SC0_2PH_1121_ER.pdf
+  93  1sc0-2ph-may-june-2022          1SC0/2PH    May-June          2022  null  null   1SC0_2PH_0622_QU.pdf  1SC0_2PH_0622_MS.pdf  1SC0_2PH_0622_ER.pdf
+  94  1sc0-2ph-may-june-2023          1SC0/2PH    May-June          2023  null  null   1SC0_2PH_0623_QU.pdf  1SC0_2PH_0623_MS.pdf  1SC0_2PH_0623_ER.pdf
+  95  1sc0-2ph-may-june-2024          1SC0/2PH    May-June          2024  null  null   1SC0_2PH_0624_QU.pdf  1SC0_2PH_0624_MS.pdf  1SC0_2PH_0624_ER.pdf
+  96  1sc0-2ph-may-june-2025          1SC0/2PH    May-June          2025  null  null   1SC0_2PH_0625_QU.pdf  1SC0_2PH_0625_MS.pdf  1SC0_2PH_0625_ER.pdf
+
+96 of 96 row(s) carry an examiner report; 0 have none.
+
+Importing 96 paper(s)…
+
+      markscheme 18p correct=18 mis=0 above=0 206627B
+      paper 20p correct=20 mis=0 above=0 161905B
+      examiner-report 46p correct=46 mis=0 above=0 2073246B
+[1/96] 1sc0-1bf-may-june-2018 ✓ inserted
+      markscheme 22p correct=22 mis=0 above=0 255150B
+      paper 16p correct=16 mis=0 above=0 541067B
+      examiner-report 44p correct=44 mis=0 above=0 2700896B
+[2/96] 1sc0-1bf-may-june-2019 ✓ inserted
+      examiner-report 9p correct=9 mis=0 above=0 334059B
+      paper 20p correct=20 mis=0 above=0 979588B
+      markscheme 21p correct=21 mis=0 above=0 194508B
+[3/96] 1sc0-1bf-october-november-2020 ✓ inserted
+      examiner-report 8p correct=8 mis=0 above=0 148637B
+      markscheme 21p correct=21 mis=0 above=0 292982B
+      paper 24p correct=24 mis=0 above=0 1318246B
+[4/96] 1sc0-1bf-october-november-2021 ✓ inserted
+      markscheme 22p correct=22 mis=0 above=0 307277B
+      examiner-report 57p correct=57 mis=0 above=0 3444069B
+      paper 20p correct=20 mis=0 above=0 791461B
+[5/96] 1sc0-1bf-may-june-2022 ✓ inserted
+      paper 20p correct=20 mis=0 above=0 1038614B
+      markscheme 24p correct=24 mis=0 above=0 302542B
+      examiner-report 67p correct=67 mis=0 above=0 4550879B
+[6/96] 1sc0-1bf-may-june-2023 ✓ inserted
+      paper 20p correct=20 mis=0 above=0 950227B
+      markscheme 24p correct=24 mis=0 above=0 356166B
+      examiner-report 58p correct=58 mis=0 above=0 2389382B
+[7/96] 1sc0-1bf-may-june-2024 ✓ inserted
+      markscheme 22p correct=22 mis=0 above=0 527694B
+      paper 24p correct=24 mis=0 above=0 737978B
+      examiner-report 98p correct=98 mis=0 above=0 1816659B
+[8/96] 1sc0-1bf-may-june-2025 ✓ inserted
+      paper 24p correct=24 mis=0 above=0 144071B
+      markscheme 22p correct=22 mis=0 above=0 203092B
+      examiner-report 48p correct=48 mis=0 above=0 2424877B
+[9/96] 1sc0-1bh-may-june-2018 ✓ inserted
+      paper 20p correct=20 mis=0 above=0 610513B
+      markscheme 24p correct=24 mis=0 above=0 386893B
+      examiner-report 50p correct=50 mis=0 above=0 3125610B
+[10/96] 1sc0-1bh-may-june-2019 ✓ inserted
+      examiner-report 6p correct=6 mis=0 above=0 167642B
+      markscheme 20p correct=20 mis=0 above=0 197679B
+      paper 20p correct=20 mis=0 above=0 1229206B
+[11/96] 1sc0-1bh-october-november-2020 ✓ inserted
+      examiner-report 7p correct=7 mis=0 above=0 172942B
+      markscheme 21p correct=21 mis=0 above=0 247638B
+      paper 20p correct=20 mis=0 above=0 2384133B
+[12/96] 1sc0-1bh-october-november-2021 ✓ inserted
+      examiner-report 57p correct=57 mis=0 above=0 4822501B
+      markscheme 18p correct=18 mis=0 above=0 261399B
+      paper 16p correct=16 mis=0 above=0 647601B
+[13/96] 1sc0-1bh-may-june-2022 ✓ inserted
+      paper 20p correct=20 mis=0 above=0 988719B
+      examiner-report 65p correct=65 mis=0 above=0 4821972B
+      markscheme 19p correct=19 mis=0 above=0 995838B
+[14/96] 1sc0-1bh-may-june-2023 ✓ inserted
+      paper 16p correct=16 mis=0 above=0 1139001B
+      markscheme 24p correct=24 mis=0 above=0 250666B
+      examiner-report 58p correct=58 mis=0 above=0 3088196B
+[15/96] 1sc0-1bh-may-june-2024 ✓ inserted
+      paper 20p correct=20 mis=0 above=0 666759B
+      markscheme 22p correct=22 mis=0 above=0 428919B
+      examiner-report 79p correct=79 mis=0 above=0 1436460B
+[16/96] 1sc0-1bh-may-june-2025 ✓ inserted
+      paper 20p correct=20 mis=0 above=0 138340B
+      markscheme 20p correct=20 mis=0 above=0 253312B
+      examiner-report 32p correct=32 mis=0 above=0 1520956B
+[17/96] 1sc0-1cf-may-june-2018 ✓ inserted
+      paper 20p correct=20 mis=0 above=0 221961B
+      markscheme 20p correct=20 mis=0 above=0 328330B
+      examiner-report 62p correct=62 mis=0 above=0 2930853B
+[18/96] 1sc0-1cf-may-june-2019 ✓ inserted
+      examiner-report 6p correct=6 mis=0 above=0 164613B
+      markscheme 15p correct=15 mis=0 above=0 179252B
+      paper 16p correct=16 mis=0 above=0 666395B
+[19/96] 1sc0-1cf-october-november-2020 ✓ inserted
+      examiner-report 5p correct=5 mis=0 above=0 107574B
+      markscheme 15p correct=15 mis=0 above=0 225504B
+      paper 16p correct=16 mis=0 above=0 916527B
+[20/96] 1sc0-1cf-october-november-2021 ✓ inserted
+      examiner-report 54p correct=54 mis=0 above=0 3328129B
+      markscheme 22p correct=22 mis=0 above=0 348402B
+      paper 20p correct=20 mis=0 above=0 761543B
+[21/96] 1sc0-1cf-may-june-2022 ✓ inserted
+      paper 24p correct=24 mis=0 above=0 828448B
+      markscheme 20p correct=20 mis=0 above=0 403457B
+      examiner-report 68p correct=68 mis=0 above=0 4997628B
+[22/96] 1sc0-1cf-may-june-2023 ✓ inserted
+      paper 22p correct=22 mis=0 above=0 397144B
+      markscheme 22p correct=22 mis=0 above=0 321774B
+      examiner-report 83p correct=83 mis=0 above=0 5089515B
+[23/96] 1sc0-1cf-may-june-2024 ✓ inserted
+      markscheme 19p correct=19 mis=0 above=0 354389B
+      paper 24p correct=24 mis=0 above=0 1052506B
+      examiner-report 108p correct=108 mis=0 above=0 1956495B
+[24/96] 1sc0-1cf-may-june-2025 ✓ inserted
+      paper 20p correct=20 mis=0 above=0 139776B
+      markscheme 20p correct=20 mis=0 above=0 274472B
+      examiner-report 74p correct=74 mis=0 above=0 3020120B
+[25/96] 1sc0-1ch-may-june-2018 ✓ inserted
+      paper 16p correct=16 mis=0 above=0 216615B
+      markscheme 21p correct=21 mis=0 above=0 333841B
+      examiner-report 56p correct=56 mis=0 above=0 3307687B
+[26/96] 1sc0-1ch-may-june-2019 ✓ inserted
+      examiner-report 5p correct=5 mis=0 above=0 82876B
+      markscheme 14p correct=14 mis=0 above=0 159480B
+      paper 20p correct=20 mis=0 above=0 730607B
+[27/96] 1sc0-1ch-october-november-2020 ✓ inserted
+      examiner-report 6p correct=6 mis=0 above=0 162253B
+      markscheme 21p correct=21 mis=0 above=0 189924B
+      paper 16p correct=16 mis=0 above=0 576976B
+[28/96] 1sc0-1ch-october-november-2021 ✓ inserted
+      examiner-report 61p correct=61 mis=0 above=0 4652617B
+      markscheme 20p correct=20 mis=0 above=0 256401B
+      paper 20p correct=20 mis=0 above=0 817947B
+[29/96] 1sc0-1ch-may-june-2022 ✓ inserted
+      paper 20p correct=20 mis=0 above=0 399350B
+      markscheme 20p correct=20 mis=0 above=0 296481B
+      examiner-report 66p correct=66 mis=0 above=0 5045544B
+[30/96] 1sc0-1ch-may-june-2023 ✓ inserted
+      paper 22p correct=22 mis=0 above=0 409470B
+      markscheme 20p correct=20 mis=0 above=0 269133B
+      examiner-report 47p correct=47 mis=0 above=0 1948577B
+[31/96] 1sc0-1ch-may-june-2024 ✓ inserted
+      paper 22p correct=22 mis=0 above=0 637826B
+      markscheme 17p correct=17 mis=0 above=0 379575B
+      examiner-report 102p correct=102 mis=0 above=0 2023229B
+[32/96] 1sc0-1ch-may-june-2025 ✓ inserted
+      paper 20p correct=20 mis=0 above=0 890263B
+      markscheme 21p correct=21 mis=0 above=0 411099B
+      examiner-report 52p correct=52 mis=0 above=0 2240547B
+[33/96] 1sc0-1pf-may-june-2018 ✓ inserted
+      markscheme 22p correct=22 mis=0 above=0 294196B
+      paper 20p correct=20 mis=0 above=0 1261377B
+      examiner-report 60p correct=60 mis=0 above=0 2621502B
+[34/96] 1sc0-1pf-may-june-2019 ✓ inserted
+      examiner-report 5p correct=5 mis=0 above=0 231350B
+      markscheme 20p correct=20 mis=0 above=0 305433B
+      paper 20p correct=20 mis=0 above=0 961479B
+[35/96] 1sc0-1pf-october-november-2020 ✓ inserted
+      examiner-report 5p correct=5 mis=0 above=0 108252B
+      markscheme 17p correct=17 mis=0 above=0 231747B
+      paper 20p correct=20 mis=0 above=0 960057B
+[36/96] 1sc0-1pf-october-november-2021 ✓ inserted
+      examiner-report 41p correct=41 mis=0 above=0 2267071B
+      markscheme 21p correct=21 mis=0 above=0 413109B
+      paper 20p correct=20 mis=0 above=0 1018729B
+[37/96] 1sc0-1pf-may-june-2022 ✓ inserted
+      paper 24p correct=24 mis=0 above=0 644955B
+      markscheme 19p correct=19 mis=0 above=0 471811B
+      examiner-report 90p correct=90 mis=0 above=0 7465869B
+[38/96] 1sc0-1pf-may-june-2023 ✓ inserted
+      markscheme 25p correct=25 mis=0 above=0 270173B
+      examiner-report 45p correct=45 mis=0 above=0 1611441B
+      paper 28p correct=28 mis=0 above=0 618884B
+[39/96] 1sc0-1pf-may-june-2024 ✓ inserted
+      examiner-report 69p correct=69 mis=0 above=0 1163984B
+      markscheme 20p correct=20 mis=0 above=0 689405B
+      paper 28p correct=28 mis=0 above=0 1085352B
+[40/96] 1sc0-1pf-may-june-2025 ✓ inserted
+      paper 24p correct=24 mis=0 above=0 459386B
+      markscheme 19p correct=19 mis=0 above=0 433185B
+      examiner-report 38p correct=38 mis=0 above=0 2256940B
+[41/96] 1sc0-1ph-may-june-2018 ✓ inserted
+      paper 24p correct=24 mis=0 above=0 226879B
+      markscheme 25p correct=25 mis=0 above=0 334218B
+      examiner-report 44p correct=44 mis=0 above=0 2841230B
+[42/96] 1sc0-1ph-may-june-2019 ✓ inserted
+      examiner-report 7p correct=7 mis=0 above=0 135396B
+      markscheme 21p correct=21 mis=0 above=0 260900B
+      paper 20p correct=20 mis=0 above=0 1123507B
+[43/96] 1sc0-1ph-october-november-2020 ✓ inserted
+      examiner-report 5p correct=5 mis=0 above=0 95637B
+      markscheme 20p correct=20 mis=0 above=0 387317B
+      paper 24p correct=24 mis=0 above=0 1478191B
+[44/96] 1sc0-1ph-october-november-2021 ✓ inserted
+      examiner-report 58p correct=58 mis=0 above=0 4394315B
+      markscheme 24p correct=24 mis=0 above=0 403336B
+      paper 20p correct=20 mis=0 above=0 918044B
+[45/96] 1sc0-1ph-may-june-2022 ✓ inserted
+      examiner-report 46p correct=46 mis=0 above=0 2872794B
+      markscheme 22p correct=22 mis=0 above=0 399920B
+      paper 24p correct=24 mis=0 above=0 787470B
+[46/96] 1sc0-1ph-may-june-2023 ✓ inserted
+      markscheme 25p correct=25 mis=0 above=0 381766B
+      paper 28p correct=28 mis=0 above=0 614342B
+      examiner-report 86p correct=86 mis=0 above=0 3822054B
+[47/96] 1sc0-1ph-may-june-2024 ✓ inserted
+      markscheme 23p correct=23 mis=0 above=0 519234B
+      examiner-report 69p correct=69 mis=0 above=0 1703280B
+      paper 28p correct=28 mis=0 above=0 941677B
+[48/96] 1sc0-1ph-may-june-2025 ✓ inserted
+      markscheme 18p correct=18 mis=0 above=0 199475B
+      paper 24p correct=24 mis=0 above=0 228883B
+      examiner-report 86p correct=86 mis=0 above=0 3099596B
+[49/96] 1sc0-2bf-may-june-2018 ✓ inserted
+      paper 20p correct=20 mis=0 above=0 693115B
+      markscheme 23p correct=23 mis=0 above=0 272846B
+      examiner-report 48p correct=48 mis=0 above=0 2687348B
+[50/96] 1sc0-2bf-may-june-2019 ✓ inserted
+      examiner-report 5p correct=5 mis=0 above=0 150759B
+      markscheme 20p correct=20 mis=0 above=0 206081B
+      paper 24p correct=24 mis=0 above=0 2263910B
+[51/96] 1sc0-2bf-october-november-2020 ✓ inserted
+      examiner-report 5p correct=5 mis=0 above=0 151335B
+      markscheme 20p correct=20 mis=0 above=0 231806B
+      paper 20p correct=20 mis=0 above=0 1805176B
+[52/96] 1sc0-2bf-october-november-2021 ✓ inserted
+      markscheme 22p correct=22 mis=0 above=0 294529B
+      examiner-report 77p correct=77 mis=0 above=0 5147767B
+      paper 20p correct=20 mis=0 above=0 1289276B
+[53/96] 1sc0-2bf-may-june-2022 ✓ inserted
+      paper 20p correct=20 mis=0 above=0 815166B
+      examiner-report 61p correct=61 mis=0 above=0 4123591B
+      markscheme 20p correct=20 mis=0 above=0 226837B
+[54/96] 1sc0-2bf-may-june-2023 ✓ inserted
+      markscheme 24p correct=24 mis=0 above=0 351243B
+      examiner-report 73p correct=73 mis=0 above=0 2991271B
+      paper 20p correct=20 mis=0 above=0 1061645B
+[55/96] 1sc0-2bf-may-june-2024 ✓ inserted
+      markscheme 21p correct=21 mis=0 above=0 327908B
+      paper 20p correct=20 mis=0 above=0 1565778B
+      examiner-report 98p correct=98 mis=0 above=0 1992647B
+[56/96] 1sc0-2bf-may-june-2025 ✓ inserted
+      paper 20p correct=20 mis=0 above=0 135133B
+      markscheme 18p correct=18 mis=0 above=0 195045B
+      examiner-report 52p correct=52 mis=0 above=0 2750437B
+[57/96] 1sc0-2bh-may-june-2018 ✓ inserted
+      paper 16p correct=16 mis=0 above=0 213243B
+      markscheme 19p correct=19 mis=0 above=0 235084B
+      examiner-report 62p correct=62 mis=0 above=0 3774809B
+[58/96] 1sc0-2bh-may-june-2019 ✓ inserted
+      examiner-report 7p correct=7 mis=0 above=0 160481B
+      markscheme 18p correct=18 mis=0 above=0 177730B
+      paper 20p correct=20 mis=0 above=0 1487275B
+[59/96] 1sc0-2bh-october-november-2020 ✓ inserted
+      examiner-report 6p correct=6 mis=0 above=0 165126B
+      markscheme 19p correct=19 mis=0 above=0 190924B
+      paper 20p correct=20 mis=0 above=0 1665903B
+[60/96] 1sc0-2bh-october-november-2021 ✓ inserted
+      markscheme 19p correct=19 mis=0 above=0 247780B
+      examiner-report 81p correct=81 mis=0 above=0 6112964B
+      paper 20p correct=20 mis=0 above=0 1224191B
+[61/96] 1sc0-2bh-may-june-2022 ✓ inserted
+      markscheme 18p correct=18 mis=0 above=0 715914B
+      examiner-report 72p correct=72 mis=0 above=0 5882537B
+      paper 20p correct=20 mis=0 above=0 936678B
+[62/96] 1sc0-2bh-may-june-2023 ✓ inserted
+      markscheme 17p correct=17 mis=0 above=0 277425B
+      paper 16p correct=16 mis=0 above=0 891717B
+      examiner-report 66p correct=66 mis=0 above=0 5110143B
+[63/96] 1sc0-2bh-may-june-2024 ✓ inserted
+      markscheme 17p correct=17 mis=0 above=0 333788B
+      paper 20p correct=20 mis=0 above=0 1028735B
+      examiner-report 109p correct=109 mis=0 above=0 2454888B
+[64/96] 1sc0-2bh-may-june-2025 ✓ inserted
+      markscheme 20p correct=20 mis=0 above=0 227421B
+      paper 24p correct=24 mis=0 above=0 190039B
+      examiner-report 60p correct=60 mis=0 above=0 2497377B
+[65/96] 1sc0-2cf-may-june-2018 ✓ inserted
+      paper 20p correct=20 mis=0 above=0 683419B
+      markscheme 23p correct=23 mis=0 above=0 385261B
+      examiner-report 58p correct=58 mis=0 above=0 3262769B
+[66/96] 1sc0-2cf-may-june-2019 ✓ inserted
+      examiner-report 7p correct=7 mis=0 above=0 194843B
+      markscheme 17p correct=17 mis=0 above=0 221658B
+      paper 24p correct=24 mis=0 above=0 861278B
+[67/96] 1sc0-2cf-october-november-2020 ✓ inserted
+      examiner-report 5p correct=5 mis=0 above=0 148226B
+      markscheme 13p correct=13 mis=0 above=0 181873B
+      paper 20p correct=20 mis=0 above=0 1193620B
+[68/96] 1sc0-2cf-october-november-2021 ✓ inserted
+      markscheme 20p correct=20 mis=0 above=0 347702B
+      examiner-report 64p correct=64 mis=0 above=0 3943380B
+      paper 20p correct=20 mis=0 above=0 786415B
+[69/96] 1sc0-2cf-may-june-2022 ✓ inserted
+      markscheme 21p correct=21 mis=0 above=0 335871B
+      examiner-report 88p correct=88 mis=0 above=0 7254102B
+      paper 20p correct=20 mis=0 above=0 949835B
+[70/96] 1sc0-2cf-may-june-2023 ✓ inserted
+      paper 22p correct=22 mis=0 above=0 387601B
+      markscheme 20p correct=20 mis=0 above=0 236960B
+      examiner-report 71p correct=71 mis=0 above=0 4114497B
+[71/96] 1sc0-2cf-may-june-2024 ✓ inserted
+      examiner-report 59p correct=59 mis=0 above=0 1062162B
+      markscheme 23p correct=23 mis=0 above=0 454997B
+      paper 22p correct=22 mis=0 above=0 615975B
+[72/96] 1sc0-2cf-may-june-2025 ✓ inserted
+      paper 20p correct=20 mis=0 above=0 143929B
+      markscheme 20p correct=20 mis=0 above=0 299521B
+      examiner-report 52p correct=52 mis=0 above=0 2508246B
+[73/96] 1sc0-2ch-may-june-2018 ✓ inserted
+      paper 16p correct=16 mis=0 above=0 374745B
+      markscheme 19p correct=19 mis=0 above=0 238681B
+      examiner-report 32p correct=32 mis=0 above=0 2429507B
+[74/96] 1sc0-2ch-may-june-2019 ✓ inserted
+      examiner-report 5p correct=5 mis=0 above=0 120374B
+      markscheme 16p correct=16 mis=0 above=0 170219B
+      paper 20p correct=20 mis=0 above=0 638648B
+[75/96] 1sc0-2ch-october-november-2020 ✓ inserted
+      examiner-report 6p correct=6 mis=0 above=0 123489B
+      markscheme 19p correct=19 mis=0 above=0 164430B
+      paper 20p correct=20 mis=0 above=0 790014B
+[76/96] 1sc0-2ch-october-november-2021 ✓ inserted
+      examiner-report 60p correct=60 mis=0 above=0 3805680B
+      markscheme 18p correct=18 mis=0 above=0 221073B
+      paper 20p correct=20 mis=0 above=0 835852B
+[77/96] 1sc0-2ch-may-june-2022 ✓ inserted
+      examiner-report 49p correct=49 mis=0 above=0 4204485B
+      markscheme 21p correct=21 mis=0 above=0 242896B
+      paper 20p correct=20 mis=0 above=0 953039B
+[78/96] 1sc0-2ch-may-june-2023 ✓ inserted
+      paper 22p correct=22 mis=0 above=0 397325B
+      markscheme 20p correct=20 mis=0 above=0 279631B
+      examiner-report 67p correct=67 mis=0 above=0 3051691B
+[79/96] 1sc0-2ch-may-june-2024 ✓ inserted
+      markscheme 20p correct=20 mis=0 above=0 400459B
+      paper 22p correct=22 mis=0 above=0 589417B
+      examiner-report 123p correct=123 mis=0 above=0 2420011B
+[80/96] 1sc0-2ch-may-june-2025 ✓ inserted
+      paper 20p correct=20 mis=0 above=0 479393B
+      markscheme 20p correct=20 mis=0 above=0 488291B
+      examiner-report 48p correct=48 mis=0 above=0 1999031B
+[81/96] 1sc0-2pf-may-june-2018 ✓ inserted
+      markscheme 21p correct=21 mis=0 above=0 418713B
+      paper 20p correct=20 mis=0 above=0 1005795B
+      examiner-report 30p correct=30 mis=0 above=0 1862499B
+[82/96] 1sc0-2pf-may-june-2019 ✓ inserted
+      examiner-report 5p correct=5 mis=0 above=0 93498B
+      markscheme 20p correct=20 mis=0 above=0 249861B
+      paper 28p correct=28 mis=0 above=0 1411437B
+[83/96] 1sc0-2pf-october-november-2020 ✓ inserted
+      examiner-report 5p correct=5 mis=0 above=0 111799B
+      markscheme 18p correct=18 mis=0 above=0 342812B
+      paper 20p correct=20 mis=0 above=0 1179946B
+[84/96] 1sc0-2pf-october-november-2021 ✓ inserted
+      examiner-report 44p correct=44 mis=0 above=0 2014589B
+      markscheme 22p correct=22 mis=0 above=0 287171B
+      paper 24p correct=24 mis=0 above=0 1204992B
+[85/96] 1sc0-2pf-may-june-2022 ✓ inserted
+      examiner-report 50p correct=50 mis=0 above=0 2604913B
+      paper 24p correct=24 mis=0 above=0 913210B
+      markscheme 24p correct=24 mis=0 above=0 549320B
+[86/96] 1sc0-2pf-may-june-2023 ✓ inserted
+      examiner-report 46p correct=46 mis=0 above=0 1371494B
+      markscheme 21p correct=21 mis=0 above=0 262680B
+      paper 28p correct=28 mis=0 above=0 689709B
+[87/96] 1sc0-2pf-may-june-2024 ✓ inserted
+      markscheme 22p correct=22 mis=0 above=0 387220B
+      paper 28p correct=28 mis=0 above=0 1119189B
+      examiner-report 160p correct=160 mis=0 above=0 3450572B
+[88/96] 1sc0-2pf-may-june-2025 ✓ inserted
+      paper 20p correct=20 mis=0 above=0 504233B
+      markscheme 24p correct=24 mis=0 above=0 277316B
+      examiner-report 32p correct=32 mis=0 above=0 1672747B
+[89/96] 1sc0-2ph-may-june-2018 ✓ inserted
+      markscheme 27p correct=27 mis=0 above=0 271567B
+      paper 20p correct=20 mis=0 above=0 1293852B
+      examiner-report 116p correct=116 mis=0 above=0 5477469B
+[90/96] 1sc0-2ph-may-june-2019 ✓ inserted
+      examiner-report 9p correct=9 mis=0 above=0 195947B
+      markscheme 18p correct=18 mis=0 above=0 289123B
+      paper 24p correct=24 mis=0 above=0 1438527B
+[91/96] 1sc0-2ph-october-november-2020 ✓ inserted
+      examiner-report 4p correct=4 mis=0 above=0 87728B
+      markscheme 22p correct=22 mis=0 above=0 320107B
+      paper 20p correct=20 mis=0 above=0 883582B
+[92/96] 1sc0-2ph-october-november-2021 ✓ inserted
+      examiner-report 55p correct=55 mis=0 above=0 3550730B
+      markscheme 20p correct=20 mis=0 above=0 400023B
+      paper 20p correct=20 mis=0 above=0 1138896B
+[93/96] 1sc0-2ph-may-june-2022 ✓ inserted
+      examiner-report 51p correct=51 mis=0 above=0 2241518B
+      paper 20p correct=20 mis=0 above=0 908418B
+      markscheme 29p correct=29 mis=0 above=0 399988B
+[94/96] 1sc0-2ph-may-june-2023 ✓ inserted
+      markscheme 21p correct=21 mis=0 above=0 383556B
+      paper 28p correct=28 mis=0 above=0 612755B
+      examiner-report 48p correct=48 mis=0 above=0 1680728B
+[95/96] 1sc0-2ph-may-june-2024 ✓ inserted
+      examiner-report 39p correct=39 mis=0 above=0 954273B
+      markscheme 26p correct=26 mis=0 above=0 451876B
+      paper 32p correct=32 mis=0 above=0 1111648B
+[96/96] 1sc0-2ph-may-june-2025 ✓ inserted
+
+Done. 96 inserted, 0 already existed, 0 failed.
+
+Skipped 896 file(s):
+
+  896 × filename does not match <1SC0…1SC0>_<entry>_<MMYY>_<QU|MS|ER>.pdf
+      2 - Year 10 /Biology /2017/Foundation /1BIZ_1BF_0517_ER.pdf
+      2 - Year 10 /Biology /2017/Foundation /1BIZ_1BF_0517_MS.pdf
+      2 - Year 10 /Biology /2017/Foundation /1BIZ_1BF_0517_QU.pdf
+      2 - Year 10 /Biology /2017/Higher /1BIZ_1BH_0517_ER.pdf
+      2 - Year 10 /Biology /2017/Higher /1BIZ_1BH_0517_MS.pdf
+      2 - Year 10 /Biology /2017/Higher /1BIZ_1BH_0517_QU.pdf
+      2 - Year 10 /Chemistry /2017/Foundation/1CHZ_1CF_0517_ER.pdf
+      2 - Year 10 /Chemistry /2017/Foundation/1CHZ_1CF_0517_MS.pdf
+      2 - Year 10 /Chemistry /2017/Foundation/1CHZ_1CF_0517_QU.pdf
+      2 - Year 10 /Chemistry /2017/Higher/1CHZ_1CH_0517_ER.pdf
+      … and 886 more
+
+Report written to /Users/muhammed/dev/ailemy-app/bulk-import-report.json
