@@ -387,6 +387,18 @@ export const SUBJECTS: Record<string, SubjectConfig> = {
     paperCodes: { "4PH1": { courseSlug: "edexcel-igcse-physics", level: "IGCSE" } },
     unitMetadata: {},
   },
+
+  "gcse-combined-science": {
+    label: "Edexcel GCSE (9-1) Combined Science",
+    paperCodes: { "1SC0": { courseSlug: "edexcel-gcse-combined-science", level: "GCSE" } },
+    unitMetadata: {},
+  },
+
+  "igcse-single-science": {
+    label: "Edexcel International GCSE (9-1) Single Science",
+    paperCodes: { "4SS0": { courseSlug: "edexcel-igcse-single-science", level: "IGCSE" } },
+    unitMetadata: {},
+  },
 };
 
 /**

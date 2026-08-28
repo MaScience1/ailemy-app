@@ -26,7 +26,7 @@ const t = (n: string, c: boolean, got?: unknown) => {
 };
 
 // ============================================================================
-console.log("\n=== 1. the fourteen new codes are declared, and unit-less ===");
+console.log("\n=== 1. the sixteen unit-less codes are declared, and unit-less ===");
 // ============================================================================
 {
   const all = Object.entries(SUBJECTS).flatMap(([key, cfg]) =>
@@ -35,18 +35,24 @@ console.log("\n=== 1. the fourteen new codes are declared, and unit-less ===");
   const unitless = all.filter((r) => r.unitNumber === undefined);
   const withUnit = all.filter((r) => r.unitNumber !== undefined);
 
-  t("⚠ exactly 14 unit-less codes", unitless.length === 14, unitless.length);
+  t("⚠ exactly 16 unit-less codes", unitless.length === 16, unitless.length);
   t("⚠ the 18 IAL codes still declare a unit (nothing regressed)",
     withUnit.length === 18, withUnit.length);
-  t("⚠ every unit-less code is one of the expected fourteen",
+  /**
+   * ⚠ SIXTEEN NOW, NOT FOURTEEN. 1SC0 (GCSE Combined Science) and 4SS0
+   * (International GCSE Single Science) joined the unit-less set; the fourteen
+   * that were here are unchanged. Both new codes are asserted in full by
+   * import-newly-declared-codes.test.ts — this line only pins the roster.
+   */
+  t("⚠ every unit-less code is one of the expected sixteen",
     unitless.map((r) => r.code).sort().join(",") ===
-      "1BI0,1CH0,1PH0,4BI1,4CH1,4PH1,8BI0,8BN0,8CH0,8PH0,9BI0,9BN0,9CH0,9PH0",
+      "1BI0,1CH0,1PH0,1SC0,4BI1,4CH1,4PH1,4SS0,8BI0,8BN0,8CH0,8PH0,9BI0,9BN0,9CH0,9PH0",
     unitless.map((r) => r.code).sort().join(","));
   t("⚠ every unit-less code names a course slug that is NOT an IAL one",
     unitless.every((r) => !r.courseSlug.includes("-ial-")),
     unitless.filter((r) => r.courseSlug.includes("-ial-")).map((r) => r.code).join(", "));
-  t("⚠ the fourteen resolve to fourteen DISTINCT courses",
-    new Set(unitless.map((r) => r.courseSlug)).size === 14,
+  t("⚠ the sixteen resolve to sixteen DISTINCT courses",
+    new Set(unitless.map((r) => r.courseSlug)).size === 16,
     new Set(unitless.map((r) => r.courseSlug)).size);
 
   /**
@@ -79,10 +85,17 @@ console.log("\n=== 2. GUARD (b) — an unknown code skips and reports ===");
   const anyAccepts = (name: string) =>
     Object.values(SUBJECTS).some((cfg) => buildFilenameRe(cfg).test(name));
 
+  /**
+   * ⚠ 1SC0 AND 4SS0 LEFT THIS LIST BECAUSE THEY ARE NOW DECLARED, and the three
+   * Z codes were added in their place — this list got STRONGER, not weaker.
+   * The standalone guarantee lives in import-deferred-z-codes.test.ts; what is
+   * being tested here is the regex-gate MECHANISM, with 9ZZ9 as the code that
+   * does not exist anywhere at all.
+   */
   const undeclared = [
-    "1SC0_1BF_0618_QU.pdf",   // Combined Science — deferred out of batch 1
-    "4SS0_1B_0619_QU.pdf",    // Single Science  — deferred out of batch 1
     "1BIZ_1BF_0517_QU.pdf",   // Year 10 Progress Assessment — not an exam paper
+    "1CHZ_1CF_0517_QU.pdf",   // Year 10 Progress Assessment — not an exam paper
+    "1PHZ_1PF_0517_QU.pdf",   // Year 10 Progress Assessment — not an exam paper
     "9ZZ9_01_0625_QU.pdf",    // does not exist at all
   ];
   t("⚠ every undeclared code is rejected before planning",
