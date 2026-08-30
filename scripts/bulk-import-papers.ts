@@ -388,6 +388,75 @@ export const SUBJECTS: Record<string, SubjectConfig> = {
     unitMetadata: {},
   },
 
+  /**
+   * ⚠ IAL MATHS AND ENGLISH. unitNumber IS THE DIGIT IN units.name, NOT
+   * sort_order — R21, and it is not a style preference.
+   *
+   * loadCatalogue validates the number against the units row's NAME
+   * (bulk-import-papers.ts:933 parses /^\s*Unit\s+(\d+)/ off row.name). The two
+   * agree for eighteen of the twenty-two rows and DISAGREE for four: A2 English
+   * carries names "Unit 3"/"Unit 4" while its sort_order is 1/2. Reading
+   * sort_order there would abort the whole run exactly as the 0077 defect did,
+   * because a mismatch pushes a problem and loadCatalogue calls fail().
+   *
+   * ⚠ unitMetadata IS EMPTY AND THAT IS NOT AN OVERSIGHT. duration_minutes and
+   * total_marks are per-unit facts nobody has verified for these subjects yet.
+   * An unverified pair would be a guess printed as data, so planRows will skip
+   * these papers with "no duration/marks configured" until the real numbers are
+   * supplied. Catalogue resolution is unaffected.
+   */
+  "ial-mathematics": {
+    label: "Edexcel IAL Mathematics",
+    paperCodes: {
+      WMA11: { unitNumber: 1, courseSlug: "edexcel-ial-as-mathematics", level: "AS" },
+      WMA12: { unitNumber: 2, courseSlug: "edexcel-ial-as-mathematics", level: "AS" },
+      WME01: { unitNumber: 3, courseSlug: "edexcel-ial-as-mathematics", level: "AS" },
+      WST01: { unitNumber: 4, courseSlug: "edexcel-ial-as-mathematics", level: "AS" },
+      WDM11: { unitNumber: 5, courseSlug: "edexcel-ial-as-mathematics", level: "AS" },
+      WMA13: { unitNumber: 1, courseSlug: "edexcel-ial-a2-mathematics", level: "A2" },
+      WMA14: { unitNumber: 2, courseSlug: "edexcel-ial-a2-mathematics", level: "A2" },
+      WME02: { unitNumber: 3, courseSlug: "edexcel-ial-a2-mathematics", level: "A2" },
+      WME03: { unitNumber: 4, courseSlug: "edexcel-ial-a2-mathematics", level: "A2" },
+      WST02: { unitNumber: 5, courseSlug: "edexcel-ial-a2-mathematics", level: "A2" },
+      WST03: { unitNumber: 6, courseSlug: "edexcel-ial-a2-mathematics", level: "A2" },
+    },
+    unitMetadata: {},
+  },
+
+  "ial-further-mathematics": {
+    label: "Edexcel IAL Further Mathematics",
+    paperCodes: {
+      WFM01: { unitNumber: 1, courseSlug: "edexcel-ial-as-further-mathematics", level: "AS" },
+      WFM02: { unitNumber: 1, courseSlug: "edexcel-ial-a2-further-mathematics", level: "A2" },
+      WFM03: { unitNumber: 2, courseSlug: "edexcel-ial-a2-further-mathematics", level: "A2" },
+    },
+    unitMetadata: {},
+  },
+
+  "ial-english-language": {
+    label: "Edexcel IAL English Language",
+    paperCodes: {
+      WEN01: { unitNumber: 1, courseSlug: "edexcel-ial-as-english-language", level: "AS" },
+      WEN02: { unitNumber: 2, courseSlug: "edexcel-ial-as-english-language", level: "AS" },
+      /** ⚠ 3 and 4, from the NAME. sort_order here is 1 and 2 — see R21 above. */
+      WEN03: { unitNumber: 3, courseSlug: "edexcel-ial-a2-english-language", level: "A2" },
+      WEN04: { unitNumber: 4, courseSlug: "edexcel-ial-a2-english-language", level: "A2" },
+    },
+    unitMetadata: {},
+  },
+
+  "ial-english-literature": {
+    label: "Edexcel IAL English Literature",
+    paperCodes: {
+      WET01: { unitNumber: 1, courseSlug: "edexcel-ial-as-english-literature", level: "AS" },
+      WET02: { unitNumber: 2, courseSlug: "edexcel-ial-as-english-literature", level: "AS" },
+      /** ⚠ 3 and 4, from the NAME. sort_order here is 1 and 2 — see R21 above. */
+      WET03: { unitNumber: 3, courseSlug: "edexcel-ial-a2-english-literature", level: "A2" },
+      WET04: { unitNumber: 4, courseSlug: "edexcel-ial-a2-english-literature", level: "A2" },
+    },
+    unitMetadata: {},
+  },
+
   "gcse-combined-science": {
     label: "Edexcel GCSE (9-1) Combined Science",
     paperCodes: { "1SC0": { courseSlug: "edexcel-gcse-combined-science", level: "GCSE" } },
