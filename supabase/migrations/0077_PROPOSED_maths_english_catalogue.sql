@@ -1,13 +1,20 @@
 -- ============================================================================
--- _PROPOSED_maths_english_catalogue.sql
+-- 0077_PROPOSED_maths_english_catalogue.sql
 -- ----------------------------------------------------------------------------
--- ⚠ UNAPPLIED AND UNNUMBERED. Planning allocates the number and renames; the
--- founder runs it in the SQL Editor. It has NOT been connected to, checked
--- against, or applied to any database by the agent that wrote it.
+-- ⚠ NUMBER 0077 ISSUED BY PLANNING. UNAPPLIED. The founder runs it in the SQL
+-- Editor. It has NOT been connected to, checked against, or applied to any
+-- database by the agent that wrote it.
 --
--- ⚠ THE NUMBER IS NOT "the highest on disk plus one". main's highest is 0070,
--- but 0072-0076 are live on feat/classroom-schema and invisible to `ls` here,
--- and 0071 is a gap. That is exactly why this file stays unnumbered.
+-- ⚠ THE NUMBER WAS NOT TAKEN FROM `ls`. main's highest is 0070, but 0071 is a
+-- gap and 0072-0076 are live in production on the unmerged classroom branch,
+-- invisible to a listing here. Planning checked all of that and issued 0077.
+--
+-- ⚠ IT KEEPS _PROPOSED_ UNTIL IT IS APPLIED, and that is deliberate. An
+-- unapplied file sitting under its plain number manufactures drift: a rebuild
+-- replays this folder in order and would create these rows, while production
+-- does not have them. 0033 sat as 0033_PROPOSED_ for a day for this reason.
+-- Drop the _PROPOSED_ token once it has been run, and record the result here
+-- at the same time.
 --
 -- ============================================================================
 -- BOTH OPEN QUESTIONS ARE NOW ANSWERED BY THE FOUNDER
@@ -56,17 +63,18 @@ BEGIN;
 
 -- ---------------------------------------------------------------------------
 -- 1. SUBJECTS (5). sort_order continues from biology at 3.
---    ⚠ COLOURS TAKEN VERBATIM FROM R12 IN THE ORDER GIVEN (#DB2777 / #F472B6).
---    Note this puts the DARKER shade in color_as, where the three existing
---    subjects put the lighter one there (chemistry is #F97316 AS / #C2410C A2).
---    Following the ruling as written; flag if the pair was meant the other way.
+--    ⚠ COLOUR ORDER IS R18. R12 gave one pair without saying which slot took
+--    which shade, and was followed as written; R18 settled it and reversed that
+--    pair along with fixing the other four. The convention, matching the three
+--    Science subjects (chemistry is #F97316 AS / #C2410C A2), is LIGHTER IN
+--    color_as, DARKER IN color_a2.
 -- ---------------------------------------------------------------------------
 INSERT INTO subjects (slug, name, color_as, color_a2, sort_order) VALUES
-  ('mathematics',         'Mathematics',         '#8B5CF6', '#6D28D9', 4),
-  ('further-mathematics', 'Further Mathematics', '#A855F7', '#7E22CE', 5),
-  ('english-language',    'English Language',    '#14B8A6', '#0F766E', 6),
-  ('english-literature',  'English Literature',  '#0EA5E9', '#0369A1', 7),
-  ('english-language-and-literature', 'English Language & Literature', '#DB2777', '#F472B6', 8)
+  ('mathematics',         'Mathematics',         '#60A5FA', '#2563EB', 4),
+  ('further-mathematics', 'Further Mathematics', '#818CF8', '#4F46E5', 5),
+  ('english-language',    'English Language',    '#34D399', '#059669', 6),
+  ('english-literature',  'English Literature',  '#A78BFA', '#7C3AED', 7),
+  ('english-language-and-literature', 'English Language & Literature', '#F472B6', '#DB2777', 8)
 ON CONFLICT (slug) DO NOTHING;
 
 -- ---------------------------------------------------------------------------
