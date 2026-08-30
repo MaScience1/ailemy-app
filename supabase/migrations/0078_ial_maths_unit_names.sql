@@ -1,9 +1,32 @@
 -- ============================================================================
--- 0078_PROPOSED_ial_maths_unit_names.sql
+-- 0078_ial_maths_unit_names.sql
 -- ----------------------------------------------------------------------------
--- ⚠ NUMBER 0078 ISSUED BY PLANNING. UNAPPLIED. The founder runs it in the SQL
--- Editor. The _PROPOSED_ token stays until then, per R19: an unapplied file
--- under its plain number lets a rebuild get ahead of production.
+-- ⚠ APPLIED TO PRODUCTION 2026-08-30 by the founder in the SQL Editor.
+--   Renamed from 0078_PROPOSED_ once applied and verified, per R19: the plain
+--   number is taken only after the rows exist, so a rebuild replaying this
+--   folder cannot get ahead of production.
+--
+--   VERIFICATION, measured after the run:
+--
+--     units        40    unchanged - this migration writes no rows
+--     ial_rows     22    the Maths/English units 0077 created
+--     parse_ok     22    names matching the validator at :933
+--     dup_n         0    no two units in a course claiming the same N
+--     ambiguous     0    no unit code appearing twice
+--
+--   ⚠ TWO NAMES READ BACK INDIVIDUALLY, not just counted, because parse_ok=22
+--   would also hold if every name had been rewritten to the same wrong thing:
+--
+--     WME01  'Unit 3: Mechanics M1'
+--     WFM03  'Unit 2: Further Pure FP3'
+--
+--   Both confirm the rule this migration exists to apply: N is the row's
+--   sort_order, not the Pearson digit. WME01 is Mechanics M1 and became Unit 3;
+--   WFM03 is Further Pure FP3 and became Unit 2.
+--
+--   ⚠ units TOTAL IS UNCHANGED AT 40 AND THAT IS THE POINT. This migration
+--   updates a text column on fourteen existing rows. A changed total would mean
+--   it had inserted or deleted something it should not have.
 --
 -- ============================================================================
 -- WHY THIS EXISTS — A DEFECT IN 0077, WHICH IS ALREADY APPLIED
