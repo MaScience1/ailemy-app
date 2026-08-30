@@ -175,7 +175,9 @@ console.log("\n=== 4. the corpus really holds these papers (not a vacuous pass) 
    * passing quietly. 498 + 66 = 564 unique basenames carry the two codes.
    */
   t("⚠ 1SC0 is present in the corpus, 498 unique basenames", per("1SC0") === 498, per("1SC0"));
-  t("⚠ 4SS0 is present in the corpus, 66 unique basenames", per("4SS0") === 66, per("4SS0"));
+  /** 66 -> 75: the nine 4ss0-*-que/rms/pef ISO files became 4SS0_*_0625_* at 86d17c6,
+   *  so they now count under this code where their ISO names did not. */
+  t("⚠ 4SS0 is present in the corpus, 75 unique basenames", per("4SS0") === 75, per("4SS0"));
 
   /**
    * ⚠ AND NOT ALL 564 ARE ADMITTED — 508 are. The 56-file difference is the
@@ -188,7 +190,8 @@ console.log("\n=== 4. the corpus really holds these papers (not a vacuous pass) 
   const admitted = UNIQUE.filter(
     (n) => ["1SC0", "4SS0"].includes(n.split("_")[0].toUpperCase()) && anyAccepts(n),
   ).length;
-  t("⚠ exactly 508 of the 564 are admitted by shape", admitted === 508, admitted);
+  /** 508 -> 517: the same nine renamed at 86d17c6 are now admitted by the grammar. */
+  t("⚠ exactly 517 of the 573 are admitted by shape", admitted === 517, admitted);
   t("⚠ …so 56 are still rejected on shape alone", per("1SC0") + per("4SS0") - admitted === 56,
     per("1SC0") + per("4SS0") - admitted);
 }

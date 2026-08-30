@@ -107,11 +107,24 @@ console.log("\n=== 2. GUARD (a) — what the regex must still REJECT, as counts 
   t(`⚠ ALL ${sample.length} sample/exemplar files are rejected`,
     rejects(sample) === sample.length, `${rejects(sample)} of ${sample.length}`);
 
-  t("⚠ ISO-date underscore files exist", isoUnder.length > 0, isoUnder.length);
+  /**
+   * ⚠ INVERTED AT 86d17c6, AND STILL A GUARD. This asserted > 0 so it could not
+   * pass vacuously — the population had to exist for "all of them are rejected"
+   * to mean anything. That population is now zero BY DESIGN: 86d17c6 renamed all
+   * 21 ISO-named files into the MMYY grammar. So the assertion flips and its
+   * subject changes. It no longer guards "we can see them"; it guards NO
+   * ISO-NAMED FILE HAS RE-ENTERED THE CORPUS.
+   *
+   * ⚠ RUNNING 86d17c6'S UNDO LOG FIRES THIS. rename-iso-undo-20260829-123336.log
+   * puts all 21 back under their old names, and this goes red. That is the
+   * correct behaviour, not a false alarm.
+   */
+  t("⚠ no ISO-date underscore file has re-entered the corpus", isoUnder.length === 0, isoUnder.length);
   t(`⚠ ALL ${isoUnder.length} ISO-date underscore files are rejected`,
     rejects(isoUnder) === isoUnder.length, `${rejects(isoUnder)} of ${isoUnder.length}`);
 
-  t("⚠ ISO-date lowercase-hyphen files exist", isoDash.length > 0, isoDash.length);
+  /** Same inversion, same cause (86d17c6), same undo-log consequence. */
+  t("⚠ no lowercase que/rms/pef file has re-entered the corpus", isoDash.length === 0, isoDash.length);
   t(`⚠ ALL ${isoDash.length} lowercase que/rms/pef files are rejected`,
     rejects(isoDash) === isoDash.length, `${rejects(isoDash)} of ${isoDash.length}`);
 
@@ -197,8 +210,16 @@ console.log("\n=== 2. GUARD (a) — what the regex must still REJECT, as counts 
    * and the number moves; widen the regex and the number moves.
    */
   const inScopeAccepted = UNIQUE.filter(anyAccepts);
-  t("⚠ folders 2/4/8 now accept exactly 1,878 of 2,119 unique basenames",
-    inScopeAccepted.length === 1878, `${inScopeAccepted.length} of ${UNIQUE.length}`);
+  /**
+   * ⚠ THIRD RESTATEMENT. 1,370 -> 1,878 when 1SC0/4SS0 were declared; 1,878 ->
+   * 1,936 of 2,156 now. The corpus moved by +37 unique basenames under two
+   * commits: 0800dd1 added 31 recovered Pearson files to folder 2, and 8b01450
+   * renamed 4CH1 1C/2C out of _1121_, which had SHARED basenames with the
+   * genuine November 2021 papers and now do not — six names that previously
+   * collapsed into three.
+   */
+  t("⚠ folders 2/4/8 now accept exactly 1,936 of 2,156 unique basenames",
+    inScopeAccepted.length === 1936, `${inScopeAccepted.length} of ${UNIQUE.length}`);
 
   /** Per code, so a regression names the qualification rather than a total. */
   const perCode = new Map<string, number>();

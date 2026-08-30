@@ -118,7 +118,8 @@ console.log("\n=== 2. the 18 files are still on disk, so the absence is a CHOICE
   for (const c of DEFERRED) t(`⚠ ${c} is present on disk (6 files)`, per(c) === 6, per(c));
   const total = DEFERRED.reduce((s, c) => s + per(c), 0);
   t("⚠ eighteen Progress Assessment files exist in total", total === 18, total);
-  t("⚠ …and this section is not vacuous (the corpus is loaded)", UNIQUE.length === 2119, UNIQUE.length);
+  /** 2,119 -> 2,156: +31 Pearson files (0800dd1) and +6 un-collided 4CH1 basenames (8b01450). */
+  t("⚠ …and this section is not vacuous (the corpus is loaded)", UNIQUE.length === 2156, UNIQUE.length);
 
   /** The point of the whole file: present on disk, absent from the accepted set. */
   const acceptedZ = UNIQUE.filter(
