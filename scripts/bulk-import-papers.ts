@@ -457,6 +457,65 @@ export const SUBJECTS: Record<string, SubjectConfig> = {
     unitMetadata: {},
   },
 
+  /**
+   * ⚠ UK GCE MATHS AND ENGLISH — ALL TEN ARE UNIT-LESS. No unitNumber, so each
+   * takes the branch at :895: the course is resolved by slug, the level is
+   * asserted against the row, and unit_id is written NULL. This is the same
+   * path the sixteen existing unit-less codes use, and R22 confirms these need
+   * no unit rows at all — creating them would be dead rows.
+   *
+   * ⚠ 8EL0/9EL0 IS ENGLISH LANGUAGE & LITERATURE, a UK-only combined award with
+   * no IAL counterpart. It is why the catalogue is 10 UK courses against 8 IAL.
+   *
+   * ⚠ unitMetadata IS EMPTY AND STAYS EMPTY (R22) — and for a unit-less code it
+   * is never consulted anyway, since :1219 only reads it when unitNumber is
+   * defined.
+   */
+  "gce-mathematics": {
+    label: "Edexcel GCE Mathematics (UK)",
+    paperCodes: {
+      "8MA0": { courseSlug: "edexcel-gce-as-mathematics", level: "AS" },
+      "9MA0": { courseSlug: "edexcel-gce-a2-mathematics", level: "A2" },
+    },
+    unitMetadata: {},
+  },
+
+  "gce-further-mathematics": {
+    label: "Edexcel GCE Further Mathematics (UK)",
+    paperCodes: {
+      "8FM0": { courseSlug: "edexcel-gce-as-further-mathematics", level: "AS" },
+      "9FM0": { courseSlug: "edexcel-gce-a2-further-mathematics", level: "A2" },
+    },
+    unitMetadata: {},
+  },
+
+  "gce-english-language": {
+    label: "Edexcel GCE English Language (UK)",
+    paperCodes: {
+      "8EN0": { courseSlug: "edexcel-gce-as-english-language", level: "AS" },
+      "9EN0": { courseSlug: "edexcel-gce-a2-english-language", level: "A2" },
+    },
+    unitMetadata: {},
+  },
+
+  "gce-english-literature": {
+    label: "Edexcel GCE English Literature (UK)",
+    paperCodes: {
+      "8ET0": { courseSlug: "edexcel-gce-as-english-literature", level: "AS" },
+      "9ET0": { courseSlug: "edexcel-gce-a2-english-literature", level: "A2" },
+    },
+    unitMetadata: {},
+  },
+
+  "gce-english-language-and-literature": {
+    label: "Edexcel GCE English Language & Literature (UK)",
+    paperCodes: {
+      "8EL0": { courseSlug: "edexcel-gce-as-english-language-and-literature", level: "AS" },
+      "9EL0": { courseSlug: "edexcel-gce-a2-english-language-and-literature", level: "A2" },
+    },
+    unitMetadata: {},
+  },
+
   "gcse-combined-science": {
     label: "Edexcel GCSE (9-1) Combined Science",
     paperCodes: { "1SC0": { courseSlug: "edexcel-gcse-combined-science", level: "GCSE" } },

@@ -26,7 +26,7 @@ const t = (n: string, c: boolean, got?: unknown) => {
 };
 
 // ============================================================================
-console.log("\n=== 1. the sixteen unit-less codes are declared, and unit-less ===");
+console.log("\n=== 1. the twenty-six unit-less codes are declared, and unit-less ===");
 // ============================================================================
 {
   const all = Object.entries(SUBJECTS).flatMap(([key, cfg]) =>
@@ -35,24 +35,32 @@ console.log("\n=== 1. the sixteen unit-less codes are declared, and unit-less ==
   const unitless = all.filter((r) => r.unitNumber === undefined);
   const withUnit = all.filter((r) => r.unitNumber !== undefined);
 
-  t("⚠ exactly 16 unit-less codes", unitless.length === 16, unitless.length);
-  t("⚠ the 18 IAL codes still declare a unit (nothing regressed)",
-    withUnit.length === 18, withUnit.length);
+  /**
+   * ⚠ 14 -> 16 -> 26. The last move is the ten UK GCE Maths and English codes
+   * (8MA0/9MA0, 8FM0/9FM0, 8EN0/9EN0, 8ET0/9ET0, 8EL0/9EL0), declared unit-less
+   * because they resolve the course by slug and write unit_id NULL — R22.
+   */
+  t("⚠ exactly 26 unit-less codes", unitless.length === 26, unitless.length);
+  /** 18 -> 40: the 22 IAL Maths and English unit codes joined the unit path. */
+  t("⚠ the 40 IAL codes declare a unit (nothing regressed)",
+    withUnit.length === 40, withUnit.length);
   /**
    * ⚠ SIXTEEN NOW, NOT FOURTEEN. 1SC0 (GCSE Combined Science) and 4SS0
    * (International GCSE Single Science) joined the unit-less set; the fourteen
    * that were here are unchanged. Both new codes are asserted in full by
    * import-newly-declared-codes.test.ts — this line only pins the roster.
    */
-  t("⚠ every unit-less code is one of the expected sixteen",
+  t("⚠ every unit-less code is one of the expected twenty-six",
     unitless.map((r) => r.code).sort().join(",") ===
-      "1BI0,1CH0,1PH0,1SC0,4BI1,4CH1,4PH1,4SS0,8BI0,8BN0,8CH0,8PH0,9BI0,9BN0,9CH0,9PH0",
+      "1BI0,1CH0,1PH0,1SC0,4BI1,4CH1,4PH1,4SS0,8BI0,8BN0,8CH0,8EL0,8EN0,8ET0,8FM0," +
+      "8MA0,8PH0,9BI0,9BN0,9CH0,9EL0,9EN0,9ET0,9FM0,9MA0,9PH0",
     unitless.map((r) => r.code).sort().join(","));
   t("⚠ every unit-less code names a course slug that is NOT an IAL one",
     unitless.every((r) => !r.courseSlug.includes("-ial-")),
     unitless.filter((r) => r.courseSlug.includes("-ial-")).map((r) => r.code).join(", "));
-  t("⚠ the sixteen resolve to sixteen DISTINCT courses",
-    new Set(unitless.map((r) => r.courseSlug)).size === 16,
+  /** Still one course each: ten new codes, ten new courses, no sharing. */
+  t("⚠ the twenty-six resolve to twenty-six DISTINCT courses",
+    new Set(unitless.map((r) => r.courseSlug)).size === 26,
     new Set(unitless.map((r) => r.courseSlug)).size);
 
   /**
