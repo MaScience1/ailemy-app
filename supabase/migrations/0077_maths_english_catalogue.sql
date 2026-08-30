@@ -1,20 +1,33 @@
 -- ============================================================================
--- 0077_PROPOSED_maths_english_catalogue.sql
+-- 0077_maths_english_catalogue.sql
 -- ----------------------------------------------------------------------------
--- ⚠ NUMBER 0077 ISSUED BY PLANNING. UNAPPLIED. The founder runs it in the SQL
--- Editor. It has NOT been connected to, checked against, or applied to any
--- database by the agent that wrote it.
+-- ⚠ APPLIED TO PRODUCTION 2026-08-30 by the founder in the SQL Editor.
+--   Renamed from 0077_PROPOSED_ once applied and verified, per the standing
+--   rule: the plain number is taken only after the rows exist, so a rebuild
+--   replaying this folder cannot get ahead of production.
 --
--- ⚠ THE NUMBER WAS NOT TAKEN FROM `ls`. main's highest is 0070, but 0071 is a
--- gap and 0072-0076 are live in production on the unmerged classroom branch,
--- invisible to a listing here. Planning checked all of that and issued 0077.
+--   VERIFICATION: measured before and after, one SELECT each. Every one of the
+--   six figures is the gate's own expectation, confirmed against the database
+--   rather than inferred from the script exiting cleanly.
 --
--- ⚠ IT KEEPS _PROPOSED_ UNTIL IT IS APPLIED, and that is deliberate. An
--- unapplied file sitting under its plain number manufactures drift: a rebuild
--- replays this folder in order and would create these rows, while production
--- does not have them. 0033 sat as 0033_PROPOSED_ for a day for this reason.
--- Drop the _PROPOSED_ token once it has been run, and record the result here
--- at the same time.
+--                    before    after    delta
+--     subjects            5       10       +5
+--     uk courses          0       10      +10
+--     ial courses         0        8       +8
+--     units              18       40      +22
+--     ambiguous           0        0        0
+--     wrongly_live        0        0        0
+--
+--   ⚠ THE TWO ZEROES ARE THE LOAD-BEARING ONES. `ambiguous` is unit codes
+--   appearing more than once: units.code is looked up UNSCOPED by course
+--   (bulk-import-papers.ts:829 does `.in("code", unitCodes)`), so a duplicated
+--   code would send papers to whichever row the query happened to return.
+--   `wrongly_live` is rows that reached a public status; everything here is
+--   'coming_soon', so nothing became visible on being run.
+--
+-- ⚠ THE NUMBER WAS NOT TAKEN FROM `ls`. main's highest was 0070, but 0071 is a
+-- gap and 0072-0076 were live in production on the unmerged classroom branch,
+-- invisible to a listing here. Planning checked that and issued 0077.
 --
 -- ============================================================================
 -- BOTH OPEN QUESTIONS ARE NOW ANSWERED BY THE FOUNDER
