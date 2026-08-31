@@ -599,7 +599,19 @@ const MAX_YEAR = 2025;
  * (several of these folders have a trailing space). Without that this list
  * silently matches nothing and the rule only appears to work.
  */
-const SKIP_DIRECTORIES = ["SAM"];
+/**
+ * ⚠ "_quarantine" IS A SAFETY GUARD, NOT A CONVENIENCE. R24 holds files back
+ * from import deliberately, and the staging trees keep them in a "_quarantine"
+ * folder. Until R35 that folder was excluded only because its files still carry
+ * their original Pearson download names ("wst03-01-rms-20260813.pdf"), which no
+ * subject regex matches — the exclusion was a side effect of naming, not a rule.
+ * Renaming one of those files into the importable convention, which the rename
+ * tool does in bulk, would have made all 421 of them importable in a single
+ * step. The entry below makes the exclusion structural, so it holds regardless
+ * of what the files are called. import-quarantine-skip.test.ts proves it with a
+ * probe whose name DOES match the regex.
+ */
+export const SKIP_DIRECTORIES = ["SAM", "_quarantine"];
 
 function normaliseSegment(segment: string): string {
   return segment
@@ -620,7 +632,7 @@ const NAME_DASH = "–";
 // CLI
 // ============================================================================
 
-type Options = {
+export type Options = {
   root: string;
   subject: string;
   config: SubjectConfig;
@@ -878,7 +890,7 @@ export function buildFilenameRe(config: SubjectConfig): RegExp {
   );
 }
 
-async function walk(dir: string, out: string[] = []): Promise<string[]> {
+export async function walk(dir: string, out: string[] = []): Promise<string[]> {
   const entries = await readdir(dir, { withFileTypes: true });
   for (const entry of entries) {
     // Finder and iCloud litter these through synced folders.
@@ -890,7 +902,7 @@ async function walk(dir: string, out: string[] = []): Promise<string[]> {
   return out;
 }
 
-function parseFile(
+export function parseFile(
   absPath: string,
   root: string,
   options: Options,
