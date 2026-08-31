@@ -116,9 +116,20 @@ async function main() {
 
   try {
     let up = false;
+    /**
+     * ⚠ 10s, AND THE OLD 2s IS WHY THIS NUMBER IS WRITTEN DOWN. Cold render of
+     * / measured at ~2900ms 31 Aug 2026; 2000ms budget aborted all 60 attempts
+     * and the suite checked zero routes. It reported a single red line and
+     * returned before fetching one route — the exact failure this suite exists
+     * to catch, wearing the costume of an ordinary failure.
+     *
+     * 3s would clear that measurement and nothing else. A gate that flakes on a
+     * cold machine is one people re-run rather than read, which lands straight
+     * back at zero routes checked, so the headroom is deliberate.
+     */
     for (let i = 0; i < 60; i++) {
       try {
-        await fetch(BASE + "/", { signal: AbortSignal.timeout(2000) });
+        await fetch(BASE + "/", { signal: AbortSignal.timeout(10_000) });
         up = true; break;
       } catch { await new Promise((r) => setTimeout(r, 1000)); }
     }
