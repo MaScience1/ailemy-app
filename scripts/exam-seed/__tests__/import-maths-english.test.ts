@@ -221,25 +221,63 @@ console.log("\n=== 7. QU/MS/ER of one sitting group onto ONE paper identity ==="
 }
 
 // ============================================================================
-console.log("\n=== 8. unitMetadata stays empty (R22) ===");
+console.log("\n=== 8. unitMetadata: UK empty, IAL confirmed values (R22 -> R31) ===");
 // ============================================================================
 {
   /**
-   * ⚠ EMPTY IS THE CORRECT STATE, NOT A GAP. duration_minutes and total_marks
-   * are per-unit facts nobody has verified for these subjects. An unverified
-   * pair is a guess printed as data, and it reaches a student on a paper page.
-   * planRows skipping with "no duration/marks configured for unit N" is the
-   * intended behaviour until real numbers are read off real papers.
+   * ⚠ THIS SECTION WAS "STAYS EMPTY" AND R31 SUPERSEDED HALF OF IT. R22 held
+   * that duration and marks are per-unit facts nobody had verified, so an
+   * unverified pair would be a guess printed as data. R31 supplied them the
+   * only acceptable way: read verbatim off the cover of a staged question paper
+   * per code, reported for confirmation, and written only after the founder
+   * confirmed all 22.
+   *
+   * ⚠ THE UK FIVE ARE STILL EMPTY, AND THAT IS NOT AN OMISSION. Their codes are
+   * unit-less, and :1219 only reads unitMetadata when unitNumber is defined, so
+   * a value there would be unreachable. Empty is the correct state forever.
+   *
+   * ⚠ THE VALUES ARE PINNED, NOT JUST THEIR PRESENCE. A guard that only checked
+   * "is populated" would pass on a wrong mark total, and a wrong total is
+   * invisible once it is in past_papers.
    */
-  const NEW_CONFIGS = ["ial-mathematics","ial-further-mathematics","ial-english-language",
-                       "ial-english-literature","gce-mathematics","gce-further-mathematics",
-                       "gce-english-language","gce-english-literature",
-                       "gce-english-language-and-literature"];
-  t("⚠ every new config carries an EMPTY unitMetadata",
-    NEW_CONFIGS.every((k) => Object.keys(SUBJECTS[k].unitMetadata).length === 0),
-    NEW_CONFIGS.filter((k) => Object.keys(SUBJECTS[k].unitMetadata).length > 0).join(", "));
-  t("⚠ …and all nine configs exist to be checked", NEW_CONFIGS.every((k) => SUBJECTS[k] !== undefined),
-    NEW_CONFIGS.filter((k) => !SUBJECTS[k]).join(", "));
+  const UK = ["gce-mathematics","gce-further-mathematics","gce-english-language",
+              "gce-english-literature","gce-english-language-and-literature"];
+  t("⚠ the five UK configs carry an EMPTY unitMetadata (unit-less, never consulted)",
+    UK.every((k) => Object.keys(SUBJECTS[k].unitMetadata).length === 0),
+    UK.filter((k) => Object.keys(SUBJECTS[k].unitMetadata).length > 0).join(", "));
+
+  const EXPECT: Record<string, Record<number, [number, number]>> = {
+    "ial-mathematics":         { 1:[90,75], 2:[90,75], 3:[90,75], 4:[90,75], 5:[90,75], 6:[90,75] },
+    "ial-further-mathematics": { 1:[90,75], 2:[90,75] },
+    "ial-english-language":    { 1:[105,50], 2:[105,50], 3:[120,50], 4:[120,50] },
+    "ial-english-literature":  { 1:[120,50], 2:[120,50], 3:[120,50], 4:[120,50] },
+  };
+  const wrong: string[] = [];
+  for (const [cfg, units] of Object.entries(EXPECT)) {
+    const m = SUBJECTS[cfg].unitMetadata;
+    if (Object.keys(m).length !== Object.keys(units).length) wrong.push(`${cfg}: key count`);
+    for (const [n, [dur, marks]] of Object.entries(units)) {
+      const got = m[Number(n)];
+      if (!got || got.durationMinutes !== dur || got.totalMarks !== marks)
+        wrong.push(`${cfg}#${n}: ${got?.durationMinutes}m/${got?.totalMarks}`);
+    }
+  }
+  t("⚠ all 22 IAL units carry the CONFIRMED duration and marks", wrong.length === 0, wrong.join(", "));
+
+  /**
+   * ⚠ English Language is the only config whose duration varies by unit —
+   * AS 105, A2 120. If an extractor had defaulted one unit to another's value
+   * this is where it would show.
+   */
+  const el = SUBJECTS["ial-english-language"].unitMetadata;
+  t("⚠ IAL English Language really does differ AS 105 vs A2 120",
+    el[1].durationMinutes === 105 && el[4].durationMinutes === 120,
+    `${el[1].durationMinutes} / ${el[4].durationMinutes}`);
+
+  /** verified must be true, or auditRows blocks every row as a placeholder. */
+  const unver = Object.keys(EXPECT).flatMap((k) =>
+    Object.entries(SUBJECTS[k].unitMetadata).filter(([, v]) => !v.verified).map(([n]) => `${k}#${n}`));
+  t("⚠ every IAL metadata entry is marked verified", unver.length === 0, unver.join(", "));
 }
 
 // ============================================================================

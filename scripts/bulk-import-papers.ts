@@ -420,7 +420,28 @@ export const SUBJECTS: Record<string, SubjectConfig> = {
       WST02: { unitNumber: 5, courseSlug: "edexcel-ial-a2-mathematics", level: "A2" },
       WST03: { unitNumber: 6, courseSlug: "edexcel-ial-a2-mathematics", level: "A2" },
     },
-    unitMetadata: {},
+    /**
+     * ⚠ READ OFF THE PAPERS, NOT THE SPECIFICATION — R31, confirmed by the
+     * founder 31 Aug. Every value below was extracted verbatim from the cover
+     * page of a staged question paper and reported for confirmation before
+     * anything was written here. The type's rule is that `verified: true` must
+     * never mean recollection; the corroboration here is the printed cover of
+     * the paper itself, which is the source past_papers rows would themselves
+     * have been derived from.
+     *
+     * ⚠ THE TRAILING ARTEFACT IS STRIPPED. The grabbed line read
+     * "Time: 1 hour 30 minutes) WMA11/01A" — the bracket and paper code are
+     * adjacent text the line-grab swallowed, not part of the duration. The
+     * integer minutes are stored, never the line as grabbed.
+     */
+    unitMetadata: {
+      1: { durationMinutes: 90, totalMarks: 75, verified: true },
+      2: { durationMinutes: 90, totalMarks: 75, verified: true },
+      3: { durationMinutes: 90, totalMarks: 75, verified: true },
+      4: { durationMinutes: 90, totalMarks: 75, verified: true },
+      5: { durationMinutes: 90, totalMarks: 75, verified: true },
+      6: { durationMinutes: 90, totalMarks: 75, verified: true },
+    },
   },
 
   "ial-further-mathematics": {
@@ -430,7 +451,11 @@ export const SUBJECTS: Record<string, SubjectConfig> = {
       WFM02: { unitNumber: 1, courseSlug: "edexcel-ial-a2-further-mathematics", level: "A2" },
       WFM03: { unitNumber: 2, courseSlug: "edexcel-ial-a2-further-mathematics", level: "A2" },
     },
-    unitMetadata: {},
+    /** Same source and rule as ial-mathematics above. WFM01/02/03 all 90/75. */
+    unitMetadata: {
+      1: { durationMinutes: 90, totalMarks: 75, verified: true },
+      2: { durationMinutes: 90, totalMarks: 75, verified: true },
+    },
   },
 
   "ial-english-language": {
@@ -442,7 +467,17 @@ export const SUBJECTS: Record<string, SubjectConfig> = {
       WEN03: { unitNumber: 3, courseSlug: "edexcel-ial-a2-english-language", level: "A2" },
       WEN04: { unitNumber: 4, courseSlug: "edexcel-ial-a2-english-language", level: "A2" },
     },
-    unitMetadata: {},
+    /**
+     * ⚠ ENGLISH LANGUAGE IS THE ONE CONFIG WHERE THE DURATION VARIES BY UNIT:
+     * AS units 1-2 print "Time: 1 hour 45 minutes", A2 units 3-4 print
+     * "Time: 2 hours". Marks are 50 throughout. Read off the covers per R31.
+     */
+    unitMetadata: {
+      1: { durationMinutes: 105, totalMarks: 50, verified: true },
+      2: { durationMinutes: 105, totalMarks: 50, verified: true },
+      3: { durationMinutes: 120, totalMarks: 50, verified: true },
+      4: { durationMinutes: 120, totalMarks: 50, verified: true },
+    },
   },
 
   "ial-english-literature": {
@@ -454,7 +489,13 @@ export const SUBJECTS: Record<string, SubjectConfig> = {
       WET03: { unitNumber: 3, courseSlug: "edexcel-ial-a2-english-literature", level: "A2" },
       WET04: { unitNumber: 4, courseSlug: "edexcel-ial-a2-english-literature", level: "A2" },
     },
-    unitMetadata: {},
+    /** All four units print "Time: 2 hours" and 50 marks. Read off the covers. */
+    unitMetadata: {
+      1: { durationMinutes: 120, totalMarks: 50, verified: true },
+      2: { durationMinutes: 120, totalMarks: 50, verified: true },
+      3: { durationMinutes: 120, totalMarks: 50, verified: true },
+      4: { durationMinutes: 120, totalMarks: 50, verified: true },
+    },
   },
 
   /**
@@ -1265,7 +1306,26 @@ function planRows(
   }
 
   const rows: PlannedRow[] = [];
+  /**
+   * ⚠ KEYED ON (courseId, slug), NOT slug ALONE — R34.
+   * ==========================================================================
+   * past_papers enforces UNIQUE (course_id, slug): a slug is unique PER COURSE,
+   * not globally. This map is the planner's mirror of that constraint, so it
+   * must use the same key. Keyed on slug alone it treats two rows in DIFFERENT
+   * courses as a clash and discards one.
+   *
+   * ⚠ IT COST 114 COMPONENTS BEFORE IT WAS FOUND. IAL Maths numbers its units
+   * per course — AS 1-5, A2 1-6 — so `unit-1-may-june-2025` is legitimately
+   * minted by both WMA11 (P1, AS) and WMA13 (P3, A2). The course-blind key
+   * skipped P3, P4, M2, S1, S2 and FP2 as duplicates of unrelated AS units.
+   *
+   * ⚠ SCIENCE HID IT FOR MONTHS. Science IAL numbers units 1-6 CONTINUOUSLY
+   * across AS and A2 (AS 1,2,3 / A2 4,5,6), so no Science slug can ever
+   * collide across courses. 233 papers imported through this path without
+   * exercising the bug once — green by absence, not by design.
+   */
   const bySlug = new Map<string, PlannedRow>();
+  const slugKey = (courseId: string, slug: string) => `${courseId}::${slug}`;
 
   for (const [pairKey, group] of [...groups].sort((a, b) =>
     a[0].localeCompare(b[0]),
@@ -1377,7 +1437,7 @@ function planRows(
     // of the same unit and sitting collapse onto one slug. Refuse both rather
     // than let the second silently lose to a unique-constraint skip. On the
     // course path the entry IS in the slug, so a clash here is a real duplicate.
-    const clash = bySlug.get(slug);
+    const clash = bySlug.get(slugKey(resolved.courseId, slug));
     if (clash) {
       for (const f of all) {
         skips.push({
@@ -1441,7 +1501,7 @@ function planRows(
       examinerReportPath,
     };
     rows.push(row);
-    bySlug.set(slug, row);
+    bySlug.set(slugKey(resolved.courseId, slug), row);
   }
 
   /**
