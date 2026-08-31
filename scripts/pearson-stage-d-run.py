@@ -81,13 +81,20 @@ with open(PRIOR) as f:
         if row["status"]=="HTTP_000": target.add(row["key"])
 print(f"scope: {len(target)} HTTP_000 components from the prior manifest", flush=True)
 
-# Resume: anything this run already downloaded is skipped, not re-fetched.
-done=set()
+# Resume. SETTLED statuses are not re-attempted:
+#   OK              — the file is already on disk.
+#   CODE_NOT_IN_PDF — the download succeeds and the document does not carry its
+#                     own paper code. Re-fetching returns the same bytes and
+#                     re-quarantines them: a known-outcome retry that adds a
+#                     manifest row and nothing else.
+# HTTP_502 is NOT settled — a transient far-end error is worth another attempt.
+SETTLED={"OK","CODE_NOT_IN_PDF"}
+done=set(); settled=collections.Counter()
 if os.path.exists(MAN):
     with open(MAN) as f:
         for row in csv.DictReader(f):
-            if row["status"]=="OK": done.add(row["key"])
-    print(f"resuming: {len(done)} already recovered in a previous R39 pass", flush=True)
+            if row["status"] in SETTLED: done.add(row["key"]); settled[row["status"]]+=1
+    print(f"resuming: skipping {len(done)} settled ({dict(settled)})", flush=True)
 
 work=[r for r in queue if r["key"] in target and r["key"] not in done]
 print(f"attempting: {len(work)} components, {MIN_GAP}s apart", flush=True)
