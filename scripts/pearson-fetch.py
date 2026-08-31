@@ -131,6 +131,27 @@ RAW   = os.path.join(STAGE, "_raw")
 SESSION_OF = {"01":"January","06":"May-June","11":"October-November"}
 os.makedirs(RAW, exist_ok=True); os.makedirs(QUAR, exist_ok=True)
 
+from urllib.parse import urlsplit, urlunsplit, quote
+
+
+def encode_path(url):
+    """Percent-encode the PATH ONLY; scheme, host, query and fragment untouched.
+
+    ⚠ THE 913 "HTTP_000" WERE THIS, NOT A NETWORK FAULT. curl refused them with
+    `curl: (3) URL rejected: Malformed input to a URL function` — no connection
+    opened, no byte sent. Every one of the 913 has an unencoded space in its
+    path ("A Level/English Language and Literature/"); all 1296 that succeeded
+    have none. The correlation is 913/913 and 0/1296.
+
+    safe="/" keeps the separators. Double-encoding is not a risk here and the
+    data says so rather than the comment: no queue URL contains "%", none has a
+    query or fragment, and the space is the ONLY character in any path outside
+    [A-Za-z0-9/-._~]. Re-check that before pointing this at a different queue.
+    """
+    p = urlsplit(url)
+    return urlunsplit((p.scheme, p.netloc, quote(p.path, safe="/"), p.query, p.fragment))
+
+
 def get(url, dest):
     r = subprocess.run(["curl","-sS","-L","--max-time","300","-o",dest,
                         "-w","%{http_code}",url], capture_output=True, text=True)
