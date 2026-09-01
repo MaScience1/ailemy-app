@@ -171,14 +171,45 @@ def hashes(p):
     return hashlib.sha256(b).hexdigest(), hashlib.md5(b).hexdigest(), len(b)
 
 def code_in_pdf(p, code, entry):
-    """Requirement 3: the paper code and component must be IN the document."""
+    """Requirement 3: the paper code and component must be IN the document.
+
+    ⚠ R45 — THE VERDICT IS UNCHANGED; THE REASON IS NOT. This used to return
+    "neither" for two findings that are not the same thing, and a five-paper
+    block was reported on the wrong one of them:
+
+      the document HAS text and the code is absent  -> genuinely wrong document
+      the document has NO extractable text at all   -> UNTESTED, not failed
+
+    A third case sits between them and is the one that actually bit. Pearson
+    covers are often a scanned image while the body is real text, so the paper
+    code — which lives only on the cover — is unreachable even though the file
+    is full of text. 9FM0_3C had 5,195 characters in its first three pages and
+    an empty page 1; it was the right paper. Collapsing that into
+    "wrong document" is the very error R45 exists to stop, so the cover is
+    reported separately.
+
+    `hit` is byte-for-byte the same decision as before. Only the reason changes.
+    """
     try: rd=PdfReader(p)
-    except Exception: return False, ""
-    txt="".join((rd.pages[i].extract_text() or "") for i in range(min(3,len(rd.pages))))
+    except Exception: return False, "unreadable-pdf"
+    pages=[(rd.pages[i].extract_text() or "") for i in range(min(3,len(rd.pages)))]
+    txt="".join(pages)
     flat=re.sub(r'\s+','',txt).upper()
     hit_code = code.upper() in flat
     hit_entry = bool(re.search(re.escape(code.upper())+r'[/\\]?0?'+re.escape(entry.upper()), flat))
-    return hit_code, ("code+entry" if hit_entry else ("code only" if hit_code else "neither"))
+    if hit_code:
+        return True, ("code+entry" if hit_entry else "code only")
+    if not flat:
+        return False, "no-text"                       # untested: nothing to search
+    # ⚠ A COVER WHOSE ONLY TEXT IS THE PRINT BARCODE IS AN IMAGE COVER.
+    #   9FM0_3C page 1 extracts exactly "*P62674A0128*" and nothing else — 13
+    #   characters that are not the paper code and never will be. Counting that
+    #   as "the cover has text" puts the right paper in the wrong bucket, which
+    #   is the failure R45 exists to prevent.
+    cover=re.sub(r'\*?P\d{5,6}A\d{4,7}\*?','',pages[0] if pages else "")
+    if not re.sub(r'\s+','',cover):
+        return False, "text-without-code:image-cover" # untested: cover not searchable
+    return False, "text-without-code"                 # genuine wrong-document candidate
 
 def run(manifest):
     out=[]

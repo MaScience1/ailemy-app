@@ -176,7 +176,12 @@ for i,r in enumerate(work):
     ex=pf.extract(dest)
     row["cover_series"]=ex["series"] or ""; row["cover_year"]=ex["year"] or ""
     if not hit:
-        row["status"]="CODE_NOT_IN_PDF"; fail+=1
+        # ⚠ R45 — distinct statuses. UNTESTED_* means the check could not run,
+        #   not that the document is wrong. Both still quarantine; only the
+        #   recorded reason differs, so triage is possible later.
+        row["status"]=("CODE_NOT_IN_PDF" if how=="text-without-code"
+                       else "UNTESTED_"+how.split(":")[-1].upper().replace("-","_"))
+        fail+=1
         os.replace(dest, os.path.join(Q, r["base"]))
         w.writerow(row); fh.flush(); time.sleep(max(0,MIN_GAP-(time.time()-t0))); continue
     tgt=os.path.join(S, r["target"])
