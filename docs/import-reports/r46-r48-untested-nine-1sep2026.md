@@ -26,7 +26,13 @@ code is visible and it MATCHES the assigned name, which by the rule means
 accept. But the document is the source booklet that accompanies WEN04/01, not
 the question paper. Importing it would put a booklet of source texts in the
 `paper_pdf_path` slot of an exam paper. It is neither a code mismatch nor an
-unreadable cover, so it is held in quarantine and reported rather than decided.
+unreadable cover, so it was held and reported rather than decided.
+
+**R49 — HOLD UPHELD.** `WEN04_01_que_20190626.pdf` stays in quarantine under its
+ORIGINAL name, with the reason `SOURCE_BOOKLET_NOT_QUESTION_PAPER`. It was never
+renamed to a canonical target and never entered the staging root, so no canonical
+name was ever minted for a document that could not carry it. md5
+`fa368109a7607d9688f6e08f42d7022c`, 2,630,377 bytes.
 
 The two examiner reports are real reports, not stubs — the same font-encoding
 fault that made them unreadable to `code_in_pdf` had nothing to do with their
@@ -106,10 +112,34 @@ this ruling, so re-running it puts all four back into `text-without-code`:
       WFM02_01_que_20150603    (now WFM02_01_0615_QU.pdf)
       WFM03_01_que_20150622    (now WFM03_01_0615_QU.pdf)
 
+    HAND-CLASSIFIED, source booklet — R49            <- third class
+      WEN04_01_que_20190626    SOURCE_BOOKLET_NOT_QUESTION_PAPER, still
+                               quarantined under its original name
+
+⚠ THE THIRD CLASS IS THE ONE THE CHECK IS FURTHEST FROM SEEING. Broken encoding
+and mojibake at least make `code_in_pdf` fail. The source booklet PASSES every
+test it has: the code is present, extractable, and correct. Nothing in the
+check's design distinguishes a question paper from its companion booklet,
+because the check asks which paper a document belongs to and never asks what
+KIND of document it is. That is not a defect to be patched here — it is the
+same gap as the backlog note below, seen from the verification side.
+
 The check is deliberately NOT extended to detect these. It guards every import,
 and a heuristic for mojibake has blast radius far beyond four files. Anyone
 re-deriving this classification from `code_in_pdf` output alone will not
 reproduce it, and that is by design, not oversight.
+
+## Backlog — recorded, not acted on
+
+The importer has no attach path for a companion document. It creates rows, and a
+row is a paper; there is nowhere to put a document that belongs WITH a paper
+rather than being one. Three files are now waiting on that:
+
+    9EL0_02_0624_ER.pdf      recovered examiner report, paper already imported
+    9ET0_01_0624_ER.pdf      recovered examiner report, paper already imported
+    WEN04_01_que_20190626    source booklet for WEN04/01 May-June 2019
+
+One gap, one future ruling. Not acted on.
 
 ## Where things stand
 
@@ -122,5 +152,7 @@ Of the 35 files previously classed `CODE_NOT_IN_PDF`:
     26  NOT_PUBLISHED   closed on Pearson's own notice
      8  recovered       read from the cover, renamed, 6 imported, 2 on disk
                         awaiting a way to attach an ER to an existing paper
-     1  HELD            WEN04_01 June 2019 — a source booklet, not a question
-                        paper. Code matches; document type does not.
+     1  NOT A QUESTION PAPER   WEN04_01 June 2019 — source booklet. Code
+                        matches; document type does not. R49 upheld the hold;
+                        quarantined as SOURCE_BOOKLET_NOT_QUESTION_PAPER under
+                        its original name.
