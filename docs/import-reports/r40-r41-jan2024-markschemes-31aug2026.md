@@ -57,9 +57,20 @@ document types are present for every code. **The queue was faithful for these
 two sessions** — which narrows the discovery defect to the January-2024 mark
 schemes specifically rather than leaving it open-ended.
 
-Two index quirks, either of which would have produced a false zero: `June 2019`
-exists alongside `June-2019` with a space, and Document-Type appears as both
-`Mark-scheme` and `Mark-Scheme`. All matching was case-insensitive.
+Document-Type appears as both `Mark-scheme` and `Mark-Scheme`, so all matching
+was case-insensitive.
+
+⚠ CORRECTED 1 Sep 2026 — this section first claimed `June 2019` exists as a
+duplicate exam-series label alongside `June-2019`. It does not. The space
+variant is `Pearson-UK:Grade-Boundaries-Exam-Series/June 2019`, a DIFFERENT
+facet family; the only exam-series label is `Pearson-UK:Exam-Series/June-2019`.
+That matters because the filter used here tested `"Exam-Series" in x`, which
+matches the grade-boundaries prefix as a substring and could have pulled
+grade-boundary rows into the per-code counts. R41 was re-run under the strict
+`Pearson-UK:Exam-Series/` prefix: October-2019 question papers 0 across 13 docs
+in 6 codes, June-2021 examiner reports 0 across 74 docs in 22 codes. The
+conclusions are unchanged and no grade-boundary rows had in fact been counted —
+but the filter was loose, and the next one should anchor on the full prefix.
 
 ## The recovery run
 

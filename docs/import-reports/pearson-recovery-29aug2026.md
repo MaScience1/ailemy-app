@@ -24,8 +24,16 @@ answer before it was found:
    `Paper 1 - Core Physics I` or an empty string; only some older ones include
    `8PH0/01`. The dependable identifiers are the URL basename and the structured
    `category` facets (`Pearson-UK:Exam-Series/...`, `Pearson-UK:Document-Type/...`).
-2. **Results truncate at 1000** against `nbHits` up to 3013, with no pagination.
-   A broad query silently returns one series and looks like an absence.
+2. **Results truncate at 1000** against `nbHits` up to 3013. A broad query
+   silently returns one series and looks like an absence.
+
+   ⚠ CORRECTED 1 Sep 2026 — "with no pagination" was WRONG. The index paginates
+   normally: a `page=1` request for `9EN0` returned a further 1000 hits and
+   reported `nbPages: 4` against `nbHits: 3408`. The 1000 is a per-page cap, not
+   a hard ceiling on what is reachable. Narrowing with `facetFilters` is still
+   the better move — it removes the truncation instead of walking it — but a
+   result set larger than 1000 is NOT out of reach, and treating it as such is
+   how a real absence gets confirmed on a partial window.
 3. **The autumn 2020 series is tagged `October-2020`**, not November, and its
    mark scheme uses the `msc` token rather than `rms`.
 
