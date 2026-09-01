@@ -207,9 +207,20 @@ export default async function CourseResourcesPage({ params }: { params: Params }
 
           {/* ── TOPICS (§8) ──────────────────────────────────────────────── */}
           <section className="mt-14" aria-labelledby="topics-heading">
-            <h2 id="topics-heading" className="font-display text-2xl font-medium tracking-tight">
-              Browse by topic
-            </h2>
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+              <h2 id="topics-heading" className="font-display text-2xl font-medium tracking-tight">
+                Browse by topic
+              </h2>
+              {/* The full point-by-point map, with the student's own mastery
+                  laid over it. (feature/specification-mastery — the one edit
+                  this branch makes to a shared file.) */}
+              <Link
+                href={`/resources/${subjectSlug}/${courseSlug}/specification`}
+                className="text-sm text-[var(--subject-text)] underline underline-offset-4 transition-colors hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                Specification &amp; mastery map →
+              </Link>
+            </div>
 
             {units.length === 0 ? (
               <p className="mt-4 text-sm text-ink/65">
