@@ -30,10 +30,14 @@ let issues = 0;
 const flag = (msg: string) => { issues++; console.log(`  ✗ ${msg}`); };
 const ok = (msg: string) => console.log(`  ✓ ${msg}`);
 
-// ── expectation, derived from the seed file ─────────────────────────────────
-const seedSql = readFileSync("supabase/seed/004_ial_as_chem_specification.sql", "utf8");
+// ── expectation, derived from the seed files ────────────────────────────────
+// 004 seeded the deck-derived drafts; 005 is the official-spec verification
+// pass (adds 10.14 and 10.23). The union is what must be live.
+const seedSql =
+  readFileSync("supabase/seed/004_ial_as_chem_specification.sql", "utf8") +
+  readFileSync("supabase/seed/005_official_spec_verification.sql", "utf8");
 const expectedCodes = new Set(
-  [...seedSql.matchAll(/^-- (\d{1,2}\.\d{1,2}) — from deck/gm)].map((m) => m[1]),
+  [...seedSql.matchAll(/^-- (\d{1,2}\.\d{1,2}) — (?:from deck|official)/gm)].map((m) => m[1]),
 );
 const expectedTopicSlugs = new Set(
   [...seedSql.matchAll(/WHERE t\.slug = '([a-z0-9-]+)'/g)].map((m) => m[1]),
