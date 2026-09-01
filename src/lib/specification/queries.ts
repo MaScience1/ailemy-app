@@ -73,6 +73,7 @@ export const loadSpecificationTree = cache(async function loadSpecificationTree(
     db.from("topics")
       .select("id, code, name, unit_id, sort_order")
       .eq("course_id", course.id)
+      .neq("status", "archived")
       .order("sort_order"),
     db.from("lessons")
       .select("id, slug, title, status")
@@ -94,11 +95,15 @@ export const loadSpecificationTree = cache(async function loadSpecificationTree(
 
   // Spec points scoped to this course's topics; links scoped to those points.
   // Sequential because each is filtered by the previous read's ids.
+  // ⚠ ARCHIVED ROWS ARE LIFECYCLE, NOT CONTENT. content_status's 'archived'
+  // is the catalogue's own soft-delete (a retired point keeps its row so
+  // nothing referencing it breaks); a specification map must not show it.
   const points = topicIds.length
     ? await db
         .from("spec_points")
         .select("id, topic_id, code, title, description, command_terms, sort_order")
         .in("topic_id", topicIds)
+        .neq("status", "archived")
     : { data: [], error: null };
   if (points.error) {
     return { ...base, units: [], error: `spec points: ${points.error.message}` };

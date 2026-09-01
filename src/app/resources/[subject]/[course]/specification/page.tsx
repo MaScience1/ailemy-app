@@ -50,12 +50,18 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const { subject, course } = await params;
   const tree = await loadSpecificationTree(subject, course);
   /* notFound() here as well as in the page, so an unknown course gets the
-     not-found UI and title rather than a metadata fallback. ⚠ The HTTP STATUS
-     still streams as 200 — loading.tsx flushes the shell before either call
-     runs, and metadata streams too in Next 16. The whole /learn tree behaves
-     identically (verified against a running build), so this is the codebase's
-     accepted trade: skeleton-first streaming over a status-correct 404.
-     cache() on the loader means this is not a second read. */
+     not-found UI, title AND a real 404 status. cache() on the loader means
+     this is not a second read.
+
+     ⚠ THIS ROUTE HAS NO loading.tsx, DELIBERATELY — like every other
+     /resources page. One was added and then removed: a leaf loading.tsx here
+     suspends the WHOLE page (SiteNav included — there is no layout above it,
+     unlike /learn), and that full-page swap plus streamed metadata left the
+     browser with a parser-restructured DOM that React 19 could not hydrate —
+     every control on the page rendered but silently did nothing. Verified
+     both ways against a running server; do not reintroduce the file without
+     re-verifying hydration (probe: elements carry __reactFiber$ keys and a
+     filter chip toggles aria-pressed). */
   if (!tree) notFound();
   return {
     title: `${tree.courseName} specification · Ailemy`,
