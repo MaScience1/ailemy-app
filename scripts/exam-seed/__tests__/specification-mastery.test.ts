@@ -23,12 +23,14 @@ import {
   MASTERY_EVIDENCE_FLOOR_MARKS,
   MASTERY_SECURE_AT,
   MASTERY_DEVELOPING_AT,
+  EVIDENCE_HIGH_AT_MARKS,
+  masteryPercent,
 } from "../../../src/lib/account/academic.ts";
 import { buildCourseMastery, unstartedFacts } from "../../../src/lib/specification/mastery.ts";
 import { recommendNext } from "../../../src/lib/specification/recommend.ts";
 import { compareSpecCodes } from "../../../src/lib/specification/codes.ts";
 import type {
-  PracticeEvidenceRow,
+  MasteryEvidenceRow,
   SpecUnitNode,
 } from "../../../src/lib/specification/types.ts";
 
@@ -65,10 +67,12 @@ const UNITS: SpecUnitNode[] = [
 ];
 
 /** n one-mark answers on a code, k of them correct — the exact shape 0065
- *  records (mark_available is always 1 today; the adapter must not assume it). */
+ *  records (mark_available is always 1 today; the adapter must not assume it).
+ *  Defaults to lesson-practice provenance; exam rows override per test. */
 const answers = (
-  code: string, correct: number, total: number, opts?: { attemptId?: string; at?: string },
-): PracticeEvidenceRow[] =>
+  code: string, correct: number, total: number,
+  opts?: { attemptId?: string; at?: string; source?: MasteryEvidenceRow["source"]; examConditions?: boolean },
+): MasteryEvidenceRow[] =>
   Array.from({ length: total }, (_, i) => ({
     attemptId: opts?.attemptId ?? `a-${code}`,
     qIndex: i,
@@ -76,6 +80,8 @@ const answers = (
     markAwarded: i < correct ? 1 : 0,
     markAvailable: 1,
     attemptedAt: opts?.at ?? null,
+    source: opts?.source ?? "lesson-practice",
+    examConditions: opts?.examConditions ?? false,
   }));
 
 // Band fixtures derived from the constants:
@@ -167,12 +173,13 @@ console.log("\n=== 5. malformed and foreign evidence is set aside and counted ==
 // ============================================================================
 {
   const good = answers("1.1", secureCorrect, FLOOR);
-  const bad: PracticeEvidenceRow[] = [
-    { attemptId: "x", qIndex: 0, specCode: "1.1", markAwarded: -1, markAvailable: 1, attemptedAt: null },
-    { attemptId: "x", qIndex: 1, specCode: "1.1", markAwarded: 2, markAvailable: 1, attemptedAt: null },
-    { attemptId: "x", qIndex: 2, specCode: "1.1", markAwarded: 1, markAvailable: 0, attemptedAt: null },
-    { attemptId: "x", qIndex: 3, specCode: "1.1", markAwarded: NaN, markAvailable: 1, attemptedAt: null },
-    { attemptId: "x", qIndex: 4, specCode: "9.9", markAwarded: 1, markAvailable: 1, attemptedAt: null },
+  const practice = { source: "lesson-practice" as const, examConditions: false };
+  const bad: MasteryEvidenceRow[] = [
+    { attemptId: "x", qIndex: 0, specCode: "1.1", markAwarded: -1, markAvailable: 1, attemptedAt: null, ...practice },
+    { attemptId: "x", qIndex: 1, specCode: "1.1", markAwarded: 2, markAvailable: 1, attemptedAt: null, ...practice },
+    { attemptId: "x", qIndex: 2, specCode: "1.1", markAwarded: 1, markAvailable: 0, attemptedAt: null, ...practice },
+    { attemptId: "x", qIndex: 3, specCode: "1.1", markAwarded: NaN, markAvailable: 1, attemptedAt: null, ...practice },
+    { attemptId: "x", qIndex: 4, specCode: "9.9", markAwarded: 1, markAvailable: 1, attemptedAt: null, ...practice },
   ];
   const m = buildCourseMastery({ units: UNITS, evidence: [...good, ...bad] });
   t("five rows ignored", m.ignoredRows === 5, m.ignoredRows);
@@ -290,6 +297,68 @@ console.log("\n=== 9. the derivation bites: a moved threshold moves the verdicts
   const under = buildCourseMastery({ units: UNITS, evidence: answers("1.1", FLOOR - 1, FLOOR - 1) });
   t("one mark under, even at 100% → not rated",
     under.byCode["1.1"]?.state === "insufficient", under.byCode["1.1"]?.state);
+}
+
+// ============================================================================
+console.log("\n=== 10. §22 as amended: a percentage only where the floor is met ===");
+// ============================================================================
+{
+  const m = buildCourseMastery({
+    units: UNITS,
+    evidence: [
+      ...answers("1.1", 2, FLOOR - 1),           // below the floor
+      ...answers("1.2", developingCorrect, FLOOR), // at the floor
+    ],
+  });
+  t("below the floor → percent is null, not 0 and not the raw ratio",
+    m.byCode["1.1"]?.percent === null, m.byCode["1.1"]?.percent);
+  t("at the floor → percent is masteryPercent's, passed through not recomputed",
+    m.byCode["1.2"]?.percent === masteryPercent(developingCorrect, FLOOR),
+    m.byCode["1.2"]?.percent);
+  t("unstarted facts carry no percent and no confidence claim",
+    unstartedFacts().percent === null && unstartedFacts().evidenceConfidence === "none");
+
+  // Confidence bands, derived from the exported constant — never retyped.
+  const limited = buildCourseMastery({
+    units: UNITS, evidence: answers("1.1", 0, EVIDENCE_HIGH_AT_MARKS - 1),
+  });
+  const high = buildCourseMastery({
+    units: UNITS, evidence: answers("1.1", 0, EVIDENCE_HIGH_AT_MARKS),
+  });
+  t("one mark under the high bar → limited",
+    limited.byCode["1.1"]?.evidenceConfidence === "limited",
+    limited.byCode["1.1"]?.evidenceConfidence);
+  t("at the high bar → high (boundary inclusive)",
+    high.byCode["1.1"]?.evidenceConfidence === "high",
+    high.byCode["1.1"]?.evidenceConfidence);
+  t("confidence never adjusts the marks or the percent",
+    high.byCode["1.1"]?.percent === masteryPercent(0, EVIDENCE_HIGH_AT_MARKS) &&
+    high.byCode["1.1"]?.awarded === 0);
+}
+
+// ============================================================================
+console.log("\n=== 11. bySource counts usable evidence per arm, and only usable ===");
+// ============================================================================
+{
+  const m = buildCourseMastery({
+    units: UNITS,
+    evidence: [
+      ...answers("1.1", 3, 4, { attemptId: "prac" }),
+      ...answers("2.1", 2, 3, { attemptId: "exam", source: "exam-paper", examConditions: true }),
+      // A malformed exam row: must land in ignoredRows, never in bySource.
+      { attemptId: "exam", qIndex: 99, specCode: "2.1", markAwarded: 9, markAvailable: 1,
+        attemptedAt: null, source: "exam-paper", examConditions: true },
+    ],
+  });
+  t("practice arm counted", m.bySource.practice.rows === 4 && m.bySource.practice.outOf === 4,
+    JSON.stringify(m.bySource.practice));
+  t("exam arm counted", m.bySource.exam.rows === 3 && m.bySource.exam.outOf === 3,
+    JSON.stringify(m.bySource.exam));
+  t("the malformed exam row was ignored, not counted", m.ignoredRows === 1);
+  t("both sources feed ONE calculation — the exam code is rated by the same bands",
+    m.byCode["2.1"]?.state === "insufficient" && m.byCode["2.1"]?.outOf === 3);
+  t("summary marks pool across sources",
+    m.summary.outOf === 7, m.summary.outOf);
 }
 
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);

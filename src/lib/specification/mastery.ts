@@ -24,7 +24,7 @@
 import { masteryFor, type AssessedQuestion } from "../account/academic.ts";
 import type {
   CourseMastery,
-  PracticeEvidenceRow,
+  MasteryEvidenceRow,
   SpecMasteryFacts,
   SpecUnitNode,
 } from "./types.ts";
@@ -32,6 +32,8 @@ import type {
 const NO_EVIDENCE: Omit<SpecMasteryFacts, "state"> = {
   awarded: 0,
   outOf: 0,
+  percent: null,
+  evidenceConfidence: "none",
   questionCount: 0,
   marksShortOfFloor: 0,
   lastPractisedAt: null,
@@ -39,7 +41,7 @@ const NO_EVIDENCE: Omit<SpecMasteryFacts, "state"> = {
 
 export function buildCourseMastery(input: {
   units: SpecUnitNode[];
-  evidence: PracticeEvidenceRow[];
+  evidence: MasteryEvidenceRow[];
 }): CourseMastery {
   // The course's own vocabulary: which codes exist, and whose topic each is.
   const topicOfCode = new Map<string, string>();
@@ -57,7 +59,7 @@ export function buildCourseMastery(input: {
   // A negative mark or an award above its tariff is a broken row — clamping it
   // would invent data. A spec code outside this course's specification is not
   // this course's evidence. Both are ignoredRows, so the caller can say so.
-  const usable: PracticeEvidenceRow[] = [];
+  const usable: MasteryEvidenceRow[] = [];
   let ignoredRows = 0;
   for (const r of input.evidence) {
     const malformed =
@@ -110,13 +112,25 @@ export function buildCourseMastery(input: {
     summary.outOf += facts.outOf;
   }
 
-  return { byCode, byTopic, summary, ignoredRows };
+  // Usable evidence per source — display facts ("includes N marks from marked
+  // exam papers"), never an input to any state.
+  const bySource: CourseMastery["bySource"] = {
+    practice: { rows: 0, outOf: 0 },
+    exam: { rows: 0, outOf: 0 },
+  };
+  for (const r of usable) {
+    const bucket = r.source === "exam-paper" ? bySource.exam : bySource.practice;
+    bucket.rows += 1;
+    bucket.outOf += r.markAvailable;
+  }
+
+  return { byCode, byTopic, summary, ignoredRows, bySource };
 }
 
 function bucket(
   questions: AssessedQuestion[],
-  rows: PracticeEvidenceRow[],
-  keyOf: (r: PracticeEvidenceRow) => string,
+  rows: MasteryEvidenceRow[],
+  keyOf: (r: MasteryEvidenceRow) => string,
 ): Record<string, SpecMasteryFacts> {
   const out: Record<string, SpecMasteryFacts> = {};
   if (rows.length === 0) return out;
@@ -142,6 +156,10 @@ function bucket(
       state: row.state,
       awarded: row.awarded,
       outOf: row.outOf,
+      // Straight from academic.ts's MasteryRow — the ONE percentage function
+      // and the ONE confidence banding, passed through, never recomputed.
+      percent: row.percent,
+      evidenceConfidence: row.evidenceConfidence,
       questionCount: row.questionIds.length,
       marksShortOfFloor: row.marksShortOfFloor,
       lastPractisedAt: lastAt.get(row.topic) ?? null,

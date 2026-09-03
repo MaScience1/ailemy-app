@@ -28,9 +28,12 @@ import {
   performanceFor,
   masteryFor,
   insufficientReason,
+  masteryPercent,
+  evidenceConfidenceFor,
   MASTERY_EVIDENCE_FLOOR_MARKS,
   MASTERY_SECURE_AT,
   MASTERY_DEVELOPING_AT,
+  EVIDENCE_HIGH_AT_MARKS,
   type AssessedQuestion,
 } from "../../../src/lib/account/academic.ts";
 
@@ -227,19 +230,40 @@ console.log("\n=== 7. unmapped and unassessed questions never become a topic ===
 }
 
 // ============================================================================
-console.log("\n=== 8. no percentage is ever produced (§22) ===");
+console.log("\n=== 8. §22 as amended: a percentage only where the floor is met ===");
 // ============================================================================
+// The original guard here asserted NO percent field could exist. The 2026-09-03
+// amendment (owner decision, Service 3 Mastery work) replaced that with a
+// narrower rule this section now pins: percent is null below the floor, is
+// masteryPercent's figure at or above it, and always travels with the marks
+// and an evidence-confidence label that never adjusts it.
 {
   const v = masteryFor({
     questions: [ok("q1", FLOOR, FLOOR * 2)],
     topics: [{ questionId: "q1", topic: "Bonding" }],
   });
   const row = v.available === true ? v.rows[0] : null;
-  t("a mastery row carries marks and a state, and no percent field",
-    row !== null && !Object.keys(row).some((k) => /percent|pct|score|rating|mastery(Value|Number)/i.test(k)),
-    row ? Object.keys(row).join(", ") : "no row");
-  t("...and the marks that produced the state travel with it",
+  t("at the floor the row carries masteryPercent's figure",
+    row?.percent === masteryPercent(FLOOR, FLOOR * 2), row?.percent);
+  t("...and the marks that produced it travel with it",
     row?.awarded === FLOOR && row?.outOf === FLOOR * 2, `${row?.awarded}/${row?.outOf}`);
+  t("...and an evidence-confidence label rides beside it",
+    row?.evidenceConfidence === evidenceConfidenceFor(FLOOR * 2), row?.evidenceConfidence);
+
+  const under = masteryFor({
+    questions: [ok("q1", FLOOR - 1, FLOOR - 1)],
+    topics: [{ questionId: "q1", topic: "Bonding" }],
+  });
+  const urow = under.available === true ? under.rows[0] : null;
+  t("below the floor percent is null — even at 100% raw",
+    urow !== null && urow.percent === null, urow?.percent);
+
+  t("masteryPercent refuses below the floor", masteryPercent(5, FLOOR - 1) === null);
+  t("masteryPercent rounds to a whole percent (no false precision)",
+    masteryPercent(1, FLOOR) === Math.round((1 / FLOOR) * 100));
+  t("confidence bands: one under the bar is limited, at the bar is high",
+    evidenceConfidenceFor(EVIDENCE_HIGH_AT_MARKS - 1) === "limited" &&
+    evidenceConfidenceFor(EVIDENCE_HIGH_AT_MARKS) === "high");
 }
 
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);

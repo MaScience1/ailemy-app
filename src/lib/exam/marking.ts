@@ -850,7 +850,7 @@ export async function markSubmittedAttempt(
 
         const eqAwarded = clamp(eq.awarded, qa.max_marks, q.question_number);
         try {
-          persistedRows += await persist(db, qa.id, eqAwarded, "deterministic", eq.points.map(byTier1));
+          persistedRows += await persist(db, qa.id, eqAwarded, "deterministic", eq.assessedOutOf, eq.points.map(byTier1));
         } catch (error) {
           marked.push(persistFailed(qa, q, tier, error));
           continue;
@@ -1037,7 +1037,7 @@ export async function markSubmittedAttempt(
         // awardedMarks carries the provisional figure and confidence says so,
         // which keeps it out of the confirmed total.
         try {
-          persistedRows += await persist(db, qa.id, outcome.awarded, "requires_review", outcome.points.map(byTier2));
+          persistedRows += await persist(db, qa.id, outcome.awarded, "requires_review", outcome.points.length, outcome.points.map(byTier2));
         } catch (error) {
           marked.push(persistFailed(qa, q, tier, error));
           continue;
@@ -1072,7 +1072,7 @@ export async function markSubmittedAttempt(
       // ONE persist call for both tiers: two would each write awarded_marks,
       // and the second would overwrite the first.
       try {
-        persistedRows += await persist(db, qa.id, awarded, "deterministic", [
+        persistedRows += await persist(db, qa.id, awarded, "deterministic", result.assessedOutOf, [
           ...result.points.map(byTier1),
           ...outcome.points.map(byTier2),
         ]);
@@ -1160,7 +1160,7 @@ export async function markSubmittedAttempt(
     const text = response && response.kind === "text" ? response.text.trim() : "";
     if (!text) {
       try {
-        persistedRows += await persist(db, qa.id, 0, "requires_review", []);
+        persistedRows += await persist(db, qa.id, 0, "requires_review", qa.max_marks, []);
       } catch (error) {
         marked.push(persistFailed(qa, q, tier, error));
         continue;
@@ -1386,7 +1386,7 @@ export async function markSubmittedAttempt(
     // 'requires_review' is hardcoded, not derived from anything the model
     // returned. A model cannot promote its own marking to authoritative.
     try {
-      persistedRows += await persist(db, qa.id, awarded, "requires_review", points.map(byTier2));
+      persistedRows += await persist(db, qa.id, awarded, "requires_review", qa.max_marks, points.map(byTier2));
     } catch (error) {
       marked.push(persistFailed(qa, q, tier, error));
       continue;
@@ -1667,11 +1667,11 @@ async function clearMark(
   db: ReturnType<typeof createAdminClient>,
   questionAttemptId: string,
 ): Promise<number> {
-  const { data, error } = await db
-    .from("question_attempts")
-    .update({ awarded_marks: null, confidence: null })
-    .eq("id", questionAttemptId)
-    .select("id");
+  const { data, error } = await updateQuestionAttempt(db, questionAttemptId, {
+    awarded_marks: null,
+    confidence: null,
+    assessed_out_of: null,
+  });
   if (error) throw new PersistError("question_attempts", error.code ?? "?", error.message);
   if ((data?.length ?? 0) !== 1) {
     throw new PersistError("question_attempts", "row_count", `cleared ${data?.length ?? 0} rows, expected 1`);
@@ -1679,11 +1679,59 @@ async function clearMark(
   return 1;
 }
 
+/**
+ * 0080 adds question_attempts.assessed_out_of; this code must also run
+ * against a database where 0080 has not been applied yet (it is written
+ * PROPOSED first, per the migrations rule). PostgREST rejects an UPDATE
+ * naming an unknown column (PGRST204 / 42703), so on exactly that error the
+ * write retries without the column, says so ONCE in the log, and marking
+ * carries on exactly as it did before 0080 existed. Any other error is a real
+ * failure and propagates untouched. The flag stops per-question log spam and
+ * skips the doomed first try for the rest of the process's life; it never
+ * flips back, which costs nothing worse than one extra log line after the
+ * migration is applied mid-flight (the next deploy clears it).
+ */
+const MISSING_COLUMN = new Set(["PGRST204", "42703"]);
+let assessedOutOfColumnMissing = false;
+
+async function updateQuestionAttempt(
+  db: ReturnType<typeof createAdminClient>,
+  questionAttemptId: string,
+  values: {
+    awarded_marks: number | null;
+    confidence: "deterministic" | "requires_review" | null;
+    assessed_out_of: number | null;
+  },
+) {
+  if (!assessedOutOfColumnMissing) {
+    const res = await db
+      .from("question_attempts")
+      .update(values)
+      .eq("id", questionAttemptId)
+      .select("id");
+    if (!res.error || !MISSING_COLUMN.has(res.error.code ?? "")) return res;
+    assessedOutOfColumnMissing = true;
+    console.error(
+      "[marking] question_attempts.assessed_out_of is not in the database (migration 0080 not applied). " +
+        "Marks persist without an assessed tariff until it is — exam evidence cannot feed mastery until then.",
+    );
+  }
+  const { assessed_out_of: _omitted, ...withoutColumn } = values;
+  return db.from("question_attempts").update(withoutColumn).eq("id", questionAttemptId).select("id");
+}
+
 async function persist(
   db: ReturnType<typeof createAdminClient>,
   questionAttemptId: string,
   awarded: number,
   confidence: "deterministic" | "requires_review",
+  /**
+   * The tariff this awarded figure actually assessed — MarkedQuestion's
+   * assessedOutOf, persisted (0080). For a requires_review row it records
+   * what the PROVISIONAL figure covers; mastery reads deterministic rows
+   * only, so nothing downstream mistakes it for confirmed coverage.
+   */
+  assessedOutOf: number,
   points: PersistablePoint[],
 ): Promise<number> {
   let rowsWritten = 0;
@@ -1721,11 +1769,11 @@ async function persist(
   // updated_at is not sent: 0028's touch_question_attempts trigger sets it,
   // and sending it would need an UPDATE privilege on a column students should
   // not hold — see 0032.
-  const { data, error } = await db
-    .from("question_attempts")
-    .update({ awarded_marks: awarded, confidence })
-    .eq("id", questionAttemptId)
-    .select("id");
+  const { data, error } = await updateQuestionAttempt(db, questionAttemptId, {
+    awarded_marks: awarded,
+    confidence,
+    assessed_out_of: assessedOutOf,
+  });
   if (error) throw new PersistError("question_attempts", error.code ?? "?", error.message);
   if ((data?.length ?? 0) !== 1) {
     throw new PersistError("question_attempts", "row_count", `updated ${data?.length ?? 0} rows, expected 1`);

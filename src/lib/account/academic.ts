@@ -10,11 +10,22 @@
  * it.
  *
  * So this module returns three shapes and never one. There is no combined
- * score, no overall percentage, and deliberately no function that produces one.
+ * score that blends completion, performance and mastery into a single figure,
+ * and deliberately no function that produces one.
  *
- * ⚠ MASTERY IS A STATE, NOT A PERCENTAGE (§22). "73% mastery" asserts a
- * precision that 24 marks cannot support. A state can be wrong; a percentage is
- * wrong in a way that looks authoritative.
+ * ⚠ §21/§22, AS AMENDED 2026-09-03 (owner decision, Service 3 Mastery work).
+ * The original doctrine — "mastery is a state, not a percentage" — barred any
+ * percentage anywhere. What survives of it: a percentage may NEVER be shown
+ * where the evidence floor is unmet, may never blend the three shapes, and
+ * must always travel with the marks that produced it and an evidence-
+ * confidence label. What changed: where the floor IS met, the marks ratio may
+ * be shown as a percentage of ASSESSED marks ("84% · 21 of 25 marks"), because
+ * trend, ranking, retention and explainability all need the number and hiding
+ * it while acting on it would be its own dishonesty. masteryPercent() below is
+ * the ONE function that produces it; a percentage computed anywhere else in
+ * the codebase is a §22 violation exactly as before. Mastery and evidence
+ * confidence stay distinct concepts, carried side by side, never multiplied
+ * together.
  *
  * ⚠ AND EVERY SHAPE CAN REFUSE (§96). Unavailable is imported from
  * results-insights rather than redefined, so there is ONE refusal shape in the
@@ -153,6 +164,21 @@ export const MASTERY_EVIDENCE_FLOOR_MARKS = 12;
 export const MASTERY_SECURE_AT = 0.75;
 export const MASTERY_DEVELOPING_AT = 0.5;
 
+/**
+ * Evidence confidence — how much assessed work stands behind a figure.
+ *
+ * ⚠ A SECOND FLOOR, NOT A SECOND SCORE. 24 marks is double the evidence floor:
+ * roughly four typical structured questions, enough that one strong or weak
+ * question no longer moves the ratio by a band. Below it a figure is shown as
+ * "limited evidence"; at or above it, "high". A round number on purpose, like
+ * the floor and the band boundaries, and written here so it can be argued
+ * with. Confidence NEVER adjusts the percentage — the two are shown side by
+ * side and mean different things (§21/§22 as amended).
+ */
+export const EVIDENCE_HIGH_AT_MARKS = 24;
+
+export type EvidenceConfidence = "limited" | "high";
+
 export type MasteryState = "insufficient" | "emerging" | "developing" | "secure";
 
 export type MasteryRow = {
@@ -160,11 +186,18 @@ export type MasteryRow = {
   state: MasteryState;
   /**
    * ⚠ THE MARKS TRAVEL WITH THE STATE, ALWAYS. "18 of 24 marks" is a fact and
-   * a UI may show it. "75% mastery" is a claim and it may not. Carrying both
-   * numbers means the honest version is always the easier one to render.
+   * a UI may always show it. Since the §22 amendment a percentage may ride
+   * beside them — but only the one below, and only when the floor is met.
    */
   awarded: number;
   outOf: number;
+  /**
+   * masteryPercent(awarded, outOf): null below the evidence floor — a UI gets
+   * no number to show prematurely, which is the amendment's whole guard.
+   */
+  percent: number | null;
+  /** How much assessed work stands behind the figures. Never adjusts them. */
+  evidenceConfidence: EvidenceConfidence;
   /** How far short of the floor, when the state is `insufficient`. 0 otherwise. */
   marksShortOfFloor: number;
   questionIds: string[];
@@ -220,6 +253,8 @@ export function masteryFor(input: {
       state: stateFor(b.awarded, b.outOf),
       awarded: b.awarded,
       outOf: b.outOf,
+      percent: masteryPercent(b.awarded, b.outOf),
+      evidenceConfidence: evidenceConfidenceFor(b.outOf),
       marksShortOfFloor: Math.max(0, MASTERY_EVIDENCE_FLOOR_MARKS - b.outOf),
       questionIds: b.questionIds,
     });
@@ -228,6 +263,25 @@ export function masteryFor(input: {
   // Weakest evidence first: the topics a student can do something about.
   rows.sort((a, b) => a.awarded / Math.max(1, a.outOf) - b.awarded / Math.max(1, b.outOf));
   return { available: true, rows };
+}
+
+/**
+ * THE percentage function (§22 as amended). Everything student-facing that
+ * prints a mastery percentage calls this; nothing else may divide the marks.
+ *
+ * ⚠ NULL BELOW THE FLOOR, NOT 0 AND NOT THE RAW RATIO. Six of six marks is
+ * 100% arithmetically and is not a claim this model will stand behind — the
+ * same floor-before-ratio rule stateFor() enforces, applied to the number.
+ * Rounded to a whole percent: the underlying marks do not support decimals.
+ */
+export function masteryPercent(awarded: number, outOf: number): number | null {
+  if (outOf < MASTERY_EVIDENCE_FLOOR_MARKS) return null;
+  return Math.round((awarded / outOf) * 100);
+}
+
+/** See EVIDENCE_HIGH_AT_MARKS. Counted in assessed marks, like the floor. */
+export function evidenceConfidenceFor(outOf: number): EvidenceConfidence {
+  return outOf >= EVIDENCE_HIGH_AT_MARKS ? "high" : "limited";
 }
 
 function stateFor(awarded: number, outOf: number): MasteryState {

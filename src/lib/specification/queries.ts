@@ -2,6 +2,7 @@ import { cache } from "react";
 
 import { createClient } from "@/lib/supabase/server";
 import { compareSpecCodes } from "./codes.ts";
+import { examEvidenceRows } from "./exam-evidence.ts";
 import type {
   PracticeEvidenceRow,
   SpecificationTree,
@@ -228,6 +229,113 @@ export async function loadPracticeEvidence(
       markAwarded: r.mark_awarded as number,
       markAvailable: r.mark_available as number,
       attemptedAt: (r.attempted_at as string) ?? null,
+      source: "lesson-practice" as const,
+      examConditions: false,
     })),
   };
+}
+
+// ============================================================================
+// Exam evidence — the second arm of the canonical contract (Phase 1)
+// ============================================================================
+
+export type ExamEvidenceResult =
+  | {
+      ok: true;
+      rows: PracticeEvidenceRow[];
+      /** Marked, deterministic-confidence questions with NO spec mapping —
+       *  counted so the page can say what is missing, never silently thinner. */
+      unmappedQuestions: number;
+    }
+  | {
+      ok: false;
+      error: string;
+      /** True when the read failed because 0080's assessed_out_of column is
+       *  not in the database yet — the page shows "not joined yet", not an
+       *  alarm, because pre-0080 that is the expected state of the world. */
+      missingSchema: boolean;
+    };
+
+/** PostgREST's two spellings of "that column does not exist". */
+const MISSING_COLUMN_CODES = new Set(["42703", "PGRST204"]);
+
+/**
+ * The student's own marked exam-question evidence for one course.
+ *
+ * ⚠ CONFIRMED MARKS ONLY. confidence = 'deterministic' — provisional Tier-2
+ * marks (requires_review) are exactly what their name says and feed nothing
+ * until a review workflow can confirm them. assessed_out_of must be present
+ * and positive: rows marked before 0080 self-heal on their next results-page
+ * view (marking is idempotent) and contribute nothing until then.
+ *
+ * Same trust doctrine as loadPracticeEvidence: own session client, student_id
+ * ALSO filtered explicitly, a failed read is an error and never an empty map.
+ */
+export async function loadExamEvidence(
+  studentId: string,
+  courseId: string,
+): Promise<ExamEvidenceResult> {
+  const db = await createClient();
+
+  const { data: attempts, error: aErr } = await db
+    .from("exam_attempts")
+    .select("id, mode, submitted_at, past_papers!inner(course_id)")
+    .eq("student_id", studentId)
+    .eq("past_papers.course_id", courseId)
+    .not("submitted_at", "is", null);
+  if (aErr) {
+    return { ok: false, error: `exam attempts: ${aErr.message}`, missingSchema: false };
+  }
+  const attemptRows = (attempts ?? []).map((a) => ({
+    id: a.id as string,
+    mode: a.mode as string,
+    submittedAt: (a.submitted_at as string) ?? null,
+  }));
+  if (attemptRows.length === 0) return { ok: true, rows: [], unmappedQuestions: 0 };
+
+  const { data: qa, error: qErr } = await db
+    .from("question_attempts")
+    .select("id, exam_attempt_id, question_id, awarded_marks, assessed_out_of")
+    .in("exam_attempt_id", attemptRows.map((a) => a.id))
+    .eq("confidence", "deterministic")
+    .not("awarded_marks", "is", null)
+    .not("assessed_out_of", "is", null)
+    .gt("assessed_out_of", 0);
+  if (qErr) {
+    return {
+      ok: false,
+      error: `marked questions: ${qErr.message}`,
+      missingSchema: MISSING_COLUMN_CODES.has(qErr.code ?? ""),
+    };
+  }
+  const marked = (qa ?? []).map((r) => ({
+    questionAttemptId: r.id as string,
+    examAttemptId: r.exam_attempt_id as string,
+    questionId: r.question_id as string,
+    awardedMarks: r.awarded_marks as number,
+    assessedOutOf: r.assessed_out_of as number,
+  }));
+  if (marked.length === 0) return { ok: true, rows: [], unmappedQuestions: 0 };
+
+  // Spec mapping. RLS on question_spec_points is "staff OR paper live" — rows
+  // a student may not read simply do not come back, so a non-live paper's
+  // questions land in unmappedQuestions rather than erroring.
+  const { data: qsp, error: sErr } = await db
+    .from("question_spec_points")
+    .select("question_id, spec_code, display_order")
+    .in("question_id", [...new Set(marked.map((m) => m.questionId))])
+    .order("display_order", { ascending: true });
+  if (sErr) {
+    return { ok: false, error: `spec mapping: ${sErr.message}`, missingSchema: false };
+  }
+
+  return examEvidenceRows({
+    attempts: attemptRows,
+    marked,
+    specLinks: (qsp ?? []).map((r) => ({
+      questionId: r.question_id as string,
+      specCode: r.spec_code as string,
+      displayOrder: r.display_order as number,
+    })),
+  });
 }
