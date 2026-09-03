@@ -1,11 +1,19 @@
 -- ============================================================================
 -- 0080 — MASTERY EVIDENCE FOUNDATION (Service 3, Phase 0/1)
 --
--- ⚠ PROPOSED — NOT YET APPLIED. Rename to 0080_mastery_evidence_foundation.sql
---   only once it has been run, and record the verification results in this
---   header at the same time (the 0033/0069 procedure). The number 0080 was
---   allocated by the project owner in the Service 3 planning conversation
---   (2026-09-03); 0079 is Hydrogen's (chatbox client-write revoke).
+-- ⚠ APPLIED 2026-09-03 by the project owner in the Supabase SQL Editor, and
+--   VERIFIED the same day. Post-apply results, as reported by the owner:
+--     A. assessed_out_of exists (integer, nullable)            = 1  ✓
+--     B. lpans_attempt_idx exists                              = 1  ✓
+--     C. dead-trio client grants remaining (anon/authenticated) = 0  ✓
+--     D. TRUNCATE/TRIGGER/REFERENCES grants repo-wide           = 0  ✓
+--     E. question_attempts_assessed_within_tariff CHECK exists  = 1  ✓
+--   (E was the owner's own addition to the four header checks — it confirms
+--   the CHECK constraint by name, which check A alone does not.)
+--   The number 0080 was allocated by the project owner in the Service 3
+--   planning conversation (2026-09-03); 0079 is Hydrogen's (chatbox
+--   client-write revoke). This file sat as 0080_PROPOSED_… until the apply,
+--   per the standing rule (the 0033/0069 procedure).
 --
 -- WHY THIS MIGRATION EXISTS
 --   Service 3's mastery map reads ONE evidence source today: lesson-practice
