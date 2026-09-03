@@ -197,24 +197,32 @@ export type RecommendedItem = {
 };
 
 // ============================================================================
-// Phase 2+ seams — TYPES ONLY, deliberately unimplemented
+// Phase 2 — trend, retention, retrieval, rankings, history (implemented)
 // ============================================================================
-// The Service 3 plan (owner-approved 2026-09-03) names four future functions:
-// trendFor(), retentionFor(), retrievalQueue(), masteryContextForHydrogen().
-// Their OUTPUT shapes are settled here so Phase 1 code (and Hydrogen, on its
-// own branch) can be written against them, but no implementation exists yet —
-// a stub that returns invented states would be worse than an absent function.
-// All four are pure calculations over MasteryEvidenceRow history: the
-// append-only 0065/0028 tables carry timestamps, so every one of these is
-// derivable with no new storage.
+// Declared as types-only seams in Phase 1; the implementations landed in
+// Phase 2 (trend.ts, retention.ts, retrieval.ts, rankings.ts, history.ts,
+// composed by insights.ts). All pure calculations over MasteryEvidenceRow
+// history — the append-only 0065/0028 tables carry timestamps, so every one
+// of these is derived at read time with no new storage.
 
-/** trendFor(): recent evidence vs earlier evidence, per bucket. */
+/** trendFor(): recent evidence window vs the window before it. */
 export type TrendState =
   | "improving"
   | "declining"
   | "stable"
   | "stalled"
   | "insufficient-evidence";
+
+export type SpecTrend = {
+  state: TrendState;
+  /** Marks ratio of the two compared windows. null when a window could not
+   *  be filled — exactly when state is "insufficient-evidence". */
+  recentRatio: number | null;
+  earlierRatio: number | null;
+  /** The assessed marks each window actually holds — the trend's evidence. */
+  recentMarks: number;
+  earlierMarks: number;
+};
 
 /**
  * retentionFor(): confidence that demonstrated competence is still available
@@ -224,26 +232,112 @@ export type TrendState =
  */
 export type RetentionBand = "fresh" | "aging" | "at-risk" | "stale";
 
+export type RetentionFacts = {
+  /**
+   * false when the point has not demonstrated enough to be worth retrieving —
+   * unstarted/insufficient/emerging points belong to PRACTICE (recommendNext),
+   * not retrieval. Every time-field below is null when not eligible.
+   */
+  eligible: boolean;
+  band: RetentionBand | null;
+  /** age > interval — the deterministic "should be retested now" bit. */
+  retrievalDue: boolean;
+  lastDemonstratedAt: string | null;
+  /** Distinct DAYS carrying a qualifying demonstration — same-day repeats
+   *  count once, which is the §24 immediate-retry discount the data supports. */
+  demonstrationDays: number;
+  /** The ladder interval those demonstrations earned (7/14/30/60 days). */
+  intervalDays: number | null;
+  ageDays: number | null;
+  /** Consecutive most-recent failed answers — 3+ flags intervention. */
+  failStreak: number;
+};
+
+/** The actionable retrieval state a UI or Hydrogen acts on. */
+export type RetrievalState =
+  | "fresh"
+  | "review-soon"
+  | "retrieval-due"
+  | "intervention-needed";
+
 /** retrievalQueue(): one entry per spec code worth retrieving, ranked. */
 export type RetrievalCandidate = {
   specCode: string;
   topicId: string;
-  retention: RetentionBand;
+  /** 1-based rank. Deterministic: same evidence, same order, always. */
+  priority: number;
+  retrievalState: RetrievalState;
+  /** The queue is explainable — one sentence naming the evidence. */
+  reason: string;
   lastDemonstratedAt: string | null;
+  masteryState: SpecMasteryState;
+  evidenceConfidence: SpecMasteryFacts["evidenceConfidence"];
+  retention: RetentionFacts;
+};
+
+/** strengthsFor()/weaknessesFor(): evidence-aware ranked areas. */
+export type RankedArea = {
+  specCode: string;
+  topicId: string;
   facts: SpecMasteryFacts;
+  trend: TrendState;
+  /** One sentence a student can check against the numbers beside it. */
+  reason: string;
+};
+
+/** One point of a derived progress series (history.ts — masterySeries). */
+export type SeriesPoint = {
+  atIso: string;
+  awarded: number;
+  outOf: number;
+  /** masteryPercent over the cumulative marks at that date — null below the
+   *  evidence floor, so early points refuse precision exactly like live ones. */
+  percent: number | null;
+};
+
+/** The §10 evidence summary behind one point/topic — facts, not internals. */
+export type EvidenceSummary = {
+  recentSuccessful: number;
+  recentTotal: number;
+  lastDemonstratedAt: string | null;
+  trend: TrendState;
+  retrievalState: RetrievalState | null;
+  awarded: number;
+  outOf: number;
+  examMarks: number;
+};
+
+/** Everything Phase 2 derives for one course, computed once server-side. */
+export type CourseInsights = {
+  trendByCode: Record<string, SpecTrend>;
+  trendByTopic: Record<string, SpecTrend>;
+  retentionByCode: Record<string, RetentionFacts>;
+  queue: RetrievalCandidate[];
+  strengths: RankedArea[];
+  weaknesses: RankedArea[];
+  series: SeriesPoint[];
+  evidenceByCode: Record<string, EvidenceSummary>;
 };
 
 /**
- * masteryContextForHydrogen(): the structured academic state Hydrogen reads.
- * Hydrogen INTERPRETS this and decides what to do; it never writes mastery —
- * its evidence enters through the same attempt tables as everything else.
+ * masteryContextFor(): the structured academic state Hydrogen will read in
+ * Phase 3. Hydrogen INTERPRETS this and decides what to do; it never writes
+ * mastery — its evidence enters through the same attempt tables as everything
+ * else. ⚠ PHASE 2 BUILDS AND TESTS THIS SHAPE IN ISOLATION; no Hydrogen code
+ * consumes it yet and no cross-branch dependency exists.
  */
 export type MasteryContext = {
   courseId: string;
-  weakestAreas: RecommendedItem[];
-  strongestAreas: { specCode: string; topicId: string; facts: SpecMasteryFacts }[];
+  weakestAreas: RankedArea[];
+  strongestAreas: RankedArea[];
   retrievalDue: RetrievalCandidate[];
   recentlyImproved: { specCode: string; topicId: string; trend: TrendState }[];
+  decliningAreas: { specCode: string; topicId: string; trend: TrendState }[];
   stalledAreas: { specCode: string; topicId: string; trend: TrendState }[];
+  /** Curriculum-ordered "where the student is": the first not-started point
+   *  after the last point with any evidence, when one exists. */
+  currentSpecificationPosition: { specCode: string; topicId: string } | null;
+  /** The most recent series points — how the course figure has been moving. */
+  recentPerformance: SeriesPoint[];
   summary: CourseMastery["summary"];
 };

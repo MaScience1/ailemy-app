@@ -39,14 +39,19 @@ const NO_EVIDENCE: Omit<SpecMasteryFacts, "state"> = {
   lastPractisedAt: null,
 };
 
-export function buildCourseMastery(input: {
-  units: SpecUnitNode[];
-  evidence: MasteryEvidenceRow[];
-}): CourseMastery {
-  // The course's own vocabulary: which codes exist, and whose topic each is.
+/**
+ * The course's own vocabulary: which codes exist, and whose topic each is.
+ * Exported so every Phase-2 dimension (trend, retention, retrieval, rankings)
+ * scopes itself with the SAME map mastery uses — a second copy of "is this
+ * code ours" is exactly the drift the one-calculation-path rule forbids.
+ */
+export function courseVocabulary(units: SpecUnitNode[]): {
+  topicOfCode: Map<string, string>;
+  pointsTotal: number;
+} {
   const topicOfCode = new Map<string, string>();
   let pointsTotal = 0;
-  for (const u of input.units) {
+  for (const u of units) {
     for (const t of u.topics) {
       for (const p of t.points) {
         topicOfCode.set(p.code, t.id);
@@ -54,14 +59,26 @@ export function buildCourseMastery(input: {
       }
     }
   }
+  return { topicOfCode, pointsTotal };
+}
 
-  // ⚠ MALFORMED OR FOREIGN EVIDENCE IS SET ASIDE AND COUNTED, NEVER PATCHED.
-  // A negative mark or an award above its tariff is a broken row — clamping it
-  // would invent data. A spec code outside this course's specification is not
-  // this course's evidence. Both are ignoredRows, so the caller can say so.
+/**
+ * ⚠ MALFORMED OR FOREIGN EVIDENCE IS SET ASIDE AND COUNTED, NEVER PATCHED.
+ * A negative mark or an award above its tariff is a broken row — clamping it
+ * would invent data. A spec code outside this course's specification is not
+ * this course's evidence. Both are ignoredRows, so the caller can say so.
+ * Exported for the same one-filter reason as courseVocabulary(): the trend,
+ * retention and history calculations must reason over exactly the rows
+ * mastery counted, or a topic's trend could disagree with its own state
+ * about which answers exist.
+ */
+export function usableEvidence(
+  topicOfCode: Map<string, string>,
+  evidence: MasteryEvidenceRow[],
+): { usable: MasteryEvidenceRow[]; ignoredRows: number } {
   const usable: MasteryEvidenceRow[] = [];
   let ignoredRows = 0;
-  for (const r of input.evidence) {
+  for (const r of evidence) {
     const malformed =
       !Number.isFinite(r.markAwarded) ||
       !Number.isFinite(r.markAvailable) ||
@@ -74,6 +91,15 @@ export function buildCourseMastery(input: {
     }
     usable.push(r);
   }
+  return { usable, ignoredRows };
+}
+
+export function buildCourseMastery(input: {
+  units: SpecUnitNode[];
+  evidence: MasteryEvidenceRow[];
+}): CourseMastery {
+  const { topicOfCode, pointsTotal } = courseVocabulary(input.units);
+  const { usable, ignoredRows } = usableEvidence(topicOfCode, input.evidence);
 
   // One answer row = one assessed question, for masteryFor's purposes. The id
   // only needs to be unique; attempt + index is exactly that (0065's UNIQUE).
