@@ -23,6 +23,8 @@ import { resolve } from "node:path";
 import { examEvidenceRows } from "../../../src/lib/specification/exam-evidence.ts";
 import { validateQuestionSet, type QuestionSet } from "../../../src/lib/exam/question-set.ts";
 import { WCH11_01_2025_MAY_JUNE } from "../wch11-01-2025-may-june.ts";
+import { UNIT_1_MAY_JUNE_2025_SET } from "../unit-1-may-june-2025.set.ts";
+import specOverlay from "../spec-points.unit-1-may-june-2025.json" with { type: "json" };
 
 let pass = 0, fail = 0;
 const t = (n: string, c: boolean, got?: unknown) => {
@@ -176,6 +178,46 @@ console.log("\n=== 4. the validator's new rules bite ===");
   } as QuestionSet;
   t("a container carrying specPoints is refused",
     validateQuestionSet(withContainer).some((i) => /container but carries specPoints/.test(i.message)));
+}
+
+// ============================================================================
+console.log("\n=== 5. the seedable overlay agrees with the cited transcription ===");
+// ============================================================================
+// The SEEDABLE set (unit-1-may-june-2025-generated) takes its spec mappings
+// from spec-points.unit-1-may-june-2025.json; the CITATIONS live in the hand
+// transcription's // spec: comments. Two copies of one mapping can drift, so
+// this section pins them together: every overlay entry must equal the same
+// question's specPoints in the transcription, and vice versa — a change to
+// either without the other goes red here.
+{
+  const overlayMap = (specOverlay as { specPoints: Record<string, string[]> }).specPoints;
+  const hand = new Map(
+    WCH11_01_2025_MAY_JUNE.questions
+      .filter((q) => (q.specPoints?.length ?? 0) > 0)
+      .map((q) => [q.questionNumber, q.specPoints!]),
+  );
+
+  t("the overlay maps exactly the questions the transcription maps",
+    Object.keys(overlayMap).sort().join("|") === [...hand.keys()].sort().join("|"),
+    `overlay: ${Object.keys(overlayMap).sort().join(",")} vs hand: ${[...hand.keys()].sort().join(",")}`);
+  t("every mapping is identical, order included (order IS the primary ranking)",
+    Object.entries(overlayMap).every(
+      ([n, codes]) => (hand.get(n) ?? []).join("|") === codes.join("|"),
+    ),
+    Object.entries(overlayMap)
+      .filter(([n, codes]) => (hand.get(n) ?? []).join("|") !== codes.join("|"))
+      .map(([n]) => n).join(","));
+
+  const seedable = UNIT_1_MAY_JUNE_2025_SET;
+  const seedableByNumber = new Map(seedable.questions.map((q) => [q.questionNumber, q]));
+  t("the seedable set carries the overlay's mappings on the right questions",
+    Object.entries(overlayMap).every(
+      ([n, codes]) => (seedableByNumber.get(n)?.specPoints ?? []).join("|") === codes.join("|"),
+    ));
+  t("the seedable set still validates with the mappings merged in",
+    validateQuestionSet(seedable, { paperIdResolvedAtRuntime: true }).length === 0,
+    validateQuestionSet(seedable, { paperIdResolvedAtRuntime: true })
+      .map((i) => `${i.where}: ${i.message}`).join(" | "));
 }
 
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);
