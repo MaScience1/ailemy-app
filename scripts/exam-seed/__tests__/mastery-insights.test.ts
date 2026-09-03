@@ -312,7 +312,12 @@ console.log("\n=== 4. strengths / weaknesses: evidence-aware, not lowest-percent
   const noTrend = { state: "insufficient-evidence" as const, recentRatio: null, earlierRatio: null, recentMarks: 0, earlierMarks: 0 };
   const noRet: RetentionFacts = { eligible: false, band: null, retrievalDue: false,
     lastDemonstratedAt: null, demonstrationDays: 0, intervalDays: null, ageDays: null, failStreak: 0 };
-  const p = (code: string, f: SpecMasteryFacts, trendState = noTrend.state, failStreak = 0) => ({
+  const p = (
+    code: string,
+    f: SpecMasteryFacts,
+    trendState: import("../../../src/lib/specification/types.ts").TrendState = noTrend.state,
+    failStreak = 0,
+  ) => ({
     specCode: code, topicId: "t1", facts: f,
     trend: { ...noTrend, state: trendState },
     retention: { ...noRet, failStreak },

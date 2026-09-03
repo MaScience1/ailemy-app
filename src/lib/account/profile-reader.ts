@@ -372,7 +372,15 @@ export type CourseAcademics = {
   questionsAnswered: number;
   /** Mark-weighted across submitted attempts (§95), or a stated refusal (§96). */
   assessed: Unavailable | { available: true; awarded: number; outOf: number; percent: number };
-  /** ⚠ ALWAYS unavailable today — see the reason it carries. */
+  /**
+   * ⚠ ALWAYS unavailable here — and NO UI renders this field. The
+   * evidence-aware ranking exists now (src/lib/specification/rankings.ts,
+   * weaknessesFor — floor-gated, confidence-weighted, trend-bumped, with
+   * reasons) and is rendered on the specification map's "Needs attention"
+   * rail. If a profile visual ever wants a weakest topic, it consumes THAT
+   * engine through buildCourseInsights; this field stays a pointer so two
+   * surfaces cannot rank a student's weaknesses differently.
+   */
   weakestTopic: Unavailable;
 };
 

@@ -1,4 +1,9 @@
-import type { SpecMasteryFacts, SpecMasteryState } from "@/lib/specification/types";
+import type {
+  RetrievalState,
+  SpecMasteryFacts,
+  SpecMasteryState,
+  TrendState,
+} from "@/lib/specification/types";
 
 /**
  * One vocabulary for mastery states — glyph, label, tone — used by every
@@ -118,6 +123,30 @@ export function MasteryGlyph({
       );
   }
 }
+
+/**
+ * Trend vocabulary — one label and tone per trend state, shared by every
+ * surface so "improving" cannot look green in a card and grey in a drawer.
+ * insufficient-evidence deliberately has NO label: an absent line, not a
+ * hedge — the drawer simply says nothing about a trend it cannot support.
+ */
+export const TREND_META: Record<
+  Exclude<TrendState, "insufficient-evidence">,
+  { label: string; tone: string }
+> = {
+  improving: { label: "Improving", tone: "var(--color-marked)" },
+  declining: { label: "Slipping", tone: "var(--color-pending)" },
+  stable: { label: "Steady", tone: "var(--color-ink-60)" },
+  stalled: { label: "Stalled", tone: "var(--color-gold)" },
+};
+
+/** Retrieval vocabulary — the actionable states a student sees. */
+export const RETRIEVAL_META: Record<RetrievalState, { label: string; tone: string }> = {
+  fresh: { label: "Recently shown", tone: "var(--color-ink-60)" },
+  "review-soon": { label: "Review soon", tone: "var(--color-gold)" },
+  "retrieval-due": { label: "Retrieval due", tone: "var(--color-pending)" },
+  "intervention-needed": { label: "Needs a proper revisit", tone: "var(--color-pending)" },
+};
 
 /**
  * Evidence-confidence copy — the label that must ride beside any percentage

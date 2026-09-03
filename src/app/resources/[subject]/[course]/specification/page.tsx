@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 
 import { Breadcrumb } from "@/components/catalogue/breadcrumb";
 import { subjectColour, subjectVars } from "@/lib/design/subject-colours";
+import { buildCourseInsights } from "@/lib/specification/insights";
 import { buildCourseMastery } from "@/lib/specification/mastery";
 import {
   listCourseLessonIds,
@@ -17,7 +18,8 @@ import {
   loadSpecificationTree,
 } from "@/lib/specification/queries";
 import { recommendNext } from "@/lib/specification/recommend";
-import type { CourseMastery } from "@/lib/specification/types";
+import type { CourseInsights, CourseMastery } from "@/lib/specification/types";
+import { NeedsAttention, RetrievalDue, StrongestAreas } from "@/components/specification/InsightRails";
 import { MasterySummary, SignedOutMastery } from "@/components/specification/MasterySummary";
 import { RecommendedNext } from "@/components/specification/RecommendedNext";
 import { SpecificationExplorer } from "@/components/specification/SpecificationExplorer";
@@ -97,6 +99,7 @@ export default async function SpecificationPage({
   } = await db.auth.getUser();
 
   let mastery: CourseMastery | null = null;
+  let insights: CourseInsights | null = null;
   let evidenceError: string | null = null;
   let examUnmapped = 0;
   let examNote: string | null = null;
@@ -113,6 +116,14 @@ export default async function SpecificationPage({
       // the expected pre-migration state, reported softly, not as an alarm.
       const rows = exam.ok ? [...practice.rows, ...exam.rows] : practice.rows;
       mastery = buildCourseMastery({ units: tree.units, evidence: rows });
+      // Phase 2: every dimension — trend, retention, retrieval, rankings,
+      // series — derived HERE, once, from the same rows. Components render.
+      insights = buildCourseInsights({
+        units: tree.units,
+        mastery,
+        evidence: rows,
+        nowIso: new Date().toISOString(),
+      });
       if (exam.ok) {
         examUnmapped = exam.unmappedQuestions;
       } else {
@@ -206,13 +217,43 @@ export default async function SpecificationPage({
                     mastery is shown — the specification itself is unaffected.
                   </p>
                 ) : mastery ? (
-                  <MasterySummary mastery={mastery} examUnmapped={examUnmapped} />
+                  <MasterySummary
+                    mastery={mastery}
+                    examUnmapped={examUnmapped}
+                    series={insights?.series ?? []}
+                  />
                 ) : (
                   <SignedOutMastery signInHref={`/login?next=${encodeURIComponent(specHref)}`} />
                 )}
 
                 {examNote && mastery && (
                   <p className="px-1 text-xs leading-relaxed text-ink/50">{examNote}</p>
+                )}
+
+                {insights && (
+                  <RetrievalDue
+                    items={insights.queue}
+                    units={tree.units}
+                    lessonBase={lessonBase}
+                    specHref={specHref}
+                  />
+                )}
+
+                {insights && (
+                  <NeedsAttention
+                    items={insights.weaknesses}
+                    units={tree.units}
+                    lessonBase={lessonBase}
+                    specHref={specHref}
+                  />
+                )}
+
+                {insights && (
+                  <StrongestAreas
+                    items={insights.strengths}
+                    units={tree.units}
+                    specHref={specHref}
+                  />
                 )}
 
                 {recommended.length > 0 && (
@@ -237,6 +278,15 @@ export default async function SpecificationPage({
                 <SpecificationExplorer
                   units={tree.units}
                   mastery={mastery}
+                  insights={
+                    insights
+                      ? {
+                          trendByCode: insights.trendByCode,
+                          retentionByCode: insights.retentionByCode,
+                          evidenceByCode: insights.evidenceByCode,
+                        }
+                      : null
+                  }
                   lessonBase={lessonBase}
                   initial={{
                     q: one(sp.q),

@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown, Search, X } from "lucide-react";
 
 import type {
+  CourseInsights,
   CourseMastery,
   SpecMasteryFacts,
   SpecMasteryState,
@@ -13,7 +14,23 @@ import type {
   SpecUnitNode,
 } from "@/lib/specification/types";
 import { unstartedFacts } from "@/lib/specification/mastery";
-import { CONFIDENCE_META, MasteryFigure, MasteryGlyph, STATE_META, StateLabel } from "./mastery-meta";
+import {
+  CONFIDENCE_META,
+  MasteryFigure,
+  MasteryGlyph,
+  RETRIEVAL_META,
+  STATE_META,
+  StateLabel,
+  TREND_META,
+} from "./mastery-meta";
+
+/** The per-point slice of insights the drawer prints — trend, retention and
+ *  the evidence summary. Serialisable, computed server-side; null when
+ *  signed out, exactly like `mastery`. */
+export type PointInsights = Pick<
+  CourseInsights,
+  "trendByCode" | "retentionByCode" | "evidenceByCode"
+>;
 
 /**
  * The interactive specification tree: search, filters, expand/collapse,
@@ -76,12 +93,15 @@ function Highlight({ text, query }: { text: string; query: string }) {
 export function SpecificationExplorer({
   units,
   mastery,
+  insights,
   lessonBase,
   initial,
 }: {
   units: SpecUnitNode[];
   /** null when signed out — the tree renders with no state column at all. */
   mastery: CourseMastery | null;
+  /** Phase-2 dimensions for the point drawer; null renders Phase-1 exactly. */
+  insights: PointInsights | null;
   /** "/learn/<subject>/<pathway>/<course>" — where a live lesson opens. */
   lessonBase: string | null;
   initial: { q: string; unit: string; state: string; point: string };
@@ -347,6 +367,7 @@ export function SpecificationExplorer({
                             key={p.id}
                             point={p}
                             facts={mastery ? factsOf(p.code) : null}
+                            insights={insights}
                             query={q}
                             open={openPoint === p.code}
                             onToggle={() =>
@@ -372,6 +393,7 @@ export function SpecificationExplorer({
 function PointRow({
   point,
   facts,
+  insights,
   query,
   open,
   onToggle,
@@ -380,6 +402,7 @@ function PointRow({
 }: {
   point: SpecPointNode;
   facts: SpecMasteryFacts | null;
+  insights: PointInsights | null;
   query: string;
   open: boolean;
   onToggle: () => void;
@@ -447,21 +470,24 @@ function PointRow({
                 </p>
               )}
               {facts.state !== "unstarted" && facts.state !== "insufficient" && (
-                <p>
-                  {/* §22 as amended: the percent comes from the domain layer
-                      (null below the floor), and its confidence label rides
-                      with it — this component divides nothing. */}
-                  {facts.percent !== null && facts.evidenceConfidence !== "none" && (
-                    <>
-                      {facts.percent}% of assessed marks ·{" "}
-                      {CONFIDENCE_META[facts.evidenceConfidence].toLowerCase()}.{" "}
-                    </>
-                  )}
-                  {facts.awarded} of {facts.outOf} marks across {facts.questionCount} question
-                  {facts.questionCount === 1 ? "" : "s"}.
-                  {facts.lastPractisedAt &&
-                    ` Last practised ${new Date(facts.lastPractisedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}.`}
-                </p>
+                <>
+                  <p>
+                    {/* §22 as amended: the percent comes from the domain layer
+                        (null below the floor), and its confidence label rides
+                        with it — this component divides nothing. */}
+                    {facts.percent !== null && facts.evidenceConfidence !== "none" && (
+                      <>
+                        {facts.percent}% of assessed marks ·{" "}
+                        {CONFIDENCE_META[facts.evidenceConfidence].toLowerCase()}.{" "}
+                      </>
+                    )}
+                    {facts.awarded} of {facts.outOf} marks across {facts.questionCount} question
+                    {facts.questionCount === 1 ? "" : "s"}.
+                    {facts.lastPractisedAt &&
+                      ` Last practised ${new Date(facts.lastPractisedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}.`}
+                  </p>
+                  <PointEvidence code={point.code} insights={insights} />
+                </>
               )}
             </div>
           )}
@@ -504,5 +530,63 @@ function PointRow({
         </div>
       )}
     </li>
+  );
+}
+
+
+/**
+ * The §10 evidence lines — trend, retrieval state, the recent-answer count
+ * and the last demonstration. Every line is a fact the engines computed
+ * server-side; a dimension without enough evidence renders NOTHING rather
+ * than a hedge (an absent trend line IS the honest "insufficient evidence").
+ */
+function PointEvidence({
+  code,
+  insights,
+}: {
+  code: string;
+  insights: PointInsights | null;
+}) {
+  if (!insights) return null;
+  const trend = insights.trendByCode[code];
+  const retention = insights.retentionByCode[code];
+  const summary = insights.evidenceByCode[code];
+  if (!summary) return null;
+
+  const trendMeta =
+    trend && trend.state !== "insufficient-evidence" ? TREND_META[trend.state] : null;
+  const retrievalState = summary.retrievalState;
+  const day = (iso: string) =>
+    new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+
+  return (
+    <div className="mt-2 grid gap-0.5">
+      <p>
+        {summary.recentSuccessful} of {summary.recentTotal} recent answer
+        {summary.recentTotal === 1 ? "" : "s"} successful
+        {summary.examMarks > 0 && ` · includes ${summary.examMarks} exam mark${summary.examMarks === 1 ? "" : "s"}`}
+        .
+      </p>
+      {retention?.lastDemonstratedAt && (
+        <p>Last demonstrated {day(retention.lastDemonstratedAt)}.</p>
+      )}
+      {(trendMeta || retrievalState) && (
+        <p className="flex flex-wrap items-center gap-x-2">
+          {trendMeta && (
+            <span className="font-mono text-[10px]" style={{ color: trendMeta.tone }}>
+              {trendMeta.label}
+            </span>
+          )}
+          {retrievalState && (
+            <span
+              className="font-mono text-[10px]"
+              style={{ color: RETRIEVAL_META[retrievalState].tone }}
+            >
+              {RETRIEVAL_META[retrievalState].label}
+            </span>
+          )}
+        </p>
+      )}
+    </div>
   );
 }

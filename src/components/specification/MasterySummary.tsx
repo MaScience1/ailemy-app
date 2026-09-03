@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { evidenceConfidenceFor, masteryPercent } from "@/lib/account/academic";
-import type { CourseMastery } from "@/lib/specification/types";
+import type { CourseMastery, SeriesPoint } from "@/lib/specification/types";
 import { CONFIDENCE_META, MasteryGlyph, STATE_META } from "./mastery-meta";
 
 /**
@@ -23,11 +23,15 @@ import { CONFIDENCE_META, MasteryGlyph, STATE_META } from "./mastery-meta";
 export function MasterySummary({
   mastery,
   examUnmapped = 0,
+  series = [],
 }: {
   mastery: CourseMastery;
   /** Marked exam questions with no spec-point tag yet — counted by the exam
    *  evidence loader so this panel can say what is missing. */
   examUnmapped?: number;
+  /** history.ts's weekly cumulative series — rendered as a plain arrow line
+   *  ("42% → 51% → 63%"): accessible, honest, and no chart library. */
+  series?: SeriesPoint[];
 }) {
   const s = mastery.summary;
   const practised = s.pointsTotal - s.unstarted;
@@ -79,6 +83,8 @@ export function MasterySummary({
           ` · includes ${examMarks} mark${examMarks === 1 ? "" : "s"} from marked exam papers`}
       </p>
 
+      <TrendLine series={series} />
+
       {/* Counts drawn to width. Decorative — the legend carries every number.
           Unstarted points are the unpainted track itself: what has not begun
           should recede, not dominate the strip in grey. */}
@@ -121,6 +127,30 @@ export function MasterySummary({
         </p>
       )}
     </section>
+  );
+}
+
+/**
+ * "Am I improving?" as a sentence: the last few weekly figures, oldest to
+ * newest, joined by arrows. Rendered only when at least two points carry a
+ * percent (the floor refused the rest) — one number is not a trend, and a
+ * line invented around null points would be. The dates anchor the claim.
+ */
+function TrendLine({ series }: { series: SeriesPoint[] }) {
+  const rated = series.filter((p) => p.percent !== null);
+  if (rated.length < 2) return null;
+  const shown = rated.slice(-4);
+  const day = (iso: string) =>
+    new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  return (
+    <p className="mt-3 text-sm text-ink/75">
+      <span className="font-mono">
+        {shown.map((p) => `${p.percent}%`).join(" → ")}
+      </span>
+      <span className="ms-2 text-xs text-ink/50">
+        {day(shown[0].atIso)} – {day(shown[shown.length - 1].atIso)}, weekly
+      </span>
+    </p>
   );
 }
 
