@@ -13,7 +13,7 @@ import type {
   SpecUnitNode,
 } from "@/lib/specification/types";
 import { unstartedFacts } from "@/lib/specification/mastery";
-import { MasteryGlyph, STATE_META, StateLabel } from "./mastery-meta";
+import { CONFIDENCE_META, MasteryFigure, MasteryGlyph, STATE_META, StateLabel } from "./mastery-meta";
 
 /**
  * The interactive specification tree: search, filters, expand/collapse,
@@ -321,6 +321,7 @@ export function SpecificationExplorer({
                       {topicFacts && topicFacts.state !== "unstarted" && (
                         <span className="text-xs text-ink/70">
                           <StateLabel state={topicFacts.state} />
+                          <MasteryFigure facts={topicFacts} className="ms-2" />
                           <span className="ms-2 font-mono text-[10px] text-ink/45">
                             {topicFacts.awarded} of {topicFacts.outOf} marks
                           </span>
@@ -408,6 +409,7 @@ function PointRow({
             <StateLabel state={facts.state} />
           </span>
         )}
+        {facts && <MasteryFigure facts={facts} />}
         {facts && facts.outOf > 0 && (
           <span className="font-mono text-[10px] text-ink/45">
             {facts.awarded} of {facts.outOf}
@@ -446,6 +448,15 @@ function PointRow({
               )}
               {facts.state !== "unstarted" && facts.state !== "insufficient" && (
                 <p>
+                  {/* §22 as amended: the percent comes from the domain layer
+                      (null below the floor), and its confidence label rides
+                      with it — this component divides nothing. */}
+                  {facts.percent !== null && facts.evidenceConfidence !== "none" && (
+                    <>
+                      {facts.percent}% of assessed marks ·{" "}
+                      {CONFIDENCE_META[facts.evidenceConfidence].toLowerCase()}.{" "}
+                    </>
+                  )}
                   {facts.awarded} of {facts.outOf} marks across {facts.questionCount} question
                   {facts.questionCount === 1 ? "" : "s"}.
                   {facts.lastPractisedAt &&

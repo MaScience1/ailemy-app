@@ -1,4 +1,4 @@
-import type { SpecMasteryState } from "@/lib/specification/types";
+import type { SpecMasteryFacts, SpecMasteryState } from "@/lib/specification/types";
 
 /**
  * One vocabulary for mastery states — glyph, label, tone — used by every
@@ -117,6 +117,38 @@ export function MasteryGlyph({
         </svg>
       );
   }
+}
+
+/**
+ * Evidence-confidence copy — the label that must ride beside any percentage
+ * (§22 as amended). One vocabulary, so "High confidence" cannot drift into
+ * "Strong evidence" on another surface.
+ */
+export const CONFIDENCE_META: Record<"limited" | "high", string> = {
+  limited: "Limited evidence",
+  high: "High confidence",
+};
+
+/**
+ * The one way a mastery percentage is rendered (§22 as amended): the figure,
+ * with its confidence label, only when the domain layer produced one —
+ * facts.percent is null below the evidence floor and this component renders
+ * NOTHING rather than a premature number. It never divides marks itself.
+ */
+export function MasteryFigure({
+  facts,
+  className,
+}: {
+  facts: SpecMasteryFacts;
+  className?: string;
+}) {
+  if (facts.percent === null || facts.evidenceConfidence === "none") return null;
+  return (
+    <span className={`whitespace-nowrap font-mono text-[11px] ${className ?? ""}`}>
+      <span className="font-medium text-ink/80">{facts.percent}%</span>
+      <span className="text-ink/45"> · {CONFIDENCE_META[facts.evidenceConfidence]}</span>
+    </span>
+  );
 }
 
 /** Glyph + label, the pairing every row uses. */

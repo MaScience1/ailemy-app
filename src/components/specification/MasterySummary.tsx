@@ -1,22 +1,34 @@
 import Link from "next/link";
 
+import { evidenceConfidenceFor, masteryPercent } from "@/lib/account/academic";
 import type { CourseMastery } from "@/lib/specification/types";
-import { MasteryGlyph, STATE_META } from "./mastery-meta";
+import { CONFIDENCE_META, MasteryGlyph, STATE_META } from "./mastery-meta";
 
 /**
- * The course mastery summary — counts and marks, never a blended score.
+ * The course mastery summary — counts, marks, and (since the §22 amendment)
+ * the assessed-marks percentage, shown honestly.
  *
  * ============================================================================
- * ⚠ THERE IS NO "OVERALL MASTERY 67%" HERE, ON PURPOSE
+ * ⚠ THE PERCENTAGE IS OF ASSESSED MARKS, NEVER OF THE SYLLABUS
  * ============================================================================
- * academic.ts §21/§22: a single number that blends completion, performance and
- * evidence quantity is a claim nobody can check, rendered with the authority
- * of arithmetic. What a student gets instead is what the record supports:
- * how many specification points sit in each state, and the marks those states
- * rest on. The segmented strip below is those COUNTS drawn to width — every
- * segment is a number printed right beside it.
+ * academic.ts §21/§22 as amended 2026-09-03: the figure below is
+ * masteryPercent(awarded, outOf) over the marks actually assessed — it says
+ * "of the work you've been marked on, this share was earned", with the
+ * coverage caveat printed in the same breath ("across N of M points"). It
+ * still never blends completion, performance and evidence quantity into one
+ * number, and it comes from the ONE domain function — this component divides
+ * nothing. The segmented strip below is COUNTS drawn to width — every segment
+ * is a number printed right beside it.
  */
-export function MasterySummary({ mastery }: { mastery: CourseMastery }) {
+export function MasterySummary({
+  mastery,
+  examUnmapped = 0,
+}: {
+  mastery: CourseMastery;
+  /** Marked exam questions with no spec-point tag yet — counted by the exam
+   *  evidence loader so this panel can say what is missing. */
+  examUnmapped?: number;
+}) {
   const s = mastery.summary;
   const practised = s.pointsTotal - s.unstarted;
 
@@ -39,15 +51,32 @@ export function MasterySummary({ mastery }: { mastery: CourseMastery }) {
     (state) => ({ state, count: s[state] }),
   );
 
+  // The one percentage function (§22 as amended) — null below the floor, and
+  // then this panel shows counts and marks alone, exactly as it always did.
+  const percent = masteryPercent(s.awarded, s.outOf);
+  const confidence = s.outOf > 0 ? evidenceConfidenceFor(s.outOf) : null;
+  const examMarks = mastery.bySource.exam.outOf;
+
   return (
     <section aria-labelledby="mastery-heading" className="rounded-xl border border-ink/10 bg-snow p-5">
       <h2 id="mastery-heading" className="font-display text-lg font-medium tracking-tight">
         Your mastery
       </h2>
 
+      {percent !== null && confidence !== null && (
+        <p className="mt-2">
+          <span className="font-display text-3xl font-medium tracking-tight">{percent}%</span>
+          <span className="ms-2 text-xs text-ink/55">
+            of assessed marks · {CONFIDENCE_META[confidence]}
+          </span>
+        </p>
+      )}
+
       <p className="mt-2 text-sm text-ink/70">
         {practised} of {s.pointsTotal} specification point{s.pointsTotal === 1 ? "" : "s"} practised
         · {s.awarded} of {s.outOf} marks earned
+        {examMarks > 0 &&
+          ` · includes ${examMarks} mark${examMarks === 1 ? "" : "s"} from marked exam papers`}
       </p>
 
       {/* Counts drawn to width. Decorative — the legend carries every number.
@@ -79,9 +108,16 @@ export function MasterySummary({ mastery }: { mastery: CourseMastery }) {
 
       {mastery.ignoredRows > 0 && (
         <p className="mt-3 text-xs text-ink/50">
-          {mastery.ignoredRows} practice answer{mastery.ignoredRows === 1 ? "" : "s"} couldn&apos;t
+          {mastery.ignoredRows} answer{mastery.ignoredRows === 1 ? "" : "s"} couldn&apos;t
           be matched to this specification and {mastery.ignoredRows === 1 ? "is" : "are"} not
           counted above.
+        </p>
+      )}
+
+      {examUnmapped > 0 && (
+        <p className="mt-3 text-xs text-ink/50">
+          {examUnmapped} marked exam question{examUnmapped === 1 ? "" : "s"} aren&apos;t tagged to
+          specification points yet, so they aren&apos;t counted above.
         </p>
       )}
     </section>

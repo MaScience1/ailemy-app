@@ -12,6 +12,7 @@ import { subjectColour, subjectVars } from "@/lib/design/subject-colours";
 import { buildCourseMastery } from "@/lib/specification/mastery";
 import {
   listCourseLessonIds,
+  loadExamEvidence,
   loadPracticeEvidence,
   loadSpecificationTree,
 } from "@/lib/specification/queries";
@@ -32,15 +33,18 @@ import { SpecificationExplorer } from "@/components/specification/SpecificationE
  * readable signed out — the same tables the Resources page reads.
  *
  * The MASTERY layer exists only for the signed-in student, computed from their
- * OWN lesson-practice answers (0065), read with their own session client and
- * filtered by student_id explicitly. No service key is used anywhere on this
- * page, and no other student's data can appear on it.
+ * OWN evidence — lesson-practice answers (0065) AND marked exam questions
+ * (0028 + 0080's assessed_out_of) — both read with their own session client
+ * and filtered by student_id explicitly. No service key is used anywhere on
+ * this page, and no other student's data can appear on it.
  *
- * ⚠ EVERY STATE IS academic.ts's (§21/§22): the 12-mark floor, the three
- * bands, no blended percentage anywhere. Exam-paper marking does NOT feed this
- * map yet — question_spec_points is unpopulated and assessedOutOf is never
- * stored, and aggregating around that would charge students for marks the
- * MARKER could not reach. The page says so instead of pretending.
+ * ⚠ EVERY STATE AND EVERY PERCENTAGE IS academic.ts's (§21/§22 as amended
+ * 2026-09-03): the 12-mark floor, the three bands, masteryPercent() as the one
+ * percentage function. Exam evidence enters through the same canonical
+ * MasteryEvidenceRow contract as practice — awarded over assessed_out_of,
+ * never over max_marks, so a student is never charged for marks the MARKER
+ * could not reach. The two arms fail independently: a broken exam read is
+ * reported beside a working practice map, never conflated with it.
  */
 
 type Params = Promise<{ subject: string; course: string }>;
@@ -94,13 +98,30 @@ export default async function SpecificationPage({
 
   let mastery: CourseMastery | null = null;
   let evidenceError: string | null = null;
+  let examUnmapped = 0;
+  let examNote: string | null = null;
   if (user && !tree.error) {
     const lessonIds = await listCourseLessonIds(tree.courseId);
-    const evidence = await loadPracticeEvidence(user.id, lessonIds);
-    if (evidence.ok) {
-      mastery = buildCourseMastery({ units: tree.units, evidence: evidence.rows });
+    const [practice, exam] = await Promise.all([
+      loadPracticeEvidence(user.id, lessonIds),
+      loadExamEvidence(user.id, tree.courseId),
+    ]);
+    if (practice.ok) {
+      // ⚠ THE TWO ARMS FAIL INDEPENDENTLY. A failed exam read must not blank
+      // the practice map (or vice versa) — the map renders from what could be
+      // read, and says what could not. missingSchema (0080 not applied) is
+      // the expected pre-migration state, reported softly, not as an alarm.
+      const rows = exam.ok ? [...practice.rows, ...exam.rows] : practice.rows;
+      mastery = buildCourseMastery({ units: tree.units, evidence: rows });
+      if (exam.ok) {
+        examUnmapped = exam.unmappedQuestions;
+      } else {
+        examNote = exam.missingSchema
+          ? "Marked exam papers aren't joined to this map yet."
+          : "Your marked exam papers couldn't be read just now, so only practice evidence is shown.";
+      }
     } else {
-      evidenceError = evidence.error;
+      evidenceError = practice.error;
     }
   }
 
@@ -185,9 +206,13 @@ export default async function SpecificationPage({
                     mastery is shown — the specification itself is unaffected.
                   </p>
                 ) : mastery ? (
-                  <MasterySummary mastery={mastery} />
+                  <MasterySummary mastery={mastery} examUnmapped={examUnmapped} />
                 ) : (
                   <SignedOutMastery signInHref={`/login?next=${encodeURIComponent(specHref)}`} />
+                )}
+
+                {examNote && mastery && (
+                  <p className="px-1 text-xs leading-relaxed text-ink/50">{examNote}</p>
                 )}
 
                 {recommended.length > 0 && (
@@ -199,13 +224,12 @@ export default async function SpecificationPage({
                   />
                 )}
 
-                {/* §45 — where the states come from, and what does not feed
-                    them yet. Honesty about the map's own limits. */}
+                {/* §45 — where the states come from. Honesty about the map's
+                    own limits. */}
                 <p className="px-1 text-xs leading-relaxed text-ink/50">
-                  Mastery states come from your recorded lesson practice,
-                  needing at least 12 marks of evidence per point. Marked exam
-                  papers will join this map once their questions are tagged to
-                  specification points.
+                  Mastery comes from your recorded lesson practice and your
+                  marked exam questions, needing at least 12 marks of evidence
+                  per point before anything is rated.
                 </p>
               </aside>
 
