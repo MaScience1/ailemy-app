@@ -50,10 +50,21 @@
  * stranded there.
  *
  * `topic` is authored EXCEPT where the examiner report names it in so many
- * words; those carry a `// examiner report:` comment. `specPoint` is omitted
- * throughout — the specification document is not in the repository and
- * plausible-looking spec codes are exactly the kind of invention the rest of
- * this work has avoided. The column is nullable; fill it from the spec.
+ * words; those carry a `// examiner report:` comment.
+ *
+ * `specPoints` (added 2026-09-03): the legacy single `specPoint` stays omitted,
+ * but every MARK-CARRYING leaf now carries `specPoints` — codes from the IAL
+ * AS Chemistry specification that landed in supabase/seed/004 (155 points,
+ * verified against the official Pearson document in 005). The blocker the
+ * paragraph above recorded — "the specification document is not in the
+ * repository" — is gone, so these are mappings against real statements, not
+ * inventions. Each carries a `// spec:` comment quoting enough of the matched
+ * statement to check the mapping without opening the seed file. The FIRST
+ * code is the primary (the point the question chiefly assesses — mastery
+ * evidence attributes the marks there); later codes are secondary context.
+ * Containers carry none: marks live on leaves, so mapping does too (the
+ * validator enforces it). The importer resolves every code against the live
+ * catalogue and refuses unknowns — a typo cannot become a phantom bucket.
  *
  * ============================================================================
  * WHY THESE SEVENTEEN QUESTIONS
@@ -173,6 +184,11 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       answerType: "mcq",
       commandWord: "Which row shows",
       topic: "Atomic structure", // examiner report: "Question 1 (atomic structure)"
+      // spec 2.1: "the structure of an atom in terms of electrons, protons and
+      // neutrons ... determine the number of each subatomic particle in any
+      // atom or ion" — the question verbatim. 2.5 secondary: "ions (cations
+      // and anions) · the ²⁴₁₂Mg notation" (reading 79Br-).
+      specPoints: ["2.1", "2.5"],
       // MS p5 · "The only correct answer is B (neutron number 44, electron
       // number 36)". An MCQ's answer IS its single mark.
       expectedAnswer: { value: "B", marksOnCorrectAnswer: 1 },
@@ -221,6 +237,11 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       answerType: "mcq",
       commandWord: "What volume",
       topic: "Moles and gas volumes",
+      // spec 1.8: "use chemical equations to calculate volumes of gases ...
+      // the molar volume of gases" — the asked-for quantity. Secondary 1.7
+      // (mole ratios from balanced equations) and 1.5 (concentration in
+      // mol dm⁻³ — the 50 cm³ of 0.12 mol dm⁻³ input).
+      specPoints: ["1.8", "1.7", "1.5"],
       // MS p5 · "The only correct answer is A (0.072 dm3)"
       expectedAnswer: { value: "A", marksOnCorrectAnswer: 1 },
       questionText:
@@ -283,6 +304,10 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       answerType: "numeric",
       commandWord: "Calculate",
       topic: "The ideal gas equation",
+      // spec 1.8: "the expression pV = nRT for gases and volatile liquids" —
+      // the equation the stem supplies. 1.4 secondary: "express small
+      // concentrations using parts per million (ppm)" — the 415 ppm input.
+      specPoints: ["1.8", "1.4"],
       // `numeric`, NOT numeric_with_unit. MS p14 lists four points — convert,
       // convert, substitute, evaluate — and NONE of them is a unit mark, so a
       // unit field here could only ever cost marks. The stem supplies the
@@ -377,6 +402,10 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       answerType: "short_text",
       commandWord: "State",
       topic: "Complete combustion",
+      // spec 4.17: "reactions of alkanes with: i. oxygen in the air
+      // (combustion)" — the definition asked for is of that reaction run in
+      // sufficient oxygen.
+      specPoints: ["4.17"],
       questionText: "State what is meant by complete combustion.",
       markScheme: [
         {
@@ -403,6 +432,10 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       answerType: "chemical_equation",
       commandWord: "Write",
       topic: "Balanced equations with state symbols",
+      // spec 1.3: "full and ionic equations, including state symbols, for
+      // chemical reactions" — both marks (balance, state symbols) live here.
+      // 4.17 secondary: the reaction being written is alkane + oxygen.
+      specPoints: ["1.3", "4.17"],
       questionText:
         "Write a balanced equation for the complete combustion of dodecane, C12H26.\n" +
         "Include state symbols.",
@@ -462,6 +495,11 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       answerType: "numeric",
       commandWord: "Calculate",
       topic: "Multi-step mass calculation",
+      // spec 1.7: "calculate reacting masses ... the four-step bridge
+      // (m → n → ratio → n → m) ... use these calculations on
+      // industrial-scale reactions such as combustion" — the six method
+      // marks ARE that bridge. 1.2 secondary (mole calculations).
+      specPoints: ["1.7", "1.2"],
       // MS p15 · M6 guidance: "307 (kg)"
       //          M6 accept:   "Allow 306 (kg)" -> acceptedValues
       //          M6 criterion: "calculation of mass (kg) of carbon dioxide/
@@ -564,6 +602,11 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       answerType: "structure",
       commandWord: "Draw",
       topic: "Skeletal formulae and isomers",
+      // spec 4.5: "name compounds and draw them as structural, displayed and
+      // skeletal formulae" — the drawing skill marked. 4.10 secondary:
+      // "alkanes (CₙH₂ₙ₊₂) ... draw and name structural isomers" (the
+      // isomer reasoning the examiner report says decided the marks).
+      specPoints: ["4.5", "4.10"],
       questionText:
         "The formula C12H26 represents many isomers, including six diethyloctanes. The names of four of these diethyloctanes are\n" +
         "\n" +
@@ -665,6 +708,10 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       answerType: "graph",
       commandWord: "Plot",
       topic: "Plotting ionisation energy against element",
+      // spec 2.17: "represent data, in a graphical form (including the use of
+      // logarithms of first ionisation energies on a graph) for elements 1 to
+      // 36" — this question, to the letter (MS even allows the log axis).
+      specPoints: ["2.17"],
       questionText:
         "Plot the following first ionisation energies of the elements in Period 2 on the grid below.\n" +
         "\n" +
@@ -754,6 +801,9 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       answerType: "numeric",
       commandWord: "Calculate",
       topic: "Percentage yield",
+      // spec 1.9: "percentage yields ... % yield = (actual mass ÷ theoretical
+      // mass) × 100" — the mark scheme's own M1–M3 chain.
+      specPoints: ["1.9"],
       // M3 guidance: "1/ 27.844 x 100 = 3.591%" · "Correct answer with some working scores 3".
       // No unit: a percentage yield is dimensionless, which is why this is
       // `numeric` and not `numeric_with_unit`.
@@ -891,6 +941,10 @@ export const WCH11_01_2025_MAY_JUNE: QuestionSet = {
       answerType: "long_text",
       commandWord: "Explain",
       topic: "Delocalised electrons and electrical conductivity",
+      // spec 3.21: "use the model to interpret electrical conductivity" — M1.
+      // 3.20 secondary: "giant lattices of metal ions in a sea of delocalised
+      // electrons" — the M2 diagram.
+      specPoints: ["3.21", "3.20"],
       questionText:
         "Metals conduct electricity when solid.\n" +
         "\n" +

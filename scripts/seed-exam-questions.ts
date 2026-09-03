@@ -461,7 +461,7 @@ class Journal {
 async function upsertReversibly(opts: {
   db: SupabaseClient;
   journal: Journal;
-  table: "mark_scheme_items" | "question_expected_answers";
+  table: "mark_scheme_items" | "question_expected_answers" | "question_spec_points";
   /** The column scoping the snapshot to this question's rows. */
   scopeColumn: "question_id";
   scopeValue: string;
@@ -581,6 +581,7 @@ async function upsertReversibly(opts: {
 type PaperRow = {
   id: string;
   slug: string;
+  course_id: string;
   paper_code: string | null;
   session: string | null;
   year: number | null;
@@ -618,6 +619,8 @@ const REQUIRED_COLUMNS: RequiredColumn[] = [
   // 0031 — a separate, staff-only table.
   { table: "question_expected_answers", column: "expected_value", migration: "0031" },
   { table: "question_expected_answers", column: "marks_on_correct_answer", migration: "0031" },
+  // 0035 — the multi-value spec mapping the mastery evidence model reads.
+  { table: "question_spec_points", column: "spec_code", migration: "0035" },
 ];
 
 /** What the plan says will happen to one fixture question. */
@@ -646,7 +649,7 @@ async function verifyPaper(
 ): Promise<PaperRow> {
   const { data, error } = await db
     .from("past_papers")
-    .select("id, slug, paper_code, session, year, total_marks, status, paper_pdf_path")
+    .select("id, slug, course_id, paper_code, session, year, total_marks, status, paper_pdf_path")
     .eq("id", set.paperId)
     .maybeSingle();
 
@@ -703,6 +706,64 @@ async function verifySchema(db: SupabaseClient): Promise<void> {
   fail(
     `the database is missing schema this script writes:\n  - ${verdict.failures.join("\n  - ")}\n\nNothing was written.`,
   );
+}
+
+/**
+ * Every spec code the fixture names must exist in the paper's own course
+ * specification — spec_points reached through the course's topics. A code the
+ * catalogue does not hold is refused OUTRIGHT, before anything is written:
+ * an invented or mistyped code would seed evidence no specification map can
+ * place, silently. Returns code -> description so the rows can carry the
+ * wording they were mapped against (0035's denormalised spec_text).
+ */
+async function resolveSpecCodes(
+  db: SupabaseClient,
+  courseId: string,
+  set: QuestionSet,
+): Promise<Map<string, string | null>> {
+  const wanted = new Set<string>();
+  for (const q of set.questions) for (const c of q.specPoints ?? []) wanted.add(c);
+  if (wanted.size === 0) return new Map();
+
+  const { data: topics, error: topicsError } = await db
+    .from("topics")
+    .select("id")
+    .eq("course_id", courseId);
+  if (topicsError) fail(`could not read topics for the paper's course: ${topicsError.message}`);
+  const topicIds = (topics ?? []).map((t) => (t as { id: string }).id);
+  if (topicIds.length === 0) {
+    fail(
+      `the fixture carries ${wanted.size} spec code(s) but the paper's course has no topics ` +
+        `in the catalogue — nothing to resolve them against.`,
+    );
+  }
+
+  const { data: points, error: pointsError } = await db
+    .from("spec_points")
+    .select("code, description, status")
+    .in("topic_id", topicIds);
+  if (pointsError) fail(`could not read spec_points: ${pointsError.message}`);
+
+  const byCode = new Map<string, string | null>();
+  for (const p of points ?? []) {
+    const row = p as { code: string; description: string | null; status: string | null };
+    // An archived point is the catalogue's soft-delete — mapping against it
+    // would resurrect it as an evidence bucket the explorer filters out.
+    if (row.status === "archived") continue;
+    byCode.set(row.code, row.description ?? null);
+  }
+
+  const unknown = [...wanted].filter((c) => !byCode.has(c)).sort();
+  if (unknown.length > 0) {
+    fail(
+      `${unknown.length} spec code(s) in the fixture are not in the paper's course ` +
+        `specification: ${unknown.join(", ")}. Fix the fixture — the importer does not invent codes.`,
+    );
+  }
+
+  const resolved = new Map<string, string | null>();
+  for (const c of wanted) resolved.set(c, byCode.get(c) ?? null);
+  return resolved;
 }
 
 async function loadExistingQuestions(
@@ -1075,6 +1136,27 @@ function buildMarkSchemeRows(questionId: string, q: QuestionInput) {
   }));
 }
 
+/**
+ * question_spec_points rows (0035). display_order carries the fixture's own
+ * ordering — the FIRST code is the primary, the one mastery evidence
+ * attributes the marks to (src/lib/specification/exam-evidence.ts).
+ * spec_text is the statement AS THE CATALOGUE HOLDS IT AT SEED TIME,
+ * resolved by resolveSpecCodes() — denormalised on purpose (0035's design:
+ * the mapping records the wording it was made against).
+ */
+function buildSpecPointRows(
+  questionId: string,
+  q: QuestionInput,
+  specTextByCode: Map<string, string | null>,
+) {
+  return (q.specPoints ?? []).map((code, index) => ({
+    question_id: questionId,
+    spec_code: code,
+    spec_text: specTextByCode.get(code) ?? null,
+    display_order: index,
+  }));
+}
+
 function buildKeylessRows(
   questionId: string,
   q: QuestionInput,
@@ -1138,7 +1220,7 @@ function renderValue(value: unknown, indent: string): string {
  * is not a description of what would be written — it IS what would be written,
  * shown before it is sent.
  */
-function printWritePlan(set: QuestionSet, plan: PlanRow[]) {
+function printWritePlan(set: QuestionSet, plan: PlanRow[], specTextByCode: Map<string, string | null>) {
   const PLACEHOLDER = "<uuid assigned on insert>";
 
   type TablePlan = { table: string; rows: Record<string, unknown>[] };
@@ -1147,6 +1229,7 @@ function printWritePlan(set: QuestionSet, plan: PlanRow[]) {
     { table: "question_regions", rows: [] },
     { table: "mark_scheme_items", rows: [] },
     { table: "question_expected_answers", rows: [] },
+    { table: "question_spec_points", rows: [] },
     { table: "examiner_report_insights", rows: [] },
     { table: "model_answers", rows: [] },
   ];
@@ -1163,6 +1246,9 @@ function printWritePlan(set: QuestionSet, plan: PlanRow[]) {
     byName
       .get("question_expected_answers")!
       .rows.push(...buildExpectedAnswerRows(qid, question));
+    byName
+      .get("question_spec_points")!
+      .rows.push(...buildSpecPointRows(qid, question, specTextByCode));
     for (const { table, rows } of buildKeylessRows(qid, question)) {
       byName.get(table)!.rows.push(...rows);
     }
@@ -1239,6 +1325,7 @@ function printWritePlan(set: QuestionSet, plan: PlanRow[]) {
 // ============================================================================
 
 type Stats = {
+  specPoints: number;
   questionsInserted: number;
   questionsUpdated: number;
   questionsUnchanged: number;
@@ -1491,8 +1578,10 @@ async function applyPlan(
   plan: PlanRow[],
   options: Options,
   journal: Journal,
+  specTextByCode: Map<string, string | null>,
 ): Promise<Stats> {
   const stats: Stats = {
+    specPoints: 0,
     questionsInserted: 0,
     questionsUpdated: 0,
     questionsUnchanged: 0,
@@ -1611,6 +1700,23 @@ async function applyPlan(
       journalUndo: row.existing !== null,
     });
     if (expectedRows.length > 0) stats.expectedAnswers += 1;
+
+    // question_spec_points has the same real-unique-key shape (0035:
+    // UNIQUE (question_id, spec_code)), so it takes the same reversible
+    // upsert path as the mark scheme.
+    const specRows = buildSpecPointRows(questionId, q, specTextByCode);
+    await upsertReversibly({
+      db,
+      journal,
+      table: "question_spec_points",
+      scopeColumn: "question_id",
+      scopeValue: questionId,
+      rows: specRows,
+      onConflict: "question_id,spec_code",
+      what: q.questionNumber,
+      journalUndo: row.existing !== null,
+    });
+    stats.specPoints += specRows.length;
 
     // --- keyless child tables --------------------------------------------
     const BUMP: Record<ChildTable, (n: number) => void> = {
@@ -1804,6 +1910,16 @@ async function main() {
       `${paper.total_marks} marks  status=${paper.status}\n     slug ${paper.slug}\n     id   ${paper.id}`,
   );
 
+  heading("3b. Specification codes");
+  const specTextByCode = await resolveSpecCodes(db, paper.course_id, set);
+  const mappedLeaves = set.questions.filter((q) => (q.specPoints?.length ?? 0) > 0).length;
+  console.log(
+    specTextByCode.size === 0
+      ? `  ${DIM}— the fixture maps no spec codes; question_spec_points is untouched${RESET}`
+      : `  ${GREEN}✓${RESET} ${specTextByCode.size} distinct code(s) across ${mappedLeaves} ` +
+          `question(s), every one resolved against the course specification`,
+  );
+
   heading("4. Region gate");
   await gateRegions(set, paper, url);
 
@@ -1893,7 +2009,7 @@ async function main() {
   );
 
   // ---- 5/6. what every table receives, and what the rows look like --------
-  printWritePlan(set, plan);
+  printWritePlan(set, plan, specTextByCode);
 
   // ---- 7. write, or don't -------------------------------------------------
   if (!options.commit) {
@@ -1922,7 +2038,7 @@ async function main() {
   const journal = new Journal();
   let stats: Stats;
   try {
-    stats = await applyPlan(db, set, plan, options, journal);
+    stats = await applyPlan(db, set, plan, options, journal, specTextByCode);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`\n  ${RED}✗${RESET} ${message}`);
@@ -1975,6 +2091,7 @@ async function main() {
   console.log(`  questions   ${stats.questionsInserted} inserted, ${stats.questionsUpdated} updated, ${stats.questionsUnchanged} unchanged`);
   console.log(`  mark scheme ${stats.markSchemePoints} point(s) upserted`);
   console.log(`  expected    ${stats.expectedAnswers} answer(s) upserted (staff-only table)`);
+  console.log(`  spec codes  ${stats.specPoints} question_spec_points row(s) upserted`);
   console.log(`  regions     ${stats.regions}`);
   console.log(`  insights    ${stats.insights}`);
   console.log(`  model answ. ${stats.modelAnswers}`);
