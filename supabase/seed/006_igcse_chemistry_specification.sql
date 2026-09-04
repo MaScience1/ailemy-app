@@ -2,9 +2,29 @@
 -- AILEMY — PEARSON EDEXCEL INTERNATIONAL GCSE CHEMISTRY (4CH1) SPECIFICATION
 -- 28 sub-topics, 182 specification points (section 1: 60, section 2: 50, section 3: 22, section 4: 50)
 --
--- ⚠ NOT YET APPLIED. Prepared 2026-09-04 for owner review. On application,
---   rewrite this header the same day with the date and verification result
---   (the 004 rule: the seed folder is the record of what is live).
+-- ⚠ APPLIED 2026-09-04 by the owner via the Supabase SQL Editor (whole-file
+--   paste, sentinel confirmed, "Success. No rows returned") and VERIFIED the
+--   same day, read-only, by scripts/db-checks/igcse-4ch1-spec-verify.ts
+--   (ALL CHECKS PASS) plus direct reads and a rendered-page check:
+--     · 28 topics, all unit_id NULL, slugs/codes/names/order exact
+--     · 182 specification points, wording byte-exact to the extraction,
+--       titles equal to their derived official-stem trims
+--     · 52 Paper 2-only (C-suffix) points
+--     · zero duplicate codes, zero malformed codes, zero orphan points
+--     · zero cross-course contamination (58 textual code collisions with
+--       IAL co-existing correctly on separate rows)
+--     · IAL unchanged: 157 live+verified + 1 archived (1.13)
+--     · zero lesson mappings and zero question mappings created
+--     · all 182 points remain status='draft', verified_at NULL —
+--       INTENTIONALLY awaiting the Phase 3 official-verification pass
+--       (the 004/005 lifecycle convention)
+--     · Specification Explorer renders the course: "182 specification
+--       points · 28 topics", unit-less layout, no "unit" noun, deep links
+--       and Unicode super/subscripts intact.
+--   A first apply attempt earlier the same day failed on spec_points.title
+--   NOT NULL and rolled back completely (nothing applied); the generator
+--   was fixed to derive titles and the guard suite gained the DDL-derived
+--   required-column preflight before this successful run.
 --
 -- PROVENANCE — nothing here is invented:
 --   Every sub-topic, code and statement is extracted from the OFFICIAL
