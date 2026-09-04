@@ -36,6 +36,10 @@ const ROOT = join(HERE, "../..");
 const COURSE_SLUG = "edexcel-igcse-chemistry";
 const IAL_SLUG = "edexcel-ial-as-chemistry";
 const BASELINE = process.argv.includes("--baseline");
+/** After 007 (the official-verification lifecycle pass): every point must be
+ *  status 'live' with verified_at set. Without the flag, lifecycle is not
+ *  asserted either way, so the same gate serves pre- and post-007 states. */
+const EXPECT_VERIFIED = process.argv.includes("--verified");
 
 // ── env: anon key, hand-parsed like every db-check ──────────────────────────
 const env: Record<string, string> = {};
@@ -96,8 +100,8 @@ async function main() {
   const points = topicIds.length
     ? await rows<{
         id: string; topic_id: string; code: string; title: string; description: string;
-        status: string; sort_order: number;
-      }>(`spec_points?topic_id=in.(${topicIds.join(",")})&select=id,topic_id,code,title,description,status,sort_order`)
+        status: string; verified_at: string | null; sort_order: number;
+      }>(`spec_points?topic_id=in.(${topicIds.join(",")})&select=id,topic_id,code,title,description,status,verified_at,sort_order`)
     : [];
 
   const ial = await rows<{ id: string }>(`courses?slug=eq.${IAL_SLUG}&select=id`);
@@ -176,6 +180,11 @@ async function main() {
   check(`${json.meta.counts.cOnly} C-suffix (Paper 2-only) points (derived)`,
     points.filter((p) => p.code.endsWith("C")).length === json.meta.counts.cOnly);
   check("no archived points", points.every((p) => p.status !== "archived"));
+  if (EXPECT_VERIFIED) {
+    check("post-007 lifecycle: every point is 'live' with verified_at set",
+      points.every((p) => p.status === "live" && p.verified_at !== null),
+      `${points.filter((p) => p.status !== "live" || p.verified_at === null).length} not yet verified`);
+  }
 
   check("IAL course still holds its own specification (isolation, not displacement)",
     ialPoints.length >= 100, ialPoints.length);

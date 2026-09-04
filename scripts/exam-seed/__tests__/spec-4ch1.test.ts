@@ -409,5 +409,50 @@ console.log("§6 schema-constraint preflight — required columns derived from t
     json.points.filter((p, i) => insertTitles[i] !== pointTitle(p.text)).map((p) => p.code).slice(0, 5).join(","));
 }
 
+// ============================================================================
+console.log("§7 the 007 lifecycle pass touches lifecycle and NOTHING else");
+// ============================================================================
+// 007 flips 006's 182 rows draft -> live+verified_at (005's exact IAL
+// semantics). This section refuses any version of 007 that could write
+// academic content, reach another course, or run unguarded.
+{
+  const v = readFileSync(repo("supabase/seed/007_igcse_official_spec_verification.sql"), "utf8");
+  const sets = [...v.matchAll(/\bSET\s+([\s\S]*?)\n\s*FROM\b/g)].map((m) => m[1]);
+  t("exactly one UPDATE, setting only status and verified_at",
+    sets.length === 1 && /^status = 'live', verified_at = now\(\)\s*$/.test(sets[0] ?? ""),
+    JSON.stringify(sets));
+  t("no academic column is ever written",
+    !/SET[\s\S]{0,200}?(code|title|description|topic_id|sort_order|command_terms)\s*=/.test(v));
+  t("no INSERT, DELETE or TRUNCATE anywhere",
+    !/\bINSERT\b/i.test(v) && !/\bDELETE\b/i.test(v) && !/\bTRUNCATE\b/i.test(v));
+  // ⚠ Anchored to the UPDATE STATEMENT ITSELF — the same scope lines exist
+  //   in the pre-guard SELECTs, so a bare regex over the whole file passed
+  //   even with the UPDATE's scope stripped (found by sabotage, 2026-09-04;
+  //   the runtime guards would NOT catch that today, because no other course
+  //   currently holds draft points for a stray UPDATE to touch).
+  const updateStmt = /UPDATE spec_points p[\s\S]*?;/.exec(v)?.[0] ?? "";
+  t("the UPDATE statement itself is scoped by course slug AND the draft/NULL state",
+    updateStmt.includes("c.slug = 'edexcel-igcse-chemistry'") &&
+    updateStmt.includes("p.status = 'draft' AND p.verified_at IS NULL"),
+    updateStmt.slice(0, 200));
+  t("IAL is named only inside the post-guard that asserts it UNCHANGED",
+    (v.match(/edexcel-ial-as-chemistry/g) ?? []).length === 1 &&
+    /INTO ial_live, ial_verified, ial_archived/.test(v));
+  t("guards: eligible=182 pre-check, ROW_COUNT=182, end state 182/0, IAL 157/157/1, idempotent no-op arm",
+    v.includes("expected 182 or an exact no-op") &&
+    v.includes("GET DIAGNOSTICS updated = ROW_COUNT") &&
+    v.includes("expected exactly 182") &&
+    v.includes("expected 182 / 0") &&
+    v.includes("expected 157/157/1") &&
+    v.includes("already applied — 182 rows live+verified"));
+  t("transactional with sentinel: BEGIN, one DO block, COMMIT, END-OF-007 last line",
+    v.indexOf("BEGIN;") < v.indexOf("DO $$") &&
+    v.indexOf("COMMIT;") > v.indexOf("END $$;") &&
+    v.trimEnd().endsWith("If this line is missing, the paste was truncated."));
+  t("the 182/52 expectations in 007 agree with the extraction (derived, not drifting)",
+    v.includes("expected 182") && json.meta.counts.points === 182 &&
+    /52[\s\S]{0,8}--?\s*C-suffix/.test(v) && json.meta.counts.cOnly === 52);
+}
+
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);
 process.exit(fail === 0 ? 0 : 1);
