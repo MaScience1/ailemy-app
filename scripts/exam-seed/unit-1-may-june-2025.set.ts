@@ -27,12 +27,35 @@ import {
 import { deriveWithOverlay, type PaperMeta } from "../../src/lib/exam/fixture-adapter.ts";
 import type { QuestionSet } from "../../src/lib/exam/question-set.ts";
 import overlay from "./answer-types.unit-1-may-june-2025.json" with { type: "json" };
+import specOverlay from "./spec-points.unit-1-may-june-2025.json" with { type: "json" };
 
 const derived = deriveWithOverlay(
   UNIT_1_MAY_JUNE_2025,
   UNIT_1_MAY_JUNE_2025_PAPER,
   overlay as { answerTypes: Record<string, string> },
 );
+
+/**
+ * Specification-point mappings — the second founder-supplied overlay, same
+ * pattern as answer-types: per-paper knowledge the generated artefact cannot
+ * state, keyed by questionNumber, validated at import.
+ *
+ * ⚠ AN OVERLAY KEY THAT MATCHES NO QUESTION IS A THROW, NOT A SKIP. A renamed
+ * or mistyped question number would otherwise drop its mapping silently, and
+ * the seeder would report one fewer mapped question with nothing looking
+ * wrong. Same philosophy as the refusals check below.
+ */
+const SPEC_POINTS = (specOverlay as { specPoints: Record<string, string[]> }).specPoints;
+{
+  const known = new Set(derived.questions.map((q) => q.questionNumber));
+  const unknown = Object.keys(SPEC_POINTS).filter((n) => !known.has(n));
+  if (unknown.length > 0) {
+    throw new Error(
+      `spec-points overlay names ${unknown.length} question(s) the derived set does not ` +
+        `contain: ${unknown.join(", ")}`,
+    );
+  }
+}
 
 /**
  * ⚠ A REFUSAL HERE IS A THROW, NOT A WARNING.
@@ -76,6 +99,7 @@ export const UNIT_1_MAY_JUNE_2025_SET: QuestionSet = {
     displayOrder: q.displayOrder,
     marks: q.marks,
     answerType: q.answerType,
+    ...(SPEC_POINTS[q.questionNumber] ? { specPoints: SPEC_POINTS[q.questionNumber] } : {}),
     ...(q.expectedAnswer
       ? {
           expectedAnswer: {

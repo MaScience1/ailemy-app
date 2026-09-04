@@ -200,7 +200,29 @@ export type QuestionInput = {
   /** "State", "Calculate", "Explain", "Draw" — drives the marking prompt. */
   commandWord?: string;
   topic?: string;
+  /**
+   * @deprecated The single-value 0028 column, superseded by {@link specPoints}
+   * and the question_spec_points table (0035). Retained so an older fixture
+   * still compiles; the importer ignores it.
+   */
   specPoint?: string;
+  /**
+   * Specification codes this question assesses — question_spec_points rows
+   * (0035), written by the importer, which RESOLVES each code against the
+   * paper's own course specification (spec_points via topics) and REFUSES a
+   * code the catalogue does not hold: an invented code would silently create
+   * evidence no specification map can place.
+   *
+   * ⚠ ORDER IS THE MAPPING'S RANKING: the FIRST code is the primary — the
+   * point the question chiefly assesses — and it is the one the mastery
+   * evidence model attributes the marks to (display_order carries the order
+   * into the table; see src/lib/specification/exam-evidence.ts for why the
+   * marks go to exactly one code). Codes after it are secondary context.
+   *
+   * Leaves only: a container's marks live on its children, so mapping the
+   * container would create evidence attribution nothing can use.
+   */
+  specPoints?: string[];
   /**
    * The final answer a deterministic marker compares against (migration 0031).
    *
@@ -479,6 +501,16 @@ export function validateQuestionSet(
       }
     }
 
+    // --- spec points --------------------------------------------------------
+    const specCodes = new Set<string>();
+    for (const code of q.specPoints ?? []) {
+      if (!code.trim()) push(at, "specPoints contains a blank code.");
+      if (specCodes.has(code)) {
+        push(at, `duplicate spec code ${code} — 0035 is UNIQUE (question_id, spec_code).`);
+      }
+      specCodes.add(code);
+    }
+
     // A leaf worth n marks should have n mark-scheme points. This is the rule
     // 0028 CANNOT express — it needs the mark scheme and the question side by
     // side — and it is the one that catches a transcription that dropped a
@@ -511,6 +543,12 @@ export function validateQuestionSet(
       push(
         parentNumber,
         `has children but answerType is ${JSON.stringify(parent.answerType)}. A container is not answerable — use ${JSON.stringify(CONTAINER_ANSWER_TYPE)}.`,
+      );
+    }
+    if ((parent.specPoints?.length ?? 0) > 0) {
+      push(
+        parentNumber,
+        "is a container but carries specPoints. Marks live on the leaves, so spec mapping must too — evidence attribution reads the leaf's codes.",
       );
     }
   }

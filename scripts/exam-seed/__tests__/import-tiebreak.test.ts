@@ -126,7 +126,24 @@ console.log("\n=== 0. the module RESOLVES — run FIRST, before anything execute
     cliOut = execFileSync("node", [
       "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON", SRC,
       "--subject=gcse-chemistry", "--root=/tmp/ailemy-does-not-exist",
-    ], { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+    ], {
+      encoding: "utf8", stdio: ["ignore", "pipe", "pipe"],
+      /**
+       * ⚠ DUMMY CREDENTIALS, DELIBERATELY. The CLI checks env before argument
+       * handling, so on a machine without .env.local this section false-redded
+       * on "NEXT_PUBLIC_SUPABASE_URL not found" — an env-file report dressed as
+       * an init failure, and a false red is how a real red gets ignored. What
+       * this section proves is that the MODULE initialises and reaches its
+       * argument handling; a nonsense URL and key prove that on any machine,
+       * and the nonexistent --root stops the run before anything could be
+       * contacted, let alone written.
+       */
+      env: {
+        ...process.env,
+        NEXT_PUBLIC_SUPABASE_URL: "http://localhost:54321",
+        SUPABASE_SERVICE_ROLE_KEY: "dummy-key-for-init-check",
+      },
+    });
   } catch (e) {
     const err = e as { stdout?: string; stderr?: string };
     cliOut = `${err.stdout ?? ""}${err.stderr ?? ""}`;

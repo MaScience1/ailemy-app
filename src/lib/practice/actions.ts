@@ -49,6 +49,12 @@ type StartResult =
       ok: true;
       seed: number;
       fingerprint: string;
+      /** Server clock at generation, ISO. Returned to the client and handed
+       *  back at submit — the engine is stateless by seed, so the server has
+       *  no other memory of when this attempt began. Advisory: it is clamped
+       *  on the way back in (see plausibleStartedAt) and recorded on the
+       *  student's own attempt row only. */
+      startedAt: string;
       questions: ServedQuestion[];
       /** Present when the approved pool could not fill ATTEMPT_SIZE distinct
        *  questions. The UI states the REAL number it is serving (§62) — the
@@ -148,6 +154,7 @@ export async function startPractice(input: {
       ok: true,
       seed,
       fingerprint: attemptFingerprint(spec),
+      startedAt: new Date().toISOString(),
       questions: toServed(spec),
       shortfall: spec.shortfall,
     };
@@ -162,6 +169,9 @@ export async function submitPractice(input: {
   lessonSlug: string;
   seed: number;
   fingerprint: string;
+  /** The startedAt this attempt's startPractice returned. Optional so an
+   *  in-flight client from before this field existed still submits. */
+  startedAt?: string;
   avoidFamilies?: string[];
   focusFamilies?: string[];
   selections: (number | null)[];
@@ -198,8 +208,34 @@ export async function submitPractice(input: {
   }
 
   const marked = markAttempt(spec, input.selections);
-  const recorded = await recordPracticeEvidence(marked, user?.id ?? null, lesson.id);
+  const recorded = await recordPracticeEvidence(
+    marked,
+    user?.id ?? null,
+    lesson.id,
+    plausibleStartedAt(input.startedAt),
+  );
   return { ok: true, marked, recorded };
+}
+
+/**
+ * The startedAt a client hands back rode through the browser, so it is checked
+ * rather than trusted: a valid ISO instant, not in the future (60s of clock
+ * skew allowed), not absurdly old (7 days — a tab left open over a weekend is
+ * real; older is stale enough to be misleading history). Anything else becomes
+ * NULL, which is what started_at meant before it was wired: "not recorded",
+ * never a guess.
+ */
+const STARTED_AT_SKEW_MS = 60_000;
+const STARTED_AT_MAX_AGE_MS = 7 * 24 * 60 * 60_000;
+
+function plausibleStartedAt(raw: string | undefined): string | null {
+  if (!raw) return null;
+  const t = Date.parse(raw);
+  if (Number.isNaN(t)) return null;
+  const now = Date.now();
+  if (t > now + STARTED_AT_SKEW_MS) return null;
+  if (t < now - STARTED_AT_MAX_AGE_MS) return null;
+  return new Date(t).toISOString();
 }
 
 /**
@@ -226,6 +262,7 @@ async function recordPracticeEvidence(
   marked: MarkedAttempt,
   studentId: string | null,
   lessonId: string,
+  startedAt: string | null,
 ): Promise<"saved" | "replay" | "device-only"> {
   if (!studentId) return "device-only";
   const db = await createClient();
@@ -252,6 +289,9 @@ async function recordPracticeEvidence(
       question_count: marked.outOf,
       score: marked.score,
       percent: marked.percent,
+      // 0065 granted started_at for INSERT from day one; it was simply never
+      // sent. NULL still means "not recorded" — see plausibleStartedAt.
+      started_at: startedAt,
       // §88 immutability: the marked questions as served, reconstructable
       // after families change.
       snapshot: marked.questions,

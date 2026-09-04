@@ -36,7 +36,7 @@ import { useLessonProgress } from "./LessonProgress";
 type Phase =
   | { name: "idle" }
   | { name: "loading" }
-  | { name: "active"; seed: number; fingerprint: string; questions: ServedQuestion[]; avoid: string[]; focus: string[]; shortfall?: { requested: number; served: number; reason: string } }
+  | { name: "active"; seed: number; fingerprint: string; startedAt: string; questions: ServedQuestion[]; avoid: string[]; focus: string[]; shortfall?: { requested: number; served: number; reason: string } }
   | { name: "marked"; marked: MarkedAttempt; avoid: string[]; recorded: "saved" | "replay" | "device-only"; shortfall?: { requested: number; served: number; reason: string } }
   | { name: "error"; reason: string };
 
@@ -84,6 +84,7 @@ export function LessonPractice({ lessonSlug }: { lessonSlug: string }) {
         name: "active",
         seed: res.seed,
         fingerprint: res.fingerprint,
+        startedAt: res.startedAt,
         questions: res.questions,
         avoid: opts.avoid ?? [],
         focus: opts.focus ?? [],
@@ -126,6 +127,7 @@ export function LessonPractice({ lessonSlug }: { lessonSlug: string }) {
       lessonSlug,
       seed: phase.seed,
       fingerprint: phase.fingerprint,
+      startedAt: phase.startedAt,
       avoidFamilies: phase.avoid,
       focusFamilies: phase.focus,
       selections,

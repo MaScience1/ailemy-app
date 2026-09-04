@@ -1,0 +1,17 @@
+{
+  "note": "Specification-point mappings for WCH11/01 May-June 2025, keyed by questionNumber; the FIRST code is the primary (mastery evidence attributes the marks there). Authored against the hand transcription scripts/exam-seed/wch11-01-2025-may-june.ts, where each mapping carries a // spec: comment quoting the matched statement from the IAL AS Chemistry specification (supabase/seed/004, verified in 005) — this file must agree with those cited mappings, and mastery-evidence-union.test.ts fails if it drifts. Only the ten leaves the transcription covers are mapped; the paper's other questions stay unmapped rather than guessed, and the seeder refuses any code the live catalogue does not hold.",
+  "paperSlug": "unit-1-may-june-2025",
+  "suppliedBy": "hand transcription wch11-01-2025-may-june.ts (cited per mapping), 2026-09-03",
+  "specPoints": {
+    "1": ["2.1", "2.5"],
+    "2": ["1.8", "1.7", "1.5"],
+    "20(a)": ["1.8", "1.4"],
+    "20(b)(i)": ["4.17"],
+    "20(b)(ii)": ["1.3", "4.17"],
+    "20(b)(iii)": ["1.7", "1.2"],
+    "20(b)(iv)": ["4.5", "4.10"],
+    "21(c)(i)": ["2.17"],
+    "22(c)": ["1.9"],
+    "23(c)(ii)": ["3.21", "3.20"]
+  }
+}

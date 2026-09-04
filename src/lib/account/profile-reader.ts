@@ -372,7 +372,15 @@ export type CourseAcademics = {
   questionsAnswered: number;
   /** Mark-weighted across submitted attempts (§95), or a stated refusal (§96). */
   assessed: Unavailable | { available: true; awarded: number; outOf: number; percent: number };
-  /** ⚠ ALWAYS unavailable today — see the reason it carries. */
+  /**
+   * ⚠ ALWAYS unavailable here — and NO UI renders this field. The
+   * evidence-aware ranking exists now (src/lib/specification/rankings.ts,
+   * weaknessesFor — floor-gated, confidence-weighted, trend-bumped, with
+   * reasons) and is rendered on the specification map's "Needs attention"
+   * rail. If a profile visual ever wants a weakest topic, it consumes THAT
+   * engine through buildCourseInsights; this field stays a pointer so two
+   * surfaces cannot rank a student's weaknesses differently.
+   */
   weakestTopic: Unavailable;
 };
 
@@ -466,11 +474,19 @@ export async function loadAcademicSummary(
       weakestTopic: {
         available: false,
         /**
-         * ⚠ NOT "no weak topics". Topic mastery needs question_topics populated
-         * AND enough assessed marks per topic; the mark-scheme seed for WCH11/01
-         * has not landed. Saying "none" would be a claim about the student.
+         * ⚠ NOT "no weak topics" — and no longer "no topic breakdown exists".
+         * Topic-level mastery DOES exist: the specification map
+         * (/resources/[subject]/[course]/specification) computes it through
+         * buildCourseMastery() from the unified evidence. This summary card
+         * does not duplicate that calculation with a second, thinner one
+         * (exam-attempt totals have no topic key of their own here); it points
+         * at the one place the answer already lives. Computing a single
+         * weakest-topic call HERE from the same path is Phase 2 of the
+         * mastery work — until then, a pointer is the honest shape, and two
+         * surfaces disagreeing about a student's weakest topic is the defect
+         * this comment exists to prevent.
          */
-        reason: "Topic breakdown appears once the question bank is tagged and you have attempted enough marks in a topic.",
+        reason: "Your topic-by-topic standing lives on each course's specification map — open a course and choose Specification to see it.",
       },
     });
   }
