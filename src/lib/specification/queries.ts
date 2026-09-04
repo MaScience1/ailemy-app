@@ -3,6 +3,7 @@ import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { compareSpecCodes } from "./codes.ts";
 import { examEvidenceRows } from "./exam-evidence.ts";
+import { groupTopicsByUnit, UNGROUPED_UNIT_ID } from "./grouping.ts";
 import type {
   PracticeEvidenceRow,
   SpecificationTree,
@@ -164,13 +165,21 @@ export const loadSpecificationTree = cache(async function loadSpecificationTree(
     points: pointsByTopic.get(t.id as string) ?? [],
   }));
 
-  const unitNodes: SpecUnitNode[] = (units.data ?? []).map((u) => ({
-    id: u.id as string,
-    code: (u.code as string) ?? null,
-    name: u.name as string,
-    topics: topicNodes
-      .filter((t) => t.unitId === u.id)
-      .map(({ unitId: _unitId, ...t }): SpecTopicNode => t),
+  // ⚠ grouping.ts owns where a topic hangs — a unit-less course (IGCSE, UK
+  // GCSE: topics with unit_id NULL and no units rows at all) renders its
+  // topics under one UNGROUPED_UNIT_ID group instead of being dropped.
+  const unitNodes: SpecUnitNode[] = groupTopicsByUnit(
+    (units.data ?? []).map((u) => ({
+      id: u.id as string,
+      code: (u.code as string) ?? null,
+      name: u.name as string,
+    })),
+    topicNodes,
+  ).map(({ unit, topics: groupTopics }) => ({
+    id: unit?.id ?? UNGROUPED_UNIT_ID,
+    code: unit?.code ?? null,
+    name: unit?.name ?? "Ungrouped",
+    topics: groupTopics.map(({ unitId: _unitId, ...t }): SpecTopicNode => t),
   }));
 
   return { ...base, units: unitNodes, error: null };
