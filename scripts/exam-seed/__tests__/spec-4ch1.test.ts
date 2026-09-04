@@ -1,0 +1,341 @@
+/**
+ * 4CH1 specification extraction + seed — the pre-apply verification audit.
+ *
+ *   node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON \
+ *     scripts/exam-seed/__tests__/spec-4ch1.test.ts
+ *
+ * ============================================================================
+ * ⚠ THE EXPECTATION IS RE-DERIVED, NEVER TYPED (AGENTS.md)
+ * ============================================================================
+ * Three artefacts descend from the official Issue 3 PDF:
+ *   content-lines.txt (near-source: every content line with fonts/position)
+ *     → 4ch1-issue3.json (the canonical extraction)
+ *       → 006_igcse_chemistry_specification.sql (the seed)
+ * §1 re-parses content-lines.txt with its OWN small parser — different logic
+ * from extract_4ch1.py — and every downstream count, code, order and flag is
+ * checked against THAT, so the extractor cannot vouch for itself. The only
+ * typed numbers in this file are cross-checks a reader can verify against
+ * the printed document (4 sections, 28 lettered sub-topics).
+ *
+ * No credentials, no database. The post-apply twin is
+ * scripts/db-checks/igcse-4ch1-spec-verify.ts.
+ */
+
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
+import { topicSlug } from "../../spec-extract/generate-4ch1-seed.ts";
+import { compareSpecCodes } from "../../../src/lib/specification/codes.ts";
+import {
+  groupTopicsByUnit,
+  UNGROUPED_UNIT_ID,
+} from "../../../src/lib/specification/grouping.ts";
+import { buildCourseMastery, courseVocabulary } from "../../../src/lib/specification/mastery.ts";
+import type { MasteryEvidenceRow, SpecUnitNode } from "../../../src/lib/specification/types.ts";
+
+let pass = 0, fail = 0;
+const t = (n: string, c: boolean, got?: unknown) => {
+  c ? (pass++, console.log("  ✓ " + n))
+    : (fail++, console.log("  ✗ " + n + (got !== undefined ? "\n      " + String(got) : "")));
+};
+
+const repo = (p: string) => fileURLToPath(new URL(`../../../${p}`, import.meta.url));
+const norm = (s: string) => s.replace(/\s+/g, " ").trim();
+
+// ── the three artefacts ─────────────────────────────────────────────────────
+const rawLines = readFileSync(repo("scripts/spec-extract/4ch1-issue3-content-lines.txt"), "utf8")
+  .split("\n");
+type Extraction = {
+  meta: {
+    counts: {
+      points: number; topics: number; cOnly: number; practical: number;
+      bySection: Record<string, number>;
+    };
+  };
+  sections: { number: number; name: string }[];
+  topics: { section: number; sectionName: string; letter: string; name: string; order: number }[];
+  points: {
+    code: string; section: number; number: number; cOnly: boolean; practical: boolean;
+    topicOrder: number; order: number; text: string;
+  }[];
+};
+const json: Extraction = JSON.parse(
+  readFileSync(repo("scripts/spec-extract/4ch1-issue3.json"), "utf8"),
+);
+const sql = readFileSync(repo("supabase/seed/006_igcse_chemistry_specification.sql"), "utf8");
+
+// ============================================================================
+console.log("§1 independent re-derivation from the near-source line dump");
+// ============================================================================
+// A deliberately different parse: statements are found by code-at-line-start,
+// their extent by the next code/heading, bold by the code line's fonts.
+type Derived = {
+  code: string; section: number; number: number; bold: boolean;
+  topicKey: string; order: number; textNorm: string;
+};
+const derived: Derived[] = [];
+const derivedTopics: { key: string; name: string }[] = [];
+{
+  let started = false;
+  let preview = false;
+  let topicKey = "";
+  let cur: { code: string; section: number; number: number; bold: boolean; topicKey: string; parts: string[] } | null = null;
+  let section = 0;
+  const close = () => {
+    if (cur) {
+      derived.push({
+        code: cur.code, section: cur.section, number: cur.number, bold: cur.bold,
+        topicKey: cur.topicKey, order: derived.length + 1,
+        textNorm: norm(cur.parts.join(" ")),
+      });
+      cur = null;
+    }
+  };
+  for (const line of rawLines) {
+    const m = /^\[p=\d+ x=[\d.]+ ([^\]]*) \[([^\]]*)\]\] (.*)$/.exec(line);
+    if (!m) continue;
+    const fonts = m[1];
+    const sizes = m[2];
+    const text = m[3].trim();
+    if (!text || fonts.includes("TrebuchetMS") || sizes === "8") continue;
+    if (sizes.includes("16") && fonts.includes("Bold")) {
+      const s = /^([1-4])\s+(.+)$/.exec(text);
+      if (s) { close(); started = true; preview = false; section = Number(s[1]); topicKey = ""; continue; }
+    }
+    if (!started) continue;
+    if (text === "The following sub-topics are covered in this section.") { preview = true; continue; }
+    const sub = /^\(([a-z])\)\s+(.+)$/.exec(text);
+    if (sub && fonts.includes("Bold")) {
+      close(); preview = false;
+      topicKey = `${section}(${sub[1]})`;
+      derivedTopics.push({ key: topicKey, name: sub[2].trim() });
+      continue;
+    }
+    if (preview || text === "Students should:") continue;
+    const code = /^([1-4])\.(\d{1,2})(C?)\b\s*(.*)$/.exec(text);
+    if (code) {
+      close();
+      cur = {
+        code: `${code[1]}.${code[2]}${code[3]}`, section: Number(code[1]),
+        number: Number(code[2]), bold: fonts.includes("Bold"),
+        topicKey, parts: code[4] ? [code[4]] : [],
+      };
+      continue;
+    }
+    if (cur) cur.parts.push(text.replace(/^•\s*/, "• "));
+  }
+  close();
+}
+
+t("the dump yields the same point count as the JSON (derived, not typed)",
+  derived.length === json.points.length && derived.length === json.meta.counts.points,
+  `${derived.length} vs ${json.points.length}`);
+t("re-derivation is plausibly the whole specification (≥ 150 points — parser-rot guard)",
+  derived.length >= 150, derived.length);
+t("28 lettered sub-topics across exactly 4 sections",
+  derivedTopics.length === 28 && new Set(derived.map((d) => d.section)).size === 4,
+  derivedTopics.length);
+t("bold ⟺ C-suffix for every derived statement (the document's own Paper 2 marking)",
+  derived.every((d) => d.bold === d.code.endsWith("C")),
+  derived.filter((d) => d.bold !== d.code.endsWith("C")).map((d) => d.code).join(","));
+t("codes are contiguous 1..N within every section — no missing, no extra",
+  [1, 2, 3, 4].every((s) => {
+    const nums = derived.filter((d) => d.section === s).map((d) => d.number);
+    return nums.join(",") === Array.from({ length: nums.length }, (_, i) => i + 1).join(",");
+  }));
+t("every derived statement sits inside a lettered sub-topic",
+  derived.every((d) => d.topicKey !== ""));
+
+// ============================================================================
+console.log("§2 JSON ⟷ derivation: codes, order, topics, flags, wording");
+// ============================================================================
+{
+  const dCodes = derived.map((d) => d.code).join("|");
+  const jCodes = json.points.map((p) => p.code).join("|");
+  t("identical code sequence in document order", dCodes === jCodes);
+
+  const dByCode = new Map(derived.map((d) => [d.code, d]));
+  const topicKeyOf = new Map(json.topics.map((x) => [x.order, `${x.section}(${x.letter})`]));
+  t("every point's topic matches the sub-topic the document put it under",
+    json.points.every((p) => dByCode.get(p.code)?.topicKey === topicKeyOf.get(p.topicOrder)),
+    json.points.filter((p) => dByCode.get(p.code)?.topicKey !== topicKeyOf.get(p.topicOrder))
+      .map((p) => p.code).join(","));
+  t("cOnly flag ⟺ official C suffix, for every point",
+    json.points.every((p) => p.cOnly === p.code.endsWith("C")));
+  t("meta counts are sums of the data, not assertions",
+    json.meta.counts.cOnly === json.points.filter((p) => p.cOnly).length &&
+    json.meta.counts.topics === json.topics.length &&
+    Object.entries(json.meta.counts.bySection).every(
+      ([s, n]) => json.points.filter((p) => p.section === Number(s)).length === n,
+    ));
+  t("practical ⟺ the official 'practical:' prefix, for every point",
+    json.points.every((p) => p.practical === p.text.startsWith("practical:")) &&
+    json.meta.counts.practical === json.points.filter((p) => p.practical).length);
+
+  const wordingMismatches = json.points.filter(
+    (p) => norm(p.text) !== dByCode.get(p.code)?.textNorm,
+  );
+  t("wording: every statement matches the near-source dump verbatim (whitespace-normalised)",
+    wordingMismatches.length === 0,
+    wordingMismatches.map((p) => p.code).join(","));
+  t("no malformed codes (official shape N.NN with optional C)",
+    json.points.every((p) => /^[1-4]\.\d{1,2}C?$/.test(p.code)));
+  t("no duplicate codes",
+    new Set(json.points.map((p) => p.code)).size === json.points.length);
+  t("topic names match the document's bold sub-topic headings",
+    json.topics.every((x, i) => derivedTopics[i]?.key === `${x.section}(${x.letter})` &&
+      derivedTopics[i]?.name === x.name),
+    JSON.stringify(json.topics.map((x, i) => [derivedTopics[i]?.name, x.name])
+      .filter(([a, b]) => a !== b)));
+}
+
+// ============================================================================
+console.log("§3 the comparator orders the REAL code set as the document does");
+// ============================================================================
+{
+  const docOrder = json.points.map((p) => p.code);
+  const bySection = new Map<number, string[]>();
+  for (const p of json.points) {
+    bySection.set(p.section, [...(bySection.get(p.section) ?? []), p.code]);
+  }
+  const sorted = [...bySection.entries()].sort((a, b) => a[0] - b[0])
+    .flatMap(([, codes]) => codes.slice());
+  t("sanity: per-section concatenation reproduces document order", sorted.join("|") === docOrder.join("|"));
+  // ⚠ PAIRWISE, NEVER VIA sort(). Sorting a reversed array cannot expose a
+  //   broken comparator: TimSort recognises the descending run by comparing
+  //   ADJACENT pairs only and reverses it wholesale, so "1.5C" vs "1.10" —
+  //   the exact pair the lexical fallback got wrong — is never asked. Found
+  //   by sabotage: the pre-fix comparator passed the sort-based assertion.
+  const misordered: string[] = [];
+  for (let i = 0; i < docOrder.length; i++) {
+    for (let j = i + 1; j < docOrder.length; j++) {
+      if (!(compareSpecCodes(docOrder[i], docOrder[j]) < 0 &&
+            compareSpecCodes(docOrder[j], docOrder[i]) > 0)) {
+        misordered.push(`${docOrder[i]}⋛${docOrder[j]}`);
+      }
+    }
+  }
+  t("compareSpecCodes agrees with document order for EVERY pair of the real code set (16 471 pairs, incl. 1.5C < 1.10)",
+    misordered.length === 0, misordered.slice(0, 5).join(", "));
+  t("every code equals itself under the comparator",
+    docOrder.every((c) => compareSpecCodes(c, c) === 0));
+  t("the IAL shapes still order exactly as before (pure-numeric segments untouched)",
+    compareSpecCodes("1.2", "1.10") < 0 && compareSpecCodes("10.14", "9.1") > 0 &&
+    compareSpecCodes("1.4.2", "1.10") < 0 && compareSpecCodes("2.1", "2.1") === 0);
+}
+
+// ============================================================================
+console.log("§4 the seed SQL is exactly the JSON, course-scoped, non-destructive");
+// ============================================================================
+{
+  const pointInserts = [...sql.matchAll(
+    /INSERT INTO spec_points \(topic_id, code, title, description, command_terms, status, sort_order\)\nSELECT t\.id, '([^']+)', NULL, '((?:[^']|'')*)', NULL, 'draft', (\d+)\nFROM topics t JOIN courses cs ON cs\.id = t\.course_id AND cs\.slug = 'edexcel-igcse-chemistry'\nWHERE t\.slug = '([^']+)'/g,
+  )].map((m) => ({ code: m[1], text: m[2].replace(/''/g, "'"), sortOrder: Number(m[3]), slug: m[4] }));
+  t("exactly one spec-point INSERT per JSON point, in document order",
+    pointInserts.map((r) => r.code).join("|") === json.points.map((p) => p.code).join("|"),
+    `${pointInserts.length} inserts`);
+
+  const topicByOrder = new Map(json.topics.map((x) => [x.order, x]));
+  t("every point INSERT targets its own sub-topic's derived slug",
+    json.points.every((p, i) => {
+      const x = topicByOrder.get(p.topicOrder)!;
+      return pointInserts[i]?.slug === topicSlug(x.section, x.letter, x.name);
+    }));
+  t("every point INSERT carries the exact official wording",
+    json.points.every((p, i) => pointInserts[i]?.text === p.text),
+    json.points.filter((p, i) => pointInserts[i]?.text !== p.text).map((p) => p.code).slice(0, 5).join(","));
+  t("sort_order is the official number within the section",
+    json.points.every((p, i) => pointInserts[i]?.sortOrder === p.number));
+
+  const topicInserts = [...sql.matchAll(
+    /INSERT INTO topics \(course_id, unit_id, slug, code, name, status, sort_order\)\nSELECT c\.id, (NULL), '([^']+)', '([^']+)', '((?:[^']|'')*)', 'coming_soon', (\d+)\nFROM courses c WHERE c\.slug = 'edexcel-igcse-chemistry'/g,
+  )].map((m) => ({ unitId: m[1], slug: m[2], code: m[3], name: m[4].replace(/''/g, "'") }));
+  t("exactly one topic INSERT per sub-topic, every one with unit_id NULL (no fabricated units)",
+    topicInserts.length === json.topics.length && topicInserts.every((r) => r.unitId === "NULL"));
+  t("topic codes and names are the document's own",
+    json.topics.every((x, i) =>
+      topicInserts[i]?.code === `${x.section}(${x.letter})` && topicInserts[i]?.name === x.name));
+
+  t("idempotent: topics DO NOTHING + points DO UPDATE, one conflict clause per insert",
+    (sql.match(/^ON CONFLICT \(course_id, slug\) DO NOTHING;$/gm) ?? []).length === json.topics.length &&
+    (sql.match(/^ON CONFLICT \(topic_id, code\) DO UPDATE$/gm) ?? []).length === json.points.length);
+  t("non-destructive: no DELETE, no TRUNCATE, no UPDATE outside conflict clauses, no units rows",
+    !/\bDELETE\b/i.test(sql) && !/\bTRUNCATE\b/i.test(sql) &&
+    !/^\s*UPDATE\b/im.test(sql) && !/INSERT INTO units\b/.test(sql));
+  t("course isolation: scoped to edexcel-igcse-chemistry on EVERY insert; IAL never named",
+    (sql.match(/edexcel-igcse-chemistry/g) ?? []).length >= json.topics.length + json.points.length &&
+    !sql.includes("edexcel-ial"));
+  t("the self-verifying DO block pins the derived counts and the file ends with its sentinel",
+    sql.includes(`expected ${json.meta.counts.topics}'`) &&
+    sql.includes(`expected ${json.meta.counts.points}'`) &&
+    sql.includes(`expected ${json.meta.counts.cOnly}'`) &&
+    sql.trimEnd().endsWith("If this line is missing, the paste was truncated."));
+  t("transactional: BEGIN before the first insert, COMMIT after the DO block",
+    sql.indexOf("BEGIN;") < sql.indexOf("INSERT INTO topics") &&
+    sql.indexOf("COMMIT;") > sql.indexOf("DO $$"));
+}
+
+// ============================================================================
+console.log("§5 IAL untouched, and the two courses stay isolated");
+// ============================================================================
+{
+  const ial004 = readFileSync(repo("supabase/seed/004_ial_as_chem_specification.sql"), "utf8");
+  const ialCodes = new Set([...ial004.matchAll(/SELECT t\.id, '(\d{1,2}\.\d{1,2})', /g)].map((m) => m[1]));
+  t("004 still parses to the whole IAL specification (≥ 100 codes — untouched)",
+    ialCodes.size >= 100, ialCodes.size);
+  t("the textual collision is real (shared codes exist), which is why scoping matters",
+    [...ialCodes].some((c) => json.points.some((p) => p.code === c)));
+
+  // Build the REAL 4CH1 tree the explorer would build post-seed, and a
+  // minimal IAL-shaped tree sharing code "1.2"; the same evidence rows must
+  // bucket into each course's own topics and never leak.
+  const topicNodes = json.topics.map((x) => ({
+    id: `4ch1-${x.section}${x.letter}`,
+    code: `${x.section}(${x.letter})`,
+    name: x.name,
+    unitId: null as string | null,
+    points: json.points
+      .filter((p) => p.topicOrder === x.order)
+      .map((p) => ({
+        id: `pt-${p.code}`, code: p.code, title: null,
+        description: p.text, commandTerms: [], lessons: [],
+      })),
+  }));
+  const igcseUnits: SpecUnitNode[] = groupTopicsByUnit([], topicNodes).map(({ unit, topics }) => ({
+    id: unit ?? UNGROUPED_UNIT_ID, code: null, name: "Ungrouped",
+    topics: topics.map(({ unitId: _u, ...rest }) => rest),
+  })) as SpecUnitNode[];
+  const vocab = courseVocabulary(igcseUnits);
+  t("explorer shape: one synthetic group, every point in vocabulary, real topic ids",
+    igcseUnits.length === 1 && igcseUnits[0].id === UNGROUPED_UNIT_ID &&
+    vocab.pointsTotal === json.points.length &&
+    vocab.topicOfCode.get("1.1") === "4ch1-1a" && vocab.topicOfCode.get("4.50C") === "4ch1-4h");
+  t("zero lesson links — coverage is honestly zero until real IGCSE lessons exist",
+    igcseUnits[0].topics.every((x) => x.points.every((p) => p.lessons.length === 0)));
+
+  const evidence: MasteryEvidenceRow[] = Array.from({ length: 3 }, (_, i) => ({
+    attemptId: "a1", qIndex: i, specCode: "1.2", markAwarded: 1, markAvailable: 1,
+    attemptedAt: null, source: "lesson-practice", examConditions: false,
+  }));
+  const ialUnits: SpecUnitNode[] = [{
+    id: "ial-u1", code: "WCH11", name: "Unit 1",
+    topics: [{ id: "ial-t1", code: "1", name: "Formulae", points: [{
+      id: "ial-p", code: "1.2", title: null, description: "IAL 1.2", commandTerms: [], lessons: [],
+    }] }],
+  }];
+  const mIgcse = buildCourseMastery({ units: igcseUnits, evidence });
+  const mIal = buildCourseMastery({ units: ialUnits, evidence });
+  t("code '1.2' buckets to each course's OWN topic — never across",
+    mIgcse.byTopic["4ch1-1a"] !== undefined && mIal.byTopic["ial-t1"] !== undefined &&
+    mIgcse.byTopic["ial-t1"] === undefined && mIal.byTopic["4ch1-1a"] === undefined);
+  t("a C-only code is foreign evidence to IAL and set aside there",
+    buildCourseMastery({
+      units: ialUnits,
+      evidence: [{ ...evidence[0], specCode: "1.5C" }],
+    }).ignoredRows === 1);
+  t("zero-evidence 4CH1 course computes clean over the full real tree",
+    buildCourseMastery({ units: igcseUnits, evidence: [] }).summary.pointsTotal === json.points.length);
+}
+
+console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);
+process.exit(fail === 0 ? 0 : 1);

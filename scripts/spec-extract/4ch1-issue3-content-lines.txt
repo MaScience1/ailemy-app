@@ -1,0 +1,601 @@
+# Pearson Edexcel International GCSE in Chemistry (4CH1) — Issue 3
+# Content pages 15-32, extracted international-gcse-chemistry-4ch1-specification-issue3.pdf
+# pdf sha256 36e2080d2e99f060bcc18f2a9d0bbd8b29498b45e007fa232e3befcd89b73362
+[p=15 x=62.3  [8]] 
+[p=15 x=62.3 Verdana-Bold [18]] 2 Chemistry content
+[p=15 x=98.0 Verdana [12]] 1 Principles of chemistry 11
+[p=15 x=98.0 Verdana [12]] 2 Inorganic chemistry 16
+[p=15 x=98.0 Verdana [12]] 3 Physical chemistry 21
+[p=15 x=98.0 Verdana [12]] 4 Organic chemistry 23
+[p=15 x=62.3  [10]] 
+[p=15 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Chemistry 9
+[p=15 x=62.3 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=16 x=62.3  [8]] 
+[p=16 x=62.3 TrebuchetMS|Verdana [8, 10]] 10Pearson Edexcel International GCSE in Chemistry
+[p=16 x=220.9 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=17 x=62.3  [8]] 
+[p=17 x=62.3 Verdana-Bold [16]] 1 Principles of chemistry
+[p=17 x=62.3 Verdana [10]] The following sub-topics are covered in this section.
+[p=17 x=62.3 Verdana [10]] (a) States of matter
+[p=17 x=62.3 Verdana [10]] (b) Elements, compounds and mixtures
+[p=17 x=62.3 Verdana [10]] (c) Atomic structure
+[p=17 x=62.4 Verdana [10]] (d) The Periodic Table
+[p=17 x=62.4 Verdana [10]] (e) Chemical formulae, equations and calculations
+[p=17 x=62.4 Verdana [10]] (f) Ionic bonding
+[p=17 x=62.3 Verdana [10]] (g) Covalent bonding
+[p=17 x=62.4 Verdana [10]] (h) Metallic bonding
+[p=17 x=62.3 Verdana [10]] (i) Electrolysis
+[p=17 x=62.3  [10]] 
+[p=17 x=62.3 Verdana-Bold [10]] (a) States of matter
+[p=17 x=62.3 Verdana-Bold [10]] Students should:
+[p=17 x=62.3 Verdana [10]] 1.1 understand the three states of matter in terms of the arrangement, movement and
+[p=17 x=98.1 Verdana [10]] energy of the particles
+[p=17 x=62.3 Verdana [10]] 1.2 understand the interconversions between the three states of matter in terms of:
+[p=17 x=98.0 SymbolMT|Verdana [10]] • the names of the interconversions
+[p=17 x=98.0 SymbolMT|Verdana [10]] • how they are achieved
+[p=17 x=98.0 SymbolMT|Verdana [10]] • the changes in arrangement, movement and energy of the particles.
+[p=17 x=62.3 Verdana [10]] 1.3 understand how the results of experiments involving the dilution of coloured solutions
+[p=17 x=98.0 Verdana [10]] and diffusion of gases can be explained
+[p=17 x=62.3 Verdana [10]] 1.4 know what is meant by the terms:
+[p=17 x=98.0 SymbolMT|Verdana [10]] • solvent
+[p=17 x=98.0 SymbolMT|Verdana [10]] • solute
+[p=17 x=98.0 SymbolMT|Verdana [10]] • solution
+[p=17 x=98.0 SymbolMT|Verdana [10]] • saturated solution.
+[p=17 x=62.3 Verdana-Bold [10]] 1.5C know what is meant by the term solubility in the units g per 100 g of solvent
+[p=17 x=62.3 Verdana-Bold [10]] 1.6C understand how to plot and interpret solubility curves
+[p=17 x=62.3 Verdana-Bold|Verdana-BoldItalic [10]] 1.7C practical: investigate the solubility of a solid in water at a specific
+[p=17 x=98.0 Verdana-BoldItalic [10]] temperature
+[p=17 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Chemistry 11
+[p=17 x=62.3 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=18 x=62.3  [8]] 
+[p=18 x=62.3  [10]] 
+[p=18 x=62.3 Verdana-Bold [10]] (b) Elements, compounds and mixtures
+[p=18 x=62.3 Verdana-Bold [10]] Students should:
+[p=18 x=62.3 Verdana [10]] 1.8 understand how to classify a substance as an element, compound or mixture
+[p=18 x=62.3 Verdana [10]] 1.9 understand that a pure substance has a fixed melting and boiling point, but that a
+[p=18 x=98.1 Verdana [10]] mixture may melt or boil over a range of temperatures
+[p=18 x=62.3 Verdana [10]] 1.10 describe these experimental techniques for the separation of mixtures:
+[p=18 x=98.0 SymbolMT|Verdana [10]] • simple distillation
+[p=18 x=98.0 SymbolMT|Verdana [10]] • fractional distillation
+[p=18 x=98.0 SymbolMT|Verdana [10]] • filtration
+[p=18 x=98.0 SymbolMT|Verdana [10]] • crystallisation
+[p=18 x=98.0 SymbolMT|Verdana [10]] • paper chromatography.
+[p=18 x=62.3 Verdana [10]] 1.11 understand how a chromatogram provides information about the composition of a
+[p=18 x=98.0 Verdana [10]] mixture
+[p=18 x=62.3 Verdana [6, 10]] 1.12 understand how to use the calculation of Rf values to identify the components of a
+[p=18 x=98.0 Verdana [10]] mixture
+[p=18 x=62.3 Verdana|Verdana-Italic [10]] 1.13 practical: investigate paper chromatography using inks/food colourings
+[p=18 x=62.3  [10]] 
+[p=18 x=62.3 Verdana-Bold [10]] (c) Atomic structure
+[p=18 x=62.3 Verdana-Bold [10]] Students should:
+[p=18 x=62.3 Verdana [10]] 1.14 know what is meant by the terms atom and molecule
+[p=18 x=62.3 Verdana [10]] 1.15 know the structure of an atom in terms of the positions, relative masses and relative
+[p=18 x=98.0 Verdana [10]] charges of sub-atomic particles
+[p=18 x=62.3 Verdana [10]] 1.16 know what is meant by the terms atomic number, mass number, isotopes and relative
+[p=18 x=98.0 Verdana|Verdana-Italic [6, 10]] atomic mass (Ar)
+[p=18 x=62.3 Verdana|Verdana-Italic [6, 10]] 1.17 be able to calculate the relative atomic mass of an element (Ar) from isotopic
+[p=18 x=98.0 Verdana [10]] abundances
+[p=18 x=62.3  [10]] 
+[p=18 x=62.3 Verdana-Bold [10]] (d) The Periodic Table
+[p=18 x=62.3 Verdana-Bold [10]] Students should:
+[p=18 x=62.3 Verdana [10]] 1.18 understand how elements are arranged in the Periodic Table:
+[p=18 x=98.0 SymbolMT|Verdana [10]] • in order of atomic number
+[p=18 x=98.0 SymbolMT|Verdana [10]] • in groups and periods.
+[p=18 x=62.3 Verdana [10]] 1.19 understand how to deduce the electronic configurations of the first 20 elements from
+[p=18 x=98.0 Verdana [10]] their positions in the Periodic Table
+[p=18 x=62.3 Verdana [10]] 1.20 understand how to use electrical conductivity and the acid-base character of oxides to
+[p=18 x=98.0 Verdana [10]] classify elements as metals or non-metals
+[p=18 x=62.3 Verdana [10]] 1.21 identify an element as a metal or a non-metal according to its position in the Periodic
+[p=18 x=98.0 Verdana [10]] Table
+[p=18 x=62.3 Verdana [10]] 1.22 understand how the electronic configuration of a main group element is related to its
+[p=18 x=98.0 Verdana [10]] position in the Periodic Table
+[p=18 x=62.3 TrebuchetMS|Verdana [8, 10]] 12Pearson Edexcel International GCSE in Chemistry
+[p=18 x=220.9 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=19 x=62.3  [8]] 
+[p=19 x=62.3  [11]] 
+[p=19 x=62.3 Verdana-Bold [10]] Students should:
+[p=19 x=62.3 Verdana [10]] 1.23 understand why elements in the same group of the Periodic Table have similar
+[p=19 x=98.0 Verdana [10]] chemical properties
+[p=19 x=62.3 Verdana [10]] 1.24 understand why the noble gases (Group 0) do not readily react
+[p=19 x=62.3  [10]] 
+[p=19 x=62.3 Verdana-Bold [10]] (e) Chemical formulae, equations and calculations
+[p=19 x=62.3 Verdana-Bold [10]] Students should:
+[p=19 x=62.3 Verdana [10]] 1.25 write word equations and balanced chemical equations (including state symbols):
+[p=19 x=98.0 SymbolMT|Verdana [10]] • for reactions studied in this specification
+[p=19 x=98.0 SymbolMT|Verdana [10]] • for unfamiliar reactions where suitable information is provided.
+[p=19 x=62.3 Verdana|Verdana-Italic [6, 10]] 1.26 calculate relative formula masses (including relative molecular masses) (Mr) from
+[p=19 x=98.0 Verdana|Verdana-Italic [6, 10]] relative atomic masses (Ar)
+[p=19 x=62.3 Verdana [10]] 1.27 know that the mole (mol) is the unit for the amount of a substance
+[p=19 x=62.3 Verdana [10]] 1.28 understand how to carry out calculations involving amount of substance, relative
+[p=19 x=98.0 Verdana|Verdana-Italic [6, 10]] atomic mass (Ar) and relative formula mass (Mr)
+[p=19 x=62.3 Verdana [10]] 1.29 calculate reacting masses using experimental data and chemical equations
+[p=19 x=62.3 Verdana [10]] 1.30 calculate percentage yield
+[p=19 x=62.3 Verdana [10]] 1.31 understand how the formulae of simple compounds can be obtained experimentally,
+[p=19 x=98.0 Verdana [10]] including metal oxides, water and salts containing water of crystallisation
+[p=19 x=62.3 Verdana [10]] 1.32 know what is meant by the terms empirical formula and molecular formula
+[p=19 x=62.3 Verdana [10]] 1.33 calculate empirical and molecular formulae from experimental data
+[p=19 x=62.3 Verdana-Bold [10]] 1.34C understand how to carry out calculations involving amount of substance,
+[p=19 x=98.1 Verdana-Bold [6, 10]] volume and concentration (in mol/dm³) of solution
+[p=19 x=62.3 Verdana-Bold [10]] 1.35C understand how to carry out calculations involving gas volumes and the
+[p=19 x=98.1 Verdana-Bold [6, 10]] molar volume of a gas (24 dm³ and 24 000 cm³ at room temperature and
+[p=19 x=98.0 Verdana-Bold [10]] pressure (rtp))
+[p=19 x=62.3 Verdana|Verdana-Italic [10]] 1.36 practical: know how to determine the formula of a metal oxide by combustion
+[p=19 x=98.0 Verdana-Italic [10]] (e.g. magnesium oxide) or by reduction (e.g. copper(II) oxide)
+[p=19 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Chemistry 13
+[p=19 x=62.3 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=20 x=62.3  [8]] 
+[p=20 x=62.3  [12]] 
+[p=20 x=62.3 Verdana-Bold [10]] (f) Ionic bonding
+[p=20 x=62.3 Verdana-Bold [10]] Students should:
+[p=20 x=62.3 Verdana [10]] 1.37 understand how ions are formed by electron loss or gain
+[p=20 x=62.3 Verdana [10]] 1.38 know the charges of these ions:
+[p=20 x=98.0 SymbolMT|Verdana [10]] • metals in Groups 1, 2 and 3
+[p=20 x=98.0 SymbolMT|Verdana [10]] • non-metals in Groups 5, 6 and 7
+[p=20 x=98.0 SymbolMT|Verdana [6, 10]] • Ag⁺, Cu²⁺, Fe²⁺, Fe³⁺, Pb²⁺, Zn²⁺
+[p=20 x=98.0 SymbolMT|Verdana [6, 10]] • hydrogen (H⁺), hydroxide (OH⁻), ammonium (NH₄⁺), carbonate (CO₃²⁻),
+[p=20 x=116.0 Verdana [6, 10]] nitrate (NO₃⁻), sulfate (SO₄²⁻).
+[p=20 x=62.3 Verdana [10]] 1.39 write formulae for compounds formed between the ions listed above
+[p=20 x=62.3 Verdana [10]] 1.40 draw dot-and-cross diagrams to show the formation of ionic compounds by electron
+[p=20 x=98.0 Verdana [10]] transfer, limited to combinations of elements from Groups 1, 2, 3 and 5, 6, 7
+[p=20 x=62.3 Verdana-Italic [10]]  only outer electrons need be shown
+[p=20 x=62.3 Verdana [10]] 1.41 understand ionic bonding in terms of electrostatic attractions
+[p=20 x=62.3 Verdana [10]] 1.42 understand why compounds with giant ionic lattices have high melting and boiling
+[p=20 x=98.0 Verdana [10]] points
+[p=20 x=62.3 Verdana [10]] 1.43 know that ionic compounds do not conduct electricity when solid, but do conduct
+[p=20 x=98.0 Verdana [10]] electricity when molten and in aqueous solution
+[p=20 x=62.3  [10]] 
+[p=20 x=62.3 Verdana-Bold [10]] (g) Covalent bonding
+[p=20 x=62.3 Verdana-Bold [10]] Students should:
+[p=20 x=62.3 Verdana [10]] 1.44 know that a covalent bond is formed between atoms by the sharing of a pair of
+[p=20 x=98.0 Verdana [10]] electrons
+[p=20 x=62.3 Verdana [10]] 1.45 understand covalent bonds in terms of electrostatic attractions
+[p=20 x=62.3 Verdana [10]] 1.46 understand how to use dot-and-cross diagrams to represent covalent bonds in:
+[p=20 x=98.0 SymbolMT|Verdana [10]] • diatomic molecules, including hydrogen, oxygen, nitrogen, halogens and hydrogen
+[p=20 x=116.0 Verdana [10]] halides
+[p=20 x=98.0 SymbolMT|Verdana [10]] • inorganic molecules including water, ammonia and carbon dioxide
+[p=20 x=98.0 SymbolMT|Verdana [10]] • organic molecules containing up to two carbon atoms, including methane, ethane,
+[p=20 x=116.0 Verdana [10]] ethene and those containing halogen atoms.
+[p=20 x=62.3 Verdana [10]] 1.47 explain why substances with a simple molecular structures are gases or liquids, or
+[p=20 x=98.0 Verdana [10]] solids with low melting and boiling points
+[p=20 x=62.3 Verdana-Italic [10]]  the term intermolecular forces of attraction can be used to represent all forces
+[p=20 x=98.0 Verdana-Italic [10]] between molecules
+[p=20 x=62.3 Verdana [10]] 1.48 explain why the melting and boiling points of substances with simple molecular
+[p=20 x=98.0 Verdana [10]] structures increase, in general, with increasing relative molecular mass
+[p=20 x=62.3 Verdana [10]] 1.49 explain why substances with giant covalent structures are solids with high melting and
+[p=20 x=98.0 Verdana [10]] boiling points
+[p=20 x=62.3 Verdana [6, 10]] 1.50 explain how the structures of diamond, graphite and C₆₀ fullerene influence their
+[p=20 x=98.0 Verdana [10]] physical properties, including electrical conductivity and hardness
+[p=20 x=62.3 Verdana [10]] 1.51 know that covalent compounds do not usually conduct electricity
+[p=20 x=62.3 TrebuchetMS|Verdana [8, 10]] 14Pearson Edexcel International GCSE in Chemistry
+[p=20 x=220.9 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=21 x=62.3  [8]] 
+[p=21 x=62.3  [11]] 
+[p=21 x=62.3 Verdana-Bold [10]] (h) Metallic bonding
+[p=21 x=62.3 Verdana-Bold [10]] Students should:
+[p=21 x=62.3 Verdana-Bold [10]] 1.52C know how to represent a metallic lattice by a 2-D diagram
+[p=21 x=62.3 Verdana-Bold [10]] 1.53C understand metallic bonding in terms of electrostatic attractions
+[p=21 x=62.3 Verdana-Bold [10]] 1.54C explain typical physical properties of metals, including electrical conductivity
+[p=21 x=98.0 Verdana-Bold [10]] and malleability
+[p=21 x=62.3  [10]] 
+[p=21 x=62.3 Verdana-Bold [10]] (i) Electrolysis
+[p=21 x=62.3 Verdana-Bold [10]] Students should:
+[p=21 x=62.3 Verdana-Bold [10]] 1.55C understand why covalent compounds do not conduct electricity
+[p=21 x=62.3 Verdana-Bold [10]] 1.56C understand why ionic compounds conduct electricity only when molten or in
+[p=21 x=98.1 Verdana-Bold [10]] aqueous solution
+[p=21 x=62.3 Verdana-Bold [10]] 1.57C know that anion and cation are terms used to refer to negative and positive
+[p=21 x=98.0 Verdana-Bold [10]] ions respectively
+[p=21 x=62.3 Verdana-Bold [10]] 1.58C describe experiments to investigate electrolysis, using inert electrodes, of
+[p=21 x=98.0 Verdana-Bold [10]] molten compounds (including lead(II) bromide) and aqueous solutions
+[p=21 x=98.0 Verdana-Bold [10]] (including sodium chloride, dilute sulfuric acid and copper(II) sulfate) and to
+[p=21 x=98.0 Verdana-Bold [10]] predict the products
+[p=21 x=62.3 Verdana-Bold [10]] 1.59C write ionic half-equations representing the reactions at the electrodes during
+[p=21 x=98.0 Verdana-Bold [10]] electrolysis and understand why these reactions are classified as oxidation
+[p=21 x=98.1 Verdana-Bold [10]] or reduction
+[p=21 x=62.3 Verdana-Bold|Verdana-BoldItalic [10]] 1.60C practical: investigate the electrolysis of aqueous solutions
+[p=21 x=62.3  [11]] 
+[p=21 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Chemistry 15
+[p=21 x=62.3 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=22 x=62.3  [8]] 
+[p=22 x=62.3 Verdana-Bold [16]] 2 Inorganic chemistry
+[p=22 x=62.3 Verdana [10]] The following sub-topics are covered in this section.
+[p=22 x=62.3 Verdana [10]] (a) Group 1 (alkali metals) – lithium, sodium and potassium
+[p=22 x=62.3 Verdana [10]] (b) Group 7 (halogens) – chlorine, bromine and iodine
+[p=22 x=62.3 Verdana [10]] (c) Gases in the atmosphere
+[p=22 x=62.3 Verdana [10]] (d) Reactivity series
+[p=22 x=62.3 Verdana [10]] (e) Extraction and uses of metals
+[p=22 x=62.3 Verdana [10]] (f) Acids, alkalis and titrations
+[p=22 x=62.3 Verdana [10]] (g) Acids, bases and salt preparations
+[p=22 x=62.3 Verdana [10]] (h) Chemical tests
+[p=22 x=62.3  [10]] 
+[p=22 x=62.3 Verdana-Bold [10]] (a) Group 1 (alkali metals) – lithium, sodium and potassium
+[p=22 x=62.3 Verdana-Bold [10]] Students should:
+[p=22 x=62.3 Verdana [10]] 2.1 understand how the similarities in the reactions of these elements with water provide
+[p=22 x=98.0 Verdana [10]] evidence for their recognition as a family of elements
+[p=22 x=62.3 Verdana [10]] 2.2 understand how the differences between the reactions of these elements with air and
+[p=22 x=98.0 Verdana [10]] water provide evidence for the trend in reactivity in Group 1
+[p=22 x=62.3 Verdana [10]] 2.3 use knowledge of trends in Group 1 to predict the properties of other alkali metals
+[p=22 x=62.3 Verdana-Bold [10]] 2.4C explain the trend in reactivity in Group 1 in terms of electronic
+[p=22 x=98.1 Verdana-Bold [10]] configurations
+[p=22 x=62.3  [10]] 
+[p=22 x=62.3 Verdana-Bold [10]] (b) Group 7 (halogens) – chlorine, bromine and iodine
+[p=22 x=62.3 Verdana-Bold [10]] Students should:
+[p=22 x=62.3 Verdana [10]] 2.5 know the colours, physical states (at room temperature) and trends in physical
+[p=22 x=98.1 Verdana [10]] properties of these elements
+[p=22 x=62.3 Verdana [10]] 2.6 use knowledge of trends in Group 7 to predict the properties of other halogens
+[p=22 x=62.3 Verdana [10]] 2.7 understand how displacement reactions involving halogens and halides provide
+[p=22 x=98.1 Verdana [10]] evidence for the trend in reactivity in Group 7
+[p=22 x=62.3 Verdana-Bold [10]] 2.8C explain the trend in reactivity in Group 7 in terms of electronic
+[p=22 x=98.0 Verdana-Bold [10]] configurations
+[p=22 x=62.3 TrebuchetMS|Verdana [8, 10]] 16Pearson Edexcel International GCSE in Chemistry
+[p=22 x=220.9 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=23 x=62.3  [8]] 
+[p=23 x=62.3  [10]] 
+[p=23 x=62.3 Verdana-Bold [10]] (c) Gases in the atmosphere
+[p=23 x=62.3 Verdana-Bold [10]] Students should:
+[p=23 x=62.3 Verdana [10]] 2.9 know the approximate percentages by volume of the four most abundant gases in dry
+[p=23 x=98.0 Verdana [10]] air
+[p=23 x=62.3 Verdana [10]] 2.10 understand how to determine the percentage by volume of oxygen in air using
+[p=23 x=98.0 Verdana [10]] experiments involving the reactions of metals (e.g. iron) and non-metals
+[p=23 x=98.0 Verdana [10]] (e.g. phosphorus) with air
+[p=23 x=62.3 Verdana [10]] 2.11 describe the combustion of elements in oxygen, including magnesium, hydrogen and
+[p=23 x=98.0 Verdana [10]] sulfur
+[p=23 x=62.3 Verdana [10]] 2.12 describe the formation of carbon dioxide from the thermal decomposition of metal
+[p=23 x=98.0 Verdana [10]] carbonates, including copper(II) carbonate
+[p=23 x=62.3 Verdana [10]] 2.13 know that carbon dioxide is a greenhouse gas and that increasing amounts in the
+[p=23 x=98.0 Verdana [10]] atmosphere may contribute to climate change
+[p=23 x=62.3 Verdana|Verdana-Italic [10]] 2.14 practical: determine the approximate percentage by volume of oxygen in air using a
+[p=23 x=98.0 Verdana-Italic [10]] metal or a non-metal
+[p=23 x=62.3  [10]] 
+[p=23 x=62.3 Verdana-Bold [10]] (d) Reactivity series
+[p=23 x=62.3 Verdana-Bold [10]] Students should:
+[p=23 x=62.3 Verdana [10]] 2.15 understand how metals can be arranged in a reactivity series based on their reactions
+[p=23 x=98.0 Verdana [10]] with:
+[p=23 x=98.0 SymbolMT|Verdana [10]] • water
+[p=23 x=98.0 SymbolMT|Verdana [10]] • dilute hydrochloric or sulfuric acid.
+[p=23 x=62.3 Verdana [10]] 2.16 understand how metals can be arranged in a reactivity series based on their
+[p=23 x=98.0 Verdana [10]] displacement reactions between:
+[p=23 x=98.0 SymbolMT|Verdana [10]] • metals and metal oxides
+[p=23 x=98.0 SymbolMT|Verdana [10]] • metals and aqueous solutions of metal salts.
+[p=23 x=62.3 Verdana [10]] 2.17 know the order of reactivity of these metals: potassium, sodium, lithium, calcium,
+[p=23 x=98.0 Verdana [10]] magnesium, aluminium, zinc, iron, copper, silver, gold
+[p=23 x=62.3 Verdana [10]] 2.18 know the conditions under which iron rusts
+[p=23 x=62.3 Verdana [10]] 2.19 understand how the rusting of iron may be prevented by:
+[p=23 x=98.0 SymbolMT|Verdana [10]] • barrier methods
+[p=23 x=98.0 SymbolMT|Verdana [10]] • galvanising
+[p=23 x=98.0 SymbolMT|Verdana [10]] • sacrificial protection.
+[p=23 x=62.3 Verdana [10]] 2.20 understand the terms:
+[p=23 x=98.0 SymbolMT|Verdana [10]] • oxidation
+[p=23 x=98.0 SymbolMT|Verdana [10]] • reduction
+[p=23 x=98.0 SymbolMT|Verdana [10]] • redox
+[p=23 x=98.0 SymbolMT|Verdana [10]] • oxidising agent
+[p=23 x=98.0 SymbolMT|Verdana [10]] • reducing agent
+[p=23 x=62.3 Verdana [10]]  in terms of gain or loss of oxygen and loss or gain of electrons.
+[p=23 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Chemistry 17
+[p=23 x=62.3 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=24 x=62.3  [8]] 
+[p=24 x=62.3  [11]] 
+[p=24 x=62.3 Verdana-Bold [10]] Students should:
+[p=24 x=62.3 Verdana|Verdana-Italic [10]] 2.21 practical: investigate reactions between dilute hydrochloric and sulfuric acids and
+[p=24 x=98.0 Verdana-Italic [10]] metals (e.g. magnesium, zinc and iron)
+[p=24 x=62.3  [10]] 
+[p=24 x=62.3 Verdana-Bold [10]] (e) Extraction and uses of metals
+[p=24 x=62.3 Verdana-Bold [10]] Students should:
+[p=24 x=62.3 Verdana-Bold [10]] 2.22C know that most metals are extracted from ores found in the Earth’s crust
+[p=24 x=98.0 Verdana-Bold [10]] and that unreactive metals are often found as the uncombined element
+[p=24 x=62.3 Verdana-Bold [10]] 2.23C explain how the method of extraction of a metal is related to its position in
+[p=24 x=98.0 Verdana-Bold [10]] the reactivity series, illustrated by carbon extraction for iron and electrolysis
+[p=24 x=98.0 Verdana-Bold [10]] for aluminium
+[p=24 x=62.3 Verdana-Bold [10]] 2.24C be able to comment on a metal extraction process, given appropriate
+[p=24 x=98.0 Verdana-Bold [10]] information
+[p=24 x=62.3 Verdana-BoldItalic [10]]  detailed knowledge of the processes used in the extraction of a specific
+[p=24 x=98.1 Verdana-BoldItalic [10]] metal is not required
+[p=24 x=62.3 Verdana-Bold [10]] 2.25C explain the uses of aluminium, copper, iron and steel in terms of their
+[p=24 x=98.0 Verdana-Bold [10]] properties
+[p=24 x=62.3 Verdana-BoldItalic [10]]  the types of steel will be limited to low-carbon (mild), high-carbon and
+[p=24 x=98.0 Verdana-BoldItalic [10]] stainless
+[p=24 x=62.3 Verdana-Bold [10]] 2.26C know that an alloy is a mixture of a metal and one or more elements, usually
+[p=24 x=98.0 Verdana-Bold [10]] other metals or carbon
+[p=24 x=62.3 Verdana-Bold [10]] 2.27C explain why alloys are harder than pure metals
+[p=24 x=62.3  [10]] 
+[p=24 x=62.3 Verdana-Bold [10]] (f) Acids, alkalis and titrations
+[p=24 x=62.3 Verdana-Bold [10]] Students should:
+[p=24 x=62.3 Verdana [10]] 2.28 describe the use of litmus, phenolphthalein and methyl orange to distinguish between
+[p=24 x=98.0 Verdana [10]] acidic and alkaline solutions
+[p=24 x=62.3 Verdana [10]] 2.29 understand how to use the pH scale, from 0–14, can be used to classify solutions as
+[p=24 x=98.0 Verdana [10]] strongly acidic (0–3), weakly acidic (4–6), neutral (7), weakly alkaline (8–10) and
+[p=24 x=98.0 Verdana [10]] strongly alkaline (11–14)
+[p=24 x=62.3 Verdana [10]] 2.30 describe the use of universal indicator to measure the approximate pH value of an
+[p=24 x=98.0 Verdana [10]] aqueous solution
+[p=24 x=62.3 Verdana [10]] 2.31 know that acids in aqueous solution are a source of hydrogen ions and alkalis in a
+[p=24 x=98.0 Verdana [10]] aqueous solution are a source of hydroxide ions
+[p=24 x=62.3 Verdana [10]] 2.32 know that alkalis can neutralise acids
+[p=24 x=62.3 Verdana-Bold [10]] 2.33C describe how to carry out an acid-alkali titration
+[p=24 x=62.3 TrebuchetMS|Verdana [8, 10]] 18Pearson Edexcel International GCSE in Chemistry
+[p=24 x=220.9 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=25 x=62.3  [8]] 
+[p=25 x=62.3  [12]] 
+[p=25 x=62.3 Verdana-Bold [10]] (g) Acids, bases and salt preparations
+[p=25 x=62.3 Verdana-Bold [10]] Students should:
+[p=25 x=62.3 Verdana [10]] 2.34 know the general rules for predicting the solubility of ionic compounds in water:
+[p=25 x=98.0 SymbolMT|Verdana [10]] • common sodium, potassium and ammonium compounds are soluble
+[p=25 x=98.0 SymbolMT|Verdana [10]] • all nitrates are soluble
+[p=25 x=98.0 SymbolMT|Verdana [10]] • common chlorides are soluble, except those of silver and lead(II)
+[p=25 x=98.0 SymbolMT|Verdana [10]] • common sulfates are soluble, except for those of barium, calcium and lead(II)
+[p=25 x=98.0 SymbolMT|Verdana [10]] • common carbonates are insoluble, except for those of sodium, potassium and
+[p=25 x=116.0 Verdana [10]] ammonium
+[p=25 x=98.0 SymbolMT|Verdana [10]] • common hydroxides are insoluble except for those of sodium, potassium and
+[p=25 x=116.0 Verdana [10]] calcium (calcium hydroxide is slightly soluble).
+[p=25 x=62.3 Verdana [10]] 2.35 understand acids and bases in terms of proton transfer
+[p=25 x=62.3 Verdana [10]] 2.36 understand that an acid is a proton donor and a base is a proton acceptor
+[p=25 x=62.3 Verdana [10]] 2.37 describe the reactions of hydrochloric acid, sulfuric acid and nitric acid with metals,
+[p=25 x=98.0 Verdana [10]] bases and metal carbonates (excluding the reactions between nitric acid and metals)
+[p=25 x=98.0 Verdana [10]] to form salts
+[p=25 x=62.3 Verdana [10]] 2.38 know that metal oxides, metal hydroxides and ammonia can act as bases, and that
+[p=25 x=98.0 Verdana [10]] alkalis are bases that are soluble in water
+[p=25 x=62.3 Verdana [10]] 2.39 describe an experiment to prepare a pure, dry sample of a soluble salt, starting from
+[p=25 x=98.0 Verdana [10]] an insoluble reactant
+[p=25 x=62.3 Verdana-Bold [10]] 2.40C describe an experiment to prepare a pure, dry sample of a soluble salt,
+[p=25 x=98.0 Verdana-Bold [10]] starting from an acid and alkali
+[p=25 x=62.3 Verdana-Bold [10]] 2.41C describe an experiment to prepare a pure, dry sample of an insoluble salt,
+[p=25 x=98.0 Verdana-Bold [10]] starting from two soluble reactants
+[p=25 x=62.3 Verdana|Verdana-Italic [10]] 2.42 practical: prepare a sample of pure, dry hydrated copper(II) sulfate crystals starting
+[p=25 x=98.0 Verdana-Italic [10]] from copper(II) oxide
+[p=25 x=62.3 Verdana-Bold|Verdana-BoldItalic [10]] 2.43C practical: prepare a sample of pure, dry lead(II) sulfate
+[p=25 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Chemistry 19
+[p=25 x=62.3 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=26 x=62.3  [8]] 
+[p=26 x=62.3  [10]] 
+[p=26 x=62.3 Verdana-Bold [10]] (h) Chemical tests
+[p=26 x=62.3 Verdana-Bold [10]] Students should:
+[p=26 x=62.3 Verdana [10]] 2.44 describe tests for these gases:
+[p=26 x=98.0 SymbolMT|Verdana [10]] • hydrogen
+[p=26 x=98.0 SymbolMT|Verdana [10]] • oxygen
+[p=26 x=98.0 SymbolMT|Verdana [10]] • carbon dioxide
+[p=26 x=98.0 SymbolMT|Verdana [10]] • ammonia
+[p=26 x=98.0 SymbolMT|Verdana [10]] • chlorine.
+[p=26 x=62.3 Verdana [10]] 2.45 describe how to carry out a flame test
+[p=26 x=62.3 Verdana [10]] 2.46 know the colours formed in flame tests for these cations:
+[p=26 x=98.0 SymbolMT|Verdana [6, 10]] • Li⁺ is red
+[p=26 x=98.0 SymbolMT|Verdana [6, 10]] • Na⁺ is yellow
+[p=26 x=98.0 SymbolMT|Verdana [6, 10]] • K⁺ is lilac
+[p=26 x=98.0 SymbolMT|Verdana [6, 10]] • Ca²⁺ is orange-red
+[p=26 x=98.0 SymbolMT|Verdana [6, 10]] • Cu²⁺ is blue-green.
+[p=26 x=62.3 Verdana [10]] 2.47 describe tests for these cations:
+[p=26 x=98.0 SymbolMT|Verdana [6, 10]] • NH₄⁺ using sodium hydroxide solution and identifying the gas evolved
+[p=26 x=98.0 SymbolMT|Verdana [6, 10]] • Cu²⁺, Fe²⁺ and Fe³⁺ using sodium hydroxide solution.
+[p=26 x=62.3 Verdana [10]] 2.48 describe tests for these anions:
+[p=26 x=98.0 SymbolMT|Verdana [6, 10]] • Cl⁻, Br⁻ and I⁻ using acidified silver nitrate solution
+[p=26 x=98.0 SymbolMT|Verdana [6, 10]] • SO₄²⁻ using acidified barium chloride solution
+[p=26 x=98.0 SymbolMT|Verdana [6, 10]] • CO₃²⁻ using hydrochloric acid and identifying the gas evolved.
+[p=26 x=62.3 Verdana [10]] 2.49 describe a test for the presence of water using anhydrous copper(II) sulfate
+[p=26 x=62.3 Verdana [10]] 2.50 describe a physical test to show whether a sample of water is pure
+[p=26 x=62.3 TrebuchetMS|Verdana [8, 10]] 20Pearson Edexcel International GCSE in Chemistry
+[p=26 x=220.9 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=27 x=62.3  [8]] 
+[p=27 x=62.3 Verdana-Bold [16]] 3 Physical chemistry
+[p=27 x=62.3 Verdana [10]] The following sub-topics are covered in this section:
+[p=27 x=62.3 Verdana [10]] (a) Energetics
+[p=27 x=62.3 Verdana [10]] (b) Rates of reaction
+[p=27 x=62.3 Verdana [10]] (c) Reversible reactions and equilibria
+[p=27 x=62.3  [10]] 
+[p=27 x=62.3 Verdana-Bold [10]] (a) Energetics
+[p=27 x=62.3 Verdana-Bold [10]] Students should:
+[p=27 x=62.3 Verdana [10]] 3.1 know that chemical reactions in which heat energy is given out are described as
+[p=27 x=98.0 Verdana [10]] exothermic, and those in which heat energy is taken in are described as endothermic
+[p=27 x=62.3 Verdana [10]] 3.2 describe simple calorimetry experiments for reactions such as combustion,
+[p=27 x=98.0 Verdana [10]] displacement, dissolving and neutralisation
+[p=27 x=62.3 Verdana [10]] 3.3 calculate the heat energy change from a measured temperature change using the
+[p=27 x=98.0 TimesNewRomanPS-ItalicMT|TimesNewRomanPSMT|Verdana [10, 11, 12]] expression Q = mcΔT
+[p=27 x=62.3 TimesNewRomanPS-ItalicMT|TimesNewRomanPSMT|Verdana|Verdana-Italic [10, 11]] 3.4 calculate the molar enthalpy change (ΔH) from the heat energy change, Q
+[p=27 x=62.3 Verdana-Bold [10]] 3.5C draw and explain energy level diagrams to represent exothermic and
+[p=27 x=98.1 Verdana-Bold [10]] endothermic reactions
+[p=27 x=62.3 Verdana-Bold [10]] 3.6C know that bond-breaking is an endothermic process and that bond-making is
+[p=27 x=98.0 Verdana-Bold [10]] an exothermic process
+[p=27 x=62.3 Verdana-Bold [10]] 3.7C use bond energies to calculate the enthalpy change during a chemical
+[p=27 x=98.0 Verdana-Bold [10]] reaction
+[p=27 x=62.3 Verdana|Verdana-Italic [10]] 3.8 practical: investigate temperature changes accompanying some of the following types
+[p=27 x=98.0 Verdana-Italic [10]] of change:
+[p=27 x=98.0 SymbolMT|Verdana-Italic [10]] • salts dissolving in water
+[p=27 x=98.0 SymbolMT|Verdana-Italic [10]] • neutralisation reactions
+[p=27 x=98.0 SymbolMT|Verdana-Italic [10]] • displacement reactions
+[p=27 x=98.0 SymbolMT|Verdana-Italic [10]] • combustion reactions.
+[p=27 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Chemistry 21
+[p=27 x=62.3 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=28 x=62.3  [8]] 
+[p=28 x=62.3  [10]] 
+[p=28 x=62.3 Verdana-Bold [10]] (b) Rates of reaction
+[p=28 x=62.3 Verdana-Bold [10]] Students should:
+[p=28 x=62.3 Verdana [10]] 3.9 describe experiments to investigate the effects of changes in surface area of a solid,
+[p=28 x=98.0 Verdana [10]] concentration of a solution, temperature and the use of a catalyst on the rate of a
+[p=28 x=98.0 Verdana [10]] reaction
+[p=28 x=62.3 Verdana [10]] 3.10 describe the effects of changes in surface area of a solid, concentration of a solution,
+[p=28 x=98.0 Verdana [10]] pressure of a gas, temperature and the use of a catalyst on the rate of a reaction
+[p=28 x=62.3 Verdana [10]] 3.11 explain the effects of changes in surface area of a solid, concentration of a solution,
+[p=28 x=98.0 Verdana [10]] pressure of a gas and temperature on the rate of a reaction in terms of particle
+[p=28 x=98.0 Verdana [10]] collision theory
+[p=28 x=62.3 Verdana [10]] 3.12 know that a catalyst is a substance that increases the rate of a reaction, but is
+[p=28 x=98.0 Verdana [10]] chemically unchanged at the end of the reaction
+[p=28 x=62.3 Verdana [10]] 3.13 know that a catalyst works by providing an alternative pathway with lower activation
+[p=28 x=98.0 Verdana [10]] energy
+[p=28 x=62.3 Verdana-Bold|Verdana-BoldItalic [10]] 3.14C draw and explain reaction profile diagrams showing ΔH and activation
+[p=28 x=98.0 Verdana-Bold [10]] energy
+[p=28 x=62.3 Verdana-Italic [10]] 3.15 practical: investigate the effect of changing the surface area of marble chips and of
+[p=28 x=98.0 Verdana-Italic [10]] changing the concentration of hydrochloric acid on the rate of reaction between
+[p=28 x=98.0 Verdana-Italic [10]] marble chips and dilute hydrochloric acid
+[p=28 x=62.3 Verdana-Italic [10]] 3.16 practical: investigate the effect of different solids on the catalytic decomposition of
+[p=28 x=98.0 Verdana-Italic [10]] hydrogen peroxide solution
+[p=28 x=62.3  [10]] 
+[p=28 x=62.3 Verdana-Bold [10]] (c) Reversible reactions and equilibria
+[p=28 x=62.3 Verdana-Bold [10]] Students should:
+[p=28 x=62.3 CambriaMath|Verdana [10]] 3.17 know that some reactions are reversible and this is indicated by the symbol ⇌ in
+[p=28 x=98.0 Verdana [10]] equations
+[p=28 x=62.3 Verdana [10]] 3.18 describe reversible reactions such as the dehydration of hydrated copper(II) sulfate
+[p=28 x=98.0 Verdana [10]] and the effect of heat on ammonium chloride
+[p=28 x=62.3 Verdana-Bold [10]] 3.19C know that a reversible reaction can reach dynamic equilibrium in a sealed
+[p=28 x=98.0 Verdana-Bold [10]] container
+[p=28 x=62.3 Verdana-Bold [10]] 3.20C know that the characteristics of a reaction at dynamic equilibrium are:
+[p=28 x=98.0 SymbolMT|Verdana-Bold [10]] • the forward and reverse reactions occur at the same rate
+[p=28 x=98.0 SymbolMT|Verdana-Bold [10]] • the concentrations of reactants and products remain constant.
+[p=28 x=62.3 Verdana-Bold [10]] 3.21C understand why a catalyst does not affect the position of equilibrium in a
+[p=28 x=98.0 Verdana-Bold [10]] reversible reaction
+[p=28 x=62.3 Verdana-Bold [10]] 3.22C know the effect of changing either temperature or pressure on the position
+[p=28 x=98.0 Verdana-Bold [10]] of equilibrium in a reversible reaction:
+[p=28 x=98.0 SymbolMT|Verdana-Bold [10]] • an increase (or decrease) in temperature shifts the position of
+[p=28 x=116.0 Verdana-Bold [10]] equilibrium in the direction of the endothermic (or exothermic) reaction
+[p=28 x=98.0 SymbolMT|Verdana-Bold [10]] • an increase (or decrease) in pressure shifts the position of equilibrium in
+[p=28 x=116.0 Verdana-Bold [10]] the direction that produces fewer (or more) moles of gas
+[p=28 x=62.3 Verdana-BoldItalic [10]]  References to Le Chatelier's principle are not required
+[p=28 x=62.3 TrebuchetMS|Verdana [8, 10]] 22Pearson Edexcel International GCSE in Chemistry
+[p=28 x=220.9 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=29 x=62.3  [8]] 
+[p=29 x=62.3 Verdana-Bold [16]] 4 Organic chemistry
+[p=29 x=62.3 Verdana [10]] The following sub-topics are covered in this section.
+[p=29 x=62.3 Verdana [10]] (a) Introduction
+[p=29 x=62.3 Verdana [10]] (b) Crude oil
+[p=29 x=62.3 Verdana [10]] (c) Alkanes
+[p=29 x=62.3 Verdana [10]] (d) Alkenes
+[p=29 x=62.4 Verdana [10]] (e) Alcohols
+[p=29 x=62.3 Verdana [10]] (f) Carboxylic acids
+[p=29 x=62.3 Verdana [10]] (g) Esters
+[p=29 x=62.3 Verdana [10]] (h) Synthetic polymers
+[p=29 x=62.3  [10]] 
+[p=29 x=62.3 Verdana-Bold [10]] (a) Introduction
+[p=29 x=62.3 Verdana-Bold [10]] Students should:
+[p=29 x=62.3 Verdana [10]] 4.1 know that a hydrocarbon is a compound of hydrogen and carbon only
+[p=29 x=62.3 Verdana [10]] 4.2 understand how to represent organic molecules using empirical formulae, molecular
+[p=29 x=98.0 Verdana [10]] formulae, general formulae, structural formulae and displayed formulae
+[p=29 x=62.3 Verdana [10]] 4.3 know what is meant by the terms homologous series, functional group and isomerism
+[p=29 x=62.3 Verdana [10]] 4.4 understand how to name compounds relevant to this specification using the rules of
+[p=29 x=98.0 Verdana [10]] International Union of Pure and Applied Chemistry (IUPAC) nomenclature
+[p=29 x=62.3 Verdana-Italic [10]]  students will be expected to name compounds containing up to six carbon atoms
+[p=29 x=62.3 Verdana [10]] 4.5 understand how to write the possible structural and displayed formulae of an organic
+[p=29 x=98.0 Verdana [10]] molecule given its molecular formula
+[p=29 x=62.3 Verdana [10]] 4.6 understand how to classify reactions of organic compounds as substitution, addition
+[p=29 x=98.0 Verdana [10]] and combustion
+[p=29 x=62.3 Verdana-Italic [10]]  knowledge of reaction mechanisms is not required
+[p=29 x=62.3  [10]] 
+[p=29 x=62.3 Verdana-Bold [10]] (b) Crude oil
+[p=29 x=62.3 Verdana-Bold [10]] Students should:
+[p=29 x=62.3 Verdana [10]] 4.7 know that crude oil is a mixture of hydrocarbons
+[p=29 x=62.3 Verdana [10]] 4.8 describe how the industrial process of fractional distillation separates crude oil into
+[p=29 x=98.0 Verdana [10]] fractions
+[p=29 x=62.3 Verdana [10]] 4.9 know the names and uses of the main fractions obtained from crude oil:
+[p=29 x=98.0 Verdana [10]] refinery gases, gasoline, kerosene, diesel, fuel oil and bitumen
+[p=29 x=62.3 Verdana [10]] 4.10 know the trend in colour, boiling point and viscosity of the main fractions
+[p=29 x=62.3 Verdana [10]] 4.11 know that a fuel is a substance that, when burned, releases heat energy
+[p=29 x=62.3 Verdana [10]] 4.12 know the possible products of complete and incomplete combustion of hydrocarbons
+[p=29 x=98.0 Verdana [10]] with oxygen in the air
+[p=29 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Chemistry 23
+[p=29 x=62.3 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=30 x=62.3  [8]] 
+[p=30 x=62.3  [11]] 
+[p=30 x=62.3 Verdana-Bold [10]] Students should:
+[p=30 x=62.3 Verdana [10]] 4.13 understand why carbon monoxide is poisonous, in terms of its effect on the capacity
+[p=30 x=98.0 Verdana [10]] of blood to transport oxygen
+[p=30 x=62.3 Verdana-Italic [10]]  references to haemoglobin are not required
+[p=30 x=62.3 Verdana [10]] 4.14 know that, in car engines, the temperature reached is high enough to allow nitrogen
+[p=30 x=98.0 Verdana [10]] and oxygen from air to react, forming oxides of nitrogen
+[p=30 x=62.3 Verdana [10]] 4.15 explain how the combustion of some impurities in hydrocarbon fuels results in the
+[p=30 x=98.0 Verdana [10]] formation of sulfur dioxide
+[p=30 x=62.3 Verdana [10]] 4.16 understand how sulfur dioxide and oxides of nitrogen contribute to acid rain
+[p=30 x=62.3 Verdana [10]] 4.17 describe how long-chain alkanes are converted to alkenes and shorter-chain alkanes
+[p=30 x=98.0 Verdana [10]] by catalytic cracking (using silica or alumina as the catalyst and a temperature in the
+[p=30 x=98.0 Verdana [10, 12]] range of 600–700 ºC)
+[p=30 x=62.3 Verdana [10]] 4.18 explain why cracking is necessary, in terms of the balance between supply and
+[p=30 x=98.0 Verdana [10]] demand for different fractions
+[p=30 x=62.3  [12]] 
+[p=30 x=62.3 Verdana-Bold [10]] (c) Alkanes
+[p=30 x=62.3 Verdana-Bold [10]] Students should:
+[p=30 x=62.3 Verdana [10]] 4.19 know the general formula for alkanes
+[p=30 x=62.3 Verdana [10]] 4.20 explain why alkanes are classified as saturated hydrocarbons
+[p=30 x=62.3 Verdana [10]] 4.21 understand how to draw the structural and displayed formulae for alkanes with up to
+[p=30 x=98.0 Verdana [10]] five carbon atoms in the molecule, and to name the unbranched-chain isomers
+[p=30 x=62.3 Verdana [10]] 4.22 describe the reactions of alkanes with halogens in the presence of ultraviolet
+[p=30 x=98.0 Verdana [10]] radiation, limited to mono-substitution
+[p=30 x=62.3 Verdana-Italic [10]]  knowledge of reaction mechanisms is not required
+[p=30 x=62.3  [12]] 
+[p=30 x=62.3 Verdana-Bold [10]] (d) Alkenes
+[p=30 x=62.3 Verdana-Bold [10]] Students should:
+[p=30 x=62.3 Verdana [10]] 4.23 know that alkenes contain the functional group >C=C<
+[p=30 x=62.3 Verdana [10]] 4.24 know the general formula for alkenes
+[p=30 x=62.3 Verdana [10]] 4.25 explain why alkenes are classified as unsaturated hydrocarbons
+[p=30 x=62.3 Verdana [10]] 4.26 understand how to draw the structural and displayed formulae for alkenes with up to
+[p=30 x=98.0 Verdana [10]] four carbon atoms in the molecule, and name the unbranched-chain isomers
+[p=30 x=62.3 Verdana-Italic [10]]  knowledge of cis/trans or E/Z notation is not required
+[p=30 x=62.3 Verdana [10]] 4.27 describe the reactions of alkenes with bromine to produce dibromoalkanes
+[p=30 x=62.3 Verdana [10]] 4.28 describe how bromine water can be used to distinguish between an alkane and an
+[p=30 x=98.0 Verdana [10]] alkene
+[p=30 x=62.3 TrebuchetMS|Verdana [8, 10]] 24Pearson Edexcel International GCSE in Chemistry
+[p=30 x=220.9 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=31 x=62.3  [8]] 
+[p=31 x=62.3  [10]] 
+[p=31 x=62.3 Verdana-Bold [10]] (e) Alcohols
+[p=31 x=62.3 Verdana-Bold [10]] Students should:
+[p=31 x=62.3 Verdana-Bold [10]] 4.29C know that alcohols contain the functional group −OH
+[p=31 x=62.3 Verdana-Bold [10]] 4.30C understand how to draw structural and displayed formulae for methanol,
+[p=31 x=98.0 Verdana-Bold|Verdana-BoldItalic [10]] ethanol, propanol (propan-1-ol only) and butanol (butan-1-ol only), and
+[p=31 x=98.1 Verdana-Bold [10]] name each compound
+[p=31 x=62.4 Verdana-BoldItalic [10]]  the names propanol and butanol are acceptable
+[p=31 x=62.3 Verdana-Bold [10]] 4.31C know that ethanol can be oxidised by:
+[p=31 x=98.0 SymbolMT|Verdana-Bold [10]] • burning in air or oxygen (complete combustion)
+[p=31 x=98.0 SymbolMT|Verdana-Bold [10]] • reaction with oxygen in the air to form ethanoic acid
+[p=31 x=116.0 Verdana-Bold [10]] (microbial oxidation)
+[p=31 x=98.0 SymbolMT|Verdana-Bold [10]] • heating with potassium dichromate(VI) in dilute sulfuric acid to form
+[p=31 x=116.0 Verdana-Bold [10]] ethanoic acid
+[p=31 x=62.3 Verdana-Bold [10]] 4.32C know that ethanol can be manufactured by:
+[p=31 x=98.0 SymbolMT|Verdana-Bold [10]] •  reacting ethene with steam in the presence of a phosphoric acid catalyst
+[p=31 x=116.0 Verdana-Bold [10]] at a temperature of about 300 ºC and a pressure of about 60–70 atm
+[p=31 x=98.1 SymbolMT|Verdana-Bold [10]] •  the fermentation of glucose, in the absence of air, at an optimum
+[p=31 x=116.0 Verdana-Bold [10]] temperature of about 30 ºC and using the enzymes in yeast
+[p=31 x=62.3 Verdana-Bold [10]] 4.33C understand the reasons for fermentation, in the absence of air, and at an
+[p=31 x=98.0 Verdana-Bold [10]] optimum temperature
+[p=31 x=62.3  [10]] 
+[p=31 x=62.3 Verdana-Bold [10]] (f) Carboxylic acids
+[p=31 x=62.3 Verdana-Bold [10]] Students should:
+[p=31 x=62.3 Verdana-Bold [10]] 4.34C know that carboxylic acids contain the functional group
+[p=31 x=62.3  [10]] 
+[p=31 x=62.3 Verdana-Bold [10]] 4.35C understand how to draw structural and displayed formulae for
+[p=31 x=98.1 Verdana-Bold [10]] unbranched-chain carboxylic acids with up to four carbon atoms in the
+[p=31 x=98.1 Verdana-Bold [10]] molecule, and name each compound
+[p=31 x=62.3 Verdana-Bold [10]] 4.36C describe the reactions of aqueous solutions of carboxylic acids with metals
+[p=31 x=98.1 Verdana-Bold [10]] and metal carbonates
+[p=31 x=62.3 Verdana-Bold [10]] 4.37C know that vinegar is an aqueous solution containing ethanoic acid
+[p=31 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Chemistry 25
+[p=31 x=62.3 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=32 x=62.3  [8]] 
+[p=32 x=62.3  [10]] 
+[p=32 x=62.3 Verdana-Bold [10]] (g) Esters
+[p=32 x=62.3 Verdana-Bold [10]] Students should:
+[p=32 x=62.3 Verdana-Bold [10]] 4.38C know that esters contain the functional group
+[p=32 x=62.3  [10]] 
+[p=32 x=62.3 Verdana-Bold [10]] 4.39C know that ethyl ethanoate is the ester produced when ethanol and ethanoic
+[p=32 x=98.0 Verdana-Bold [10]] acid react in the presence of an acid catalyst
+[p=32 x=62.3 Verdana-Bold [10]] 4.40C understand how to write the structural and displayed formulae of
+[p=32 x=98.0 Verdana-Bold [10]] ethyl ethanoate
+[p=32 x=62.3 Verdana-Bold [10]] 4.41C understand how to write the structural and displayed formulae of an ester,
+[p=32 x=98.0 Verdana-Bold [10]] given the name or formula of the alcohol and carboxylic acid from which it is
+[p=32 x=98.0 Verdana-Bold [10]] formed and vice versa
+[p=32 x=62.3 Verdana-Bold [10]] 4.42C know that esters are volatile compounds with distinctive smells and are used
+[p=32 x=98.0 Verdana-Bold [10]] as food flavourings and in perfumes
+[p=32 x=62.3 Verdana-Bold|Verdana-BoldItalic [10]] 4.43C practical: prepare a sample of an ester such as ethyl ethanoate
+[p=32 x=62.3  [12]] 
+[p=32 x=62.3 Verdana-Bold [10]] (h) Synthetic polymers
+[p=32 x=62.3 Verdana-Bold [10]] Students should:
+[p=32 x=62.3 Verdana [10]] 4.44 know that an addition polymer is formed by joining up many small molecules called
+[p=32 x=98.0 Verdana [10]] monomers
+[p=32 x=62.3 Verdana [10]] 4.45 understand how to draw the repeat unit of an addition polymer, including
+[p=32 x=98.0 Verdana [10]] poly(ethene), poly(propene), poly(chloroethene) and (poly)tetrafluoroethene
+[p=32 x=62.3 Verdana [10]] 4.46 understand how to deduce the structure of a monomer from the repeat unit of an
+[p=32 x=98.0 Verdana [10]] addition polymer and vice versa
+[p=32 x=62.3 Verdana [10]] 4.47 explain problems in the disposal of addition polymers, including:
+[p=32 x=98.0 SymbolMT|Verdana [10]] • their inertness and inability to biodegrade
+[p=32 x=98.0 SymbolMT|Verdana [10]] • the production of toxic gases when they are burned.
+[p=32 x=62.3 Verdana-Bold [10]] 4.48C know that condensation polymerisation, in which a dicarboxylic acid reacts
+[p=32 x=98.0 Verdana-Bold [10]] with a diol, produces a polyester and water
+[p=32 x=62.3 Verdana-Bold [10]] 4.49C understand how to write the structural and displayed formula of a polyester,
+[p=32 x=98.0 Verdana-Bold [10]] showing the repeat unit, given the formulae of the monomers from which it
+[p=32 x=98.0 Verdana-Bold [10]] is formed including the reaction of ethanedioic acid and ethanediol:
+[p=32 x=500.4  [10]] 
+[p=32 x=62.3 Verdana-Bold [10]] 4.50C know that some polyesters, known as biopolyesters, are biodegradable
+[p=32 x=62.3 TrebuchetMS|Verdana [8, 10]] 26Pearson Edexcel International GCSE in Chemistry
+[p=32 x=220.9 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024

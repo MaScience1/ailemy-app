@@ -1,0 +1,2069 @@
+{
+ "meta": {
+  "document": "Pearson Edexcel International GCSE in Chemistry (4CH1) — Specification",
+  "issue": "Issue 3",
+  "publisher": "© Pearson Education Limited 2024",
+  "firstTeaching": "September 2017",
+  "firstAssessment": "June 2019",
+  "source": "https://qualifications.pearson.com/content/dam/pdf/International%20GCSE/Chemistry/2017/specification-and-sample-assessments/international-gcse-chemistry-2017-specification.pdf",
+  "pdfSha256": "36e2080d2e99f060bcc18f2a9d0bbd8b29498b45e007fa232e3befcd89b73362",
+  "contentPages": [
+   15,
+   32
+  ],
+  "paper2OnlyMeaning": "A 'C' code suffix (rendered bold in the document) marks content that is only in the International GCSE in Chemistry, not in Science (Double Award); Paper 1 assesses only non-C content, Paper 2 assesses all content — so the C suffix in the official code IS the Paper 2-only marker (spec pp.4, 7-9). Asserted bold ⟺ C for every statement.",
+  "imageAdjacent": [
+   "4.49C"
+  ],
+  "counts": {
+   "points": 182,
+   "topics": 28,
+   "cOnly": 52,
+   "practical": 12,
+   "bySection": {
+    "1": 60,
+    "2": 50,
+    "3": 22,
+    "4": 50
+   }
+  }
+ },
+ "sections": [
+  {
+   "number": 1,
+   "name": "Principles of chemistry"
+  },
+  {
+   "number": 2,
+   "name": "Inorganic chemistry"
+  },
+  {
+   "number": 3,
+   "name": "Physical chemistry"
+  },
+  {
+   "number": 4,
+   "name": "Organic chemistry"
+  }
+ ],
+ "topics": [
+  {
+   "section": 1,
+   "sectionName": "Principles of chemistry",
+   "letter": "a",
+   "name": "States of matter",
+   "order": 1
+  },
+  {
+   "section": 1,
+   "sectionName": "Principles of chemistry",
+   "letter": "b",
+   "name": "Elements, compounds and mixtures",
+   "order": 2
+  },
+  {
+   "section": 1,
+   "sectionName": "Principles of chemistry",
+   "letter": "c",
+   "name": "Atomic structure",
+   "order": 3
+  },
+  {
+   "section": 1,
+   "sectionName": "Principles of chemistry",
+   "letter": "d",
+   "name": "The Periodic Table",
+   "order": 4
+  },
+  {
+   "section": 1,
+   "sectionName": "Principles of chemistry",
+   "letter": "e",
+   "name": "Chemical formulae, equations and calculations",
+   "order": 5
+  },
+  {
+   "section": 1,
+   "sectionName": "Principles of chemistry",
+   "letter": "f",
+   "name": "Ionic bonding",
+   "order": 6
+  },
+  {
+   "section": 1,
+   "sectionName": "Principles of chemistry",
+   "letter": "g",
+   "name": "Covalent bonding",
+   "order": 7
+  },
+  {
+   "section": 1,
+   "sectionName": "Principles of chemistry",
+   "letter": "h",
+   "name": "Metallic bonding",
+   "order": 8
+  },
+  {
+   "section": 1,
+   "sectionName": "Principles of chemistry",
+   "letter": "i",
+   "name": "Electrolysis",
+   "order": 9
+  },
+  {
+   "section": 2,
+   "sectionName": "Inorganic chemistry",
+   "letter": "a",
+   "name": "Group 1 (alkali metals) – lithium, sodium and potassium",
+   "order": 10
+  },
+  {
+   "section": 2,
+   "sectionName": "Inorganic chemistry",
+   "letter": "b",
+   "name": "Group 7 (halogens) – chlorine, bromine and iodine",
+   "order": 11
+  },
+  {
+   "section": 2,
+   "sectionName": "Inorganic chemistry",
+   "letter": "c",
+   "name": "Gases in the atmosphere",
+   "order": 12
+  },
+  {
+   "section": 2,
+   "sectionName": "Inorganic chemistry",
+   "letter": "d",
+   "name": "Reactivity series",
+   "order": 13
+  },
+  {
+   "section": 2,
+   "sectionName": "Inorganic chemistry",
+   "letter": "e",
+   "name": "Extraction and uses of metals",
+   "order": 14
+  },
+  {
+   "section": 2,
+   "sectionName": "Inorganic chemistry",
+   "letter": "f",
+   "name": "Acids, alkalis and titrations",
+   "order": 15
+  },
+  {
+   "section": 2,
+   "sectionName": "Inorganic chemistry",
+   "letter": "g",
+   "name": "Acids, bases and salt preparations",
+   "order": 16
+  },
+  {
+   "section": 2,
+   "sectionName": "Inorganic chemistry",
+   "letter": "h",
+   "name": "Chemical tests",
+   "order": 17
+  },
+  {
+   "section": 3,
+   "sectionName": "Physical chemistry",
+   "letter": "a",
+   "name": "Energetics",
+   "order": 18
+  },
+  {
+   "section": 3,
+   "sectionName": "Physical chemistry",
+   "letter": "b",
+   "name": "Rates of reaction",
+   "order": 19
+  },
+  {
+   "section": 3,
+   "sectionName": "Physical chemistry",
+   "letter": "c",
+   "name": "Reversible reactions and equilibria",
+   "order": 20
+  },
+  {
+   "section": 4,
+   "sectionName": "Organic chemistry",
+   "letter": "a",
+   "name": "Introduction",
+   "order": 21
+  },
+  {
+   "section": 4,
+   "sectionName": "Organic chemistry",
+   "letter": "b",
+   "name": "Crude oil",
+   "order": 22
+  },
+  {
+   "section": 4,
+   "sectionName": "Organic chemistry",
+   "letter": "c",
+   "name": "Alkanes",
+   "order": 23
+  },
+  {
+   "section": 4,
+   "sectionName": "Organic chemistry",
+   "letter": "d",
+   "name": "Alkenes",
+   "order": 24
+  },
+  {
+   "section": 4,
+   "sectionName": "Organic chemistry",
+   "letter": "e",
+   "name": "Alcohols",
+   "order": 25
+  },
+  {
+   "section": 4,
+   "sectionName": "Organic chemistry",
+   "letter": "f",
+   "name": "Carboxylic acids",
+   "order": 26
+  },
+  {
+   "section": 4,
+   "sectionName": "Organic chemistry",
+   "letter": "g",
+   "name": "Esters",
+   "order": 27
+  },
+  {
+   "section": 4,
+   "sectionName": "Organic chemistry",
+   "letter": "h",
+   "name": "Synthetic polymers",
+   "order": 28
+  }
+ ],
+ "points": [
+  {
+   "code": "1.1",
+   "section": 1,
+   "number": 1,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 1,
+   "order": 1,
+   "text": "understand the three states of matter in terms of the arrangement, movement and energy of the particles"
+  },
+  {
+   "code": "1.2",
+   "section": 1,
+   "number": 2,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 1,
+   "order": 2,
+   "text": "understand the interconversions between the three states of matter in terms of:\n• the names of the interconversions\n• how they are achieved\n• the changes in arrangement, movement and energy of the particles."
+  },
+  {
+   "code": "1.3",
+   "section": 1,
+   "number": 3,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 1,
+   "order": 3,
+   "text": "understand how the results of experiments involving the dilution of coloured solutions and diffusion of gases can be explained"
+  },
+  {
+   "code": "1.4",
+   "section": 1,
+   "number": 4,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 1,
+   "order": 4,
+   "text": "know what is meant by the terms:\n• solvent\n• solute\n• solution\n• saturated solution."
+  },
+  {
+   "code": "1.5C",
+   "section": 1,
+   "number": 5,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 1,
+   "order": 5,
+   "text": "know what is meant by the term solubility in the units g per 100 g of solvent"
+  },
+  {
+   "code": "1.6C",
+   "section": 1,
+   "number": 6,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 1,
+   "order": 6,
+   "text": "understand how to plot and interpret solubility curves"
+  },
+  {
+   "code": "1.7C",
+   "section": 1,
+   "number": 7,
+   "cOnly": true,
+   "practical": true,
+   "topicOrder": 1,
+   "order": 7,
+   "text": "practical: investigate the solubility of a solid in water at a specific temperature"
+  },
+  {
+   "code": "1.8",
+   "section": 1,
+   "number": 8,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 2,
+   "order": 8,
+   "text": "understand how to classify a substance as an element, compound or mixture"
+  },
+  {
+   "code": "1.9",
+   "section": 1,
+   "number": 9,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 2,
+   "order": 9,
+   "text": "understand that a pure substance has a fixed melting and boiling point, but that a mixture may melt or boil over a range of temperatures"
+  },
+  {
+   "code": "1.10",
+   "section": 1,
+   "number": 10,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 2,
+   "order": 10,
+   "text": "describe these experimental techniques for the separation of mixtures:\n• simple distillation\n• fractional distillation\n• filtration\n• crystallisation\n• paper chromatography."
+  },
+  {
+   "code": "1.11",
+   "section": 1,
+   "number": 11,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 2,
+   "order": 11,
+   "text": "understand how a chromatogram provides information about the composition of a mixture"
+  },
+  {
+   "code": "1.12",
+   "section": 1,
+   "number": 12,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 2,
+   "order": 12,
+   "text": "understand how to use the calculation of Rf values to identify the components of a mixture"
+  },
+  {
+   "code": "1.13",
+   "section": 1,
+   "number": 13,
+   "cOnly": false,
+   "practical": true,
+   "topicOrder": 2,
+   "order": 13,
+   "text": "practical: investigate paper chromatography using inks/food colourings"
+  },
+  {
+   "code": "1.14",
+   "section": 1,
+   "number": 14,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 3,
+   "order": 14,
+   "text": "know what is meant by the terms atom and molecule"
+  },
+  {
+   "code": "1.15",
+   "section": 1,
+   "number": 15,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 3,
+   "order": 15,
+   "text": "know the structure of an atom in terms of the positions, relative masses and relative charges of sub-atomic particles"
+  },
+  {
+   "code": "1.16",
+   "section": 1,
+   "number": 16,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 3,
+   "order": 16,
+   "text": "know what is meant by the terms atomic number, mass number, isotopes and relative atomic mass (Ar)"
+  },
+  {
+   "code": "1.17",
+   "section": 1,
+   "number": 17,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 3,
+   "order": 17,
+   "text": "be able to calculate the relative atomic mass of an element (Ar) from isotopic abundances"
+  },
+  {
+   "code": "1.18",
+   "section": 1,
+   "number": 18,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 4,
+   "order": 18,
+   "text": "understand how elements are arranged in the Periodic Table:\n• in order of atomic number\n• in groups and periods."
+  },
+  {
+   "code": "1.19",
+   "section": 1,
+   "number": 19,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 4,
+   "order": 19,
+   "text": "understand how to deduce the electronic configurations of the first 20 elements from their positions in the Periodic Table"
+  },
+  {
+   "code": "1.20",
+   "section": 1,
+   "number": 20,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 4,
+   "order": 20,
+   "text": "understand how to use electrical conductivity and the acid-base character of oxides to classify elements as metals or non-metals"
+  },
+  {
+   "code": "1.21",
+   "section": 1,
+   "number": 21,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 4,
+   "order": 21,
+   "text": "identify an element as a metal or a non-metal according to its position in the Periodic Table"
+  },
+  {
+   "code": "1.22",
+   "section": 1,
+   "number": 22,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 4,
+   "order": 22,
+   "text": "understand how the electronic configuration of a main group element is related to its position in the Periodic Table"
+  },
+  {
+   "code": "1.23",
+   "section": 1,
+   "number": 23,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 4,
+   "order": 23,
+   "text": "understand why elements in the same group of the Periodic Table have similar chemical properties"
+  },
+  {
+   "code": "1.24",
+   "section": 1,
+   "number": 24,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 4,
+   "order": 24,
+   "text": "understand why the noble gases (Group 0) do not readily react"
+  },
+  {
+   "code": "1.25",
+   "section": 1,
+   "number": 25,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 5,
+   "order": 25,
+   "text": "write word equations and balanced chemical equations (including state symbols):\n• for reactions studied in this specification\n• for unfamiliar reactions where suitable information is provided."
+  },
+  {
+   "code": "1.26",
+   "section": 1,
+   "number": 26,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 5,
+   "order": 26,
+   "text": "calculate relative formula masses (including relative molecular masses) (Mr) from relative atomic masses (Ar)"
+  },
+  {
+   "code": "1.27",
+   "section": 1,
+   "number": 27,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 5,
+   "order": 27,
+   "text": "know that the mole (mol) is the unit for the amount of a substance"
+  },
+  {
+   "code": "1.28",
+   "section": 1,
+   "number": 28,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 5,
+   "order": 28,
+   "text": "understand how to carry out calculations involving amount of substance, relative atomic mass (Ar) and relative formula mass (Mr)"
+  },
+  {
+   "code": "1.29",
+   "section": 1,
+   "number": 29,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 5,
+   "order": 29,
+   "text": "calculate reacting masses using experimental data and chemical equations"
+  },
+  {
+   "code": "1.30",
+   "section": 1,
+   "number": 30,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 5,
+   "order": 30,
+   "text": "calculate percentage yield"
+  },
+  {
+   "code": "1.31",
+   "section": 1,
+   "number": 31,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 5,
+   "order": 31,
+   "text": "understand how the formulae of simple compounds can be obtained experimentally, including metal oxides, water and salts containing water of crystallisation"
+  },
+  {
+   "code": "1.32",
+   "section": 1,
+   "number": 32,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 5,
+   "order": 32,
+   "text": "know what is meant by the terms empirical formula and molecular formula"
+  },
+  {
+   "code": "1.33",
+   "section": 1,
+   "number": 33,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 5,
+   "order": 33,
+   "text": "calculate empirical and molecular formulae from experimental data"
+  },
+  {
+   "code": "1.34C",
+   "section": 1,
+   "number": 34,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 5,
+   "order": 34,
+   "text": "understand how to carry out calculations involving amount of substance, volume and concentration (in mol/dm³) of solution"
+  },
+  {
+   "code": "1.35C",
+   "section": 1,
+   "number": 35,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 5,
+   "order": 35,
+   "text": "understand how to carry out calculations involving gas volumes and the molar volume of a gas (24 dm³ and 24 000 cm³ at room temperature and pressure (rtp))"
+  },
+  {
+   "code": "1.36",
+   "section": 1,
+   "number": 36,
+   "cOnly": false,
+   "practical": true,
+   "topicOrder": 5,
+   "order": 36,
+   "text": "practical: know how to determine the formula of a metal oxide by combustion (e.g. magnesium oxide) or by reduction (e.g. copper(II) oxide)"
+  },
+  {
+   "code": "1.37",
+   "section": 1,
+   "number": 37,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 6,
+   "order": 37,
+   "text": "understand how ions are formed by electron loss or gain"
+  },
+  {
+   "code": "1.38",
+   "section": 1,
+   "number": 38,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 6,
+   "order": 38,
+   "text": "know the charges of these ions:\n• metals in Groups 1, 2 and 3\n• non-metals in Groups 5, 6 and 7\n• Ag⁺, Cu²⁺, Fe²⁺, Fe³⁺, Pb²⁺, Zn²⁺\n• hydrogen (H⁺), hydroxide (OH⁻), ammonium (NH₄⁺), carbonate (CO₃²⁻), nitrate (NO₃⁻), sulfate (SO₄²⁻)."
+  },
+  {
+   "code": "1.39",
+   "section": 1,
+   "number": 39,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 6,
+   "order": 39,
+   "text": "write formulae for compounds formed between the ions listed above"
+  },
+  {
+   "code": "1.40",
+   "section": 1,
+   "number": 40,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 6,
+   "order": 40,
+   "text": "draw dot-and-cross diagrams to show the formation of ionic compounds by electron transfer, limited to combinations of elements from Groups 1, 2, 3 and 5, 6, 7 only outer electrons need be shown"
+  },
+  {
+   "code": "1.41",
+   "section": 1,
+   "number": 41,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 6,
+   "order": 41,
+   "text": "understand ionic bonding in terms of electrostatic attractions"
+  },
+  {
+   "code": "1.42",
+   "section": 1,
+   "number": 42,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 6,
+   "order": 42,
+   "text": "understand why compounds with giant ionic lattices have high melting and boiling points"
+  },
+  {
+   "code": "1.43",
+   "section": 1,
+   "number": 43,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 6,
+   "order": 43,
+   "text": "know that ionic compounds do not conduct electricity when solid, but do conduct electricity when molten and in aqueous solution"
+  },
+  {
+   "code": "1.44",
+   "section": 1,
+   "number": 44,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 7,
+   "order": 44,
+   "text": "know that a covalent bond is formed between atoms by the sharing of a pair of electrons"
+  },
+  {
+   "code": "1.45",
+   "section": 1,
+   "number": 45,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 7,
+   "order": 45,
+   "text": "understand covalent bonds in terms of electrostatic attractions"
+  },
+  {
+   "code": "1.46",
+   "section": 1,
+   "number": 46,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 7,
+   "order": 46,
+   "text": "understand how to use dot-and-cross diagrams to represent covalent bonds in:\n• diatomic molecules, including hydrogen, oxygen, nitrogen, halogens and hydrogen halides\n• inorganic molecules including water, ammonia and carbon dioxide\n• organic molecules containing up to two carbon atoms, including methane, ethane, ethene and those containing halogen atoms."
+  },
+  {
+   "code": "1.47",
+   "section": 1,
+   "number": 47,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 7,
+   "order": 47,
+   "text": "explain why substances with a simple molecular structures are gases or liquids, or solids with low melting and boiling points the term intermolecular forces of attraction can be used to represent all forces between molecules"
+  },
+  {
+   "code": "1.48",
+   "section": 1,
+   "number": 48,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 7,
+   "order": 48,
+   "text": "explain why the melting and boiling points of substances with simple molecular structures increase, in general, with increasing relative molecular mass"
+  },
+  {
+   "code": "1.49",
+   "section": 1,
+   "number": 49,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 7,
+   "order": 49,
+   "text": "explain why substances with giant covalent structures are solids with high melting and boiling points"
+  },
+  {
+   "code": "1.50",
+   "section": 1,
+   "number": 50,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 7,
+   "order": 50,
+   "text": "explain how the structures of diamond, graphite and C₆₀ fullerene influence their physical properties, including electrical conductivity and hardness"
+  },
+  {
+   "code": "1.51",
+   "section": 1,
+   "number": 51,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 7,
+   "order": 51,
+   "text": "know that covalent compounds do not usually conduct electricity"
+  },
+  {
+   "code": "1.52C",
+   "section": 1,
+   "number": 52,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 8,
+   "order": 52,
+   "text": "know how to represent a metallic lattice by a 2-D diagram"
+  },
+  {
+   "code": "1.53C",
+   "section": 1,
+   "number": 53,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 8,
+   "order": 53,
+   "text": "understand metallic bonding in terms of electrostatic attractions"
+  },
+  {
+   "code": "1.54C",
+   "section": 1,
+   "number": 54,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 8,
+   "order": 54,
+   "text": "explain typical physical properties of metals, including electrical conductivity and malleability"
+  },
+  {
+   "code": "1.55C",
+   "section": 1,
+   "number": 55,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 9,
+   "order": 55,
+   "text": "understand why covalent compounds do not conduct electricity"
+  },
+  {
+   "code": "1.56C",
+   "section": 1,
+   "number": 56,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 9,
+   "order": 56,
+   "text": "understand why ionic compounds conduct electricity only when molten or in aqueous solution"
+  },
+  {
+   "code": "1.57C",
+   "section": 1,
+   "number": 57,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 9,
+   "order": 57,
+   "text": "know that anion and cation are terms used to refer to negative and positive ions respectively"
+  },
+  {
+   "code": "1.58C",
+   "section": 1,
+   "number": 58,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 9,
+   "order": 58,
+   "text": "describe experiments to investigate electrolysis, using inert electrodes, of molten compounds (including lead(II) bromide) and aqueous solutions (including sodium chloride, dilute sulfuric acid and copper(II) sulfate) and to predict the products"
+  },
+  {
+   "code": "1.59C",
+   "section": 1,
+   "number": 59,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 9,
+   "order": 59,
+   "text": "write ionic half-equations representing the reactions at the electrodes during electrolysis and understand why these reactions are classified as oxidation or reduction"
+  },
+  {
+   "code": "1.60C",
+   "section": 1,
+   "number": 60,
+   "cOnly": true,
+   "practical": true,
+   "topicOrder": 9,
+   "order": 60,
+   "text": "practical: investigate the electrolysis of aqueous solutions"
+  },
+  {
+   "code": "2.1",
+   "section": 2,
+   "number": 1,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 10,
+   "order": 61,
+   "text": "understand how the similarities in the reactions of these elements with water provide evidence for their recognition as a family of elements"
+  },
+  {
+   "code": "2.2",
+   "section": 2,
+   "number": 2,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 10,
+   "order": 62,
+   "text": "understand how the differences between the reactions of these elements with air and water provide evidence for the trend in reactivity in Group 1"
+  },
+  {
+   "code": "2.3",
+   "section": 2,
+   "number": 3,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 10,
+   "order": 63,
+   "text": "use knowledge of trends in Group 1 to predict the properties of other alkali metals"
+  },
+  {
+   "code": "2.4C",
+   "section": 2,
+   "number": 4,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 10,
+   "order": 64,
+   "text": "explain the trend in reactivity in Group 1 in terms of electronic configurations"
+  },
+  {
+   "code": "2.5",
+   "section": 2,
+   "number": 5,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 11,
+   "order": 65,
+   "text": "know the colours, physical states (at room temperature) and trends in physical properties of these elements"
+  },
+  {
+   "code": "2.6",
+   "section": 2,
+   "number": 6,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 11,
+   "order": 66,
+   "text": "use knowledge of trends in Group 7 to predict the properties of other halogens"
+  },
+  {
+   "code": "2.7",
+   "section": 2,
+   "number": 7,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 11,
+   "order": 67,
+   "text": "understand how displacement reactions involving halogens and halides provide evidence for the trend in reactivity in Group 7"
+  },
+  {
+   "code": "2.8C",
+   "section": 2,
+   "number": 8,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 11,
+   "order": 68,
+   "text": "explain the trend in reactivity in Group 7 in terms of electronic configurations"
+  },
+  {
+   "code": "2.9",
+   "section": 2,
+   "number": 9,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 12,
+   "order": 69,
+   "text": "know the approximate percentages by volume of the four most abundant gases in dry air"
+  },
+  {
+   "code": "2.10",
+   "section": 2,
+   "number": 10,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 12,
+   "order": 70,
+   "text": "understand how to determine the percentage by volume of oxygen in air using experiments involving the reactions of metals (e.g. iron) and non-metals (e.g. phosphorus) with air"
+  },
+  {
+   "code": "2.11",
+   "section": 2,
+   "number": 11,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 12,
+   "order": 71,
+   "text": "describe the combustion of elements in oxygen, including magnesium, hydrogen and sulfur"
+  },
+  {
+   "code": "2.12",
+   "section": 2,
+   "number": 12,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 12,
+   "order": 72,
+   "text": "describe the formation of carbon dioxide from the thermal decomposition of metal carbonates, including copper(II) carbonate"
+  },
+  {
+   "code": "2.13",
+   "section": 2,
+   "number": 13,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 12,
+   "order": 73,
+   "text": "know that carbon dioxide is a greenhouse gas and that increasing amounts in the atmosphere may contribute to climate change"
+  },
+  {
+   "code": "2.14",
+   "section": 2,
+   "number": 14,
+   "cOnly": false,
+   "practical": true,
+   "topicOrder": 12,
+   "order": 74,
+   "text": "practical: determine the approximate percentage by volume of oxygen in air using a metal or a non-metal"
+  },
+  {
+   "code": "2.15",
+   "section": 2,
+   "number": 15,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 13,
+   "order": 75,
+   "text": "understand how metals can be arranged in a reactivity series based on their reactions with:\n• water\n• dilute hydrochloric or sulfuric acid."
+  },
+  {
+   "code": "2.16",
+   "section": 2,
+   "number": 16,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 13,
+   "order": 76,
+   "text": "understand how metals can be arranged in a reactivity series based on their displacement reactions between:\n• metals and metal oxides\n• metals and aqueous solutions of metal salts."
+  },
+  {
+   "code": "2.17",
+   "section": 2,
+   "number": 17,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 13,
+   "order": 77,
+   "text": "know the order of reactivity of these metals: potassium, sodium, lithium, calcium, magnesium, aluminium, zinc, iron, copper, silver, gold"
+  },
+  {
+   "code": "2.18",
+   "section": 2,
+   "number": 18,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 13,
+   "order": 78,
+   "text": "know the conditions under which iron rusts"
+  },
+  {
+   "code": "2.19",
+   "section": 2,
+   "number": 19,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 13,
+   "order": 79,
+   "text": "understand how the rusting of iron may be prevented by:\n• barrier methods\n• galvanising\n• sacrificial protection."
+  },
+  {
+   "code": "2.20",
+   "section": 2,
+   "number": 20,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 13,
+   "order": 80,
+   "text": "understand the terms:\n• oxidation\n• reduction\n• redox\n• oxidising agent\n• reducing agent in terms of gain or loss of oxygen and loss or gain of electrons."
+  },
+  {
+   "code": "2.21",
+   "section": 2,
+   "number": 21,
+   "cOnly": false,
+   "practical": true,
+   "topicOrder": 13,
+   "order": 81,
+   "text": "practical: investigate reactions between dilute hydrochloric and sulfuric acids and metals (e.g. magnesium, zinc and iron)"
+  },
+  {
+   "code": "2.22C",
+   "section": 2,
+   "number": 22,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 14,
+   "order": 82,
+   "text": "know that most metals are extracted from ores found in the Earth’s crust and that unreactive metals are often found as the uncombined element"
+  },
+  {
+   "code": "2.23C",
+   "section": 2,
+   "number": 23,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 14,
+   "order": 83,
+   "text": "explain how the method of extraction of a metal is related to its position in the reactivity series, illustrated by carbon extraction for iron and electrolysis for aluminium"
+  },
+  {
+   "code": "2.24C",
+   "section": 2,
+   "number": 24,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 14,
+   "order": 84,
+   "text": "be able to comment on a metal extraction process, given appropriate information detailed knowledge of the processes used in the extraction of a specific metal is not required"
+  },
+  {
+   "code": "2.25C",
+   "section": 2,
+   "number": 25,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 14,
+   "order": 85,
+   "text": "explain the uses of aluminium, copper, iron and steel in terms of their properties the types of steel will be limited to low-carbon (mild), high-carbon and stainless"
+  },
+  {
+   "code": "2.26C",
+   "section": 2,
+   "number": 26,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 14,
+   "order": 86,
+   "text": "know that an alloy is a mixture of a metal and one or more elements, usually other metals or carbon"
+  },
+  {
+   "code": "2.27C",
+   "section": 2,
+   "number": 27,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 14,
+   "order": 87,
+   "text": "explain why alloys are harder than pure metals"
+  },
+  {
+   "code": "2.28",
+   "section": 2,
+   "number": 28,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 15,
+   "order": 88,
+   "text": "describe the use of litmus, phenolphthalein and methyl orange to distinguish between acidic and alkaline solutions"
+  },
+  {
+   "code": "2.29",
+   "section": 2,
+   "number": 29,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 15,
+   "order": 89,
+   "text": "understand how to use the pH scale, from 0–14, can be used to classify solutions as strongly acidic (0–3), weakly acidic (4–6), neutral (7), weakly alkaline (8–10) and strongly alkaline (11–14)"
+  },
+  {
+   "code": "2.30",
+   "section": 2,
+   "number": 30,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 15,
+   "order": 90,
+   "text": "describe the use of universal indicator to measure the approximate pH value of an aqueous solution"
+  },
+  {
+   "code": "2.31",
+   "section": 2,
+   "number": 31,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 15,
+   "order": 91,
+   "text": "know that acids in aqueous solution are a source of hydrogen ions and alkalis in a aqueous solution are a source of hydroxide ions"
+  },
+  {
+   "code": "2.32",
+   "section": 2,
+   "number": 32,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 15,
+   "order": 92,
+   "text": "know that alkalis can neutralise acids"
+  },
+  {
+   "code": "2.33C",
+   "section": 2,
+   "number": 33,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 15,
+   "order": 93,
+   "text": "describe how to carry out an acid-alkali titration"
+  },
+  {
+   "code": "2.34",
+   "section": 2,
+   "number": 34,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 16,
+   "order": 94,
+   "text": "know the general rules for predicting the solubility of ionic compounds in water:\n• common sodium, potassium and ammonium compounds are soluble\n• all nitrates are soluble\n• common chlorides are soluble, except those of silver and lead(II)\n• common sulfates are soluble, except for those of barium, calcium and lead(II)\n• common carbonates are insoluble, except for those of sodium, potassium and ammonium\n• common hydroxides are insoluble except for those of sodium, potassium and calcium (calcium hydroxide is slightly soluble)."
+  },
+  {
+   "code": "2.35",
+   "section": 2,
+   "number": 35,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 16,
+   "order": 95,
+   "text": "understand acids and bases in terms of proton transfer"
+  },
+  {
+   "code": "2.36",
+   "section": 2,
+   "number": 36,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 16,
+   "order": 96,
+   "text": "understand that an acid is a proton donor and a base is a proton acceptor"
+  },
+  {
+   "code": "2.37",
+   "section": 2,
+   "number": 37,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 16,
+   "order": 97,
+   "text": "describe the reactions of hydrochloric acid, sulfuric acid and nitric acid with metals, bases and metal carbonates (excluding the reactions between nitric acid and metals) to form salts"
+  },
+  {
+   "code": "2.38",
+   "section": 2,
+   "number": 38,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 16,
+   "order": 98,
+   "text": "know that metal oxides, metal hydroxides and ammonia can act as bases, and that alkalis are bases that are soluble in water"
+  },
+  {
+   "code": "2.39",
+   "section": 2,
+   "number": 39,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 16,
+   "order": 99,
+   "text": "describe an experiment to prepare a pure, dry sample of a soluble salt, starting from an insoluble reactant"
+  },
+  {
+   "code": "2.40C",
+   "section": 2,
+   "number": 40,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 16,
+   "order": 100,
+   "text": "describe an experiment to prepare a pure, dry sample of a soluble salt, starting from an acid and alkali"
+  },
+  {
+   "code": "2.41C",
+   "section": 2,
+   "number": 41,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 16,
+   "order": 101,
+   "text": "describe an experiment to prepare a pure, dry sample of an insoluble salt, starting from two soluble reactants"
+  },
+  {
+   "code": "2.42",
+   "section": 2,
+   "number": 42,
+   "cOnly": false,
+   "practical": true,
+   "topicOrder": 16,
+   "order": 102,
+   "text": "practical: prepare a sample of pure, dry hydrated copper(II) sulfate crystals starting from copper(II) oxide"
+  },
+  {
+   "code": "2.43C",
+   "section": 2,
+   "number": 43,
+   "cOnly": true,
+   "practical": true,
+   "topicOrder": 16,
+   "order": 103,
+   "text": "practical: prepare a sample of pure, dry lead(II) sulfate"
+  },
+  {
+   "code": "2.44",
+   "section": 2,
+   "number": 44,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 17,
+   "order": 104,
+   "text": "describe tests for these gases:\n• hydrogen\n• oxygen\n• carbon dioxide\n• ammonia\n• chlorine."
+  },
+  {
+   "code": "2.45",
+   "section": 2,
+   "number": 45,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 17,
+   "order": 105,
+   "text": "describe how to carry out a flame test"
+  },
+  {
+   "code": "2.46",
+   "section": 2,
+   "number": 46,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 17,
+   "order": 106,
+   "text": "know the colours formed in flame tests for these cations:\n• Li⁺ is red\n• Na⁺ is yellow\n• K⁺ is lilac\n• Ca²⁺ is orange-red\n• Cu²⁺ is blue-green."
+  },
+  {
+   "code": "2.47",
+   "section": 2,
+   "number": 47,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 17,
+   "order": 107,
+   "text": "describe tests for these cations:\n• NH₄⁺ using sodium hydroxide solution and identifying the gas evolved\n• Cu²⁺, Fe²⁺ and Fe³⁺ using sodium hydroxide solution."
+  },
+  {
+   "code": "2.48",
+   "section": 2,
+   "number": 48,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 17,
+   "order": 108,
+   "text": "describe tests for these anions:\n• Cl⁻, Br⁻ and I⁻ using acidified silver nitrate solution\n• SO₄²⁻ using acidified barium chloride solution\n• CO₃²⁻ using hydrochloric acid and identifying the gas evolved."
+  },
+  {
+   "code": "2.49",
+   "section": 2,
+   "number": 49,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 17,
+   "order": 109,
+   "text": "describe a test for the presence of water using anhydrous copper(II) sulfate"
+  },
+  {
+   "code": "2.50",
+   "section": 2,
+   "number": 50,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 17,
+   "order": 110,
+   "text": "describe a physical test to show whether a sample of water is pure"
+  },
+  {
+   "code": "3.1",
+   "section": 3,
+   "number": 1,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 18,
+   "order": 111,
+   "text": "know that chemical reactions in which heat energy is given out are described as exothermic, and those in which heat energy is taken in are described as endothermic"
+  },
+  {
+   "code": "3.2",
+   "section": 3,
+   "number": 2,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 18,
+   "order": 112,
+   "text": "describe simple calorimetry experiments for reactions such as combustion, displacement, dissolving and neutralisation"
+  },
+  {
+   "code": "3.3",
+   "section": 3,
+   "number": 3,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 18,
+   "order": 113,
+   "text": "calculate the heat energy change from a measured temperature change using the expression Q = mcΔT"
+  },
+  {
+   "code": "3.4",
+   "section": 3,
+   "number": 4,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 18,
+   "order": 114,
+   "text": "calculate the molar enthalpy change (ΔH) from the heat energy change, Q"
+  },
+  {
+   "code": "3.5C",
+   "section": 3,
+   "number": 5,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 18,
+   "order": 115,
+   "text": "draw and explain energy level diagrams to represent exothermic and endothermic reactions"
+  },
+  {
+   "code": "3.6C",
+   "section": 3,
+   "number": 6,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 18,
+   "order": 116,
+   "text": "know that bond-breaking is an endothermic process and that bond-making is an exothermic process"
+  },
+  {
+   "code": "3.7C",
+   "section": 3,
+   "number": 7,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 18,
+   "order": 117,
+   "text": "use bond energies to calculate the enthalpy change during a chemical reaction"
+  },
+  {
+   "code": "3.8",
+   "section": 3,
+   "number": 8,
+   "cOnly": false,
+   "practical": true,
+   "topicOrder": 18,
+   "order": 118,
+   "text": "practical: investigate temperature changes accompanying some of the following types of change:\n• salts dissolving in water\n• neutralisation reactions\n• displacement reactions\n• combustion reactions."
+  },
+  {
+   "code": "3.9",
+   "section": 3,
+   "number": 9,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 19,
+   "order": 119,
+   "text": "describe experiments to investigate the effects of changes in surface area of a solid, concentration of a solution, temperature and the use of a catalyst on the rate of a reaction"
+  },
+  {
+   "code": "3.10",
+   "section": 3,
+   "number": 10,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 19,
+   "order": 120,
+   "text": "describe the effects of changes in surface area of a solid, concentration of a solution, pressure of a gas, temperature and the use of a catalyst on the rate of a reaction"
+  },
+  {
+   "code": "3.11",
+   "section": 3,
+   "number": 11,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 19,
+   "order": 121,
+   "text": "explain the effects of changes in surface area of a solid, concentration of a solution, pressure of a gas and temperature on the rate of a reaction in terms of particle collision theory"
+  },
+  {
+   "code": "3.12",
+   "section": 3,
+   "number": 12,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 19,
+   "order": 122,
+   "text": "know that a catalyst is a substance that increases the rate of a reaction, but is chemically unchanged at the end of the reaction"
+  },
+  {
+   "code": "3.13",
+   "section": 3,
+   "number": 13,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 19,
+   "order": 123,
+   "text": "know that a catalyst works by providing an alternative pathway with lower activation energy"
+  },
+  {
+   "code": "3.14C",
+   "section": 3,
+   "number": 14,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 19,
+   "order": 124,
+   "text": "draw and explain reaction profile diagrams showing ΔH and activation energy"
+  },
+  {
+   "code": "3.15",
+   "section": 3,
+   "number": 15,
+   "cOnly": false,
+   "practical": true,
+   "topicOrder": 19,
+   "order": 125,
+   "text": "practical: investigate the effect of changing the surface area of marble chips and of changing the concentration of hydrochloric acid on the rate of reaction between marble chips and dilute hydrochloric acid"
+  },
+  {
+   "code": "3.16",
+   "section": 3,
+   "number": 16,
+   "cOnly": false,
+   "practical": true,
+   "topicOrder": 19,
+   "order": 126,
+   "text": "practical: investigate the effect of different solids on the catalytic decomposition of hydrogen peroxide solution"
+  },
+  {
+   "code": "3.17",
+   "section": 3,
+   "number": 17,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 20,
+   "order": 127,
+   "text": "know that some reactions are reversible and this is indicated by the symbol ⇌ in equations"
+  },
+  {
+   "code": "3.18",
+   "section": 3,
+   "number": 18,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 20,
+   "order": 128,
+   "text": "describe reversible reactions such as the dehydration of hydrated copper(II) sulfate and the effect of heat on ammonium chloride"
+  },
+  {
+   "code": "3.19C",
+   "section": 3,
+   "number": 19,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 20,
+   "order": 129,
+   "text": "know that a reversible reaction can reach dynamic equilibrium in a sealed container"
+  },
+  {
+   "code": "3.20C",
+   "section": 3,
+   "number": 20,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 20,
+   "order": 130,
+   "text": "know that the characteristics of a reaction at dynamic equilibrium are:\n• the forward and reverse reactions occur at the same rate\n• the concentrations of reactants and products remain constant."
+  },
+  {
+   "code": "3.21C",
+   "section": 3,
+   "number": 21,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 20,
+   "order": 131,
+   "text": "understand why a catalyst does not affect the position of equilibrium in a reversible reaction"
+  },
+  {
+   "code": "3.22C",
+   "section": 3,
+   "number": 22,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 20,
+   "order": 132,
+   "text": "know the effect of changing either temperature or pressure on the position of equilibrium in a reversible reaction:\n• an increase (or decrease) in temperature shifts the position of equilibrium in the direction of the endothermic (or exothermic) reaction\n• an increase (or decrease) in pressure shifts the position of equilibrium in the direction that produces fewer (or more) moles of gas References to Le Chatelier's principle are not required"
+  },
+  {
+   "code": "4.1",
+   "section": 4,
+   "number": 1,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 21,
+   "order": 133,
+   "text": "know that a hydrocarbon is a compound of hydrogen and carbon only"
+  },
+  {
+   "code": "4.2",
+   "section": 4,
+   "number": 2,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 21,
+   "order": 134,
+   "text": "understand how to represent organic molecules using empirical formulae, molecular formulae, general formulae, structural formulae and displayed formulae"
+  },
+  {
+   "code": "4.3",
+   "section": 4,
+   "number": 3,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 21,
+   "order": 135,
+   "text": "know what is meant by the terms homologous series, functional group and isomerism"
+  },
+  {
+   "code": "4.4",
+   "section": 4,
+   "number": 4,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 21,
+   "order": 136,
+   "text": "understand how to name compounds relevant to this specification using the rules of International Union of Pure and Applied Chemistry (IUPAC) nomenclature students will be expected to name compounds containing up to six carbon atoms"
+  },
+  {
+   "code": "4.5",
+   "section": 4,
+   "number": 5,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 21,
+   "order": 137,
+   "text": "understand how to write the possible structural and displayed formulae of an organic molecule given its molecular formula"
+  },
+  {
+   "code": "4.6",
+   "section": 4,
+   "number": 6,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 21,
+   "order": 138,
+   "text": "understand how to classify reactions of organic compounds as substitution, addition and combustion knowledge of reaction mechanisms is not required"
+  },
+  {
+   "code": "4.7",
+   "section": 4,
+   "number": 7,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 22,
+   "order": 139,
+   "text": "know that crude oil is a mixture of hydrocarbons"
+  },
+  {
+   "code": "4.8",
+   "section": 4,
+   "number": 8,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 22,
+   "order": 140,
+   "text": "describe how the industrial process of fractional distillation separates crude oil into fractions"
+  },
+  {
+   "code": "4.9",
+   "section": 4,
+   "number": 9,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 22,
+   "order": 141,
+   "text": "know the names and uses of the main fractions obtained from crude oil: refinery gases, gasoline, kerosene, diesel, fuel oil and bitumen"
+  },
+  {
+   "code": "4.10",
+   "section": 4,
+   "number": 10,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 22,
+   "order": 142,
+   "text": "know the trend in colour, boiling point and viscosity of the main fractions"
+  },
+  {
+   "code": "4.11",
+   "section": 4,
+   "number": 11,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 22,
+   "order": 143,
+   "text": "know that a fuel is a substance that, when burned, releases heat energy"
+  },
+  {
+   "code": "4.12",
+   "section": 4,
+   "number": 12,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 22,
+   "order": 144,
+   "text": "know the possible products of complete and incomplete combustion of hydrocarbons with oxygen in the air"
+  },
+  {
+   "code": "4.13",
+   "section": 4,
+   "number": 13,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 22,
+   "order": 145,
+   "text": "understand why carbon monoxide is poisonous, in terms of its effect on the capacity of blood to transport oxygen references to haemoglobin are not required"
+  },
+  {
+   "code": "4.14",
+   "section": 4,
+   "number": 14,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 22,
+   "order": 146,
+   "text": "know that, in car engines, the temperature reached is high enough to allow nitrogen and oxygen from air to react, forming oxides of nitrogen"
+  },
+  {
+   "code": "4.15",
+   "section": 4,
+   "number": 15,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 22,
+   "order": 147,
+   "text": "explain how the combustion of some impurities in hydrocarbon fuels results in the formation of sulfur dioxide"
+  },
+  {
+   "code": "4.16",
+   "section": 4,
+   "number": 16,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 22,
+   "order": 148,
+   "text": "understand how sulfur dioxide and oxides of nitrogen contribute to acid rain"
+  },
+  {
+   "code": "4.17",
+   "section": 4,
+   "number": 17,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 22,
+   "order": 149,
+   "text": "describe how long-chain alkanes are converted to alkenes and shorter-chain alkanes by catalytic cracking (using silica or alumina as the catalyst and a temperature in the range of 600–700 ºC)"
+  },
+  {
+   "code": "4.18",
+   "section": 4,
+   "number": 18,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 22,
+   "order": 150,
+   "text": "explain why cracking is necessary, in terms of the balance between supply and demand for different fractions"
+  },
+  {
+   "code": "4.19",
+   "section": 4,
+   "number": 19,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 23,
+   "order": 151,
+   "text": "know the general formula for alkanes"
+  },
+  {
+   "code": "4.20",
+   "section": 4,
+   "number": 20,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 23,
+   "order": 152,
+   "text": "explain why alkanes are classified as saturated hydrocarbons"
+  },
+  {
+   "code": "4.21",
+   "section": 4,
+   "number": 21,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 23,
+   "order": 153,
+   "text": "understand how to draw the structural and displayed formulae for alkanes with up to five carbon atoms in the molecule, and to name the unbranched-chain isomers"
+  },
+  {
+   "code": "4.22",
+   "section": 4,
+   "number": 22,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 23,
+   "order": 154,
+   "text": "describe the reactions of alkanes with halogens in the presence of ultraviolet radiation, limited to mono-substitution knowledge of reaction mechanisms is not required"
+  },
+  {
+   "code": "4.23",
+   "section": 4,
+   "number": 23,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 24,
+   "order": 155,
+   "text": "know that alkenes contain the functional group >C=C<"
+  },
+  {
+   "code": "4.24",
+   "section": 4,
+   "number": 24,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 24,
+   "order": 156,
+   "text": "know the general formula for alkenes"
+  },
+  {
+   "code": "4.25",
+   "section": 4,
+   "number": 25,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 24,
+   "order": 157,
+   "text": "explain why alkenes are classified as unsaturated hydrocarbons"
+  },
+  {
+   "code": "4.26",
+   "section": 4,
+   "number": 26,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 24,
+   "order": 158,
+   "text": "understand how to draw the structural and displayed formulae for alkenes with up to four carbon atoms in the molecule, and name the unbranched-chain isomers knowledge of cis/trans or E/Z notation is not required"
+  },
+  {
+   "code": "4.27",
+   "section": 4,
+   "number": 27,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 24,
+   "order": 159,
+   "text": "describe the reactions of alkenes with bromine to produce dibromoalkanes"
+  },
+  {
+   "code": "4.28",
+   "section": 4,
+   "number": 28,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 24,
+   "order": 160,
+   "text": "describe how bromine water can be used to distinguish between an alkane and an alkene"
+  },
+  {
+   "code": "4.29C",
+   "section": 4,
+   "number": 29,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 25,
+   "order": 161,
+   "text": "know that alcohols contain the functional group −OH"
+  },
+  {
+   "code": "4.30C",
+   "section": 4,
+   "number": 30,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 25,
+   "order": 162,
+   "text": "understand how to draw structural and displayed formulae for methanol, ethanol, propanol (propan-1-ol only) and butanol (butan-1-ol only), and name each compound the names propanol and butanol are acceptable"
+  },
+  {
+   "code": "4.31C",
+   "section": 4,
+   "number": 31,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 25,
+   "order": 163,
+   "text": "know that ethanol can be oxidised by:\n• burning in air or oxygen (complete combustion)\n• reaction with oxygen in the air to form ethanoic acid (microbial oxidation)\n• heating with potassium dichromate(VI) in dilute sulfuric acid to form ethanoic acid"
+  },
+  {
+   "code": "4.32C",
+   "section": 4,
+   "number": 32,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 25,
+   "order": 164,
+   "text": "know that ethanol can be manufactured by:\n•  reacting ethene with steam in the presence of a phosphoric acid catalyst at a temperature of about 300 ºC and a pressure of about 60–70 atm\n•  the fermentation of glucose, in the absence of air, at an optimum temperature of about 30 ºC and using the enzymes in yeast"
+  },
+  {
+   "code": "4.33C",
+   "section": 4,
+   "number": 33,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 25,
+   "order": 165,
+   "text": "understand the reasons for fermentation, in the absence of air, and at an optimum temperature"
+  },
+  {
+   "code": "4.34C",
+   "section": 4,
+   "number": 34,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 26,
+   "order": 166,
+   "text": "know that carboxylic acids contain the functional group"
+  },
+  {
+   "code": "4.35C",
+   "section": 4,
+   "number": 35,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 26,
+   "order": 167,
+   "text": "understand how to draw structural and displayed formulae for unbranched-chain carboxylic acids with up to four carbon atoms in the molecule, and name each compound"
+  },
+  {
+   "code": "4.36C",
+   "section": 4,
+   "number": 36,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 26,
+   "order": 168,
+   "text": "describe the reactions of aqueous solutions of carboxylic acids with metals and metal carbonates"
+  },
+  {
+   "code": "4.37C",
+   "section": 4,
+   "number": 37,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 26,
+   "order": 169,
+   "text": "know that vinegar is an aqueous solution containing ethanoic acid"
+  },
+  {
+   "code": "4.38C",
+   "section": 4,
+   "number": 38,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 27,
+   "order": 170,
+   "text": "know that esters contain the functional group"
+  },
+  {
+   "code": "4.39C",
+   "section": 4,
+   "number": 39,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 27,
+   "order": 171,
+   "text": "know that ethyl ethanoate is the ester produced when ethanol and ethanoic acid react in the presence of an acid catalyst"
+  },
+  {
+   "code": "4.40C",
+   "section": 4,
+   "number": 40,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 27,
+   "order": 172,
+   "text": "understand how to write the structural and displayed formulae of ethyl ethanoate"
+  },
+  {
+   "code": "4.41C",
+   "section": 4,
+   "number": 41,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 27,
+   "order": 173,
+   "text": "understand how to write the structural and displayed formulae of an ester, given the name or formula of the alcohol and carboxylic acid from which it is formed and vice versa"
+  },
+  {
+   "code": "4.42C",
+   "section": 4,
+   "number": 42,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 27,
+   "order": 174,
+   "text": "know that esters are volatile compounds with distinctive smells and are used as food flavourings and in perfumes"
+  },
+  {
+   "code": "4.43C",
+   "section": 4,
+   "number": 43,
+   "cOnly": true,
+   "practical": true,
+   "topicOrder": 27,
+   "order": 175,
+   "text": "practical: prepare a sample of an ester such as ethyl ethanoate"
+  },
+  {
+   "code": "4.44",
+   "section": 4,
+   "number": 44,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 28,
+   "order": 176,
+   "text": "know that an addition polymer is formed by joining up many small molecules called monomers"
+  },
+  {
+   "code": "4.45",
+   "section": 4,
+   "number": 45,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 28,
+   "order": 177,
+   "text": "understand how to draw the repeat unit of an addition polymer, including poly(ethene), poly(propene), poly(chloroethene) and (poly)tetrafluoroethene"
+  },
+  {
+   "code": "4.46",
+   "section": 4,
+   "number": 46,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 28,
+   "order": 178,
+   "text": "understand how to deduce the structure of a monomer from the repeat unit of an addition polymer and vice versa"
+  },
+  {
+   "code": "4.47",
+   "section": 4,
+   "number": 47,
+   "cOnly": false,
+   "practical": false,
+   "topicOrder": 28,
+   "order": 179,
+   "text": "explain problems in the disposal of addition polymers, including:\n• their inertness and inability to biodegrade\n• the production of toxic gases when they are burned."
+  },
+  {
+   "code": "4.48C",
+   "section": 4,
+   "number": 48,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 28,
+   "order": 180,
+   "text": "know that condensation polymerisation, in which a dicarboxylic acid reacts with a diol, produces a polyester and water"
+  },
+  {
+   "code": "4.49C",
+   "section": 4,
+   "number": 49,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 28,
+   "order": 181,
+   "text": "understand how to write the structural and displayed formula of a polyester, showing the repeat unit, given the formulae of the monomers from which it is formed including the reaction of ethanedioic acid and ethanediol:"
+  },
+  {
+   "code": "4.50C",
+   "section": 4,
+   "number": 50,
+   "cOnly": true,
+   "practical": false,
+   "topicOrder": 28,
+   "order": 182,
+   "text": "know that some polyesters, known as biopolyesters, are biodegradable"
+  }
+ ]
+}
