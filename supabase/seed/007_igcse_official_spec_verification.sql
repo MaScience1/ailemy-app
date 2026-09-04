@@ -1,9 +1,20 @@
 -- ============================================================================
 -- AILEMY — 4CH1 OFFICIAL SPECIFICATION VERIFICATION (lifecycle pass)
 --
--- ⚠ NOT YET APPLIED. Prepared 2026-09-04 for owner review. On application,
---   rewrite this header the same day with the date and verification result
---   (the 004 rule: the seed folder is the record of what is live).
+-- ⚠ APPLIED 2026-09-04 by the owner via the Supabase SQL Editor (whole-file
+--   paste, sentinel confirmed, "Success. No rows returned") and VERIFIED the
+--   same day, read-only:
+--     · pre-apply: eligible = 182, outside-state = 0, IAL 157/157/1 — exact
+--     · post-apply gate (igcse-4ch1-spec-verify.ts --verified): ALL CHECKS
+--       PASS — 182 points all status='live' with verified_at set, 0 draft,
+--       28 unit-less topics, 52 C-suffix, wording/titles byte-exact to the
+--       extraction, zero duplicates/malformed/orphans, zero cross-course
+--       contamination
+--     · IAL untouched: 157 live+verified + 1 archived (1.13)
+--     · zero lesson links and zero question mappings on 4CH1
+--       (question_spec_points still exactly its 18 pre-existing WCH11 rows)
+--     · Specification Explorer renders both courses correctly (4CH1
+--       unit-less, IAL unchanged with WCH11/WCH12).
 --
 -- WHAT THIS PASS DOES — and the WHOLE of what it does:
 --   status 'draft' -> 'live' and verified_at set, on EXACTLY the 182
