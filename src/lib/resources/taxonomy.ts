@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { groupTopicsByUnit, UNGROUPED_UNIT_ID } from "@/lib/specification/grouping";
 
 /**
  * The resource graph — ONE taxonomy, reusing what already exists (§67).
@@ -161,18 +162,32 @@ export async function loadCourseResources(
     lessonCount: lessonsByTopic.get(t.id as string)?.size ?? 0,
   }));
 
-  const unitNodes: UnitNode[] = (units.data ?? []).map((u) => {
-    const mine = lessonRows.filter((l) => l.unit_id === u.id);
-    return {
+  // ⚠ grouping.ts owns where a topic hangs — a unit-less course (IGCSE, UK
+  // GCSE: topics with unit_id NULL and no units rows at all) renders its
+  // topics under one UNGROUPED_UNIT_ID group instead of being dropped. The
+  // group's lesson counts follow the same rule as its topics: lessons that
+  // belong to no unit are counted there, not nowhere.
+  const unitIds = new Set((units.data ?? []).map((u) => u.id as string));
+  const unitNodes: UnitNode[] = groupTopicsByUnit(
+    (units.data ?? []).map((u) => ({
       id: u.id as string,
       code: (u.code as string) ?? null,
       name: u.name as string,
       status: u.status as string,
+    })),
+    topicNodes,
+  ).map(({ unit, topics: groupTopics }) => {
+    const mine = unit
+      ? lessonRows.filter((l) => l.unit_id === unit.id)
+      : lessonRows.filter((l) => l.unit_id === null || !unitIds.has(l.unit_id as string));
+    return {
+      id: unit?.id ?? UNGROUPED_UNIT_ID,
+      code: unit?.code ?? null,
+      name: unit?.name ?? "Ungrouped",
+      status: unit?.status ?? "live",
       lessonCount: mine.length,
       liveLessonCount: mine.filter((l) => l.status === "live").length,
-      topics: topicNodes
-        .filter((t) => t.unitId === u.id)
-        .map(({ unitId: _u, ...t }) => t),
+      topics: groupTopics.map(({ unitId: _u, ...t }) => t),
     };
   });
 

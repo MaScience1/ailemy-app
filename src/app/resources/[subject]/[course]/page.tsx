@@ -9,6 +9,7 @@ import { Breadcrumb } from "@/components/catalogue/breadcrumb";
 import { getSubjectBySlug } from "@/lib/catalogue/queries";
 import { subjectColour, subjectVars } from "@/lib/design/subject-colours";
 import { loadCourseResources } from "@/lib/resources/taxonomy";
+import { UNGROUPED_UNIT_ID } from "@/lib/specification/grouping";
 import { ResourceCategory, ResourceRow } from "@/components/resources/ResourceCategory";
 
 /**
@@ -223,22 +224,28 @@ export default async function CourseResourcesPage({ params }: { params: Params }
             </div>
 
             {units.length === 0 ? (
+              /* No units AND no topics — grouping.ts would have produced a
+                 group for either. */
               <p className="mt-4 text-sm text-ink/65">
-                This course has no units mapped yet.
+                This course has no topics mapped yet.
               </p>
             ) : (
               <div className="mt-6 grid gap-8">
                 {units.map((u) => (
                   <div key={u.id}>
-                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-ink/10 pb-2">
-                      <h3 className="font-display text-lg font-medium tracking-tight">
-                        {u.code ? `${u.code} · ` : ""}
-                        {u.name}
-                      </h3>
-                      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink/45">
-                        {u.liveLessonCount} of {u.lessonCount} lessons published
-                      </p>
-                    </div>
+                    {/* A unit-less course's single synthetic group is not a
+                        heading — its topics ARE the top level (grouping.ts). */}
+                    {!(units.length === 1 && u.id === UNGROUPED_UNIT_ID) && (
+                      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-ink/10 pb-2">
+                        <h3 className="font-display text-lg font-medium tracking-tight">
+                          {u.code ? `${u.code} · ` : ""}
+                          {u.name}
+                        </h3>
+                        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink/45">
+                          {u.liveLessonCount} of {u.lessonCount} lessons published
+                        </p>
+                      </div>
+                    )}
 
                     {u.topics.length === 0 ? (
                       <p className="mt-3 text-sm text-ink/55">

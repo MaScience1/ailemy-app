@@ -13,6 +13,7 @@ import type {
   SpecTopicNode,
   SpecUnitNode,
 } from "@/lib/specification/types";
+import { UNGROUPED_UNIT_ID } from "@/lib/specification/grouping";
 import { unstartedFacts } from "@/lib/specification/mastery";
 import {
   CONFIDENCE_META,
@@ -142,6 +143,14 @@ export function SpecificationExplorer({
 
   const factsOf = (code: string): SpecMasteryFacts =>
     mastery?.byCode[code] ?? unstartedFacts();
+
+  /* A course whose specification has no unit layer (IGCSE, UK GCSE) arrives
+     as ONE synthetic group: its topics ARE the top level, so no group heading
+     and no group filter render — the noun "unit" never appears for a course
+     that does not have units. Alongside REAL units the synthetic group is
+     data damage (a topic that lost its unit) and renders honestly under its
+     own "Ungrouped" heading instead. */
+  const soleUngrouped = units.length === 1 && units[0].id === UNGROUPED_UNIT_ID;
 
   const q = query.trim().toLowerCase();
   const filtering = q !== "" || stateFilter !== "all" || unitFilter !== "all";
@@ -295,18 +304,20 @@ export function SpecificationExplorer({
       {/* ── The tree ─────────────────────────────────────────────────────── */}
       <div className="mt-6 grid gap-10">
         {visible.map(({ unit, topics }) => (
-          <section key={unit.id} aria-label={unit.name}>
-            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-ink/10 pb-2">
-              <h3 className="font-display text-lg font-medium tracking-tight">
-                {unit.code ? `${unit.code} · ` : ""}
-                {unit.name}
-              </h3>
-              <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink/45">
-                {unit.topics.length === 0
-                  ? "no topics mapped yet"
-                  : `${unit.topics.length} topic${unit.topics.length === 1 ? "" : "s"}`}
-              </p>
-            </div>
+          <section key={unit.id} aria-label={soleUngrouped ? "Specification topics" : unit.name}>
+            {!soleUngrouped && (
+              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-ink/10 pb-2">
+                <h3 className="font-display text-lg font-medium tracking-tight">
+                  {unit.code ? `${unit.code} · ` : ""}
+                  {unit.name}
+                </h3>
+                <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink/45">
+                  {unit.topics.length === 0
+                    ? "no topics mapped yet"
+                    : `${unit.topics.length} topic${unit.topics.length === 1 ? "" : "s"}`}
+                </p>
+              </div>
+            )}
 
             {topics.length === 0 && (
               <p className="mt-3 text-sm text-ink/55">

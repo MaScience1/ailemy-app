@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 
 import { Breadcrumb } from "@/components/catalogue/breadcrumb";
 import { subjectColour, subjectVars } from "@/lib/design/subject-colours";
+import { UNGROUPED_UNIT_ID } from "@/lib/specification/grouping";
 import { buildCourseInsights } from "@/lib/specification/insights";
 import { buildCourseMastery } from "@/lib/specification/mastery";
 import {
@@ -148,6 +149,11 @@ export default async function SpecificationPage({
     0,
   );
   const hasSpec = tree.units.some((u) => u.topics.some((t) => t.points.length > 0));
+  /* The header counts what the hierarchy actually has: units where the course
+     has units (IAL), topics where it does not (IGCSE — one synthetic group,
+     which is not a unit and must not be counted as one). */
+  const realUnitCount = tree.units.filter((u) => u.id !== UNGROUPED_UNIT_ID).length;
+  const topicsTotal = tree.units.reduce((n, u) => n + u.topics.length, 0);
 
   return (
     <div style={subjectVars(colour)}>
@@ -177,7 +183,9 @@ export default async function SpecificationPage({
             {hasSpec && (
               <p className="font-mono mt-5 text-xs tracking-wide text-ink/55">
                 {pointsTotal} specification point{pointsTotal === 1 ? "" : "s"} ·{" "}
-                {tree.units.length} unit{tree.units.length === 1 ? "" : "s"}
+                {realUnitCount > 0
+                  ? `${realUnitCount} unit${realUnitCount === 1 ? "" : "s"}`
+                  : `${topicsTotal} topic${topicsTotal === 1 ? "" : "s"}`}
               </p>
             )}
           </header>
