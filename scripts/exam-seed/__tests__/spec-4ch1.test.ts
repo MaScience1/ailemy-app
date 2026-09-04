@@ -24,7 +24,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { topicSlug } from "../../spec-extract/generate-4ch1-seed.ts";
+import { pointTitle, TITLE_MAX, topicSlug } from "../../spec-extract/generate-4ch1-seed.ts";
 import { compareSpecCodes } from "../../../src/lib/specification/codes.ts";
 import {
   groupTopicsByUnit,
@@ -229,8 +229,11 @@ console.log("§4 the seed SQL is exactly the JSON, course-scoped, non-destructiv
 // ============================================================================
 {
   const pointInserts = [...sql.matchAll(
-    /INSERT INTO spec_points \(topic_id, code, title, description, command_terms, status, sort_order\)\nSELECT t\.id, '([^']+)', NULL, '((?:[^']|'')*)', NULL, 'draft', (\d+)\nFROM topics t JOIN courses cs ON cs\.id = t\.course_id AND cs\.slug = 'edexcel-igcse-chemistry'\nWHERE t\.slug = '([^']+)'/g,
-  )].map((m) => ({ code: m[1], text: m[2].replace(/''/g, "'"), sortOrder: Number(m[3]), slug: m[4] }));
+    /INSERT INTO spec_points \(topic_id, code, title, description, command_terms, status, sort_order\)\nSELECT t\.id, '([^']+)', '((?:[^']|'')+)', '((?:[^']|'')*)', NULL, 'draft', (\d+)\nFROM topics t JOIN courses cs ON cs\.id = t\.course_id AND cs\.slug = 'edexcel-igcse-chemistry'\nWHERE t\.slug = '([^']+)'/g,
+  )].map((m) => ({
+    code: m[1], title: m[2].replace(/''/g, "'"), text: m[3].replace(/''/g, "'"),
+    sortOrder: Number(m[4]), slug: m[5],
+  }));
   t("exactly one spec-point INSERT per JSON point, in document order",
     pointInserts.map((r) => r.code).join("|") === json.points.map((p) => p.code).join("|"),
     `${pointInserts.length} inserts`);
@@ -335,6 +338,75 @@ console.log("§5 IAL untouched, and the two courses stay isolated");
     }).ignoredRows === 1);
   t("zero-evidence 4CH1 course computes clean over the full real tree",
     buildCourseMastery({ units: igcseUnits, evidence: [] }).summary.pointsTotal === json.points.length);
+}
+
+// ============================================================================
+console.log("§6 schema-constraint preflight — required columns derived from the DDL");
+// ============================================================================
+// ⚠ BORN OF A PRODUCTION ROLLBACK (2026-09-04): the first apply attempt of 006
+// died on spec_points.title NOT NULL, because every check compared seed ↔
+// extraction and none compared seed ↔ SCHEMA. This section parses the CREATE
+// TABLE statements out of the migration that owns them, derives the set of
+// NOT NULL / no-DEFAULT columns, and refuses any INSERT that omits one or
+// supplies a literal NULL for one. The expectation comes from the DDL, never
+// from a typed list, so a future required column fails here before it can
+// fail in production.
+{
+  const ddl = readFileSync(repo("supabase/migrations/0001_initial_schema.sql"), "utf8");
+  const requiredColumns = (table: string): string[] => {
+    const m = new RegExp(`CREATE TABLE ${table} \\(([\\s\\S]*?)\\n\\);`).exec(ddl);
+    if (!m) return [];
+    return m[1].split("\n")
+      .map((line) => /^\s*([a-z_]+)\s+([a-z_\[\]]+.*)$/.exec(line.replace(/,\s*(--.*)?$/, "")))
+      .filter((c): c is RegExpExecArray => !!c && !c[1].startsWith("unique"))
+      .filter((c) => /NOT NULL/i.test(c[2]) && !/DEFAULT/i.test(c[2]))
+      .map((c) => c[1]);
+  };
+  const specRequired = requiredColumns("spec_points");
+  const topicsRequired = requiredColumns("topics");
+  t("DDL parse found the constraint that sank the first apply (title among spec_points' required set)",
+    specRequired.includes("title") && specRequired.includes("description") &&
+    specRequired.includes("topic_id") && specRequired.includes("code"),
+    specRequired.join(","));
+
+  const namesEvery = (insertHeadRe: RegExp, required: string[]) => {
+    const heads = [...sql.matchAll(insertHeadRe)];
+    return heads.length > 0 && heads.every((h) => {
+      const cols = h[1].split(",").map((c) => c.trim());
+      return required.every((r) => cols.includes(r));
+    });
+  };
+  t("every spec_points INSERT names every DDL-required column",
+    namesEvery(/INSERT INTO spec_points \(([^)]+)\)/g, specRequired));
+  t("every topics INSERT names every DDL-required column",
+    namesEvery(/INSERT INTO topics \(([^)]+)\)/g, topicsRequired));
+
+  // Naming a column is not supplying it: every required VALUE position must
+  // hold a non-empty quoted literal (or the id join), never NULL. The full
+  // safe shape is asserted per SELECT — column order topic_id, code, title,
+  // description, command_terms, status, sort_order.
+  const specSelects = [...sql.matchAll(/INSERT INTO spec_points \([^)]+\)\nSELECT ([\s\S]*?)\nFROM topics t JOIN/g)];
+  const SAFE_SHAPE = /^t\.id, '(?:[^']|'')+', '(?:[^']|'')+', '(?:[^']|'')*(?:[^']|'')+', NULL, 'draft', \d+$/;
+  const unsafe = specSelects.filter((m) => !SAFE_SHAPE.test(m[1].trim()));
+  t("every spec_points SELECT supplies non-NULL code, title and description (the exact defect that reached production)",
+    specSelects.length === json.points.length && unsafe.length === 0,
+    `${specSelects.length} selects, ${unsafe.length} outside the safe shape: ${unsafe[0]?.[1]?.slice(0, 80) ?? ""}`);
+  t("the DO UPDATE arm also carries title, so a re-run repairs titles too",
+    (sql.match(/SET title = EXCLUDED\.title/g) ?? []).length === json.points.length);
+
+  // Titles: the 004 convention — a deterministic trim of the official stem.
+  const insertTitles = [...sql.matchAll(/\nSELECT t\.id, '(?:[^']|'')+', '((?:[^']|'')+)', /g)]
+    .map((m) => m[1].replace(/''/g, "'"));
+  t("every title equals pointTitle(official text): non-empty, ≤ TITLE_MAX+1, a true trim of the stem",
+    insertTitles.length === json.points.length &&
+    json.points.every((p, i) => {
+      const title = insertTitles[i];
+      const stem = p.text.split("\n")[0].trim();
+      const body = title.endsWith("…") ? title.slice(0, -1).trimEnd() : title;
+      return title === pointTitle(p.text) && title.length > 0 &&
+        title.length <= TITLE_MAX + 1 && stem.startsWith(body);
+    }),
+    json.points.filter((p, i) => insertTitles[i] !== pointTitle(p.text)).map((p) => p.code).slice(0, 5).join(","));
 }
 
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);

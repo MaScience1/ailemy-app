@@ -223,7 +223,7 @@ ON CONFLICT (course_id, slug) DO NOTHING;
 
 -- 1.1 — official Issue 3 §1(a)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.1', NULL, 'understand the three states of matter in terms of the arrangement, movement and energy of the particles', NULL, 'draft', 1
+SELECT t.id, '1.1', 'understand the three states of matter in terms of the arrangement, movement and energy…', 'understand the three states of matter in terms of the arrangement, movement and energy of the particles', NULL, 'draft', 1
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1a-states-of-matter'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -232,7 +232,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.2 — official Issue 3 §1(a)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.2', NULL, 'understand the interconversions between the three states of matter in terms of:
+SELECT t.id, '1.2', 'understand the interconversions between the three states of matter in terms of:', 'understand the interconversions between the three states of matter in terms of:
 • the names of the interconversions
 • how they are achieved
 • the changes in arrangement, movement and energy of the particles.', NULL, 'draft', 2
@@ -244,7 +244,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.3 — official Issue 3 §1(a)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.3', NULL, 'understand how the results of experiments involving the dilution of coloured solutions and diffusion of gases can be explained', NULL, 'draft', 3
+SELECT t.id, '1.3', 'understand how the results of experiments involving the dilution of coloured solutions…', 'understand how the results of experiments involving the dilution of coloured solutions and diffusion of gases can be explained', NULL, 'draft', 3
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1a-states-of-matter'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -253,7 +253,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.4 — official Issue 3 §1(a)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.4', NULL, 'know what is meant by the terms:
+SELECT t.id, '1.4', 'know what is meant by the terms:', 'know what is meant by the terms:
 • solvent
 • solute
 • solution
@@ -266,7 +266,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.5C — official Issue 3 §1(a) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.5C', NULL, 'know what is meant by the term solubility in the units g per 100 g of solvent', NULL, 'draft', 5
+SELECT t.id, '1.5C', 'know what is meant by the term solubility in the units g per 100 g of solvent', 'know what is meant by the term solubility in the units g per 100 g of solvent', NULL, 'draft', 5
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1a-states-of-matter'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -275,7 +275,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.6C — official Issue 3 §1(a) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.6C', NULL, 'understand how to plot and interpret solubility curves', NULL, 'draft', 6
+SELECT t.id, '1.6C', 'understand how to plot and interpret solubility curves', 'understand how to plot and interpret solubility curves', NULL, 'draft', 6
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1a-states-of-matter'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -284,7 +284,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.7C — official Issue 3 §1(a) (C: Chemistry-only, Paper 2 only; practical)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.7C', NULL, 'practical: investigate the solubility of a solid in water at a specific temperature', NULL, 'draft', 7
+SELECT t.id, '1.7C', 'practical: investigate the solubility of a solid in water at a specific temperature', 'practical: investigate the solubility of a solid in water at a specific temperature', NULL, 'draft', 7
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1a-states-of-matter'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -293,7 +293,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.8 — official Issue 3 §1(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.8', NULL, 'understand how to classify a substance as an element, compound or mixture', NULL, 'draft', 8
+SELECT t.id, '1.8', 'understand how to classify a substance as an element, compound or mixture', 'understand how to classify a substance as an element, compound or mixture', NULL, 'draft', 8
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1b-elements-compounds-and-mixtures'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -302,7 +302,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.9 — official Issue 3 §1(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.9', NULL, 'understand that a pure substance has a fixed melting and boiling point, but that a mixture may melt or boil over a range of temperatures', NULL, 'draft', 9
+SELECT t.id, '1.9', 'understand that a pure substance has a fixed melting and boiling point, but that a…', 'understand that a pure substance has a fixed melting and boiling point, but that a mixture may melt or boil over a range of temperatures', NULL, 'draft', 9
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1b-elements-compounds-and-mixtures'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -311,7 +311,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.10 — official Issue 3 §1(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.10', NULL, 'describe these experimental techniques for the separation of mixtures:
+SELECT t.id, '1.10', 'describe these experimental techniques for the separation of mixtures:', 'describe these experimental techniques for the separation of mixtures:
 • simple distillation
 • fractional distillation
 • filtration
@@ -325,7 +325,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.11 — official Issue 3 §1(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.11', NULL, 'understand how a chromatogram provides information about the composition of a mixture', NULL, 'draft', 11
+SELECT t.id, '1.11', 'understand how a chromatogram provides information about the composition of a mixture', 'understand how a chromatogram provides information about the composition of a mixture', NULL, 'draft', 11
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1b-elements-compounds-and-mixtures'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -334,7 +334,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.12 — official Issue 3 §1(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.12', NULL, 'understand how to use the calculation of Rf values to identify the components of a mixture', NULL, 'draft', 12
+SELECT t.id, '1.12', 'understand how to use the calculation of Rf values to identify the components of a…', 'understand how to use the calculation of Rf values to identify the components of a mixture', NULL, 'draft', 12
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1b-elements-compounds-and-mixtures'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -343,7 +343,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.13 — official Issue 3 §1(b) (practical)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.13', NULL, 'practical: investigate paper chromatography using inks/food colourings', NULL, 'draft', 13
+SELECT t.id, '1.13', 'practical: investigate paper chromatography using inks/food colourings', 'practical: investigate paper chromatography using inks/food colourings', NULL, 'draft', 13
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1b-elements-compounds-and-mixtures'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -352,7 +352,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.14 — official Issue 3 §1(c)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.14', NULL, 'know what is meant by the terms atom and molecule', NULL, 'draft', 14
+SELECT t.id, '1.14', 'know what is meant by the terms atom and molecule', 'know what is meant by the terms atom and molecule', NULL, 'draft', 14
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1c-atomic-structure'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -361,7 +361,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.15 — official Issue 3 §1(c)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.15', NULL, 'know the structure of an atom in terms of the positions, relative masses and relative charges of sub-atomic particles', NULL, 'draft', 15
+SELECT t.id, '1.15', 'know the structure of an atom in terms of the positions, relative masses and relative…', 'know the structure of an atom in terms of the positions, relative masses and relative charges of sub-atomic particles', NULL, 'draft', 15
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1c-atomic-structure'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -370,7 +370,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.16 — official Issue 3 §1(c)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.16', NULL, 'know what is meant by the terms atomic number, mass number, isotopes and relative atomic mass (Ar)', NULL, 'draft', 16
+SELECT t.id, '1.16', 'know what is meant by the terms atomic number, mass number, isotopes and relative…', 'know what is meant by the terms atomic number, mass number, isotopes and relative atomic mass (Ar)', NULL, 'draft', 16
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1c-atomic-structure'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -379,7 +379,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.17 — official Issue 3 §1(c)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.17', NULL, 'be able to calculate the relative atomic mass of an element (Ar) from isotopic abundances', NULL, 'draft', 17
+SELECT t.id, '1.17', 'be able to calculate the relative atomic mass of an element (Ar) from isotopic…', 'be able to calculate the relative atomic mass of an element (Ar) from isotopic abundances', NULL, 'draft', 17
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1c-atomic-structure'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -388,7 +388,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.18 — official Issue 3 §1(d)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.18', NULL, 'understand how elements are arranged in the Periodic Table:
+SELECT t.id, '1.18', 'understand how elements are arranged in the Periodic Table:', 'understand how elements are arranged in the Periodic Table:
 • in order of atomic number
 • in groups and periods.', NULL, 'draft', 18
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
@@ -399,7 +399,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.19 — official Issue 3 §1(d)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.19', NULL, 'understand how to deduce the electronic configurations of the first 20 elements from their positions in the Periodic Table', NULL, 'draft', 19
+SELECT t.id, '1.19', 'understand how to deduce the electronic configurations of the first 20 elements from…', 'understand how to deduce the electronic configurations of the first 20 elements from their positions in the Periodic Table', NULL, 'draft', 19
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1d-the-periodic-table'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -408,7 +408,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.20 — official Issue 3 §1(d)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.20', NULL, 'understand how to use electrical conductivity and the acid-base character of oxides to classify elements as metals or non-metals', NULL, 'draft', 20
+SELECT t.id, '1.20', 'understand how to use electrical conductivity and the acid-base character of oxides to…', 'understand how to use electrical conductivity and the acid-base character of oxides to classify elements as metals or non-metals', NULL, 'draft', 20
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1d-the-periodic-table'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -417,7 +417,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.21 — official Issue 3 §1(d)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.21', NULL, 'identify an element as a metal or a non-metal according to its position in the Periodic Table', NULL, 'draft', 21
+SELECT t.id, '1.21', 'identify an element as a metal or a non-metal according to its position in the Periodic…', 'identify an element as a metal or a non-metal according to its position in the Periodic Table', NULL, 'draft', 21
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1d-the-periodic-table'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -426,7 +426,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.22 — official Issue 3 §1(d)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.22', NULL, 'understand how the electronic configuration of a main group element is related to its position in the Periodic Table', NULL, 'draft', 22
+SELECT t.id, '1.22', 'understand how the electronic configuration of a main group element is related to its…', 'understand how the electronic configuration of a main group element is related to its position in the Periodic Table', NULL, 'draft', 22
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1d-the-periodic-table'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -435,7 +435,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.23 — official Issue 3 §1(d)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.23', NULL, 'understand why elements in the same group of the Periodic Table have similar chemical properties', NULL, 'draft', 23
+SELECT t.id, '1.23', 'understand why elements in the same group of the Periodic Table have similar chemical…', 'understand why elements in the same group of the Periodic Table have similar chemical properties', NULL, 'draft', 23
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1d-the-periodic-table'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -444,7 +444,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.24 — official Issue 3 §1(d)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.24', NULL, 'understand why the noble gases (Group 0) do not readily react', NULL, 'draft', 24
+SELECT t.id, '1.24', 'understand why the noble gases (Group 0) do not readily react', 'understand why the noble gases (Group 0) do not readily react', NULL, 'draft', 24
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1d-the-periodic-table'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -453,7 +453,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.25 — official Issue 3 §1(e)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.25', NULL, 'write word equations and balanced chemical equations (including state symbols):
+SELECT t.id, '1.25', 'write word equations and balanced chemical equations (including state symbols):', 'write word equations and balanced chemical equations (including state symbols):
 • for reactions studied in this specification
 • for unfamiliar reactions where suitable information is provided.', NULL, 'draft', 25
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
@@ -464,7 +464,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.26 — official Issue 3 §1(e)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.26', NULL, 'calculate relative formula masses (including relative molecular masses) (Mr) from relative atomic masses (Ar)', NULL, 'draft', 26
+SELECT t.id, '1.26', 'calculate relative formula masses (including relative molecular masses) (Mr) from…', 'calculate relative formula masses (including relative molecular masses) (Mr) from relative atomic masses (Ar)', NULL, 'draft', 26
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1e-chemical-formulae-equations-and-calculations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -473,7 +473,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.27 — official Issue 3 §1(e)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.27', NULL, 'know that the mole (mol) is the unit for the amount of a substance', NULL, 'draft', 27
+SELECT t.id, '1.27', 'know that the mole (mol) is the unit for the amount of a substance', 'know that the mole (mol) is the unit for the amount of a substance', NULL, 'draft', 27
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1e-chemical-formulae-equations-and-calculations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -482,7 +482,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.28 — official Issue 3 §1(e)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.28', NULL, 'understand how to carry out calculations involving amount of substance, relative atomic mass (Ar) and relative formula mass (Mr)', NULL, 'draft', 28
+SELECT t.id, '1.28', 'understand how to carry out calculations involving amount of substance, relative atomic…', 'understand how to carry out calculations involving amount of substance, relative atomic mass (Ar) and relative formula mass (Mr)', NULL, 'draft', 28
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1e-chemical-formulae-equations-and-calculations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -491,7 +491,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.29 — official Issue 3 §1(e)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.29', NULL, 'calculate reacting masses using experimental data and chemical equations', NULL, 'draft', 29
+SELECT t.id, '1.29', 'calculate reacting masses using experimental data and chemical equations', 'calculate reacting masses using experimental data and chemical equations', NULL, 'draft', 29
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1e-chemical-formulae-equations-and-calculations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -500,7 +500,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.30 — official Issue 3 §1(e)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.30', NULL, 'calculate percentage yield', NULL, 'draft', 30
+SELECT t.id, '1.30', 'calculate percentage yield', 'calculate percentage yield', NULL, 'draft', 30
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1e-chemical-formulae-equations-and-calculations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -509,7 +509,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.31 — official Issue 3 §1(e)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.31', NULL, 'understand how the formulae of simple compounds can be obtained experimentally, including metal oxides, water and salts containing water of crystallisation', NULL, 'draft', 31
+SELECT t.id, '1.31', 'understand how the formulae of simple compounds can be obtained experimentally,…', 'understand how the formulae of simple compounds can be obtained experimentally, including metal oxides, water and salts containing water of crystallisation', NULL, 'draft', 31
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1e-chemical-formulae-equations-and-calculations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -518,7 +518,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.32 — official Issue 3 §1(e)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.32', NULL, 'know what is meant by the terms empirical formula and molecular formula', NULL, 'draft', 32
+SELECT t.id, '1.32', 'know what is meant by the terms empirical formula and molecular formula', 'know what is meant by the terms empirical formula and molecular formula', NULL, 'draft', 32
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1e-chemical-formulae-equations-and-calculations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -527,7 +527,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.33 — official Issue 3 §1(e)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.33', NULL, 'calculate empirical and molecular formulae from experimental data', NULL, 'draft', 33
+SELECT t.id, '1.33', 'calculate empirical and molecular formulae from experimental data', 'calculate empirical and molecular formulae from experimental data', NULL, 'draft', 33
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1e-chemical-formulae-equations-and-calculations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -536,7 +536,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.34C — official Issue 3 §1(e) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.34C', NULL, 'understand how to carry out calculations involving amount of substance, volume and concentration (in mol/dm³) of solution', NULL, 'draft', 34
+SELECT t.id, '1.34C', 'understand how to carry out calculations involving amount of substance, volume and…', 'understand how to carry out calculations involving amount of substance, volume and concentration (in mol/dm³) of solution', NULL, 'draft', 34
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1e-chemical-formulae-equations-and-calculations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -545,7 +545,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.35C — official Issue 3 §1(e) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.35C', NULL, 'understand how to carry out calculations involving gas volumes and the molar volume of a gas (24 dm³ and 24 000 cm³ at room temperature and pressure (rtp))', NULL, 'draft', 35
+SELECT t.id, '1.35C', 'understand how to carry out calculations involving gas volumes and the molar volume of…', 'understand how to carry out calculations involving gas volumes and the molar volume of a gas (24 dm³ and 24 000 cm³ at room temperature and pressure (rtp))', NULL, 'draft', 35
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1e-chemical-formulae-equations-and-calculations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -554,7 +554,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.36 — official Issue 3 §1(e) (practical)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.36', NULL, 'practical: know how to determine the formula of a metal oxide by combustion (e.g. magnesium oxide) or by reduction (e.g. copper(II) oxide)', NULL, 'draft', 36
+SELECT t.id, '1.36', 'practical: know how to determine the formula of a metal oxide by combustion (e.g.…', 'practical: know how to determine the formula of a metal oxide by combustion (e.g. magnesium oxide) or by reduction (e.g. copper(II) oxide)', NULL, 'draft', 36
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1e-chemical-formulae-equations-and-calculations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -563,7 +563,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.37 — official Issue 3 §1(f)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.37', NULL, 'understand how ions are formed by electron loss or gain', NULL, 'draft', 37
+SELECT t.id, '1.37', 'understand how ions are formed by electron loss or gain', 'understand how ions are formed by electron loss or gain', NULL, 'draft', 37
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1f-ionic-bonding'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -572,7 +572,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.38 — official Issue 3 §1(f)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.38', NULL, 'know the charges of these ions:
+SELECT t.id, '1.38', 'know the charges of these ions:', 'know the charges of these ions:
 • metals in Groups 1, 2 and 3
 • non-metals in Groups 5, 6 and 7
 • Ag⁺, Cu²⁺, Fe²⁺, Fe³⁺, Pb²⁺, Zn²⁺
@@ -585,7 +585,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.39 — official Issue 3 §1(f)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.39', NULL, 'write formulae for compounds formed between the ions listed above', NULL, 'draft', 39
+SELECT t.id, '1.39', 'write formulae for compounds formed between the ions listed above', 'write formulae for compounds formed between the ions listed above', NULL, 'draft', 39
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1f-ionic-bonding'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -594,7 +594,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.40 — official Issue 3 §1(f)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.40', NULL, 'draw dot-and-cross diagrams to show the formation of ionic compounds by electron transfer, limited to combinations of elements from Groups 1, 2, 3 and 5, 6, 7 only outer electrons need be shown', NULL, 'draft', 40
+SELECT t.id, '1.40', 'draw dot-and-cross diagrams to show the formation of ionic compounds by electron…', 'draw dot-and-cross diagrams to show the formation of ionic compounds by electron transfer, limited to combinations of elements from Groups 1, 2, 3 and 5, 6, 7 only outer electrons need be shown', NULL, 'draft', 40
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1f-ionic-bonding'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -603,7 +603,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.41 — official Issue 3 §1(f)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.41', NULL, 'understand ionic bonding in terms of electrostatic attractions', NULL, 'draft', 41
+SELECT t.id, '1.41', 'understand ionic bonding in terms of electrostatic attractions', 'understand ionic bonding in terms of electrostatic attractions', NULL, 'draft', 41
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1f-ionic-bonding'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -612,7 +612,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.42 — official Issue 3 §1(f)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.42', NULL, 'understand why compounds with giant ionic lattices have high melting and boiling points', NULL, 'draft', 42
+SELECT t.id, '1.42', 'understand why compounds with giant ionic lattices have high melting and boiling points', 'understand why compounds with giant ionic lattices have high melting and boiling points', NULL, 'draft', 42
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1f-ionic-bonding'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -621,7 +621,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.43 — official Issue 3 §1(f)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.43', NULL, 'know that ionic compounds do not conduct electricity when solid, but do conduct electricity when molten and in aqueous solution', NULL, 'draft', 43
+SELECT t.id, '1.43', 'know that ionic compounds do not conduct electricity when solid, but do conduct…', 'know that ionic compounds do not conduct electricity when solid, but do conduct electricity when molten and in aqueous solution', NULL, 'draft', 43
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1f-ionic-bonding'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -630,7 +630,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.44 — official Issue 3 §1(g)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.44', NULL, 'know that a covalent bond is formed between atoms by the sharing of a pair of electrons', NULL, 'draft', 44
+SELECT t.id, '1.44', 'know that a covalent bond is formed between atoms by the sharing of a pair of electrons', 'know that a covalent bond is formed between atoms by the sharing of a pair of electrons', NULL, 'draft', 44
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1g-covalent-bonding'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -639,7 +639,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.45 — official Issue 3 §1(g)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.45', NULL, 'understand covalent bonds in terms of electrostatic attractions', NULL, 'draft', 45
+SELECT t.id, '1.45', 'understand covalent bonds in terms of electrostatic attractions', 'understand covalent bonds in terms of electrostatic attractions', NULL, 'draft', 45
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1g-covalent-bonding'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -648,7 +648,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.46 — official Issue 3 §1(g)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.46', NULL, 'understand how to use dot-and-cross diagrams to represent covalent bonds in:
+SELECT t.id, '1.46', 'understand how to use dot-and-cross diagrams to represent covalent bonds in:', 'understand how to use dot-and-cross diagrams to represent covalent bonds in:
 • diatomic molecules, including hydrogen, oxygen, nitrogen, halogens and hydrogen halides
 • inorganic molecules including water, ammonia and carbon dioxide
 • organic molecules containing up to two carbon atoms, including methane, ethane, ethene and those containing halogen atoms.', NULL, 'draft', 46
@@ -660,7 +660,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.47 — official Issue 3 §1(g)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.47', NULL, 'explain why substances with a simple molecular structures are gases or liquids, or solids with low melting and boiling points the term intermolecular forces of attraction can be used to represent all forces between molecules', NULL, 'draft', 47
+SELECT t.id, '1.47', 'explain why substances with a simple molecular structures are gases or liquids, or…', 'explain why substances with a simple molecular structures are gases or liquids, or solids with low melting and boiling points the term intermolecular forces of attraction can be used to represent all forces between molecules', NULL, 'draft', 47
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1g-covalent-bonding'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -669,7 +669,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.48 — official Issue 3 §1(g)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.48', NULL, 'explain why the melting and boiling points of substances with simple molecular structures increase, in general, with increasing relative molecular mass', NULL, 'draft', 48
+SELECT t.id, '1.48', 'explain why the melting and boiling points of substances with simple molecular…', 'explain why the melting and boiling points of substances with simple molecular structures increase, in general, with increasing relative molecular mass', NULL, 'draft', 48
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1g-covalent-bonding'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -678,7 +678,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.49 — official Issue 3 §1(g)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.49', NULL, 'explain why substances with giant covalent structures are solids with high melting and boiling points', NULL, 'draft', 49
+SELECT t.id, '1.49', 'explain why substances with giant covalent structures are solids with high melting and…', 'explain why substances with giant covalent structures are solids with high melting and boiling points', NULL, 'draft', 49
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1g-covalent-bonding'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -687,7 +687,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.50 — official Issue 3 §1(g)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.50', NULL, 'explain how the structures of diamond, graphite and C₆₀ fullerene influence their physical properties, including electrical conductivity and hardness', NULL, 'draft', 50
+SELECT t.id, '1.50', 'explain how the structures of diamond, graphite and C₆₀ fullerene influence their…', 'explain how the structures of diamond, graphite and C₆₀ fullerene influence their physical properties, including electrical conductivity and hardness', NULL, 'draft', 50
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1g-covalent-bonding'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -696,7 +696,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.51 — official Issue 3 §1(g)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.51', NULL, 'know that covalent compounds do not usually conduct electricity', NULL, 'draft', 51
+SELECT t.id, '1.51', 'know that covalent compounds do not usually conduct electricity', 'know that covalent compounds do not usually conduct electricity', NULL, 'draft', 51
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1g-covalent-bonding'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -705,7 +705,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.52C — official Issue 3 §1(h) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.52C', NULL, 'know how to represent a metallic lattice by a 2-D diagram', NULL, 'draft', 52
+SELECT t.id, '1.52C', 'know how to represent a metallic lattice by a 2-D diagram', 'know how to represent a metallic lattice by a 2-D diagram', NULL, 'draft', 52
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1h-metallic-bonding'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -714,7 +714,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.53C — official Issue 3 §1(h) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.53C', NULL, 'understand metallic bonding in terms of electrostatic attractions', NULL, 'draft', 53
+SELECT t.id, '1.53C', 'understand metallic bonding in terms of electrostatic attractions', 'understand metallic bonding in terms of electrostatic attractions', NULL, 'draft', 53
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1h-metallic-bonding'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -723,7 +723,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.54C — official Issue 3 §1(h) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.54C', NULL, 'explain typical physical properties of metals, including electrical conductivity and malleability', NULL, 'draft', 54
+SELECT t.id, '1.54C', 'explain typical physical properties of metals, including electrical conductivity and…', 'explain typical physical properties of metals, including electrical conductivity and malleability', NULL, 'draft', 54
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1h-metallic-bonding'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -732,7 +732,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.55C — official Issue 3 §1(i) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.55C', NULL, 'understand why covalent compounds do not conduct electricity', NULL, 'draft', 55
+SELECT t.id, '1.55C', 'understand why covalent compounds do not conduct electricity', 'understand why covalent compounds do not conduct electricity', NULL, 'draft', 55
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1i-electrolysis'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -741,7 +741,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.56C — official Issue 3 §1(i) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.56C', NULL, 'understand why ionic compounds conduct electricity only when molten or in aqueous solution', NULL, 'draft', 56
+SELECT t.id, '1.56C', 'understand why ionic compounds conduct electricity only when molten or in aqueous…', 'understand why ionic compounds conduct electricity only when molten or in aqueous solution', NULL, 'draft', 56
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1i-electrolysis'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -750,7 +750,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.57C — official Issue 3 §1(i) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.57C', NULL, 'know that anion and cation are terms used to refer to negative and positive ions respectively', NULL, 'draft', 57
+SELECT t.id, '1.57C', 'know that anion and cation are terms used to refer to negative and positive ions…', 'know that anion and cation are terms used to refer to negative and positive ions respectively', NULL, 'draft', 57
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1i-electrolysis'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -759,7 +759,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.58C — official Issue 3 §1(i) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.58C', NULL, 'describe experiments to investigate electrolysis, using inert electrodes, of molten compounds (including lead(II) bromide) and aqueous solutions (including sodium chloride, dilute sulfuric acid and copper(II) sulfate) and to predict the products', NULL, 'draft', 58
+SELECT t.id, '1.58C', 'describe experiments to investigate electrolysis, using inert electrodes, of molten…', 'describe experiments to investigate electrolysis, using inert electrodes, of molten compounds (including lead(II) bromide) and aqueous solutions (including sodium chloride, dilute sulfuric acid and copper(II) sulfate) and to predict the products', NULL, 'draft', 58
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1i-electrolysis'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -768,7 +768,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.59C — official Issue 3 §1(i) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.59C', NULL, 'write ionic half-equations representing the reactions at the electrodes during electrolysis and understand why these reactions are classified as oxidation or reduction', NULL, 'draft', 59
+SELECT t.id, '1.59C', 'write ionic half-equations representing the reactions at the electrodes during…', 'write ionic half-equations representing the reactions at the electrodes during electrolysis and understand why these reactions are classified as oxidation or reduction', NULL, 'draft', 59
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1i-electrolysis'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -777,7 +777,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 1.60C — official Issue 3 §1(i) (C: Chemistry-only, Paper 2 only; practical)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '1.60C', NULL, 'practical: investigate the electrolysis of aqueous solutions', NULL, 'draft', 60
+SELECT t.id, '1.60C', 'practical: investigate the electrolysis of aqueous solutions', 'practical: investigate the electrolysis of aqueous solutions', NULL, 'draft', 60
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '1i-electrolysis'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -786,7 +786,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.1 — official Issue 3 §2(a)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.1', NULL, 'understand how the similarities in the reactions of these elements with water provide evidence for their recognition as a family of elements', NULL, 'draft', 1
+SELECT t.id, '2.1', 'understand how the similarities in the reactions of these elements with water provide…', 'understand how the similarities in the reactions of these elements with water provide evidence for their recognition as a family of elements', NULL, 'draft', 1
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2a-group-1-alkali-metals-lithium-sodium-and-potassium'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -795,7 +795,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.2 — official Issue 3 §2(a)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.2', NULL, 'understand how the differences between the reactions of these elements with air and water provide evidence for the trend in reactivity in Group 1', NULL, 'draft', 2
+SELECT t.id, '2.2', 'understand how the differences between the reactions of these elements with air and…', 'understand how the differences between the reactions of these elements with air and water provide evidence for the trend in reactivity in Group 1', NULL, 'draft', 2
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2a-group-1-alkali-metals-lithium-sodium-and-potassium'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -804,7 +804,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.3 — official Issue 3 §2(a)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.3', NULL, 'use knowledge of trends in Group 1 to predict the properties of other alkali metals', NULL, 'draft', 3
+SELECT t.id, '2.3', 'use knowledge of trends in Group 1 to predict the properties of other alkali metals', 'use knowledge of trends in Group 1 to predict the properties of other alkali metals', NULL, 'draft', 3
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2a-group-1-alkali-metals-lithium-sodium-and-potassium'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -813,7 +813,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.4C — official Issue 3 §2(a) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.4C', NULL, 'explain the trend in reactivity in Group 1 in terms of electronic configurations', NULL, 'draft', 4
+SELECT t.id, '2.4C', 'explain the trend in reactivity in Group 1 in terms of electronic configurations', 'explain the trend in reactivity in Group 1 in terms of electronic configurations', NULL, 'draft', 4
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2a-group-1-alkali-metals-lithium-sodium-and-potassium'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -822,7 +822,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.5 — official Issue 3 §2(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.5', NULL, 'know the colours, physical states (at room temperature) and trends in physical properties of these elements', NULL, 'draft', 5
+SELECT t.id, '2.5', 'know the colours, physical states (at room temperature) and trends in physical…', 'know the colours, physical states (at room temperature) and trends in physical properties of these elements', NULL, 'draft', 5
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2b-group-7-halogens-chlorine-bromine-and-iodine'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -831,7 +831,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.6 — official Issue 3 §2(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.6', NULL, 'use knowledge of trends in Group 7 to predict the properties of other halogens', NULL, 'draft', 6
+SELECT t.id, '2.6', 'use knowledge of trends in Group 7 to predict the properties of other halogens', 'use knowledge of trends in Group 7 to predict the properties of other halogens', NULL, 'draft', 6
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2b-group-7-halogens-chlorine-bromine-and-iodine'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -840,7 +840,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.7 — official Issue 3 §2(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.7', NULL, 'understand how displacement reactions involving halogens and halides provide evidence for the trend in reactivity in Group 7', NULL, 'draft', 7
+SELECT t.id, '2.7', 'understand how displacement reactions involving halogens and halides provide evidence…', 'understand how displacement reactions involving halogens and halides provide evidence for the trend in reactivity in Group 7', NULL, 'draft', 7
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2b-group-7-halogens-chlorine-bromine-and-iodine'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -849,7 +849,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.8C — official Issue 3 §2(b) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.8C', NULL, 'explain the trend in reactivity in Group 7 in terms of electronic configurations', NULL, 'draft', 8
+SELECT t.id, '2.8C', 'explain the trend in reactivity in Group 7 in terms of electronic configurations', 'explain the trend in reactivity in Group 7 in terms of electronic configurations', NULL, 'draft', 8
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2b-group-7-halogens-chlorine-bromine-and-iodine'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -858,7 +858,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.9 — official Issue 3 §2(c)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.9', NULL, 'know the approximate percentages by volume of the four most abundant gases in dry air', NULL, 'draft', 9
+SELECT t.id, '2.9', 'know the approximate percentages by volume of the four most abundant gases in dry air', 'know the approximate percentages by volume of the four most abundant gases in dry air', NULL, 'draft', 9
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2c-gases-in-the-atmosphere'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -867,7 +867,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.10 — official Issue 3 §2(c)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.10', NULL, 'understand how to determine the percentage by volume of oxygen in air using experiments involving the reactions of metals (e.g. iron) and non-metals (e.g. phosphorus) with air', NULL, 'draft', 10
+SELECT t.id, '2.10', 'understand how to determine the percentage by volume of oxygen in air using experiments…', 'understand how to determine the percentage by volume of oxygen in air using experiments involving the reactions of metals (e.g. iron) and non-metals (e.g. phosphorus) with air', NULL, 'draft', 10
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2c-gases-in-the-atmosphere'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -876,7 +876,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.11 — official Issue 3 §2(c)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.11', NULL, 'describe the combustion of elements in oxygen, including magnesium, hydrogen and sulfur', NULL, 'draft', 11
+SELECT t.id, '2.11', 'describe the combustion of elements in oxygen, including magnesium, hydrogen and sulfur', 'describe the combustion of elements in oxygen, including magnesium, hydrogen and sulfur', NULL, 'draft', 11
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2c-gases-in-the-atmosphere'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -885,7 +885,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.12 — official Issue 3 §2(c)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.12', NULL, 'describe the formation of carbon dioxide from the thermal decomposition of metal carbonates, including copper(II) carbonate', NULL, 'draft', 12
+SELECT t.id, '2.12', 'describe the formation of carbon dioxide from the thermal decomposition of metal…', 'describe the formation of carbon dioxide from the thermal decomposition of metal carbonates, including copper(II) carbonate', NULL, 'draft', 12
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2c-gases-in-the-atmosphere'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -894,7 +894,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.13 — official Issue 3 §2(c)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.13', NULL, 'know that carbon dioxide is a greenhouse gas and that increasing amounts in the atmosphere may contribute to climate change', NULL, 'draft', 13
+SELECT t.id, '2.13', 'know that carbon dioxide is a greenhouse gas and that increasing amounts in the…', 'know that carbon dioxide is a greenhouse gas and that increasing amounts in the atmosphere may contribute to climate change', NULL, 'draft', 13
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2c-gases-in-the-atmosphere'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -903,7 +903,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.14 — official Issue 3 §2(c) (practical)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.14', NULL, 'practical: determine the approximate percentage by volume of oxygen in air using a metal or a non-metal', NULL, 'draft', 14
+SELECT t.id, '2.14', 'practical: determine the approximate percentage by volume of oxygen in air using a…', 'practical: determine the approximate percentage by volume of oxygen in air using a metal or a non-metal', NULL, 'draft', 14
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2c-gases-in-the-atmosphere'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -912,7 +912,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.15 — official Issue 3 §2(d)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.15', NULL, 'understand how metals can be arranged in a reactivity series based on their reactions with:
+SELECT t.id, '2.15', 'understand how metals can be arranged in a reactivity series based on their reactions…', 'understand how metals can be arranged in a reactivity series based on their reactions with:
 • water
 • dilute hydrochloric or sulfuric acid.', NULL, 'draft', 15
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
@@ -923,7 +923,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.16 — official Issue 3 §2(d)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.16', NULL, 'understand how metals can be arranged in a reactivity series based on their displacement reactions between:
+SELECT t.id, '2.16', 'understand how metals can be arranged in a reactivity series based on their…', 'understand how metals can be arranged in a reactivity series based on their displacement reactions between:
 • metals and metal oxides
 • metals and aqueous solutions of metal salts.', NULL, 'draft', 16
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
@@ -934,7 +934,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.17 — official Issue 3 §2(d)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.17', NULL, 'know the order of reactivity of these metals: potassium, sodium, lithium, calcium, magnesium, aluminium, zinc, iron, copper, silver, gold', NULL, 'draft', 17
+SELECT t.id, '2.17', 'know the order of reactivity of these metals: potassium, sodium, lithium, calcium,…', 'know the order of reactivity of these metals: potassium, sodium, lithium, calcium, magnesium, aluminium, zinc, iron, copper, silver, gold', NULL, 'draft', 17
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2d-reactivity-series'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -943,7 +943,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.18 — official Issue 3 §2(d)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.18', NULL, 'know the conditions under which iron rusts', NULL, 'draft', 18
+SELECT t.id, '2.18', 'know the conditions under which iron rusts', 'know the conditions under which iron rusts', NULL, 'draft', 18
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2d-reactivity-series'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -952,7 +952,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.19 — official Issue 3 §2(d)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.19', NULL, 'understand how the rusting of iron may be prevented by:
+SELECT t.id, '2.19', 'understand how the rusting of iron may be prevented by:', 'understand how the rusting of iron may be prevented by:
 • barrier methods
 • galvanising
 • sacrificial protection.', NULL, 'draft', 19
@@ -964,7 +964,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.20 — official Issue 3 §2(d)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.20', NULL, 'understand the terms:
+SELECT t.id, '2.20', 'understand the terms:', 'understand the terms:
 • oxidation
 • reduction
 • redox
@@ -978,7 +978,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.21 — official Issue 3 §2(d) (practical)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.21', NULL, 'practical: investigate reactions between dilute hydrochloric and sulfuric acids and metals (e.g. magnesium, zinc and iron)', NULL, 'draft', 21
+SELECT t.id, '2.21', 'practical: investigate reactions between dilute hydrochloric and sulfuric acids and…', 'practical: investigate reactions between dilute hydrochloric and sulfuric acids and metals (e.g. magnesium, zinc and iron)', NULL, 'draft', 21
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2d-reactivity-series'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -987,7 +987,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.22C — official Issue 3 §2(e) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.22C', NULL, 'know that most metals are extracted from ores found in the Earth’s crust and that unreactive metals are often found as the uncombined element', NULL, 'draft', 22
+SELECT t.id, '2.22C', 'know that most metals are extracted from ores found in the Earth’s crust and that…', 'know that most metals are extracted from ores found in the Earth’s crust and that unreactive metals are often found as the uncombined element', NULL, 'draft', 22
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2e-extraction-and-uses-of-metals'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -996,7 +996,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.23C — official Issue 3 §2(e) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.23C', NULL, 'explain how the method of extraction of a metal is related to its position in the reactivity series, illustrated by carbon extraction for iron and electrolysis for aluminium', NULL, 'draft', 23
+SELECT t.id, '2.23C', 'explain how the method of extraction of a metal is related to its position in the…', 'explain how the method of extraction of a metal is related to its position in the reactivity series, illustrated by carbon extraction for iron and electrolysis for aluminium', NULL, 'draft', 23
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2e-extraction-and-uses-of-metals'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1005,7 +1005,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.24C — official Issue 3 §2(e) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.24C', NULL, 'be able to comment on a metal extraction process, given appropriate information detailed knowledge of the processes used in the extraction of a specific metal is not required', NULL, 'draft', 24
+SELECT t.id, '2.24C', 'be able to comment on a metal extraction process, given appropriate information…', 'be able to comment on a metal extraction process, given appropriate information detailed knowledge of the processes used in the extraction of a specific metal is not required', NULL, 'draft', 24
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2e-extraction-and-uses-of-metals'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1014,7 +1014,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.25C — official Issue 3 §2(e) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.25C', NULL, 'explain the uses of aluminium, copper, iron and steel in terms of their properties the types of steel will be limited to low-carbon (mild), high-carbon and stainless', NULL, 'draft', 25
+SELECT t.id, '2.25C', 'explain the uses of aluminium, copper, iron and steel in terms of their properties the…', 'explain the uses of aluminium, copper, iron and steel in terms of their properties the types of steel will be limited to low-carbon (mild), high-carbon and stainless', NULL, 'draft', 25
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2e-extraction-and-uses-of-metals'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1023,7 +1023,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.26C — official Issue 3 §2(e) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.26C', NULL, 'know that an alloy is a mixture of a metal and one or more elements, usually other metals or carbon', NULL, 'draft', 26
+SELECT t.id, '2.26C', 'know that an alloy is a mixture of a metal and one or more elements, usually other…', 'know that an alloy is a mixture of a metal and one or more elements, usually other metals or carbon', NULL, 'draft', 26
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2e-extraction-and-uses-of-metals'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1032,7 +1032,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.27C — official Issue 3 §2(e) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.27C', NULL, 'explain why alloys are harder than pure metals', NULL, 'draft', 27
+SELECT t.id, '2.27C', 'explain why alloys are harder than pure metals', 'explain why alloys are harder than pure metals', NULL, 'draft', 27
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2e-extraction-and-uses-of-metals'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1041,7 +1041,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.28 — official Issue 3 §2(f)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.28', NULL, 'describe the use of litmus, phenolphthalein and methyl orange to distinguish between acidic and alkaline solutions', NULL, 'draft', 28
+SELECT t.id, '2.28', 'describe the use of litmus, phenolphthalein and methyl orange to distinguish between…', 'describe the use of litmus, phenolphthalein and methyl orange to distinguish between acidic and alkaline solutions', NULL, 'draft', 28
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2f-acids-alkalis-and-titrations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1050,7 +1050,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.29 — official Issue 3 §2(f)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.29', NULL, 'understand how to use the pH scale, from 0–14, can be used to classify solutions as strongly acidic (0–3), weakly acidic (4–6), neutral (7), weakly alkaline (8–10) and strongly alkaline (11–14)', NULL, 'draft', 29
+SELECT t.id, '2.29', 'understand how to use the pH scale, from 0–14, can be used to classify solutions as…', 'understand how to use the pH scale, from 0–14, can be used to classify solutions as strongly acidic (0–3), weakly acidic (4–6), neutral (7), weakly alkaline (8–10) and strongly alkaline (11–14)', NULL, 'draft', 29
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2f-acids-alkalis-and-titrations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1059,7 +1059,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.30 — official Issue 3 §2(f)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.30', NULL, 'describe the use of universal indicator to measure the approximate pH value of an aqueous solution', NULL, 'draft', 30
+SELECT t.id, '2.30', 'describe the use of universal indicator to measure the approximate pH value of an…', 'describe the use of universal indicator to measure the approximate pH value of an aqueous solution', NULL, 'draft', 30
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2f-acids-alkalis-and-titrations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1068,7 +1068,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.31 — official Issue 3 §2(f)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.31', NULL, 'know that acids in aqueous solution are a source of hydrogen ions and alkalis in a aqueous solution are a source of hydroxide ions', NULL, 'draft', 31
+SELECT t.id, '2.31', 'know that acids in aqueous solution are a source of hydrogen ions and alkalis in a…', 'know that acids in aqueous solution are a source of hydrogen ions and alkalis in a aqueous solution are a source of hydroxide ions', NULL, 'draft', 31
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2f-acids-alkalis-and-titrations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1077,7 +1077,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.32 — official Issue 3 §2(f)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.32', NULL, 'know that alkalis can neutralise acids', NULL, 'draft', 32
+SELECT t.id, '2.32', 'know that alkalis can neutralise acids', 'know that alkalis can neutralise acids', NULL, 'draft', 32
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2f-acids-alkalis-and-titrations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1086,7 +1086,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.33C — official Issue 3 §2(f) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.33C', NULL, 'describe how to carry out an acid-alkali titration', NULL, 'draft', 33
+SELECT t.id, '2.33C', 'describe how to carry out an acid-alkali titration', 'describe how to carry out an acid-alkali titration', NULL, 'draft', 33
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2f-acids-alkalis-and-titrations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1095,7 +1095,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.34 — official Issue 3 §2(g)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.34', NULL, 'know the general rules for predicting the solubility of ionic compounds in water:
+SELECT t.id, '2.34', 'know the general rules for predicting the solubility of ionic compounds in water:', 'know the general rules for predicting the solubility of ionic compounds in water:
 • common sodium, potassium and ammonium compounds are soluble
 • all nitrates are soluble
 • common chlorides are soluble, except those of silver and lead(II)
@@ -1110,7 +1110,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.35 — official Issue 3 §2(g)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.35', NULL, 'understand acids and bases in terms of proton transfer', NULL, 'draft', 35
+SELECT t.id, '2.35', 'understand acids and bases in terms of proton transfer', 'understand acids and bases in terms of proton transfer', NULL, 'draft', 35
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2g-acids-bases-and-salt-preparations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1119,7 +1119,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.36 — official Issue 3 §2(g)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.36', NULL, 'understand that an acid is a proton donor and a base is a proton acceptor', NULL, 'draft', 36
+SELECT t.id, '2.36', 'understand that an acid is a proton donor and a base is a proton acceptor', 'understand that an acid is a proton donor and a base is a proton acceptor', NULL, 'draft', 36
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2g-acids-bases-and-salt-preparations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1128,7 +1128,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.37 — official Issue 3 §2(g)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.37', NULL, 'describe the reactions of hydrochloric acid, sulfuric acid and nitric acid with metals, bases and metal carbonates (excluding the reactions between nitric acid and metals) to form salts', NULL, 'draft', 37
+SELECT t.id, '2.37', 'describe the reactions of hydrochloric acid, sulfuric acid and nitric acid with metals,…', 'describe the reactions of hydrochloric acid, sulfuric acid and nitric acid with metals, bases and metal carbonates (excluding the reactions between nitric acid and metals) to form salts', NULL, 'draft', 37
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2g-acids-bases-and-salt-preparations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1137,7 +1137,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.38 — official Issue 3 §2(g)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.38', NULL, 'know that metal oxides, metal hydroxides and ammonia can act as bases, and that alkalis are bases that are soluble in water', NULL, 'draft', 38
+SELECT t.id, '2.38', 'know that metal oxides, metal hydroxides and ammonia can act as bases, and that alkalis…', 'know that metal oxides, metal hydroxides and ammonia can act as bases, and that alkalis are bases that are soluble in water', NULL, 'draft', 38
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2g-acids-bases-and-salt-preparations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1146,7 +1146,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.39 — official Issue 3 §2(g)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.39', NULL, 'describe an experiment to prepare a pure, dry sample of a soluble salt, starting from an insoluble reactant', NULL, 'draft', 39
+SELECT t.id, '2.39', 'describe an experiment to prepare a pure, dry sample of a soluble salt, starting from…', 'describe an experiment to prepare a pure, dry sample of a soluble salt, starting from an insoluble reactant', NULL, 'draft', 39
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2g-acids-bases-and-salt-preparations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1155,7 +1155,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.40C — official Issue 3 §2(g) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.40C', NULL, 'describe an experiment to prepare a pure, dry sample of a soluble salt, starting from an acid and alkali', NULL, 'draft', 40
+SELECT t.id, '2.40C', 'describe an experiment to prepare a pure, dry sample of a soluble salt, starting from…', 'describe an experiment to prepare a pure, dry sample of a soluble salt, starting from an acid and alkali', NULL, 'draft', 40
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2g-acids-bases-and-salt-preparations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1164,7 +1164,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.41C — official Issue 3 §2(g) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.41C', NULL, 'describe an experiment to prepare a pure, dry sample of an insoluble salt, starting from two soluble reactants', NULL, 'draft', 41
+SELECT t.id, '2.41C', 'describe an experiment to prepare a pure, dry sample of an insoluble salt, starting…', 'describe an experiment to prepare a pure, dry sample of an insoluble salt, starting from two soluble reactants', NULL, 'draft', 41
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2g-acids-bases-and-salt-preparations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1173,7 +1173,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.42 — official Issue 3 §2(g) (practical)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.42', NULL, 'practical: prepare a sample of pure, dry hydrated copper(II) sulfate crystals starting from copper(II) oxide', NULL, 'draft', 42
+SELECT t.id, '2.42', 'practical: prepare a sample of pure, dry hydrated copper(II) sulfate crystals starting…', 'practical: prepare a sample of pure, dry hydrated copper(II) sulfate crystals starting from copper(II) oxide', NULL, 'draft', 42
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2g-acids-bases-and-salt-preparations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1182,7 +1182,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.43C — official Issue 3 §2(g) (C: Chemistry-only, Paper 2 only; practical)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.43C', NULL, 'practical: prepare a sample of pure, dry lead(II) sulfate', NULL, 'draft', 43
+SELECT t.id, '2.43C', 'practical: prepare a sample of pure, dry lead(II) sulfate', 'practical: prepare a sample of pure, dry lead(II) sulfate', NULL, 'draft', 43
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2g-acids-bases-and-salt-preparations'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1191,7 +1191,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.44 — official Issue 3 §2(h)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.44', NULL, 'describe tests for these gases:
+SELECT t.id, '2.44', 'describe tests for these gases:', 'describe tests for these gases:
 • hydrogen
 • oxygen
 • carbon dioxide
@@ -1205,7 +1205,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.45 — official Issue 3 §2(h)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.45', NULL, 'describe how to carry out a flame test', NULL, 'draft', 45
+SELECT t.id, '2.45', 'describe how to carry out a flame test', 'describe how to carry out a flame test', NULL, 'draft', 45
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2h-chemical-tests'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1214,7 +1214,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.46 — official Issue 3 §2(h)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.46', NULL, 'know the colours formed in flame tests for these cations:
+SELECT t.id, '2.46', 'know the colours formed in flame tests for these cations:', 'know the colours formed in flame tests for these cations:
 • Li⁺ is red
 • Na⁺ is yellow
 • K⁺ is lilac
@@ -1228,7 +1228,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.47 — official Issue 3 §2(h)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.47', NULL, 'describe tests for these cations:
+SELECT t.id, '2.47', 'describe tests for these cations:', 'describe tests for these cations:
 • NH₄⁺ using sodium hydroxide solution and identifying the gas evolved
 • Cu²⁺, Fe²⁺ and Fe³⁺ using sodium hydroxide solution.', NULL, 'draft', 47
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
@@ -1239,7 +1239,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.48 — official Issue 3 §2(h)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.48', NULL, 'describe tests for these anions:
+SELECT t.id, '2.48', 'describe tests for these anions:', 'describe tests for these anions:
 • Cl⁻, Br⁻ and I⁻ using acidified silver nitrate solution
 • SO₄²⁻ using acidified barium chloride solution
 • CO₃²⁻ using hydrochloric acid and identifying the gas evolved.', NULL, 'draft', 48
@@ -1251,7 +1251,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.49 — official Issue 3 §2(h)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.49', NULL, 'describe a test for the presence of water using anhydrous copper(II) sulfate', NULL, 'draft', 49
+SELECT t.id, '2.49', 'describe a test for the presence of water using anhydrous copper(II) sulfate', 'describe a test for the presence of water using anhydrous copper(II) sulfate', NULL, 'draft', 49
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2h-chemical-tests'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1260,7 +1260,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 2.50 — official Issue 3 §2(h)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '2.50', NULL, 'describe a physical test to show whether a sample of water is pure', NULL, 'draft', 50
+SELECT t.id, '2.50', 'describe a physical test to show whether a sample of water is pure', 'describe a physical test to show whether a sample of water is pure', NULL, 'draft', 50
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '2h-chemical-tests'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1269,7 +1269,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 3.1 — official Issue 3 §3(a)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '3.1', NULL, 'know that chemical reactions in which heat energy is given out are described as exothermic, and those in which heat energy is taken in are described as endothermic', NULL, 'draft', 1
+SELECT t.id, '3.1', 'know that chemical reactions in which heat energy is given out are described as…', 'know that chemical reactions in which heat energy is given out are described as exothermic, and those in which heat energy is taken in are described as endothermic', NULL, 'draft', 1
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '3a-energetics'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1278,7 +1278,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 3.2 — official Issue 3 §3(a)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '3.2', NULL, 'describe simple calorimetry experiments for reactions such as combustion, displacement, dissolving and neutralisation', NULL, 'draft', 2
+SELECT t.id, '3.2', 'describe simple calorimetry experiments for reactions such as combustion, displacement,…', 'describe simple calorimetry experiments for reactions such as combustion, displacement, dissolving and neutralisation', NULL, 'draft', 2
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '3a-energetics'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1287,7 +1287,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 3.3 — official Issue 3 §3(a)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '3.3', NULL, 'calculate the heat energy change from a measured temperature change using the expression Q = mcΔT', NULL, 'draft', 3
+SELECT t.id, '3.3', 'calculate the heat energy change from a measured temperature change using the…', 'calculate the heat energy change from a measured temperature change using the expression Q = mcΔT', NULL, 'draft', 3
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '3a-energetics'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1296,7 +1296,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 3.4 — official Issue 3 §3(a)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '3.4', NULL, 'calculate the molar enthalpy change (ΔH) from the heat energy change, Q', NULL, 'draft', 4
+SELECT t.id, '3.4', 'calculate the molar enthalpy change (ΔH) from the heat energy change, Q', 'calculate the molar enthalpy change (ΔH) from the heat energy change, Q', NULL, 'draft', 4
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '3a-energetics'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1305,7 +1305,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 3.5C — official Issue 3 §3(a) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '3.5C', NULL, 'draw and explain energy level diagrams to represent exothermic and endothermic reactions', NULL, 'draft', 5
+SELECT t.id, '3.5C', 'draw and explain energy level diagrams to represent exothermic and endothermic reactions', 'draw and explain energy level diagrams to represent exothermic and endothermic reactions', NULL, 'draft', 5
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '3a-energetics'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1314,7 +1314,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 3.6C — official Issue 3 §3(a) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '3.6C', NULL, 'know that bond-breaking is an endothermic process and that bond-making is an exothermic process', NULL, 'draft', 6
+SELECT t.id, '3.6C', 'know that bond-breaking is an endothermic process and that bond-making is an exothermic…', 'know that bond-breaking is an endothermic process and that bond-making is an exothermic process', NULL, 'draft', 6
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '3a-energetics'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1323,7 +1323,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 3.7C — official Issue 3 §3(a) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '3.7C', NULL, 'use bond energies to calculate the enthalpy change during a chemical reaction', NULL, 'draft', 7
+SELECT t.id, '3.7C', 'use bond energies to calculate the enthalpy change during a chemical reaction', 'use bond energies to calculate the enthalpy change during a chemical reaction', NULL, 'draft', 7
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '3a-energetics'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1332,7 +1332,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 3.8 — official Issue 3 §3(a) (practical)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '3.8', NULL, 'practical: investigate temperature changes accompanying some of the following types of change:
+SELECT t.id, '3.8', 'practical: investigate temperature changes accompanying some of the following types of…', 'practical: investigate temperature changes accompanying some of the following types of change:
 • salts dissolving in water
 • neutralisation reactions
 • displacement reactions
@@ -1345,7 +1345,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 3.9 — official Issue 3 §3(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '3.9', NULL, 'describe experiments to investigate the effects of changes in surface area of a solid, concentration of a solution, temperature and the use of a catalyst on the rate of a reaction', NULL, 'draft', 9
+SELECT t.id, '3.9', 'describe experiments to investigate the effects of changes in surface area of a solid,…', 'describe experiments to investigate the effects of changes in surface area of a solid, concentration of a solution, temperature and the use of a catalyst on the rate of a reaction', NULL, 'draft', 9
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '3b-rates-of-reaction'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1354,7 +1354,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 3.10 — official Issue 3 §3(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '3.10', NULL, 'describe the effects of changes in surface area of a solid, concentration of a solution, pressure of a gas, temperature and the use of a catalyst on the rate of a reaction', NULL, 'draft', 10
+SELECT t.id, '3.10', 'describe the effects of changes in surface area of a solid, concentration of a…', 'describe the effects of changes in surface area of a solid, concentration of a solution, pressure of a gas, temperature and the use of a catalyst on the rate of a reaction', NULL, 'draft', 10
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '3b-rates-of-reaction'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1363,7 +1363,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 3.11 — official Issue 3 §3(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '3.11', NULL, 'explain the effects of changes in surface area of a solid, concentration of a solution, pressure of a gas and temperature on the rate of a reaction in terms of particle collision theory', NULL, 'draft', 11
+SELECT t.id, '3.11', 'explain the effects of changes in surface area of a solid, concentration of a solution,…', 'explain the effects of changes in surface area of a solid, concentration of a solution, pressure of a gas and temperature on the rate of a reaction in terms of particle collision theory', NULL, 'draft', 11
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '3b-rates-of-reaction'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1372,7 +1372,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 3.12 — official Issue 3 §3(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '3.12', NULL, 'know that a catalyst is a substance that increases the rate of a reaction, but is chemically unchanged at the end of the reaction', NULL, 'draft', 12
+SELECT t.id, '3.12', 'know that a catalyst is a substance that increases the rate of a reaction, but is…', 'know that a catalyst is a substance that increases the rate of a reaction, but is chemically unchanged at the end of the reaction', NULL, 'draft', 12
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '3b-rates-of-reaction'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1381,7 +1381,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 3.13 — official Issue 3 §3(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '3.13', NULL, 'know that a catalyst works by providing an alternative pathway with lower activation energy', NULL, 'draft', 13
+SELECT t.id, '3.13', 'know that a catalyst works by providing an alternative pathway with lower activation…', 'know that a catalyst works by providing an alternative pathway with lower activation energy', NULL, 'draft', 13
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '3b-rates-of-reaction'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1390,7 +1390,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 3.14C — official Issue 3 §3(b) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '3.14C', NULL, 'draw and explain reaction profile diagrams showing ΔH and activation energy', NULL, 'draft', 14
+SELECT t.id, '3.14C', 'draw and explain reaction profile diagrams showing ΔH and activation energy', 'draw and explain reaction profile diagrams showing ΔH and activation energy', NULL, 'draft', 14
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '3b-rates-of-reaction'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1399,7 +1399,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 3.15 — official Issue 3 §3(b) (practical)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '3.15', NULL, 'practical: investigate the effect of changing the surface area of marble chips and of changing the concentration of hydrochloric acid on the rate of reaction between marble chips and dilute hydrochloric acid', NULL, 'draft', 15
+SELECT t.id, '3.15', 'practical: investigate the effect of changing the surface area of marble chips and of…', 'practical: investigate the effect of changing the surface area of marble chips and of changing the concentration of hydrochloric acid on the rate of reaction between marble chips and dilute hydrochloric acid', NULL, 'draft', 15
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '3b-rates-of-reaction'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1408,7 +1408,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 3.16 — official Issue 3 §3(b) (practical)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '3.16', NULL, 'practical: investigate the effect of different solids on the catalytic decomposition of hydrogen peroxide solution', NULL, 'draft', 16
+SELECT t.id, '3.16', 'practical: investigate the effect of different solids on the catalytic decomposition of…', 'practical: investigate the effect of different solids on the catalytic decomposition of hydrogen peroxide solution', NULL, 'draft', 16
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '3b-rates-of-reaction'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1417,7 +1417,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 3.17 — official Issue 3 §3(c)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '3.17', NULL, 'know that some reactions are reversible and this is indicated by the symbol ⇌ in equations', NULL, 'draft', 17
+SELECT t.id, '3.17', 'know that some reactions are reversible and this is indicated by the symbol ⇌ in…', 'know that some reactions are reversible and this is indicated by the symbol ⇌ in equations', NULL, 'draft', 17
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '3c-reversible-reactions-and-equilibria'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1426,7 +1426,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 3.18 — official Issue 3 §3(c)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '3.18', NULL, 'describe reversible reactions such as the dehydration of hydrated copper(II) sulfate and the effect of heat on ammonium chloride', NULL, 'draft', 18
+SELECT t.id, '3.18', 'describe reversible reactions such as the dehydration of hydrated copper(II) sulfate…', 'describe reversible reactions such as the dehydration of hydrated copper(II) sulfate and the effect of heat on ammonium chloride', NULL, 'draft', 18
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '3c-reversible-reactions-and-equilibria'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1435,7 +1435,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 3.19C — official Issue 3 §3(c) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '3.19C', NULL, 'know that a reversible reaction can reach dynamic equilibrium in a sealed container', NULL, 'draft', 19
+SELECT t.id, '3.19C', 'know that a reversible reaction can reach dynamic equilibrium in a sealed container', 'know that a reversible reaction can reach dynamic equilibrium in a sealed container', NULL, 'draft', 19
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '3c-reversible-reactions-and-equilibria'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1444,7 +1444,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 3.20C — official Issue 3 §3(c) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '3.20C', NULL, 'know that the characteristics of a reaction at dynamic equilibrium are:
+SELECT t.id, '3.20C', 'know that the characteristics of a reaction at dynamic equilibrium are:', 'know that the characteristics of a reaction at dynamic equilibrium are:
 • the forward and reverse reactions occur at the same rate
 • the concentrations of reactants and products remain constant.', NULL, 'draft', 20
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
@@ -1455,7 +1455,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 3.21C — official Issue 3 §3(c) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '3.21C', NULL, 'understand why a catalyst does not affect the position of equilibrium in a reversible reaction', NULL, 'draft', 21
+SELECT t.id, '3.21C', 'understand why a catalyst does not affect the position of equilibrium in a reversible…', 'understand why a catalyst does not affect the position of equilibrium in a reversible reaction', NULL, 'draft', 21
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '3c-reversible-reactions-and-equilibria'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1464,7 +1464,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 3.22C — official Issue 3 §3(c) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '3.22C', NULL, 'know the effect of changing either temperature or pressure on the position of equilibrium in a reversible reaction:
+SELECT t.id, '3.22C', 'know the effect of changing either temperature or pressure on the position of…', 'know the effect of changing either temperature or pressure on the position of equilibrium in a reversible reaction:
 • an increase (or decrease) in temperature shifts the position of equilibrium in the direction of the endothermic (or exothermic) reaction
 • an increase (or decrease) in pressure shifts the position of equilibrium in the direction that produces fewer (or more) moles of gas References to Le Chatelier''s principle are not required', NULL, 'draft', 22
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
@@ -1475,7 +1475,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.1 — official Issue 3 §4(a)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.1', NULL, 'know that a hydrocarbon is a compound of hydrogen and carbon only', NULL, 'draft', 1
+SELECT t.id, '4.1', 'know that a hydrocarbon is a compound of hydrogen and carbon only', 'know that a hydrocarbon is a compound of hydrogen and carbon only', NULL, 'draft', 1
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4a-introduction'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1484,7 +1484,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.2 — official Issue 3 §4(a)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.2', NULL, 'understand how to represent organic molecules using empirical formulae, molecular formulae, general formulae, structural formulae and displayed formulae', NULL, 'draft', 2
+SELECT t.id, '4.2', 'understand how to represent organic molecules using empirical formulae, molecular…', 'understand how to represent organic molecules using empirical formulae, molecular formulae, general formulae, structural formulae and displayed formulae', NULL, 'draft', 2
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4a-introduction'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1493,7 +1493,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.3 — official Issue 3 §4(a)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.3', NULL, 'know what is meant by the terms homologous series, functional group and isomerism', NULL, 'draft', 3
+SELECT t.id, '4.3', 'know what is meant by the terms homologous series, functional group and isomerism', 'know what is meant by the terms homologous series, functional group and isomerism', NULL, 'draft', 3
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4a-introduction'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1502,7 +1502,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.4 — official Issue 3 §4(a)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.4', NULL, 'understand how to name compounds relevant to this specification using the rules of International Union of Pure and Applied Chemistry (IUPAC) nomenclature students will be expected to name compounds containing up to six carbon atoms', NULL, 'draft', 4
+SELECT t.id, '4.4', 'understand how to name compounds relevant to this specification using the rules of…', 'understand how to name compounds relevant to this specification using the rules of International Union of Pure and Applied Chemistry (IUPAC) nomenclature students will be expected to name compounds containing up to six carbon atoms', NULL, 'draft', 4
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4a-introduction'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1511,7 +1511,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.5 — official Issue 3 §4(a)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.5', NULL, 'understand how to write the possible structural and displayed formulae of an organic molecule given its molecular formula', NULL, 'draft', 5
+SELECT t.id, '4.5', 'understand how to write the possible structural and displayed formulae of an organic…', 'understand how to write the possible structural and displayed formulae of an organic molecule given its molecular formula', NULL, 'draft', 5
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4a-introduction'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1520,7 +1520,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.6 — official Issue 3 §4(a)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.6', NULL, 'understand how to classify reactions of organic compounds as substitution, addition and combustion knowledge of reaction mechanisms is not required', NULL, 'draft', 6
+SELECT t.id, '4.6', 'understand how to classify reactions of organic compounds as substitution, addition and…', 'understand how to classify reactions of organic compounds as substitution, addition and combustion knowledge of reaction mechanisms is not required', NULL, 'draft', 6
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4a-introduction'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1529,7 +1529,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.7 — official Issue 3 §4(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.7', NULL, 'know that crude oil is a mixture of hydrocarbons', NULL, 'draft', 7
+SELECT t.id, '4.7', 'know that crude oil is a mixture of hydrocarbons', 'know that crude oil is a mixture of hydrocarbons', NULL, 'draft', 7
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4b-crude-oil'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1538,7 +1538,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.8 — official Issue 3 §4(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.8', NULL, 'describe how the industrial process of fractional distillation separates crude oil into fractions', NULL, 'draft', 8
+SELECT t.id, '4.8', 'describe how the industrial process of fractional distillation separates crude oil into…', 'describe how the industrial process of fractional distillation separates crude oil into fractions', NULL, 'draft', 8
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4b-crude-oil'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1547,7 +1547,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.9 — official Issue 3 §4(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.9', NULL, 'know the names and uses of the main fractions obtained from crude oil: refinery gases, gasoline, kerosene, diesel, fuel oil and bitumen', NULL, 'draft', 9
+SELECT t.id, '4.9', 'know the names and uses of the main fractions obtained from crude oil: refinery gases,…', 'know the names and uses of the main fractions obtained from crude oil: refinery gases, gasoline, kerosene, diesel, fuel oil and bitumen', NULL, 'draft', 9
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4b-crude-oil'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1556,7 +1556,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.10 — official Issue 3 §4(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.10', NULL, 'know the trend in colour, boiling point and viscosity of the main fractions', NULL, 'draft', 10
+SELECT t.id, '4.10', 'know the trend in colour, boiling point and viscosity of the main fractions', 'know the trend in colour, boiling point and viscosity of the main fractions', NULL, 'draft', 10
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4b-crude-oil'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1565,7 +1565,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.11 — official Issue 3 §4(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.11', NULL, 'know that a fuel is a substance that, when burned, releases heat energy', NULL, 'draft', 11
+SELECT t.id, '4.11', 'know that a fuel is a substance that, when burned, releases heat energy', 'know that a fuel is a substance that, when burned, releases heat energy', NULL, 'draft', 11
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4b-crude-oil'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1574,7 +1574,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.12 — official Issue 3 §4(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.12', NULL, 'know the possible products of complete and incomplete combustion of hydrocarbons with oxygen in the air', NULL, 'draft', 12
+SELECT t.id, '4.12', 'know the possible products of complete and incomplete combustion of hydrocarbons with…', 'know the possible products of complete and incomplete combustion of hydrocarbons with oxygen in the air', NULL, 'draft', 12
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4b-crude-oil'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1583,7 +1583,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.13 — official Issue 3 §4(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.13', NULL, 'understand why carbon monoxide is poisonous, in terms of its effect on the capacity of blood to transport oxygen references to haemoglobin are not required', NULL, 'draft', 13
+SELECT t.id, '4.13', 'understand why carbon monoxide is poisonous, in terms of its effect on the capacity of…', 'understand why carbon monoxide is poisonous, in terms of its effect on the capacity of blood to transport oxygen references to haemoglobin are not required', NULL, 'draft', 13
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4b-crude-oil'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1592,7 +1592,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.14 — official Issue 3 §4(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.14', NULL, 'know that, in car engines, the temperature reached is high enough to allow nitrogen and oxygen from air to react, forming oxides of nitrogen', NULL, 'draft', 14
+SELECT t.id, '4.14', 'know that, in car engines, the temperature reached is high enough to allow nitrogen and…', 'know that, in car engines, the temperature reached is high enough to allow nitrogen and oxygen from air to react, forming oxides of nitrogen', NULL, 'draft', 14
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4b-crude-oil'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1601,7 +1601,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.15 — official Issue 3 §4(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.15', NULL, 'explain how the combustion of some impurities in hydrocarbon fuels results in the formation of sulfur dioxide', NULL, 'draft', 15
+SELECT t.id, '4.15', 'explain how the combustion of some impurities in hydrocarbon fuels results in the…', 'explain how the combustion of some impurities in hydrocarbon fuels results in the formation of sulfur dioxide', NULL, 'draft', 15
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4b-crude-oil'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1610,7 +1610,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.16 — official Issue 3 §4(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.16', NULL, 'understand how sulfur dioxide and oxides of nitrogen contribute to acid rain', NULL, 'draft', 16
+SELECT t.id, '4.16', 'understand how sulfur dioxide and oxides of nitrogen contribute to acid rain', 'understand how sulfur dioxide and oxides of nitrogen contribute to acid rain', NULL, 'draft', 16
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4b-crude-oil'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1619,7 +1619,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.17 — official Issue 3 §4(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.17', NULL, 'describe how long-chain alkanes are converted to alkenes and shorter-chain alkanes by catalytic cracking (using silica or alumina as the catalyst and a temperature in the range of 600–700 ºC)', NULL, 'draft', 17
+SELECT t.id, '4.17', 'describe how long-chain alkanes are converted to alkenes and shorter-chain alkanes by…', 'describe how long-chain alkanes are converted to alkenes and shorter-chain alkanes by catalytic cracking (using silica or alumina as the catalyst and a temperature in the range of 600–700 ºC)', NULL, 'draft', 17
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4b-crude-oil'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1628,7 +1628,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.18 — official Issue 3 §4(b)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.18', NULL, 'explain why cracking is necessary, in terms of the balance between supply and demand for different fractions', NULL, 'draft', 18
+SELECT t.id, '4.18', 'explain why cracking is necessary, in terms of the balance between supply and demand…', 'explain why cracking is necessary, in terms of the balance between supply and demand for different fractions', NULL, 'draft', 18
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4b-crude-oil'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1637,7 +1637,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.19 — official Issue 3 §4(c)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.19', NULL, 'know the general formula for alkanes', NULL, 'draft', 19
+SELECT t.id, '4.19', 'know the general formula for alkanes', 'know the general formula for alkanes', NULL, 'draft', 19
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4c-alkanes'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1646,7 +1646,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.20 — official Issue 3 §4(c)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.20', NULL, 'explain why alkanes are classified as saturated hydrocarbons', NULL, 'draft', 20
+SELECT t.id, '4.20', 'explain why alkanes are classified as saturated hydrocarbons', 'explain why alkanes are classified as saturated hydrocarbons', NULL, 'draft', 20
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4c-alkanes'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1655,7 +1655,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.21 — official Issue 3 §4(c)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.21', NULL, 'understand how to draw the structural and displayed formulae for alkanes with up to five carbon atoms in the molecule, and to name the unbranched-chain isomers', NULL, 'draft', 21
+SELECT t.id, '4.21', 'understand how to draw the structural and displayed formulae for alkanes with up to…', 'understand how to draw the structural and displayed formulae for alkanes with up to five carbon atoms in the molecule, and to name the unbranched-chain isomers', NULL, 'draft', 21
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4c-alkanes'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1664,7 +1664,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.22 — official Issue 3 §4(c)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.22', NULL, 'describe the reactions of alkanes with halogens in the presence of ultraviolet radiation, limited to mono-substitution knowledge of reaction mechanisms is not required', NULL, 'draft', 22
+SELECT t.id, '4.22', 'describe the reactions of alkanes with halogens in the presence of ultraviolet…', 'describe the reactions of alkanes with halogens in the presence of ultraviolet radiation, limited to mono-substitution knowledge of reaction mechanisms is not required', NULL, 'draft', 22
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4c-alkanes'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1673,7 +1673,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.23 — official Issue 3 §4(d)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.23', NULL, 'know that alkenes contain the functional group >C=C<', NULL, 'draft', 23
+SELECT t.id, '4.23', 'know that alkenes contain the functional group >C=C<', 'know that alkenes contain the functional group >C=C<', NULL, 'draft', 23
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4d-alkenes'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1682,7 +1682,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.24 — official Issue 3 §4(d)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.24', NULL, 'know the general formula for alkenes', NULL, 'draft', 24
+SELECT t.id, '4.24', 'know the general formula for alkenes', 'know the general formula for alkenes', NULL, 'draft', 24
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4d-alkenes'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1691,7 +1691,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.25 — official Issue 3 §4(d)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.25', NULL, 'explain why alkenes are classified as unsaturated hydrocarbons', NULL, 'draft', 25
+SELECT t.id, '4.25', 'explain why alkenes are classified as unsaturated hydrocarbons', 'explain why alkenes are classified as unsaturated hydrocarbons', NULL, 'draft', 25
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4d-alkenes'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1700,7 +1700,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.26 — official Issue 3 §4(d)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.26', NULL, 'understand how to draw the structural and displayed formulae for alkenes with up to four carbon atoms in the molecule, and name the unbranched-chain isomers knowledge of cis/trans or E/Z notation is not required', NULL, 'draft', 26
+SELECT t.id, '4.26', 'understand how to draw the structural and displayed formulae for alkenes with up to…', 'understand how to draw the structural and displayed formulae for alkenes with up to four carbon atoms in the molecule, and name the unbranched-chain isomers knowledge of cis/trans or E/Z notation is not required', NULL, 'draft', 26
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4d-alkenes'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1709,7 +1709,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.27 — official Issue 3 §4(d)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.27', NULL, 'describe the reactions of alkenes with bromine to produce dibromoalkanes', NULL, 'draft', 27
+SELECT t.id, '4.27', 'describe the reactions of alkenes with bromine to produce dibromoalkanes', 'describe the reactions of alkenes with bromine to produce dibromoalkanes', NULL, 'draft', 27
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4d-alkenes'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1718,7 +1718,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.28 — official Issue 3 §4(d)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.28', NULL, 'describe how bromine water can be used to distinguish between an alkane and an alkene', NULL, 'draft', 28
+SELECT t.id, '4.28', 'describe how bromine water can be used to distinguish between an alkane and an alkene', 'describe how bromine water can be used to distinguish between an alkane and an alkene', NULL, 'draft', 28
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4d-alkenes'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1727,7 +1727,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.29C — official Issue 3 §4(e) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.29C', NULL, 'know that alcohols contain the functional group −OH', NULL, 'draft', 29
+SELECT t.id, '4.29C', 'know that alcohols contain the functional group −OH', 'know that alcohols contain the functional group −OH', NULL, 'draft', 29
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4e-alcohols'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1736,7 +1736,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.30C — official Issue 3 §4(e) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.30C', NULL, 'understand how to draw structural and displayed formulae for methanol, ethanol, propanol (propan-1-ol only) and butanol (butan-1-ol only), and name each compound the names propanol and butanol are acceptable', NULL, 'draft', 30
+SELECT t.id, '4.30C', 'understand how to draw structural and displayed formulae for methanol, ethanol,…', 'understand how to draw structural and displayed formulae for methanol, ethanol, propanol (propan-1-ol only) and butanol (butan-1-ol only), and name each compound the names propanol and butanol are acceptable', NULL, 'draft', 30
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4e-alcohols'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1745,7 +1745,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.31C — official Issue 3 §4(e) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.31C', NULL, 'know that ethanol can be oxidised by:
+SELECT t.id, '4.31C', 'know that ethanol can be oxidised by:', 'know that ethanol can be oxidised by:
 • burning in air or oxygen (complete combustion)
 • reaction with oxygen in the air to form ethanoic acid (microbial oxidation)
 • heating with potassium dichromate(VI) in dilute sulfuric acid to form ethanoic acid', NULL, 'draft', 31
@@ -1757,7 +1757,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.32C — official Issue 3 §4(e) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.32C', NULL, 'know that ethanol can be manufactured by:
+SELECT t.id, '4.32C', 'know that ethanol can be manufactured by:', 'know that ethanol can be manufactured by:
 •  reacting ethene with steam in the presence of a phosphoric acid catalyst at a temperature of about 300 ºC and a pressure of about 60–70 atm
 •  the fermentation of glucose, in the absence of air, at an optimum temperature of about 30 ºC and using the enzymes in yeast', NULL, 'draft', 32
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
@@ -1768,7 +1768,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.33C — official Issue 3 §4(e) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.33C', NULL, 'understand the reasons for fermentation, in the absence of air, and at an optimum temperature', NULL, 'draft', 33
+SELECT t.id, '4.33C', 'understand the reasons for fermentation, in the absence of air, and at an optimum…', 'understand the reasons for fermentation, in the absence of air, and at an optimum temperature', NULL, 'draft', 33
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4e-alcohols'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1777,7 +1777,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.34C — official Issue 3 §4(f) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.34C', NULL, 'know that carboxylic acids contain the functional group', NULL, 'draft', 34
+SELECT t.id, '4.34C', 'know that carboxylic acids contain the functional group', 'know that carboxylic acids contain the functional group', NULL, 'draft', 34
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4f-carboxylic-acids'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1786,7 +1786,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.35C — official Issue 3 §4(f) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.35C', NULL, 'understand how to draw structural and displayed formulae for unbranched-chain carboxylic acids with up to four carbon atoms in the molecule, and name each compound', NULL, 'draft', 35
+SELECT t.id, '4.35C', 'understand how to draw structural and displayed formulae for unbranched-chain…', 'understand how to draw structural and displayed formulae for unbranched-chain carboxylic acids with up to four carbon atoms in the molecule, and name each compound', NULL, 'draft', 35
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4f-carboxylic-acids'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1795,7 +1795,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.36C — official Issue 3 §4(f) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.36C', NULL, 'describe the reactions of aqueous solutions of carboxylic acids with metals and metal carbonates', NULL, 'draft', 36
+SELECT t.id, '4.36C', 'describe the reactions of aqueous solutions of carboxylic acids with metals and metal…', 'describe the reactions of aqueous solutions of carboxylic acids with metals and metal carbonates', NULL, 'draft', 36
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4f-carboxylic-acids'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1804,7 +1804,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.37C — official Issue 3 §4(f) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.37C', NULL, 'know that vinegar is an aqueous solution containing ethanoic acid', NULL, 'draft', 37
+SELECT t.id, '4.37C', 'know that vinegar is an aqueous solution containing ethanoic acid', 'know that vinegar is an aqueous solution containing ethanoic acid', NULL, 'draft', 37
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4f-carboxylic-acids'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1813,7 +1813,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.38C — official Issue 3 §4(g) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.38C', NULL, 'know that esters contain the functional group', NULL, 'draft', 38
+SELECT t.id, '4.38C', 'know that esters contain the functional group', 'know that esters contain the functional group', NULL, 'draft', 38
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4g-esters'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1822,7 +1822,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.39C — official Issue 3 §4(g) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.39C', NULL, 'know that ethyl ethanoate is the ester produced when ethanol and ethanoic acid react in the presence of an acid catalyst', NULL, 'draft', 39
+SELECT t.id, '4.39C', 'know that ethyl ethanoate is the ester produced when ethanol and ethanoic acid react in…', 'know that ethyl ethanoate is the ester produced when ethanol and ethanoic acid react in the presence of an acid catalyst', NULL, 'draft', 39
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4g-esters'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1831,7 +1831,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.40C — official Issue 3 §4(g) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.40C', NULL, 'understand how to write the structural and displayed formulae of ethyl ethanoate', NULL, 'draft', 40
+SELECT t.id, '4.40C', 'understand how to write the structural and displayed formulae of ethyl ethanoate', 'understand how to write the structural and displayed formulae of ethyl ethanoate', NULL, 'draft', 40
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4g-esters'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1840,7 +1840,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.41C — official Issue 3 §4(g) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.41C', NULL, 'understand how to write the structural and displayed formulae of an ester, given the name or formula of the alcohol and carboxylic acid from which it is formed and vice versa', NULL, 'draft', 41
+SELECT t.id, '4.41C', 'understand how to write the structural and displayed formulae of an ester, given the…', 'understand how to write the structural and displayed formulae of an ester, given the name or formula of the alcohol and carboxylic acid from which it is formed and vice versa', NULL, 'draft', 41
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4g-esters'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1849,7 +1849,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.42C — official Issue 3 §4(g) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.42C', NULL, 'know that esters are volatile compounds with distinctive smells and are used as food flavourings and in perfumes', NULL, 'draft', 42
+SELECT t.id, '4.42C', 'know that esters are volatile compounds with distinctive smells and are used as food…', 'know that esters are volatile compounds with distinctive smells and are used as food flavourings and in perfumes', NULL, 'draft', 42
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4g-esters'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1858,7 +1858,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.43C — official Issue 3 §4(g) (C: Chemistry-only, Paper 2 only; practical)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.43C', NULL, 'practical: prepare a sample of an ester such as ethyl ethanoate', NULL, 'draft', 43
+SELECT t.id, '4.43C', 'practical: prepare a sample of an ester such as ethyl ethanoate', 'practical: prepare a sample of an ester such as ethyl ethanoate', NULL, 'draft', 43
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4g-esters'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1867,7 +1867,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.44 — official Issue 3 §4(h)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.44', NULL, 'know that an addition polymer is formed by joining up many small molecules called monomers', NULL, 'draft', 44
+SELECT t.id, '4.44', 'know that an addition polymer is formed by joining up many small molecules called…', 'know that an addition polymer is formed by joining up many small molecules called monomers', NULL, 'draft', 44
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4h-synthetic-polymers'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1876,7 +1876,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.45 — official Issue 3 §4(h)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.45', NULL, 'understand how to draw the repeat unit of an addition polymer, including poly(ethene), poly(propene), poly(chloroethene) and (poly)tetrafluoroethene', NULL, 'draft', 45
+SELECT t.id, '4.45', 'understand how to draw the repeat unit of an addition polymer, including poly(ethene),…', 'understand how to draw the repeat unit of an addition polymer, including poly(ethene), poly(propene), poly(chloroethene) and (poly)tetrafluoroethene', NULL, 'draft', 45
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4h-synthetic-polymers'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1885,7 +1885,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.46 — official Issue 3 §4(h)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.46', NULL, 'understand how to deduce the structure of a monomer from the repeat unit of an addition polymer and vice versa', NULL, 'draft', 46
+SELECT t.id, '4.46', 'understand how to deduce the structure of a monomer from the repeat unit of an addition…', 'understand how to deduce the structure of a monomer from the repeat unit of an addition polymer and vice versa', NULL, 'draft', 46
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4h-synthetic-polymers'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1894,7 +1894,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.47 — official Issue 3 §4(h)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.47', NULL, 'explain problems in the disposal of addition polymers, including:
+SELECT t.id, '4.47', 'explain problems in the disposal of addition polymers, including:', 'explain problems in the disposal of addition polymers, including:
 • their inertness and inability to biodegrade
 • the production of toxic gases when they are burned.', NULL, 'draft', 47
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
@@ -1905,7 +1905,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.48C — official Issue 3 §4(h) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.48C', NULL, 'know that condensation polymerisation, in which a dicarboxylic acid reacts with a diol, produces a polyester and water', NULL, 'draft', 48
+SELECT t.id, '4.48C', 'know that condensation polymerisation, in which a dicarboxylic acid reacts with a diol,…', 'know that condensation polymerisation, in which a dicarboxylic acid reacts with a diol, produces a polyester and water', NULL, 'draft', 48
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4h-synthetic-polymers'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1914,7 +1914,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.49C — official Issue 3 §4(h) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.49C', NULL, 'understand how to write the structural and displayed formula of a polyester, showing the repeat unit, given the formulae of the monomers from which it is formed including the reaction of ethanedioic acid and ethanediol:', NULL, 'draft', 49
+SELECT t.id, '4.49C', 'understand how to write the structural and displayed formula of a polyester, showing…', 'understand how to write the structural and displayed formula of a polyester, showing the repeat unit, given the formulae of the monomers from which it is formed including the reaction of ethanedioic acid and ethanediol:', NULL, 'draft', 49
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4h-synthetic-polymers'
 ON CONFLICT (topic_id, code) DO UPDATE
@@ -1923,7 +1923,7 @@ ON CONFLICT (topic_id, code) DO UPDATE
 
 -- 4.50C — official Issue 3 §4(h) (C: Chemistry-only, Paper 2 only)
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '4.50C', NULL, 'know that some polyesters, known as biopolyesters, are biodegradable', NULL, 'draft', 50
+SELECT t.id, '4.50C', 'know that some polyesters, known as biopolyesters, are biodegradable', 'know that some polyesters, known as biopolyesters, are biodegradable', NULL, 'draft', 50
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = 'edexcel-igcse-chemistry'
 WHERE t.slug = '4h-synthetic-polymers'
 ON CONFLICT (topic_id, code) DO UPDATE

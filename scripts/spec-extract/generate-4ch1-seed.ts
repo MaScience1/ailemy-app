@@ -77,6 +77,23 @@ export function topicSlug(section: number, letter: string, name: string): string
 
 const q = (s: string) => s.replace(/'/g, "''");
 
+/**
+ * spec_points.title is NOT NULL (0001) — the 2026-09-04 apply attempt failed
+ * on exactly this and rolled back, because the generator sent NULL. The 004
+ * convention ("Titles are trims of the same extracted text") is followed
+ * deterministically: the title is the statement's own first line (its stem,
+ * before any bullets), whole when it fits 004's observed length band, else
+ * cut at the last word boundary with an honest ellipsis. Every word is
+ * Pearson's, in Pearson's order — a trim, never a paraphrase.
+ */
+export const TITLE_MAX = 88;
+export function pointTitle(text: string): string {
+  const stem = text.split("\n")[0].trim();
+  if (stem.length <= TITLE_MAX) return stem;
+  const cut = stem.lastIndexOf(" ", TITLE_MAX - 1);
+  return `${stem.slice(0, cut > 0 ? cut : TITLE_MAX - 1).trimEnd()}…`;
+}
+
 function main() {
   const data: Extraction = JSON.parse(
     readFileSync(join(HERE, "4ch1-issue3.json"), "utf8"),
@@ -163,7 +180,7 @@ ON CONFLICT (course_id, slug) DO NOTHING;
     ].filter(Boolean);
     lines.push(`-- ${p.code} — official ${meta.issue} §${t.section}(${t.letter})${marks.length ? ` (${marks.join("; ")})` : ""}
 INSERT INTO spec_points (topic_id, code, title, description, command_terms, status, sort_order)
-SELECT t.id, '${p.code}', NULL, '${q(p.text)}', NULL, 'draft', ${p.number}
+SELECT t.id, '${p.code}', '${q(pointTitle(p.text))}', '${q(p.text)}', NULL, 'draft', ${p.number}
 FROM topics t JOIN courses cs ON cs.id = t.course_id AND cs.slug = '${COURSE_SLUG}'
 WHERE t.slug = '${q(slug)}'
 ON CONFLICT (topic_id, code) DO UPDATE

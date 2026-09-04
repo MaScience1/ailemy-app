@@ -60,7 +60,7 @@ async function rows<T>(path: string): Promise<T[]> {
   return (await res.json()) as T[];
 }
 
-import { topicSlug } from "../spec-extract/generate-4ch1-seed.ts";
+import { pointTitle, topicSlug } from "../spec-extract/generate-4ch1-seed.ts";
 
 type Extraction = {
   meta: { counts: { points: number; topics: number; cOnly: number } };
@@ -95,9 +95,9 @@ async function main() {
   const topicIds = topics.map((t) => t.id);
   const points = topicIds.length
     ? await rows<{
-        id: string; topic_id: string; code: string; description: string;
+        id: string; topic_id: string; code: string; title: string; description: string;
         status: string; sort_order: number;
-      }>(`spec_points?topic_id=in.(${topicIds.join(",")})&select=id,topic_id,code,description,status,sort_order`)
+      }>(`spec_points?topic_id=in.(${topicIds.join(",")})&select=id,topic_id,code,title,description,status,sort_order`)
     : [];
 
   const ial = await rows<{ id: string }>(`courses?slug=eq.${IAL_SLUG}&select=id`);
@@ -166,6 +166,10 @@ async function main() {
   check("every statement carries the exact official wording",
     expectedPointRows.every((e) => liveByCode.get(e.code)?.description === e.text),
     expectedPointRows.filter((e) => liveByCode.get(e.code)?.description !== e.text)
+      .map((e) => e.code).slice(0, 8).join(","));
+  check("every title is the derived trim of its own official stem (the NOT NULL column that sank apply #1)",
+    expectedPointRows.every((e) => liveByCode.get(e.code)?.title === pointTitle(e.text)),
+    expectedPointRows.filter((e) => liveByCode.get(e.code)?.title !== pointTitle(e.text))
       .map((e) => e.code).slice(0, 8).join(","));
   check("sort_order is the official number", expectedPointRows.every(
     (e) => liveByCode.get(e.code)?.sort_order === e.number));
