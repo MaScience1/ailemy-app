@@ -1,12 +1,23 @@
 -- ============================================================================
 -- AILEMY — 4BI1 OFFICIAL SPECIFICATION VERIFICATION (lifecycle pass)
 --
--- ⚠ PREPARED 2026-09-05, NOT YET APPLIED. Apply is the owner's step: run the
---   read-only pre-check first (expected: 176 eligible draft/unverified rows,
---   0 outside-state, 4CH1 28/182/52, IAL 157/157/1), then whole-file paste
---   into the Supabase SQL Editor with the END sentinel confirmed as the last
---   line. When applied, this header is updated to record the date and the
---   post-apply verification, the 007 way.
+-- ⚠ APPLIED 2026-09-06 by the owner via the Supabase SQL Editor (whole-file
+--   paste — 10,337 bytes clipboard-verified byte-identical to this file,
+--   END-OF-009 sentinel visibly present as the last line of the paste,
+--   "Success. No rows returned"). The owner-run read-only pre-check
+--   immediately before the paste matched every expected row: 176 eligible
+--   draft/unverified Biology points on 22 unit-less topics, 42 B-suffix,
+--   0 outside-lifecycle, 0 lesson mappings, 0 question mappings, 4CH1
+--   28/182/182/52, IAL 157/1, non-Biology total 340.
+--   What "Success" proves by construction: every guard in the DO block below
+--   ran inside the committed transaction — so the end state 176 live+verified
+--   / 0 draft / 0 unverified / 42 B-suffix, the 4CH1 28/182/52 and IAL
+--   157/157/1 unchanged-guards, and the 340 non-Biology total were all
+--   asserted true at commit time, and only status + verified_at moved on
+--   exactly 176 rows (ROW_COUNT-checked). The independent read-only
+--   post-apply SQL (docs/igcse-biology-mastery-readiness.md §1c) and the
+--   scripts/db-checks/igcse-4bi1-spec-verify.ts --verified gate remain for
+--   the owner to run from an env-bearing checkout as the external record.
 --
 -- WHAT THIS PASS DOES — and the WHOLE of what it does:
 --   status 'draft' -> 'live' and verified_at set, on EXACTLY the 176

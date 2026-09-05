@@ -1,9 +1,12 @@
 # IGCSE Biology (4BI1) — Service 3 Mastery: owner runbook & readiness
 
-Written 2026-09-05 at the end of the autonomous deep-work session on
-`feature/igcse-biology-mastery`. State at writing: seed **008 is APPLIED**
-to production (22 topics / 176 points / 42 B-suffix, all `draft` +
-`verified_at NULL`); seed **009 is written, tested and NOT applied**.
+Written 2026-09-05; updated 2026-09-06 after the owner applied seed 009.
+State now: seed **008 APPLIED** (2026-09-05) and seed **009 APPLIED**
+(2026-09-06, "Success. No rows returned", sentinel confirmed) — the intended
+production state is 22 topics / 176 points / 42 B-suffix, all
+**live + verified_at set**, siblings unchanged. §1a/§1b below are kept as
+the historical record of the apply procedure; §1c (post-apply check) and
+§1d remain useful for the external verification record.
 
 Authority for everything here: Pearson Edexcel International GCSE in Biology
 (4BI1) Specification, **Issue 3**, © Pearson Education Limited 2024, pdf
