@@ -19,7 +19,9 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import {
+  AMBIGUITY_THRESHOLD,
   validateMappingFixture,
+  warnMappingFixture,
   type MappingFixture,
 } from "../../spec-extract/validate-4bi1-mapping.ts";
 
@@ -102,6 +104,29 @@ refuses("a question with no codes is refused",
 refuses("a nonsense component is refused",
   { ...valid, paper: { ...valid.paper, component: "3B" } },
   "not one of 1B/1BR/2B/2BR");
+refuses("a cross-course Chemistry code (C suffix) is refused as malformed for Biology",
+  { ...valid, mappings: [{ questionNumber: "5", specCodes: ["1.5C"] }] },
+  "malformed code");
+
+console.log("§3 ambiguity review flags (non-fatal) and multi-point intent");
+{
+  const distinct = extraction.points.filter((p) => !p.bOnly).slice(0, AMBIGUITY_THRESHOLD + 1)
+    .map((p) => p.code);
+  const wide: MappingFixture = {
+    ...valid, mappings: [{ questionNumber: "6", specCodes: distinct }],
+  };
+  t("a question over the ambiguity threshold VALIDATES (multi-point is intentional)…",
+    validateMappingFixture(wide, officialCodes).length === 0,
+    validateMappingFixture(wide, officialCodes).join("; "));
+  t("…but raises exactly one review warning naming the question",
+    warnMappingFixture(wide).length === 1 && warnMappingFixture(wide)[0].includes("6:"),
+    warnMappingFixture(wide).join("; "));
+  t("a question at or below the threshold raises no warning",
+    warnMappingFixture({
+      ...valid,
+      mappings: [{ questionNumber: "7", specCodes: distinct.slice(0, AMBIGUITY_THRESHOLD) }],
+    }).length === 0);
+}
 
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);
 process.exit(fail === 0 ? 0 : 1);

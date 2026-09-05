@@ -41,6 +41,8 @@ import {
   UNGROUPED_UNIT_ID,
 } from "../../../src/lib/specification/grouping.ts";
 import { buildCourseMastery, courseVocabulary } from "../../../src/lib/specification/mastery.ts";
+import { buildCourseInsights } from "../../../src/lib/specification/insights.ts";
+import { masteryContextFor } from "../../../src/lib/specification/hydrogen-context.ts";
 import type { MasteryEvidenceRow, SpecUnitNode } from "../../../src/lib/specification/types.ts";
 
 let pass = 0, fail = 0;
@@ -407,6 +409,49 @@ console.log("§5 4CH1 and IAL untouched, and the three courses stay isolated");
     buildCourseMastery({ units: bioUnits, evidence: [{ ...evidence[0], specCode: "1.5C" }] }).ignoredRows === 1);
   t("zero-evidence 4BI1 course computes clean over the full real tree",
     buildCourseMastery({ units: bioUnits, evidence: [] }).summary.pointsTotal === json.points.length);
+
+  // ── the aggressive collision set, through the WHOLE derived stack ─────────
+  // Seven codes that exist (or could exist) in more than one course. Each
+  // must bucket to Biology's own vocabulary-derived topic in mastery AND in
+  // the insights/Hydrogen layers; none may fabricate anything on zero
+  // evidence.
+  const COLLIDERS = ["1.1", "1.2", "2.1", "2.5B", "3.1", "4.1", "5.1"];
+  t("all seven collision codes exist in the real 4BI1 vocabulary (the premise of the test)",
+    COLLIDERS.every((c) => vocab.topicOfCode.has(c)),
+    COLLIDERS.filter((c) => !vocab.topicOfCode.has(c)).join(","));
+  const colliderEvidence: MasteryEvidenceRow[] = COLLIDERS.map((code, i) => ({
+    attemptId: "ax", qIndex: i, specCode: code, markAwarded: 2, markAvailable: 2,
+    attemptedAt: new Date(Date.now() - i * 864e5).toISOString(),
+    source: "lesson-practice", examConditions: false,
+  }));
+  const mColl = buildCourseMastery({ units: bioUnits, evidence: colliderEvidence });
+  t("every collision code buckets to its own vocabulary-derived Biology topic; zero ignored",
+    mColl.ignoredRows === 0 &&
+    COLLIDERS.every((c) => mColl.byTopic[vocab.topicOfCode.get(c)!] !== undefined));
+  t("the same seven rows against Chemistry/IAL-shaped courses touch ONLY their own '1.2' (rest set aside)",
+    buildCourseMastery({ units: chemUnits, evidence: colliderEvidence }).ignoredRows === 6 &&
+    buildCourseMastery({ units: ialUnits, evidence: colliderEvidence }).ignoredRows === 6);
+
+  const nowIso = new Date().toISOString();
+  const mZero = buildCourseMastery({ units: bioUnits, evidence: [] });
+  const iZero = buildCourseInsights({ units: bioUnits, mastery: mZero, evidence: [], nowIso });
+  const ctxZero = masteryContextFor({ courseId: "4bi1", units: bioUnits, mastery: mZero, insights: iZero });
+  t("zero evidence fabricates NOTHING: no queue, no strengths, no weaknesses, no trends, no series",
+    iZero.queue.length === 0 && iZero.strengths.length === 0 && iZero.weaknesses.length === 0 &&
+    Object.keys(iZero.trendByCode).length === 0 && iZero.series.length === 0);
+  t("Hydrogen context on zero evidence is honestly empty: no areas, no retrieval due, no position",
+    ctxZero.weakestAreas.length === 0 && ctxZero.strongestAreas.length === 0 &&
+    ctxZero.retrievalDue.length === 0 && ctxZero.currentSpecificationPosition === null &&
+    ctxZero.summary.unstarted === json.points.length && ctxZero.summary.pointsTotal === json.points.length);
+  const iColl = buildCourseInsights({ units: bioUnits, mastery: mColl, evidence: colliderEvidence, nowIso });
+  t("insights over collision evidence stay inside the Biology vocabulary (no foreign key ever appears)",
+    Object.keys(iColl.evidenceByCode).every((c) => vocab.topicOfCode.has(c)) &&
+    iColl.queue.every((q2) => vocab.topicOfCode.has(q2.specCode)) &&
+    [...iColl.strengths, ...iColl.weaknesses].every((r) => vocab.topicOfCode.has(r.specCode)));
+  t("a B-suffix point is an ordinary point academically: same shapes, no special casing in the facts",
+    mColl.byCode["2.5B"] !== undefined && mColl.byCode["1.1"] !== undefined &&
+    JSON.stringify(Object.keys(mColl.byCode["2.5B"]).sort()) ===
+    JSON.stringify(Object.keys(mColl.byCode["1.1"]).sort()));
 }
 
 // ============================================================================

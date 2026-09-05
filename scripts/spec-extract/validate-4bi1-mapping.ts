@@ -49,9 +49,33 @@ const CODE_SHAPE = /^[1-5]\.\d{1,2}B?$/;
 const COMPONENT_SHAPE = /^[12]BR?$/;
 const SESSION_SHAPE = /^(0[16]|11)\d{2}$/; // 01/06/11 + 2-digit year, the archive's naming
 
+/** Ambiguity threshold: a question mapped to more codes than this is not
+ *  invalid (multi-point questions are intentional and common), but it is
+ *  worth a human's second look before it ever becomes rows. */
+export const AMBIGUITY_THRESHOLD = 4;
+
+/** Non-fatal review flags. Pure, same contract as validateMappingFixture. */
+export function warnMappingFixture(fixture: MappingFixture): string[] {
+  const warnings: string[] = [];
+  for (const m of fixture.mappings ?? []) {
+    if ((m.specCodes?.length ?? 0) > AMBIGUITY_THRESHOLD) {
+      warnings.push(
+        `${m.questionNumber}: mapped to ${m.specCodes.length} codes (> ${AMBIGUITY_THRESHOLD}) — ` +
+        "possibly ambiguous; confirm each code is genuinely assessed, not merely related",
+      );
+    }
+  }
+  return warnings;
+}
+
 /** Validate one fixture against the official extraction. Returns problem
  *  strings; an empty array is a pass. Pure — no I/O, so tests can feed it
- *  synthetic fixtures and synthetic code sets. */
+ *  synthetic fixtures and synthetic code sets.
+ *
+ *  Ordering contract: the fixture's specCodes array order IS the intended
+ *  question_spec_points.display_order (0-based) for that question — 0035
+ *  stores display_order per (question, code) row, and the future apply
+ *  tooling must write it from array position, never resort it. */
 export function validateMappingFixture(
   fixture: MappingFixture,
   officialCodes: ReadonlySet<string>,
@@ -122,10 +146,13 @@ function main() {
   const officialCodes = new Set(extraction.points.map((p) => p.code));
 
   const problems = validateMappingFixture(fixture, officialCodes);
+  const warnings = warnMappingFixture(fixture);
   const pairs = fixture.mappings?.reduce((n, m) => n + (m.specCodes?.length ?? 0), 0) ?? 0;
+  for (const w of warnings) console.log("  ⚠ review: " + w);
   if (problems.length === 0) {
     console.log(`OK — ${fixture.paper.code} ${fixture.paper.component} ${fixture.paper.session}: ` +
-      `${fixture.mappings.length} questions, ${pairs} (question, code) pairs, all mechanically valid. ` +
+      `${fixture.mappings.length} questions, ${pairs} (question, code) pairs, all mechanically valid` +
+      (warnings.length ? ` (${warnings.length} review flag(s) above)` : "") + ". " +
       "Nothing was written; applying mappings is a later, owner-gated phase.");
     process.exit(0);
   }
