@@ -26,9 +26,9 @@
  * wording, and must never become a row.
  *
  * No credentials, no database. The post-apply twin is
- * scripts/db-checks/igcse-4bi1-spec-verify.ts. There is no §7 here yet: the
- * draft→live lifecycle pass (seed 009) is a Phase 3 artefact and gains its
- * own section when it exists.
+ * scripts/db-checks/igcse-4bi1-spec-verify.ts. §7 audits the 009 lifecycle
+ * pass the way 4CH1's §7 audits 007 — anchored to the UPDATE statement
+ * itself, with every count cross-checked against the extraction.
  */
 
 import { readFileSync } from "node:fs";
@@ -476,6 +476,67 @@ console.log("§6 schema-constraint preflight — required columns derived from t
         title.length <= TITLE_MAX + 1 && stem.startsWith(body);
     }),
     json.points.filter((p, i) => insertTitles[i] !== pointTitle(p.text)).map((p) => p.code).slice(0, 5).join(","));
+}
+
+// ============================================================================
+console.log("§7 the 009 lifecycle pass touches lifecycle and NOTHING else");
+// ============================================================================
+// 009 flips 008's 176 rows draft -> live+verified_at (007's exact semantics).
+// This section refuses any version of 009 that could write academic content,
+// reach another course, or run unguarded. Every count is cross-checked
+// against the extractions so the file cannot drift from the source of truth.
+{
+  const v = readFileSync(repo("supabase/seed/009_igcse_biology_official_spec_verification.sql"), "utf8");
+  type ChemMeta = { meta: { counts: { points: number; topics: number; cOnly: number } } };
+  const chemMeta: ChemMeta = JSON.parse(
+    readFileSync(repo("scripts/spec-extract/4ch1-issue3.json"), "utf8"),
+  );
+
+  const sets = [...v.matchAll(/\bSET\s+([\s\S]*?)\n\s*FROM\b/g)].map((m) => m[1]);
+  t("exactly one UPDATE, setting only status and verified_at",
+    sets.length === 1 && /^status = 'live', verified_at = now\(\)\s*$/.test(sets[0] ?? ""),
+    JSON.stringify(sets));
+  t("no academic column is ever written",
+    !/SET[\s\S]{0,200}?(code|title|description|topic_id|sort_order|command_terms)\s*=/.test(v));
+  t("the UPDATE targets spec_points and never topics",
+    /UPDATE spec_points p/.test(v) && !/UPDATE topics\b/.test(v));
+  t("no INSERT, DELETE or TRUNCATE anywhere",
+    !/\bINSERT\b/i.test(v) && !/\bDELETE\b/i.test(v) && !/\bTRUNCATE\b/i.test(v));
+  t("no DDL and no grant/RLS surface (CREATE/ALTER/DROP/GRANT/REVOKE/POLICY)",
+    !/\b(CREATE|ALTER|DROP|GRANT|REVOKE|POLICY)\b/i.test(v.replace(/^--.*$/gm, "")));
+  // ⚠ Anchored to the UPDATE STATEMENT ITSELF — 4CH1's sabotage lesson: the
+  //   same scope lines exist in the pre-guard SELECTs, so a bare regex over
+  //   the whole file passed even with the UPDATE's scope stripped.
+  const updateStmt = /UPDATE spec_points p[\s\S]*?;/.exec(v)?.[0] ?? "";
+  t("the UPDATE statement itself is scoped by course slug AND the draft/NULL state",
+    updateStmt.includes("c.slug = 'edexcel-igcse-biology'") &&
+    updateStmt.includes("p.status = 'draft' AND p.verified_at IS NULL"),
+    updateStmt.slice(0, 200));
+  t("sibling courses are named only inside their unchanged-guards",
+    (v.match(/edexcel-igcse-chemistry/g) ?? []).length === 2 &&
+    (v.match(/edexcel-ial-as-chemistry/g) ?? []).length === 1 &&
+    /INTO chem_verified, chem_c/.test(v) &&
+    /INTO ial_live, ial_verified, ial_archived/.test(v));
+  t("guards: eligible pre-check, structural pre-checks, ROW_COUNT, end state, sibling guards, other-total guard, idempotent no-op arm",
+    v.includes(`expected ${json.meta.counts.points} or an exact no-op`) &&
+    v.includes("expected 22 unit-less") &&
+    v.includes("duplicate codes, % malformed codes") &&
+    v.includes("GET DIAGNOSTICS updated = ROW_COUNT") &&
+    v.includes(`expected exactly ${json.meta.counts.points}`) &&
+    v.includes(`expected ${json.meta.counts.points} / 0 / 0 / ${json.meta.counts.bOnly}`) &&
+    v.includes(`expected ${chemMeta.meta.counts.topics}/${chemMeta.meta.counts.points}/${chemMeta.meta.counts.cOnly}`) &&
+    v.includes("expected 157/157/1") &&
+    v.includes("expected 340 (182 + 158)") &&
+    v.includes(`already applied — ${json.meta.counts.points} rows live+verified`));
+  t("transactional with sentinel: BEGIN, one DO block, COMMIT, END-OF-009 last line",
+    v.indexOf("BEGIN;") < v.indexOf("DO $$") &&
+    v.indexOf("COMMIT;") > v.indexOf("END $$;") &&
+    v.trimEnd().endsWith("If this line is missing, the paste was truncated."));
+  t("009's counts equal the extraction's: points, B-suffix, and the chem guard equals ITS extraction",
+    v.includes("expected 176") && json.meta.counts.points === 176 &&
+    v.includes("expected 42") && json.meta.counts.bOnly === 42 &&
+    v.includes("expected 28/182/52") && chemMeta.meta.counts.points === 182 &&
+    chemMeta.meta.counts.cOnly === 52 && chemMeta.meta.counts.topics === 28);
 }
 
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);
