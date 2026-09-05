@@ -274,6 +274,18 @@ console.log("§5 UI source gates — the noun \"unit\" never renders unit-less")
   t("neither tree builder filters topics by unit id inline any more",
     !/topicNodes\s*\n?\s*\.filter\(\(t\) => t\.unitId === u\.id\)/.test(queries) &&
     !/topicNodes\s*\n?\s*\.filter\(\(t\) => t\.unitId === u\.id\)/.test(taxonomy));
+
+  // ⚠ SCOPED READS, NEVER WHOLE-TABLE. loadCourseResources once fetched ALL
+  // spec_points and ALL lesson_spec_points and filtered in memory — correct
+  // at one course, silently truncated by PostgREST's default 1000-row cap as
+  // courses accumulate (516 points across three courses after 4BI1). The
+  // reads must stay filtered by the course's own topic/point ids.
+  t("taxonomy scopes spec_points by the course's topic ids (no whole-table read)",
+    /from\("spec_points"\)[\s\S]{0,80}\.in\("topic_id", courseTopicIds\)/.test(taxonomy) &&
+    !/from\("spec_points"\)\.select\("id, topic_id"\),\s*\n/.test(taxonomy));
+  t("taxonomy scopes lesson_spec_points by the course's spec point ids (no whole-table read)",
+    /from\("lesson_spec_points"\)[\s\S]{0,90}\.in\("spec_point_id", specPointIds\)/.test(taxonomy) &&
+    !/from\("lesson_spec_points"\)\.select\("lesson_id, spec_point_id"\),\s*\n/.test(taxonomy));
 }
 
 console.log(`\n${fail === 0 ? "ALL PASS" : "FAILURES"} — ${pass} passed, ${fail} failed`);
