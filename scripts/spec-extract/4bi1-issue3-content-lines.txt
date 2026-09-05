@@ -1,0 +1,535 @@
+# Pearson Edexcel International GCSE in Biology (4BI1) — Issue 3
+# Content pages 15-32, extracted 4bi1-spec.pdf
+# pdf sha256 9f474a0ef0e93ef3c3107b568956d163454cdb476bb2017189e8dd12c0d58cef
+[p=15 x=62.3  [8]] 
+[p=15 x=62.3 Verdana-Bold [18]] 2 Biology content
+[p=15 x=98.0 Verdana [12]] 1 The nature and variety of living organisms 11
+[p=15 x=98.0 Verdana [12]] 2 Structure and functions in living organisms 13
+[p=15 x=98.0 Verdana [12]] 3 Reproduction and inheritance 20
+[p=15 x=98.0 Verdana [12]] 4 Ecology and the environment 23
+[p=15 x=98.0 Verdana [12]] 5 Use of biological resources 25
+[p=15 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Biology 9
+[p=15 x=62.3 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=16 x=62.3  [8]] 
+[p=16 x=62.3  [11]] 
+[p=16 x=62.3 TrebuchetMS|Verdana [8, 10]] 10Pearson Edexcel International GCSE in Biology
+[p=16 x=220.9 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=17 x=62.3  [8]] 
+[p=17 x=62.3 Verdana-Bold [16]] 1 The nature and variety of living organisms
+[p=17 x=62.3 Verdana [10]] The following sub-topics are covered in this section.
+[p=17 x=62.3 Verdana [10]] (a) Characteristics of living organisms
+[p=17 x=62.3 Verdana [10]] (b) Variety of living organisms
+[p=17 x=62.4  [10]] 
+[p=17 x=62.4 Verdana-Bold [10]] (a) Characteristics of living organisms
+[p=17 x=62.3 Verdana-Bold [10]] Students should:
+[p=17 x=62.3 Verdana [10]] 1.1 understand how living organisms share the following characteristics:
+[p=17 x=98.0 SymbolMT|Verdana [10]] • they require nutrition
+[p=17 x=98.0 SymbolMT|Verdana [10]] • they respire
+[p=17 x=98.0 SymbolMT|Verdana [10]] • they excrete their waste
+[p=17 x=98.0 SymbolMT|Verdana [10]] • they respond to their surroundings
+[p=17 x=98.1 SymbolMT|Verdana [10]] • they move
+[p=17 x=98.0 SymbolMT|Verdana [10]] • they control their internal conditions
+[p=17 x=98.0 SymbolMT|Verdana [10]] • they reproduce
+[p=17 x=98.0 SymbolMT|Verdana [10]] • they grow and develop.
+[p=17 x=62.3  [10]] 
+[p=17 x=62.3 Verdana-Bold [10]] (b) Variety of living organisms
+[p=17 x=62.3 Verdana-Bold [10]] Students should:
+[p=17 x=62.3 Verdana [10]] 1.2 describe the common features shown by eukaryotic organisms: plants, animals, fungi
+[p=17 x=98.0 Verdana [10]] and protoctists
+[p=17 x=62.3 Verdana [10]]  Plants: these are multicellular organisms; their cells contain chloroplasts and are able
+[p=17 x=98.0 Verdana [10]] to carry out photosynthesis; their cells have cellulose cell walls; they store
+[p=17 x=98.0 Verdana [10]] carbohydrates as starch or sucrose. Examples include flowering plants, such as a
+[p=17 x=98.0 Verdana [10]] cereal (for example, maize), and a herbaceous legume (for example, peas or beans).
+[p=17 x=62.3 Verdana [10]]  Animals: these are multicellular organisms; their cells do not contain chloroplasts and
+[p=17 x=98.0 Verdana [10]] are not able to carry out photosynthesis; they have no cell walls; they usually have
+[p=17 x=98.0 Verdana [10]] nervous co-ordination and are able to move from one place to another; they often
+[p=17 x=98.0 Verdana [10]] store carbohydrate as glycogen. Examples include mammals (for example, humans)
+[p=17 x=98.0 Verdana [10]] and insects (for example, housefly and mosquito).
+[p=17 x=62.3 Verdana [10]]  Fungi: these are organisms that are not able to carry out photosynthesis; their body
+[p=17 x=98.0 Verdana [10]] is usually organised into a mycelium made from thread-like structures called hyphae,
+[p=17 x=98.0 Verdana [10]] which contain many nuclei; some examples are single-celled; their cells have walls
+[p=17 x=98.0 Verdana [10]] made of chitin; they feed by extracellular secretion of digestive enzymes onto food
+[p=17 x=98.0 Verdana [10]] material and absorption of the organic products; this is known as saprotrophic
+[p=17 x=98.0 Verdana|Verdana-Italic [10]] nutrition; they may store carbohydrate as glycogen. Examples include Mucor, which
+[p=17 x=98.0 Verdana [10]] has the typical fungal hyphal structure, and yeast, which is single-celled.
+[p=17 x=62.3 Verdana|Verdana-Italic [10]]  Protoctists: these are microscopic single-celled organisms. Some, like  Amoeba, that
+[p=17 x=98.0 Verdana|Verdana-Italic [10]] live in pond water, have features like an animal cell, while others, like  Chlorella, have
+[p=17 x=98.0 Verdana|Verdana-Italic [10]] chloroplasts and are more like plants. A pathogenic example is Plasmodium,
+[p=17 x=98.0 Verdana [10]] responsible for causing malaria.
+[p=17 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Biology 11
+[p=17 x=62.3 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=18 x=62.3  [8]] 
+[p=18 x=62.3  [10]] 
+[p=18 x=62.3 Verdana-Bold [10]] Students should:
+[p=18 x=62.3 Verdana [10]] 1.3 describe the common features shown by prokaryotic organisms such as bacteria
+[p=18 x=62.3 Verdana [10]]  Bacteria: these are microscopic single-celled organisms; they have a cell wall, cell
+[p=18 x=98.0 Verdana [10]] membrane, cytoplasm and plasmids; they lack a nucleus but contain a circular
+[p=18 x=98.0 Verdana [10]] chromosome of DNA; some bacteria can carry out photosynthesis but most feed off
+[p=18 x=98.0 Verdana|Verdana-Italic [10]] other living or dead organisms. Examples include Lactobacillus bulgaricus, a
+[p=18 x=98.0 Verdana [10]] rod-shaped bacterium used in the production of yoghurt from milk, and
+[p=18 x=98.0 Verdana|Verdana-Italic [10]] Pneumococcus, a spherical bacterium that acts as the pathogen causing pneumonia.
+[p=18 x=62.3 Verdana [10]] 1.4 understand the term pathogen and know that pathogens may include fungi, bacteria,
+[p=18 x=98.0 Verdana [10]] protoctists or viruses
+[p=18 x=62.3 Verdana [10]]  Viruses: these are not living organisms. They are small particles, smaller than
+[p=18 x=98.0 Verdana [10]] bacteria; they are parasitic and can reproduce only inside living cells; they infect
+[p=18 x=98.0 Verdana [10]] every type of living organism. They have a wide variety of shapes and sizes; they
+[p=18 x=98.0 Verdana [10]] have no cellular structure but have a protein coat and contain one type of nucleic
+[p=18 x=98.0 Verdana [10]] acid, either DNA or RNA. Examples include the tobacco mosaic virus that causes
+[p=18 x=98.0 Verdana [10]] discolouring of the leaves of tobacco plants by preventing the formation of
+[p=18 x=98.0 Verdana [10]] chloroplasts, the influenza virus that causes ‘flu’ and the HIV virus that causes AIDS.
+[p=18 x=62.3 TrebuchetMS|Verdana [8, 10]] 12Pearson Edexcel International GCSE in Biology
+[p=18 x=220.9 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=19 x=62.3  [8]] 
+[p=19 x=62.3 Verdana-Bold [10, 16]] 2 Structure and functions in living organisms
+[p=19 x=62.3 Verdana [10]] The following sub-topics are covered in this section.
+[p=19 x=62.3 Verdana [10]] (a) Level of organisation
+[p=19 x=62.3 Verdana [10]] (b) Cell structure
+[p=19 x=62.3 Verdana [10]] (c) Biological molecules
+[p=19 x=62.3 Verdana [10]] (d) Movement of substances into and out of cells
+[p=19 x=62.3 Verdana [10]] (e) Nutrition
+[p=19 x=62.3 Verdana [10]] (f) Respiration
+[p=19 x=62.3 Verdana [10]] (g) Gas exchange
+[p=19 x=62.3 Verdana [10]] (h) Transport
+[p=19 x=62.3 Verdana [10]] (i) Excretion
+[p=19 x=62.3 Verdana [10]] (j) Co-ordination and response
+[p=19 x=62.3  [10]] 
+[p=19 x=62.3 Verdana-Bold [10]] (a) Level of organisation
+[p=19 x=62.3 Verdana-Bold [10]] Students should:
+[p=19 x=62.3 Verdana [10]] 2.1 describe the levels of organisation in organisms: organelles, cells, tissues, organs and
+[p=19 x=98.0 Verdana [10]] systems
+[p=19 x=62.3  [10]] 
+[p=19 x=62.3 Verdana-Bold [10]] (b) Cell structure
+[p=19 x=62.3 Verdana-Bold [10]] Students should:
+[p=19 x=62.3 Verdana [10]] 2.2 describe cell structures, including the nucleus, cytoplasm, cell membrane, cell wall,
+[p=19 x=98.0 Verdana [10]] mitochondria, chloroplasts, ribosomes and vacuole
+[p=19 x=62.3 Verdana [10]] 2.3 describe the functions of the nucleus, cytoplasm, cell membrane, cell wall,
+[p=19 x=98.0 Verdana [10]] mitochondria, chloroplasts, ribosomes and vacuole
+[p=19 x=62.3 Verdana [10]] 2.4 know the similarities and differences in the structure of plant and animal cells
+[p=19 x=62.3 Verdana-Bold [10]] 2.5B explain the importance of cell differentiation in the development of
+[p=19 x=98.0 Verdana-Bold [10]] specialised cells
+[p=19 x=62.3 Verdana-Bold [10]] 2.6B understand the advantages and disadvantages of using stem cells in
+[p=19 x=98.0 Verdana-Bold [10]] medicine
+[p=19 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Biology 13
+[p=19 x=62.3 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=20 x=62.3  [8]] 
+[p=20 x=62.3  [10]] 
+[p=20 x=62.3 Verdana-Bold [10]] (c) Biological molecules
+[p=20 x=62.3 Verdana-Bold [10]] Students should:
+[p=20 x=62.3 Verdana [10]] 2.7 identify the chemical elements present in carbohydrates, proteins and lipids
+[p=20 x=98.0 Verdana [10]] (fats and oils)
+[p=20 x=62.3 Verdana [10]] 2.8 describe the structure of carbohydrates, proteins and lipids as large molecules made
+[p=20 x=98.0 Verdana [10]] up from smaller basic units: starch and glycogen from simple sugars, protein from
+[p=20 x=98.0 Verdana [10]] amino acids, and lipid from fatty acids and glycerol
+[p=20 x=62.3 Verdana|Verdana-Italic [10]] 2.9 practical: investigate food samples for the presence of glucose, starch, protein and fat
+[p=20 x=62.3 Verdana [10]] 2.10 understand the role of enzymes as biological catalysts in metabolic reactions
+[p=20 x=62.3 Verdana [10]] 2.11 understand how temperature changes can affect enzyme function, including changes
+[p=20 x=98.0 Verdana [10]] to the shape of active site
+[p=20 x=62.3 Verdana|Verdana-Italic [10]] 2.12 practical: investigate how enzyme activity can be affected by changes in temperature
+[p=20 x=62.3 Verdana [10]] 2.13 understand how enzyme function can be affected by changes in pH altering the active
+[p=20 x=98.0 Verdana [10]] site
+[p=20 x=62.3 Verdana-Bold|Verdana-BoldItalic [10]] 2.14B practical: investigate how enzyme activity can be affected by changes in pH
+[p=20 x=62.3  [10]] 
+[p=20 x=62.3 Verdana-Bold [10]] (d) Movement of substances into and out of cells
+[p=20 x=62.3 Verdana-Bold [10]] Students should:
+[p=20 x=62.3 Verdana [10]] 2.15 understand the processes of diffusion, osmosis and active transport by which
+[p=20 x=98.0 Verdana [10]] substances move into and out of cells
+[p=20 x=62.3 Verdana [10]] 2.16 understand how factors affect the rate of movement of substances into and out of
+[p=20 x=98.0 Verdana [10]] cells, including the effects of surface area to volume ratio, distance, temperature and
+[p=20 x=98.0 Verdana [10]] concentration gradient
+[p=20 x=62.3 Verdana|Verdana-Italic [10]] 2.17 practical: investigate diffusion and osmosis using living and non-living systems
+[p=20 x=62.3 TrebuchetMS|Verdana [8, 10]] 14Pearson Edexcel International GCSE in Biology
+[p=20 x=220.9 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=21 x=62.3  [8]] 
+[p=21 x=62.3  [10]] 
+[p=21 x=62.3 Verdana-Bold [10]] (e) Nutrition
+[p=21 x=62.3 Verdana-Bold [10]] Students should:
+[p=21 x=62.3 Verdana-BoldItalic [10]] Flowering plants
+[p=21 x=62.3 Verdana [10]] 2.18 understand the process of photosynthesis and its importance in the conversion of
+[p=21 x=98.0 Verdana [10]] light energy to chemical energy
+[p=21 x=62.3 Verdana [10]] 2.19 know the word equation and the balanced chemical symbol equation for
+[p=21 x=98.0 Verdana [10]] photosynthesis
+[p=21 x=62.3 Verdana [10]] 2.20 understand how varying carbon dioxide concentration, light intensity and temperature
+[p=21 x=98.0 Verdana [10]] affect the rate of photosynthesis
+[p=21 x=62.3 Verdana [10]] 2.21 describe the structure of the leaf and explain how it is adapted for photosynthesis
+[p=21 x=62.3 Verdana [10]] 2.22 understand that plants require mineral ions for growth, and that magnesium ions are
+[p=21 x=98.0 Verdana [10]] needed for chlorophyll and nitrate ions are needed for amino acids
+[p=21 x=62.3 Verdana|Verdana-Italic [10]] 2.23 practical: investigate photosynthesis, showing the evolution of oxygen from a water
+[p=21 x=98.0 Verdana-Italic [10]] plant, the production of starch and the requirements of light, carbon dioxide and
+[p=21 x=98.0 Verdana-Italic [10]] chlorophyll
+[p=21 x=62.3 Verdana-BoldItalic [10]] Humans
+[p=21 x=62.3 Verdana [10]] 2.24 understand that a balanced diet should include appropriate proportions of
+[p=21 x=98.0 Verdana [10]] carbohydrate, protein, lipid, vitamins, minerals, water and dietary fibre
+[p=21 x=62.3 Verdana [10]] 2.25 identify the sources and describe the functions of carbohydrate, protein, lipid
+[p=21 x=98.0 Verdana [10]] (fats and oils), vitamins A, C and D, the mineral ions calcium and iron, water and
+[p=21 x=98.0 Verdana [10]] dietary fibre as components of the diet
+[p=21 x=62.3 Verdana [10]] 2.26 understand how energy requirements vary with activity levels, age and pregnancy
+[p=21 x=62.3 Verdana [10]] 2.27 describe the structure and function of the human alimentary canal, including the
+[p=21 x=98.0 Verdana [10]] mouth, oesophagus, stomach, small intestine (duodenum and ileum), large intestine
+[p=21 x=98.0 Verdana [10, 12]] (colon and rectum) and pancreas
+[p=21 x=62.3 Verdana [10, 12]] 2.28 understand how food is moved through the gut by peristalsis
+[p=21 x=62.3 Verdana [10]] 2.29 understand the role of digestive enzymes, including the digestion of starch to glucose
+[p=21 x=98.0 Verdana [10]] by amylase and maltase, the digestion of proteins to amino acids by proteases and
+[p=21 x=98.0 Verdana [10]] the digestion of lipids to fatty acids and glycerol by lipases
+[p=21 x=62.3 Verdana [10]] 2.30 understand that bile is produced by the liver and stored in the gall bladder
+[p=21 x=62.3 Verdana [10]] 2.31 understand the role of bile in neutralising stomach acid and emulsifying lipids
+[p=21 x=62.3 Verdana [10]] 2.32 understand how the small intestine is adapted for absorption, including the structure
+[p=21 x=98.0 Verdana [10]] of a villus
+[p=21 x=62.3 Verdana-BoldItalic [10]] 2.33B practical: investigate the energy content in a food sample
+[p=21 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Biology 15
+[p=21 x=62.3 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=22 x=62.3  [8]] 
+[p=22 x=62.3  [10]] 
+[p=22 x=62.3 Verdana-Bold [10]] (f) Respiration
+[p=22 x=62.3 Verdana-Bold [10]] Students should:
+[p=22 x=62.3 Verdana [10]] 2.34 understand how the process of respiration produces ATP in living organisms
+[p=22 x=62.3 Verdana [10]] 2.35 know that ATP provides energy for cells
+[p=22 x=62.3 Verdana [10]] 2.36 describe the differences between aerobic and anaerobic respiration
+[p=22 x=62.3 Verdana [10]] 2.37 know the word equation and the balanced chemical symbol equation for aerobic
+[p=22 x=98.0 Verdana [10]] respiration in living organisms
+[p=22 x=62.3 Verdana [10]] 2.38 know the word equation for anaerobic respiration in plants and in animals
+[p=22 x=62.3 Verdana|Verdana-Italic [10]] 2.39 practical: investigate the evolution of carbon dioxide and heat from respiring seeds or
+[p=22 x=98.0 Verdana-Italic [10]] other suitable living organisms
+[p=22 x=62.3  [10]] 
+[p=22 x=62.3 Verdana-Bold [10]] (g) Gas exchange
+[p=22 x=62.3 Verdana-Bold [10]] Students should:
+[p=22 x=62.3 Verdana-BoldItalic [10]] Flowering plants
+[p=22 x=62.3 Verdana-Bold [10]] 2.40B understand the role of diffusion in gas exchange
+[p=22 x=62.3 Verdana-Bold [10]] 2.41B understand gas exchange (of carbon dioxide and oxygen) in relation to
+[p=22 x=98.0 Verdana-Bold [10]] respiration and photosynthesis
+[p=22 x=62.3 Verdana-Bold [10]] 2.42B understand how the structure of the leaf is adapted for gas exchange
+[p=22 x=62.3 Verdana-Bold [10]] 2.43B describe the role of stomata in gas exchange
+[p=22 x=62.3 Verdana-Bold [10]] 2.44B understand how respiration continues during the day and night, but that the
+[p=22 x=98.0 Verdana-Bold [10]] net exchange of carbon dioxide and oxygen depends on the intensity of light
+[p=22 x=62.3 Verdana-Bold|Verdana-BoldItalic [10]] 2.45B practical: investigate the effect of light on net gas exchange from a leaf,
+[p=22 x=98.0 Verdana-BoldItalic [10]] using hydrogen-carbonate indicator
+[p=22 x=62.3 Verdana-BoldItalic [10]] Humans
+[p=22 x=62.3 Verdana [10]] 2.46 describe the structure of the thorax, including the ribs, intercostal muscles,
+[p=22 x=98.0 Verdana [10]] diaphragm, trachea, bronchi, bronchioles, alveoli and pleural membranes
+[p=22 x=62.3 Verdana [10]] 2.47 understand the role of the intercostal muscles and the diaphragm in ventilation
+[p=22 x=62.3 Verdana [10]] 2.48 explain how alveoli are adapted for gas exchange by diffusion between air in the
+[p=22 x=98.0 Verdana [10]] lungs and blood in capillaries
+[p=22 x=62.3 Verdana [10]] 2.49 understand the biological consequences of smoking in relation to the lungs and the
+[p=22 x=98.0 Verdana [10]] circulatory system, including coronary heart disease
+[p=22 x=62.3 Verdana|Verdana-Italic [10]] 2.50 practical: investigate breathing in humans, including the release of carbon dioxide
+[p=22 x=98.0 Verdana-Italic [10]] and the effect of exercise
+[p=22 x=62.3 TrebuchetMS|Verdana [8, 10]] 16Pearson Edexcel International GCSE in Biology
+[p=22 x=220.9 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=23 x=62.3  [8]] 
+[p=23 x=62.3  [10]] 
+[p=23 x=62.3 Verdana-Bold [10]] (h) Transport
+[p=23 x=62.3 Verdana-Bold [10]] Students should:
+[p=23 x=62.3 Verdana [10]] 2.51 understand why simple, unicellular organisms can rely on diffusion for movement of
+[p=23 x=98.0 Verdana [10]] substances in and out of the cell
+[p=23 x=62.3 Verdana [10]] 2.52 understand the need for a transport system in multicellular organisms
+[p=23 x=62.3 Verdana-BoldItalic [10]] Flowering plants
+[p=23 x=62.3 Verdana [10]] 2.53 describe the role of phloem in transporting sucrose and amino acids between the
+[p=23 x=98.0 Verdana [10]] leaves and other parts of the plant
+[p=23 x=62.3 Verdana [10]] 2.54 describe the role of xylem in transporting water and mineral ions from the roots to
+[p=23 x=98.0 Verdana [10]] other parts of the plant
+[p=23 x=62.3 Verdana-Bold [10]] 2.55B understand how water is absorbed by root hair cells
+[p=23 x=62.3 Verdana-Bold [10]] 2.56B understand that transpiration is the evaporation of water from the surface of
+[p=23 x=98.0 Verdana-Bold [10]] a plant
+[p=23 x=62.3 Verdana-Bold [10]] 2.57B understand how the rate of transpiration is affected by changes in humidity,
+[p=23 x=98.0 Verdana-Bold [10]] wind speed, temperature and light intensity
+[p=23 x=62.3 Verdana-Bold|Verdana-BoldItalic [10]] 2.58B practical: investigate the role of environmental factors in determining the
+[p=23 x=98.0 Verdana-BoldItalic [10]] rate of transpiration from a leafy shoot
+[p=23 x=62.3 Verdana-BoldItalic [10]] Humans
+[p=23 x=62.3 Verdana [10]] 2.59 describe the composition of the blood: red blood cells, white blood cells, platelets and
+[p=23 x=98.0 Verdana [10]] plasma
+[p=23 x=62.3 Verdana [10]] 2.60 understand the role of plasma in the transport of carbon dioxide, digested food, urea,
+[p=23 x=98.0 Verdana [10]] hormones and heat energy
+[p=23 x=62.3 Verdana [10]] 2.61 understand how adaptations of red blood cells make them suitable for the transport of
+[p=23 x=98.0 Verdana [10]] oxygen, including shape, the absence of a nucleus and the presence of haemoglobin
+[p=23 x=62.3 Verdana [10]] 2.62 understand how the immune system responds to disease using white blood cells,
+[p=23 x=98.0 Verdana [10]] illustrated by phagocytes ingesting pathogens and lymphocytes releasing antibodies
+[p=23 x=98.0 Verdana [10]] specific to the pathogen
+[p=23 x=62.3 Verdana-Bold [10]] 2.63B understand how vaccination results in the manufacture of memory cells,
+[p=23 x=98.0 Verdana-Bold [10]] which enable future antibody production to the pathogen to occur sooner,
+[p=23 x=98.0 Verdana-Bold [10]] faster and in greater quantity
+[p=23 x=62.3 Verdana-Bold [10]] 2.64B understand how platelets are involved in blood clotting, which prevents
+[p=23 x=98.0 Verdana-Bold [10]] blood loss and the entry of micro-organisms
+[p=23 x=62.3 Verdana [10]] 2.65 describe the structure of the heart and how it functions
+[p=23 x=62.3 Verdana [10]] 2.66 explain how the heart rate changes during exercise and under the influence of
+[p=23 x=98.0 Verdana [10]] adrenaline
+[p=23 x=62.3 Verdana [10]] 2.67 understand how factors may increase the risk of developing coronary heart disease
+[p=23 x=62.3 Verdana [10]] 2.68 understand how the structure of arteries, veins and capillaries relate to their function
+[p=23 x=62.3 Verdana [10]] 2.69 understand the general structure of the circulation system, including the blood
+[p=23 x=98.0 Verdana [10]] vessels to and from the heart and lungs, liver and kidneys
+[p=23 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Biology 17
+[p=23 x=62.3 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=24 x=62.3  [8]] 
+[p=24 x=62.3  [10]] 
+[p=24 x=62.3 Verdana-Bold [10]] (i) Excretion
+[p=24 x=62.3 Verdana-Bold [10]] Students should:
+[p=24 x=62.3 Verdana-BoldItalic [10]] Flowering plants
+[p=24 x=62.3 Verdana [10]] 2.70 understand the origin of carbon dioxide and oxygen as waste products of metabolism
+[p=24 x=98.0 Verdana [10]] and their loss from the stomata of a leaf
+[p=24 x=62.3 Verdana-BoldItalic [10]] Humans
+[p=24 x=62.3 Verdana [10]] 2.71 know the excretory products of the lungs, kidneys and skin (organs of excretion)
+[p=24 x=62.3 Verdana-Bold [10]] 2.72B understand how the kidney carries out its roles of excretion and
+[p=24 x=98.0 Verdana-Bold [10]] osmoregulation
+[p=24 x=62.3 Verdana-Bold [10]] 2.73B describe the structure of the urinary system, including the kidneys, ureters,
+[p=24 x=98.0 Verdana-Bold [10]] bladder and urethra
+[p=24 x=62.3 Verdana-Bold [10]] 2.74B describe the structure of a nephron, including the Bowman’s capsule and
+[p=24 x=98.0 Verdana-Bold [10]] glomerulus, convoluted tubules, loop of Henle and collecting duct
+[p=24 x=62.3 Verdana-Bold [10]] 2.75B describe ultrafiltration in the Bowman’s capsule and the composition of the
+[p=24 x=98.1 Verdana-Bold [10]] glomerular filtrate
+[p=24 x=62.3 Verdana-Bold [10]] 2.76B understand how water is reabsorbed into the blood from the collecting duct
+[p=24 x=62.3 Verdana-Bold [10]] 2.77B understand why selective reabsorption of glucose occurs at the proximal
+[p=24 x=98.0 Verdana-Bold [10]] convoluted tubule
+[p=24 x=62.3 Verdana-Bold [10]] 2.78B describe the role of ADH in regulating the water content of the blood
+[p=24 x=62.3 Verdana-Bold [10]] 2.79B understand that urine contains water, urea and ions
+[p=24 x=62.3  [10]] 
+[p=24 x=62.3 Verdana-Bold [10]] (j) Co-ordination and response
+[p=24 x=62.3 Verdana-Bold [10]] Students should:
+[p=24 x=62.3 Verdana [10]] 2.80 understand how organisms are able to respond to changes in their environment
+[p=24 x=62.3 Verdana [10]] 2.81 understand that homeostasis is the maintenance of a constant internal environment,
+[p=24 x=98.0 Verdana [10]] and that body water content and body temperature are both examples of homeostasis
+[p=24 x=62.3 Verdana [10]] 2.82 understand that a co-ordinated response requires a stimulus, a receptor and an
+[p=24 x=98.0 Verdana [10]] effector
+[p=24 x=62.3 Verdana-BoldItalic [10]] Flowering plants
+[p=24 x=62.3 Verdana [10]] 2.83 understand that plants respond to stimuli
+[p=24 x=62.3 Verdana [10]] 2.84 describe the geotropic and phototropic responses of roots and stems
+[p=24 x=62.3 Verdana [10]] 2.85 understand the role of auxin in the phototropic response of stems
+[p=24 x=62.3 TrebuchetMS|Verdana [8, 10]] 18Pearson Edexcel International GCSE in Biology
+[p=24 x=220.9 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=25 x=62.3  [8]] 
+[p=25 x=62.3  [11]] 
+[p=25 x=62.3 Verdana-Bold [10]] Students should:
+[p=25 x=62.3 Verdana-BoldItalic [10]] Humans
+[p=25 x=62.3 Verdana [10]] 2.86 describe how nervous and hormonal communication control responses and
+[p=25 x=98.0 Verdana [10]] understand the differences between the two systems
+[p=25 x=62.3 Verdana [10]] 2.87 understand that the central nervous system consists of the brain and spinal cord and
+[p=25 x=98.0 Verdana [10]] is linked to sense organs by nerves
+[p=25 x=62.3 Verdana [10]] 2.88 understand that stimulation of receptors in the sense organs sends electrical impulses
+[p=25 x=98.0 Verdana [10]] along nerves into and out of the central nervous system, resulting in rapid responses
+[p=25 x=62.3 Verdana [10]] 2.89 understand the role of neurotransmitters at synapses
+[p=25 x=62.3 Verdana [10]] 2.90 describe the structure and functioning of a simple reflex arc illustrated by the
+[p=25 x=98.0 Verdana [10, 12]] withdrawal of a finger from a hot object
+[p=25 x=62.3 Verdana [10]] 2.91 describe the structure and function of the eye as a receptor
+[p=25 x=62.3 Verdana [10]] 2.92 understand the function of the eye in focusing on near and distant objects, and in
+[p=25 x=98.0 Verdana [10]] responding to changes in light intensity
+[p=25 x=62.3 Verdana [10]] 2.93 describe the role of the skin in temperature regulation, with reference to sweating,
+[p=25 x=98.0 Verdana [10]] vasoconstriction and vasodilation
+[p=25 x=62.3 Verdana [10]] 2.94 understand the sources, roles and effects of the following hormones: adrenaline,
+[p=25 x=98.0 Verdana [10]] insulin, testosterone, progesterone and oestrogen
+[p=25 x=62.3 Verdana-Bold [10]] 2.95B understand the sources, roles and effects of the following hormones: ADH,
+[p=25 x=98.0 Verdana-Bold [10]] FSH and LH
+[p=25 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Biology 19
+[p=25 x=62.3 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=26 x=62.3  [8]] 
+[p=26 x=62.3 Verdana-Bold [16]] 3 Reproduction and inheritance
+[p=26 x=62.3 Verdana [10]] The following sub-topics are covered in this section.
+[p=26 x=62.3 Verdana [10]] (a) Reproduction
+[p=26 x=62.3 Verdana [10]] (b) Inheritance
+[p=26 x=62.3  [10]] 
+[p=26 x=62.3 Verdana-Bold [10]] (a) Reproduction
+[p=26 x=62.3 Verdana-Bold [10]] Students should:
+[p=26 x=62.3 Verdana [10]] 3.1 understand the differences between sexual and asexual reproduction
+[p=26 x=62.3 Verdana [10]] 3.2 understand that fertilisation involves the fusion of a male and female gamete to
+[p=26 x=98.0 Verdana [10]] produce a zygote that undergoes cell division and develops into an embryo
+[p=26 x=62.3 Verdana-BoldItalic [10]] Flowering plants
+[p=26 x=62.3 Verdana [10]] 3.3 describe the structures of an insect-pollinated and a wind-pollinated flower and
+[p=26 x=98.1 Verdana [10]] explain how each is adapted for pollination
+[p=26 x=62.3 Verdana [10]] 3.4 understand that the growth of the pollen tube followed by fertilisation leads to seed
+[p=26 x=98.0 Verdana [10]] and fruit formation
+[p=26 x=62.3 Verdana|Verdana-Italic [10]] 3.5 practical: investigate the conditions needed for seed germination
+[p=26 x=62.3 Verdana [10]] 3.6 understand how germinating seeds utilise food reserves until the seedling can carry
+[p=26 x=98.0 Verdana [10]] out photosynthesis
+[p=26 x=62.3 Verdana [10]] 3.7 understand that plants can reproduce asexually by natural methods
+[p=26 x=98.0 Verdana [10]] (illustrated by runners) and by artificial methods (illustrated by cuttings)
+[p=26 x=62.3 Verdana-BoldItalic [10]] Humans
+[p=26 x=62.3 Verdana [10]] 3.8 understand how the structure of the male and female reproductive systems are
+[p=26 x=98.0 Verdana [10]] adapted for their functions
+[p=26 x=62.3 Verdana [10]] 3.9 understand the roles of oestrogen and progesterone in the menstrual cycle
+[p=26 x=62.3 Verdana-Bold [10]] 3.10B understand the roles of FSH and LH in the menstrual cycle
+[p=26 x=62.3 Verdana [10]] 3.11 describe the role of the placenta in the nutrition of the developing embryo
+[p=26 x=62.3 Verdana [10]] 3.12 understand how the developing embryo is protected by amniotic fluid
+[p=26 x=62.3 Verdana [10]] 3.13 understand the roles of oestrogen and testosterone in the development of secondary
+[p=26 x=98.0 Verdana [10]] sexual characteristics
+[p=26 x=62.3 TrebuchetMS|Verdana [8, 10]] 20Pearson Edexcel International GCSE in Biology
+[p=26 x=220.9 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=27 x=62.3  [8]] 
+[p=27 x=62.3  [10]] 
+[p=27 x=62.3 Verdana-Bold [10]] (b) Inheritance
+[p=27 x=62.3 Verdana-Bold [10]] Students should:
+[p=27 x=62.3 Verdana [10]] 3.14 understand that the genome is the entire DNA of an organism and that a gene is a
+[p=27 x=98.0 Verdana [10]] section of a molecule of DNA that codes for a specific protein
+[p=27 x=62.3 Verdana [10]] 3.15 understand that the nucleus of a cell contains chromosomes on which genes are
+[p=27 x=98.0 Verdana [10]] located
+[p=27 x=62.3 Verdana-Bold [10]] 3.16B describe a DNA molecule as two strands coiled to form a double helix, the
+[p=27 x=98.0 Verdana-Bold [10]] strands being linked by a series of paired bases: adenine (A) with thymine
+[p=27 x=98.0 Verdana-Bold [10]] (T), and cytosine (C) with guanine (G)
+[p=27 x=62.3 Verdana-Bold [10]] 3.17B understand that an RNA molecule is single stranded and contains uracil (U)
+[p=27 x=98.0 Verdana-Bold [10]] instead of thymine (T)
+[p=27 x=62.3 Verdana-Bold [10]] 3.18B describe the stages of protein synthesis including transcription and
+[p=27 x=98.1 Verdana-Bold [10]] translation, including the role of mRNA, ribosomes, tRNA, codons and
+[p=27 x=98.0 Verdana-Bold [10]] anticodons
+[p=27 x=62.3 Verdana [10]] 3.19 understand how genes exist in alternative forms called alleles which give rise to
+[p=27 x=98.0 Verdana [10]] differences in inherited characteristics
+[p=27 x=62.3 Verdana [10]] 3.20 understand the meaning of the terms: dominant, recessive, homozygous,
+[p=27 x=98.0 Verdana [10]] heterozygous, phenotype, and genotype
+[p=27 x=62.3 Verdana-Bold [10]] 3.21B understand the meaning of the term codominance
+[p=27 x=62.3 Verdana [10]] 3.22 understand that most phenotypic features are the result of polygenic inheritance
+[p=27 x=98.0 Verdana [10]] rather than single genes
+[p=27 x=62.3 Verdana [10]] 3.23 describe patterns of monohybrid inheritance using a genetic diagram
+[p=27 x=62.3 Verdana [10]] 3.24 understand how to interpret family pedigrees
+[p=27 x=62.3 Verdana [10]] 3.25 predict probabilities of outcomes from monohybrid crosses
+[p=27 x=62.3 Verdana [10]] 3.26 understand how the sex of a person is controlled by one pair of chromosomes, XX in a
+[p=27 x=98.0 Verdana [10]] female and XY in a male
+[p=27 x=62.3 Verdana [10]] 3.27 describe the determination of the sex of offspring at fertilisation, using a genetic
+[p=27 x=98.0 Verdana [10]] diagram
+[p=27 x=62.3 Verdana [10]] 3.28 understand how division of a diploid cell by mitosis produces two cells that contain
+[p=27 x=98.0 Verdana [10]] identical sets of chromosomes
+[p=27 x=62.3 Verdana [10]] 3.29 understand that mitosis occurs during growth, repair, cloning and asexual
+[p=27 x=98.0 Verdana [10]] reproduction
+[p=27 x=62.3 Verdana [10]] 3.30 understand how division of a cell by meiosis produces four cells, each with half the
+[p=27 x=98.0 Verdana [10]] number of chromosomes, and that this results in the formation of genetically different
+[p=27 x=98.0 Verdana [10]] haploid gametes
+[p=27 x=62.3 Verdana [10]] 3.31 understand how random fertilisation produces genetic variation of offspring
+[p=27 x=62.3 Verdana [10]] 3.32 know that in human cells the diploid number of chromosomes is 46 and the haploid
+[p=27 x=98.0 Verdana [10]] number is 23
+[p=27 x=62.3 Verdana [10]] 3.33 understand that variation within a species can be genetic, environmental, or a
+[p=27 x=98.0 Verdana [10]] combination of both
+[p=27 x=62.3 Verdana [10]] 3.34 understand that mutation is a rare, random change in genetic material that can be
+[p=27 x=98.0 Verdana [10]] inherited
+[p=27 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Biology 21
+[p=27 x=62.3 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=28 x=62.3  [8]] 
+[p=28 x=62.3  [11]] 
+[p=28 x=62.3 Verdana-Bold [10]] Students should:
+[p=28 x=62.3 Verdana-Bold [10]] 3.35B understand how a change in DNA can affect the phenotype by altering the
+[p=28 x=98.0 Verdana-Bold [10]] sequence of amino acids in a protein
+[p=28 x=62.3 Verdana-Bold [10]] 3.36B understand how most genetic mutations have no effect on the phenotype,
+[p=28 x=98.1 Verdana-Bold [10]] some have a small effect and rarely do they have a significant effect
+[p=28 x=62.3 Verdana-Bold [10]] 3.37B understand that the incidence of mutations can be increased by exposure to
+[p=28 x=98.0 Verdana-Bold [10]] ionising radiation (for example, gamma rays, x-rays and ultraviolet rays)
+[p=28 x=98.0 Verdana-Bold [10]] and some chemical mutagens (for example, chemicals in tobacco)
+[p=28 x=62.3 Verdana [10]] 3.38 explain Darwin’s theory of evolution by natural selection
+[p=28 x=62.3 Verdana [10]] 3.39 understand how resistance to antibiotics can increase in bacterial populations, and
+[p=28 x=98.0 Verdana [10]] appreciate how such an increase can lead to infections being difficult to control
+[p=28 x=62.3 TrebuchetMS|Verdana [8, 10]] 22Pearson Edexcel International GCSE in Biology
+[p=28 x=220.9 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=29 x=62.3  [8]] 
+[p=29 x=62.3 Verdana-Bold [16]] 4 Ecology and the environment
+[p=29 x=62.3 Verdana [10]] The following sub-topics are covered in this section.
+[p=29 x=62.3 Verdana [10]] (a) The organism in the environment
+[p=29 x=62.3 Verdana [10]] (b) Feeding relationships
+[p=29 x=62.3 Verdana [10]] (c) Cycles within ecosystems
+[p=29 x=62.3 Verdana [10]] (d) Human influences on the environment
+[p=29 x=62.3  [10]] 
+[p=29 x=62.3 Verdana-Bold [10]] (a) The organism in the environment
+[p=29 x=62.3 Verdana-Bold [10]] Students should:
+[p=29 x=62.3 Verdana [10]] 4.1 understand the terms population, community, habitat and ecosystem
+[p=29 x=62.3 Verdana|Verdana-Italic [10]] 4.2 practical: investigate the population size of an organism in two different areas using
+[p=29 x=98.0 Verdana-Italic [10]] quadrats
+[p=29 x=62.3 Verdana-Bold [10]] 4.3B understand the term biodiversity
+[p=29 x=62.3 Verdana-Bold|Verdana-BoldItalic [10]] 4.4B practical: investigate the distribution of organisms in their habitats and
+[p=29 x=98.0 Verdana-BoldItalic [10]] measure biodiversity using quadrats
+[p=29 x=62.3 Verdana [10]] 4.5 understand how abiotic and biotic factors affect the population size and distribution of
+[p=29 x=98.0 Verdana [10]] organisms
+[p=29 x=62.3  [10]] 
+[p=29 x=62.3 Verdana-Bold [10]] (b) Feeding relationships
+[p=29 x=62.3 Verdana-Bold [10]] Students should:
+[p=29 x=62.3 Verdana [10]] 4.6 understand the names given to different trophic levels, including producers, primary,
+[p=29 x=98.0 Verdana [10]] secondary and tertiary consumers and decomposers
+[p=29 x=62.3 Verdana [10]] 4.7 understand the concepts of food chains, food webs, pyramids of number, pyramids of
+[p=29 x=98.0 Verdana [10]] biomass and pyramids of energy transfer
+[p=29 x=62.3 Verdana [10]] 4.8 understand the transfer of substances and energy along a food chain
+[p=29 x=62.3 Verdana [10]] 4.9 understand why only about 10% of energy is transferred from one trophic level to the
+[p=29 x=98.0 Verdana [10]] next
+[p=29 x=62.3  [10]] 
+[p=29 x=62.3 Verdana-Bold [10]] (c) Cycles within ecosystems
+[p=29 x=62.3 Verdana-Bold [10]] Students should:
+[p=29 x=62.3 Verdana [10]] 4.10 describe the stages in the carbon cycle, including respiration, photosynthesis,
+[p=29 x=98.0 Verdana [10]] decomposition and combustion
+[p=29 x=62.3 Verdana-Bold [10]] 4.11B describe the stages in the nitrogen cycle, including the roles of nitrogen
+[p=29 x=98.0 Verdana-Bold [10]] fixing bacteria, decomposers, nitrifying bacteria and denitrifying bacteria
+[p=29 x=98.0 Verdana-Bold [10]] (specific names of bacteria are not required)
+[p=29 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Biology 23
+[p=29 x=62.3 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=30 x=62.3  [8]] 
+[p=30 x=62.3  [14]] 
+[p=30 x=62.3 Verdana-Bold [10]] (d) Human influences on the environment
+[p=30 x=62.3 Verdana-Bold [10]] Students should:
+[p=30 x=62.3 Verdana [10]] 4.12 understand the biological consequences of pollution of air by sulfur dioxide and
+[p=30 x=98.0 Verdana [10]] carbon monoxide
+[p=30 x=62.3 Verdana [10]] 4.13 understand that water vapour, carbon dioxide, nitrous oxide, methane and CFCs are
+[p=30 x=98.0 Verdana [10]] greenhouse gases
+[p=30 x=62.3 Verdana [10]] 4.14 understand how human activities contribute to greenhouse gases
+[p=30 x=62.3 Verdana [10]] 4.15 understand how an increase in greenhouse gases results in an enhanced greenhouse
+[p=30 x=98.0 Verdana [10]] effect and that this may lead to global warming and its consequences
+[p=30 x=62.3 Verdana [10]] 4.16 understand the biological consequences of pollution of water by sewage
+[p=30 x=62.3 Verdana [10]] 4.17 understand the biological consequences of eutrophication caused by leached minerals
+[p=30 x=98.0 Verdana [10]] from fertiliser
+[p=30 x=62.3 Verdana-Bold [10]] 4.18B understand the effects of deforestation, including leaching, soil erosion,
+[p=30 x=98.1 Verdana-Bold [10]] disturbance of evapotranspiration and the carbon cycle, and the balance of
+[p=30 x=98.1 Verdana-Bold [10]] atmospheric gases
+[p=30 x=62.3 TrebuchetMS|Verdana [8, 10]] 24Pearson Edexcel International GCSE in Biology
+[p=30 x=220.9 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=31 x=62.3  [8]] 
+[p=31 x=62.3 Verdana-Bold [16]] 5 Use of biological resources
+[p=31 x=62.3 Verdana [10]] The following sub-topics are covered in this section.
+[p=31 x=62.3 Verdana [10]] (a) Food production
+[p=31 x=62.3 Verdana [10]] (b) Selective breeding
+[p=31 x=62.3 Verdana [10]] (c) Genetic modification (genetic engineering)
+[p=31 x=62.3 Verdana [10]] (d) Cloning
+[p=31 x=62.4  [10]] 
+[p=31 x=62.4 Verdana-Bold [10]] (a) Food production
+[p=31 x=62.3 Verdana-Bold [10]] Students should:
+[p=31 x=62.3 Verdana-BoldItalic [10]] Crop plants
+[p=31 x=62.3 Verdana [10]] 5.1 describe how glasshouses and polythene tunnels can be used to increase the yield of
+[p=31 x=98.0 Verdana [10]] certain crops
+[p=31 x=62.3 Verdana [10]] 5.2 understand the effects on crop yield of increased carbon dioxide and increased
+[p=31 x=98.0 Verdana [10]] temperature in glasshouses
+[p=31 x=62.3 Verdana [10]] 5.3 understand how the use of fertiliser can increase crop yield
+[p=31 x=62.3 Verdana [10]] 5.4 understand the reasons for pest control and the advantages and disadvantages of
+[p=31 x=98.0 Verdana [10]] using pesticides and biological control with crop plants
+[p=31 x=62.3 Verdana-BoldItalic [10]] Micro-organisms
+[p=31 x=62.3 Verdana [10]] 5.5 understand the role of yeast in the production of food including bread
+[p=31 x=62.3 Verdana|Verdana-Italic [10]] 5.6 practical: investigate the role of anaerobic respiration by yeast in different conditions
+[p=31 x=62.3 Verdana|Verdana-Italic [10]] 5.7 understand the role of bacteria (Lactobacillus) in the production of yoghurt
+[p=31 x=62.3 Verdana [10]] 5.8 understand the use of an industrial fermenter and explain the need to provide
+[p=31 x=98.0 Verdana [10]] suitable conditions in the fermenter, including aseptic precautions, nutrients,
+[p=31 x=98.0 Verdana [10]] optimum temperature and pH, oxygenation and agitation, for the growth of micro-
+[p=31 x=98.0 Verdana [10]] organisms
+[p=31 x=62.3 Verdana-BoldItalic [10]] Fish farming
+[p=31 x=62.3 Verdana-Bold [10]] 5.9B understand the methods used to farm large numbers of fish to provide a
+[p=31 x=98.0 Verdana-Bold [10]] source of protein, including maintaining water quality, controlling
+[p=31 x=98.0 Verdana-Bold [10]] intraspecific and interspecific predation, controlling disease, removing waste
+[p=31 x=98.0 Verdana-Bold [10]] products, controlling the quality and frequency of feeding, and selective
+[p=31 x=98.0 Verdana-Bold [10]] breeding
+[p=31 x=62.3  [10]] 
+[p=31 x=62.3 Verdana-Bold [10]] (b) Selective breeding
+[p=31 x=62.3 Verdana-Bold [10]] Students should:
+[p=31 x=62.3 Verdana [10]] 5.10 understand how selective breeding can develop plants with desired characteristics
+[p=31 x=62.3 Verdana [10]] 5.11 understand how selective breeding can develop animals with desired characteristics
+[p=31 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Biology 25
+[p=31 x=62.3 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
+[p=32 x=62.3  [8]] 
+[p=32 x=62.3  [11]] 
+[p=32 x=62.3 Verdana-Bold [10]] (c) Genetic modification (genetic engineering)
+[p=32 x=62.3 Verdana-Bold [10]] Students should:
+[p=32 x=62.3 Verdana [10]] 5.12 understand how restriction enzymes are used to cut DNA at specific sites and ligase
+[p=32 x=98.0 Verdana [10]] enzymes are used to join pieces of DNA together
+[p=32 x=62.3 Verdana [10]] 5.13 understand how plasmids and viruses can act as vectors, which take up pieces of
+[p=32 x=98.0 Verdana [10]] DNA, and then insert this recombinant DNA into other cells
+[p=32 x=62.3 Verdana [10]] 5.14 understand how large amounts of human insulin can be manufactured from
+[p=32 x=98.0 Verdana [10]] genetically modified bacteria that are grown in a fermenter
+[p=32 x=62.3 Verdana [10]] 5.15 understand how genetically modified plants can be used to improve food production
+[p=32 x=62.3 Verdana [10]] 5.16 understand that the term transgenic means the transfer of genetic material from one
+[p=32 x=98.0 Verdana [10]] species to a different species
+[p=32 x=62.3  [10]] 
+[p=32 x=62.3 Verdana-Bold [10]] (d) Cloning
+[p=32 x=62.3 Verdana-Bold [10]] Students should:
+[p=32 x=62.3 Verdana-Bold [10]] 5.17B describe the process of micropropagation (tissue culture) in which explants
+[p=32 x=98.0 Verdana-Bold|Verdana-BoldItalic [10]] are grown in vitro
+[p=32 x=62.3 Verdana-Bold [10]] 5.18B understand how micropropagation can be used to produce commercial
+[p=32 x=98.0 Verdana-Bold [10]] quantities of genetically identical plants with desirable characteristics
+[p=32 x=62.3 Verdana-Bold [10]] 5.19B describe the stages in the production of cloned mammals involving the
+[p=32 x=98.0 Verdana-Bold [10]] introduction of a diploid nucleus from a mature cell into an enucleated egg
+[p=32 x=98.0 Verdana-Bold [10]] cell, illustrated by Dolly the sheep
+[p=32 x=62.3 Verdana-Bold [10]] 5.20B understand how cloned transgenic animals can be used to produce human
+[p=32 x=98.0 Verdana-Bold [10]] proteins
+[p=32 x=62.3 TrebuchetMS|Verdana [8, 10]] 26Pearson Edexcel International GCSE in Biology
+[p=32 x=220.9 Verdana [8]] Specification – Issue 3 – September 2024 © Pearson Education Limited 2024
