@@ -117,16 +117,28 @@ function main() {
 -- AILEMY — PEARSON EDEXCEL INTERNATIONAL GCSE BIOLOGY (4BI1) SPECIFICATION
 -- ${meta.counts.topics} sub-topics, ${meta.counts.points} specification points (${bySection})
 --
--- ⚠ NOT YET APPLIED — Phase 2 deliverable. Apply is the owner's Phase 3 step:
---   whole-file paste into the Supabase SQL Editor, sentinel confirmed, then
---   read-only verification by scripts/db-checks/igcse-4bi1-spec-verify.ts.
---   Run that script with --baseline BEFORE applying (expected: 0 topics,
---   0 points for 4BI1; 4CH1 and IAL populated and untouched). When applied,
---   this header is updated to record the date and the verification result,
---   the 006/007 way. Until then every point stays out of production.
---   All ${meta.counts.points} points seed as status='draft', verified_at NULL —
---   INTENTIONALLY awaiting the Phase 3 official-verification lifecycle pass
---   (the 004/005 and 006/007 convention; that pass will be seed 009).
+-- ⚠ APPLIED 2026-09-05 by the owner via the Supabase SQL Editor (whole-file
+--   paste — 137,323 bytes clipboard-verified byte-identical to this file,
+--   sentinel confirmed as the last line, "Success. No rows returned").
+--   Owner-run read-only baseline BEFORE the apply: 4BI1 at exactly
+--   0 units / 0 topics / 0 points / 0 lessons / 0 lesson or question
+--   mappings; the live course row is slug edexcel-igcse-biology,
+--   uuid 35702dec-b1b9-487f-b74e-2b99500af285, status 'live', 44 past
+--   papers. Owner-run read-only verification AFTER the apply returned
+--   exactly:
+--     · ${meta.counts.topics} topics, all unit_id NULL
+--     · ${meta.counts.points} specification points, ${meta.counts.bOnly} B-suffix (Paper 2-only)
+--     · all ${meta.counts.points} points status='draft', verified_at NULL —
+--       INTENTIONALLY awaiting the Phase 3 official-verification lifecycle
+--       pass (the 004/005 and 006/007 convention; that pass is seed 009)
+--     · zero lesson mappings and zero question mappings on 4BI1
+--     · IGCSE Chemistry unchanged: 28 topics, 182 live+verified, 52 C-suffix
+--     · IAL AS Chemistry unchanged: 157 live+verified + 1 archived
+--     · non-Biology specification population unchanged (340 points).
+--   The in-repo live gate (scripts/db-checks/igcse-4bi1-spec-verify.ts)
+--   could not run from this credential-less worktree (SKIPPED, exit 2) —
+--   the owner-run SQL above is the post-apply record; the script gate runs
+--   with --verified after 009.
 --
 -- PROVENANCE — nothing here is invented:
 --   Every sub-topic, code and statement is extracted from the OFFICIAL

@@ -320,8 +320,10 @@ console.log("§4 the seed SQL is exactly the JSON, course-scoped, non-destructiv
   t("transactional: BEGIN before the first insert, COMMIT after the DO block",
     sql.indexOf("BEGIN;") < sql.indexOf("INSERT INTO topics") &&
     sql.indexOf("COMMIT;") > sql.indexOf("DO $$"));
-  t("the header says NOT YET APPLIED — this is a Phase 2 artefact until the owner applies it",
-    sql.includes("NOT YET APPLIED"));
+  t("the header records the 2026-09-05 owner apply, the real course identity, and the intentional draft state",
+    sql.includes("APPLIED 2026-09-05") && !sql.includes("NOT YET APPLIED") &&
+    sql.includes("35702dec-b1b9-487f-b74e-2b99500af285") &&
+    sql.includes("INTENTIONALLY awaiting the Phase 3"));
 }
 
 // ============================================================================
