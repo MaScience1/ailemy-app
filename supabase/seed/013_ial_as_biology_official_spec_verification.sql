@@ -1,12 +1,47 @@
 -- ============================================================================
 -- AILEMY — IAL AS BIOLOGY OFFICIAL SPECIFICATION VERIFICATION (lifecycle pass)
 --
--- ⚠ NOT YET APPLIED — and it must run ONLY after seed 012 has been applied
---   and its read-only post-apply verification has passed (the 010 → 011
---   procedure): scripts/db-checks/ial-as-biology-spec-verify.ts with no
---   flags must say ALL CHECKS PASS first, and with --verified only AFTER
---   this file. Phase 3 is the owner's; the runbook is
---   docs/ial-as-biology-mastery-readiness.md §1.
+-- ⚠ APPLIED 2026-09-06 by the owner via the Supabase SQL Editor (whole-file
+--   paste — 15,112 bytes clipboard-verified byte-identical to this file
+--   (sha256 4fc37b2f…6af4 on both sides), END-OF-013 sentinel visibly the
+--   last line of the paste, "Success. No rows returned", no errors). It ran
+--   ONLY after seed 012 was applied and its read-only post-apply
+--   verification had passed (the 010 → 011 procedure): the owner-run
+--   POST-012 check (19-row table, sentinel present) matched every expected
+--   row — 4 unit-linked topics (2/2/0), 80 points (38/42 per unit, 9 core
+--   practicals), all 80 draft with verified_at NULL, 0 duplicate codes,
+--   0 malformed codes, 0 lesson mappings, 0 question mappings, A2 Biology
+--   0/0, siblings 28/182/182/52 · 22/176/176/42 · 30/195/195/48 · 157/157/1,
+--   non-target total 711. What "Success" proves by construction: every
+--   guard in the DO block below ran inside the committed transaction — so
+--   the end state 80 live+verified / 0 draft / 0 unverified with 38/42 per
+--   unit and 9 core practicals, the four sibling unchanged-guards, the A2
+--   0/0 guard and the 711 non-target total were all asserted true at commit
+--   time, and only status + verified_at moved on exactly 80 rows
+--   (ROW_COUNT-checked).
+--
+--   VERIFIED 2026-09-06, read-only, by the owner's independent post-apply
+--   production check (the 18-row POST-013 result table, sentinel row
+--   present), which returned exactly:
+--     · AS Biology: 4 unit-linked topics · 80 points (38/42 per unit,
+--       0 on unit-3) · 9 core practicals ·
+--       80 live + verified_at set · 0 draft · 0 verified_at NULL ·
+--       0 duplicate codes · 0 malformed codes · 0 missing title/description
+--     · 0 lesson mappings (both directions), 0 question mappings
+--     · A2 Biology untouched: 0 topics / 0 points
+--     · IAL AS Chemistry unchanged: 157 live+verified + 1 archived
+--     · IGCSE Chemistry unchanged: 28 topics / 182 live+verified / 52 C
+--     · IGCSE Biology unchanged: 22 topics / 176 live+verified / 42 B
+--     · IGCSE Physics unchanged: 30 topics / 195 live+verified / 48 P
+--     · non-AS-Biology specification total 711
+--   and by the scripted live gate, ial-as-biology-spec-verify.ts
+--   --verified: ALL CHECKS PASS (anon key, expectations recomputed from
+--   the committed extraction). With this, the 004/005 → 006/007 → 008/009
+--   → 010/011 → 012/013 lifecycle convention is complete for IAL AS
+--   Biology: every one of the 80 points is live and carries a verified_at
+--   earned against the official Issue 2 document. The Phase 3 runbook
+--   (docs/ial-as-biology-mastery-readiness.md §1) is kept as the
+--   historical record of the procedure.
 --
 -- WHAT THIS PASS DOES — and the WHOLE of what it does:
 --   status 'draft' -> 'live' and verified_at set, on EXACTLY the 80

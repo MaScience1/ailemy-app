@@ -474,8 +474,8 @@ console.log("§4 the seed SQL is exactly the JSON, course- AND unit-scoped, non-
   t("transactional: BEGIN before the first insert, COMMIT after the DO block",
     sql.indexOf("BEGIN;") < sql.indexOf("INSERT INTO topics") &&
     sql.indexOf("COMMIT;") > sql.indexOf("DO $$"));
-  t("the header records NOT YET APPLIED, the real course uuid, the intentional draft state, and the pinned source",
-    sql.includes("NOT YET APPLIED") && !sql.includes("⚠ APPLIED") &&
+  t("the header records the 2026-09-06 owner apply, the real course uuid, the intentional draft state, and the pinned source (anti-revert: a regenerated seed must keep the applied record)",
+    sql.includes("⚠ APPLIED 2026-09-06") && !sql.includes("NOT YET APPLIED") &&
     sql.includes("cef65cb4-29d6-452c-99d6-95f9921583c5") &&
     sql.includes("INTENTIONALLY") && sql.includes(json.meta.pdfSha256));
   t("one edition, everywhere: Issue 2 pinned; Issue 1 appears only as the change-summary reference",
@@ -799,9 +799,11 @@ console.log("§7 the 013 lifecycle pass touches lifecycle and NOTHING else");
     v.indexOf("BEGIN;") < v.indexOf("DO $$") &&
     v.indexOf("COMMIT;") > v.indexOf("END $$;") &&
     v.trimEnd().endsWith("If this line is missing, the paste was truncated."));
-  t("013 is marked NOT YET APPLIED and pins the same source hash and order-of-operations (only after 012)",
-    v.includes("NOT YET APPLIED") && !v.includes("⚠ APPLIED") &&
-    v.includes("ONLY after seed 012") &&
+  t("the header records the 2026-09-06 owner apply AND the owner's post-apply verification (anti-revert; 013 is hand-written)",
+    v.includes("⚠ APPLIED 2026-09-06") && !v.includes("NOT YET APPLIED") &&
+    v.includes("VERIFIED 2026-09-06") &&
+    v.includes("ONLY after seed 012 was applied") &&
+    v.includes("80 live + verified_at set · 0 draft · 0 verified_at NULL") &&
     v.includes(json.meta.pdfSha256));
   t("013's derived counts agree with the extraction (the reader's cross-check: 80 points, 38/42, 9 CPs)",
     P === 80 && json.meta.counts.byUnit["1"] === 38 && json.meta.counts.byUnit["2"] === 42 &&

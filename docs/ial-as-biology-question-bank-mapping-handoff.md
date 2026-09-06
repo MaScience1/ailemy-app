@@ -1,14 +1,15 @@
 # IAL AS Biology (WBI11–WBI13) → Question Bank mapping — Service 2 handoff
 
-Written 2026-09-06 by Service 3 (Mastery), Phase 2. Seeds **012/013 are
-built and locally verified but NOT YET APPLIED** — until the owner runs
-Phase 3 (see `docs/ial-as-biology-mastery-readiness.md`) the production
-vocabulary a mapping validates against does not exist yet. This document is
+Written 2026-09-06 by Service 3 (Mastery), Phase 2; updated the same day
+once seeds 012/013 were **owner-applied and verified in production** — the
+AS Biology specification is now live (4 unit-linked topics / 80 points,
+38/42 per unit, 9 core practicals, all live + verified_at set), so the
+production vocabulary a mapping validates against exists. This document is
 the complete contract for the FUTURE mapping work. Service 3 has
 deliberately written **zero** `question_spec_points` rows; everything below
-is preparation, not action. The remaining gates before mapping, in order:
-(1) owner applies 012+013; (2) transcription (§5 step 2 — there are **zero**
-`paper_questions` rows for any Biology paper today, verified read-only).
+is preparation, not action. The remaining gate before mapping is
+transcription (§5 step 2 — there are **zero** `paper_questions` rows for
+any Biology paper today, verified read-only).
 
 ## 1. Canonical identities (do not re-derive these)
 
@@ -22,7 +23,7 @@ is preparation, not action. The remaining gates before mapping, in order:
 | Specification vocabulary | **80 points** on 4 topics (Topics 1–2 = Unit 1, Topics 3–4 = Unit 2) — canonical list: `scripts/spec-extract/wbi-as-issue2.json` (`points[].code`) |
 | Unit marker | carried by the TOPIC prefix of the code itself: `1.x`/`2.x` = Unit 1 (WBI11), `3.x`/`4.x` = Unit 2 (WBI12). No letter suffixes exist at IAL. |
 | Units in production | `unit-1`=WBI11, `unit-2`=WBI12, `unit-3`=WBI13 (existing rows; papers are unit-linked via `past_papers.unit_id`) |
-| Production lifecycle | after Phase 3: all 80 points `status='live'`, `verified_at` set |
+| Production lifecycle | all 80 points `status='live'`, `verified_at` set (seeds 012 + 013, owner-applied and verified 2026-09-06) |
 
 ## 2. Canonical tables — and the trap that already fired once
 

@@ -146,19 +146,31 @@ function main() {
 -- SPECIFICATION — ${meta.counts.topics} topics across Units 1-2, ${meta.counts.points} specification points
 -- (${byTopic}; Unit 1: ${u1}, Unit 2: ${u2}, Unit 3: none — it defines no content)
 --
--- ⚠ NOT YET APPLIED — Phase 3 is the owner's. Run the read-only PRECHECK in
---   scripts/db-checks/ial-as-biology-spec-verify.ts (or its SQL fallback)
---   BEFORE pasting this file, and the post-apply check AFTER. Expected
---   baseline: course edexcel-ial-as-biology (uuid
---   cef65cb4-29d6-452c-99d6-95f9921583c5, live) holding exactly 3 units
---   (unit-1/WBI11, unit-2/WBI12, unit-3/WBI13), 0 topics, 0 spec points,
---   100 lessons, 0 lesson mappings, 0 question mappings, 48 past papers;
---   IGCSE Chemistry 28 topics / 182 live+verified points (52 C-suffix);
---   IGCSE Biology 22 topics / 176 live+verified (42 B-suffix); IGCSE
---   Physics 30 topics / 195 live+verified (48 P-suffix); IAL AS Chemistry
---   157 live+verified + 1 archived; 711 specification points across the
---   four sibling courses; A2 Biology (edexcel-ial-a2-biology) at 0 topics /
---   0 points.
+-- ⚠ APPLIED 2026-09-06 by the owner via the Supabase SQL Editor (whole-file
+--   paste — 76,751 bytes clipboard-verified byte-identical to this file
+--   (sha256 9110b365…4ee9 on both sides), END-OF-012 sentinel visibly the
+--   last line of the paste, "Success. No rows returned", no errors).
+--   Owner-run read-only PRECHECK BEFORE the apply (15-row table, sentinel
+--   present) matched every expected row exactly: course
+--   edexcel-ial-as-biology (uuid cef65cb4-29d6-452c-99d6-95f9921583c5,
+--   live) at exactly 3 units (unit-1=WBI11, unit-2=WBI12, unit-3=WBI13),
+--   0 topics, 0 spec points, 100 lessons, 0 lesson mappings (checked from
+--   BOTH directions), 0 question mappings, 48 past papers (20/19/9 by
+--   unit); A2 Biology 0 topics / 0 points; IGCSE Chemistry 28/182/182/52;
+--   IGCSE Biology 22/176/176/42; IGCSE Physics 30/195/195/48; IAL AS
+--   Chemistry 157/157/1; non-target specification total 711. Owner-run
+--   read-only POST-012 check AFTER the apply (19-row table, sentinel
+--   present) returned exactly:
+--     · 4 topics, all unit-linked (2/2/0 on unit-1/unit-2/unit-3)
+--     · 80 specification points, 38 on unit-1 and 42 on unit-2, 0 on
+--       unit-3; 9 core-practical statements
+--     · all 80 points status='draft', verified_at NULL — INTENTIONALLY
+--       awaiting the Phase 3 official-verification lifecycle pass (seed
+--       013, applied later the same day)
+--     · 0 duplicate codes, 0 malformed codes, 0 rows missing
+--       title/description, 0 lesson and 0 question mappings
+--     · A2 Biology and all four sibling courses unchanged; non-target
+--       total 711.
 --
 -- PROVENANCE — nothing here is invented:
 --   Every topic, code and statement is extracted from the OFFICIAL

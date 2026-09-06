@@ -1,11 +1,19 @@
 # IAL AS Biology (XBI11 · WBI11–WBI13) — Service 3 Mastery: owner runbook & readiness
 
-Written 2026-09-06 (Phase 2). State now: seeds **012 and 013 are built,
-generated deterministically from the official extraction, locally verified
-(91 pre-apply checks + 23 validator checks + 22-case sabotage battery, all
-green; full repo suite 90 suites / 4,405 assertions ALL PASS) and NOT YET
-APPLIED**. Phase 3 — the two applies and their read-only verifications — is
-the owner's, in §1 below. Nothing in this branch has written to production.
+Written 2026-09-06 (Phase 2); updated the same day after the owner applied
+both seeds. State now: seed **012 APPLIED** (2026-09-06, "Success. No rows
+returned", sentinel confirmed, 15-row pre-check and 19-row post-012 check
+both exact) and seed **013 APPLIED + VERIFIED** (2026-09-06, same
+discipline, 18-row post-013 check exact, scripted `--verified` gate ALL
+CHECKS PASS) — the verified production state is 4 unit-linked topics
+(2/2/0) / 80 points (38/42 per unit, 9 core practicals), all **live +
+verified_at set**, 0 draft / 0 unverified / 0 duplicate / 0 malformed,
+zero lesson and question mappings, A2 Biology untouched at 0/0, siblings
+unchanged (IAL Chemistry 157/157/1, IGCSE Chemistry 28/182/52C, IGCSE
+Biology 22/176/42B, IGCSE Physics 30/195/48P, non-target total 711). §1
+below is kept as the historical record of the apply procedure. Build
+evidence at commit time: 91 pre-apply checks + 23 validator checks +
+22-case sabotage battery all green; full repo suite ALL PASS.
 
 Authority for everything here: Pearson Edexcel **International Advanced
 Level Biology Specification**, IAS **XBI11** / IAL **YBI11**, **Issue 2,
