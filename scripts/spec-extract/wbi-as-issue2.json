@@ -1,0 +1,1119 @@
+{
+ "meta": {
+  "document": "Pearson Edexcel International Advanced Level Biology — Specification",
+  "qualification": {
+   "ias": "XBI11",
+   "ial": "YBI11"
+  },
+  "issue": "Issue 2",
+  "published": "February 2021",
+  "publisher": "© Pearson Education Limited 2021",
+  "isbn": "978 1 446 94575 9",
+  "firstTeaching": "September 2018",
+  "firstAssessment": "January 2019",
+  "source": "https://qualifications.pearson.com/content/dam/pdf/International%20Advanced%20Level/Biology/2018/Specification-and-Sample-Assessment/International-A-Level-Biology-Spec.pdf",
+  "pdfSha256": "9197bf761e06353b492fa04ee3ac4352a02e7e5baf56f277782f4ca0f53d2703",
+  "contentPages": [
+   20,
+   33
+  ],
+  "issue2Note": "Issue 2 (February 2021) is the document Pearson serves for the 2018 qualification; its own change summary lists exactly one delta against Issue 1 — a synoptic-questions sentence for Units 4/5 — with NO AS content changes, so Issue 2 is authoritative for the whole 2019-2025 WBI11-13 paper corpus.",
+  "asScope": "IAS = Units 1-3 (WBI11/01, WBI12/01, WBI13/01), content Topics 1-4. The extraction runs from the Unit 1 opener to the page before the Unit 4 opener, so IA2 content (Units 4-6, Topics 5-8) is never read; every extracted unit must declare 'IAS compulsory unit'.",
+  "unit3": "Unit 3 (Practical Skills in Biology I) is a real assessed AS unit but defines NO numbered specification statements and NO topics — bulleted practical-skills lists only, assessing the practicals of Units 1-2. Nothing is fabricated for it (owner decision 3): byUnit['3'] is 0 and a code-shaped row under Unit 3 refuses the extraction.",
+  "subPointPolicy": "One canonical specification point per officially numbered Pearson statement (owner decision 2). Roman-numeral sub-points (i)/(ii)/… are preserved as their own lines of the official wording AND as structured subPoints metadata; they are never exploded into separate points.",
+  "recommendedAdditionalPracticalPolicy": "The document's boxed RECOMMENDED ADDITIONAL PRACTICAL items carry no specification code and are NOT seeded as points; they are recorded in recommendedPracticals so the review can see nothing was silently lost.",
+  "equationRendering": "AS Biology's two built-up formulae (4.17 heterozygosity index, 4.18 index of diversity) are stacked fractions over a drawn bar, re-assembled into deterministic inline form — numerator/denominator each parenthesised iff containing a space or operator — with a hard refusal on an empty fraction side or any scripted glyph without a Unicode form. Fraction membership is decided by span centre (4.17's left-hand side ends exactly at the bar's x-start and must stay outside the fraction). Known normalisations: the three U+00A0 non-breaking spaces of 4.17's formula render as ordinary spaces, and the sub-1pt kerning around 4.18's parentheses renders tight (Σn(n-1)), as printed. There are no super/subscripts in the AS content pages. Greek letters (β, Σ) are preserved as Unicode; 4.18's N-1 keeps the document's own hyphen. The academic relationship is never altered.",
+  "notesMeaning": "Fully-italic rows inside a statement are Pearson's own guidance notes (exclusions such as 'β-glucose and cellulose are not required in this topic.'); they are part of the official statement wording, kept as their own line, and indexed in notes[].",
+  "sourceTypos": [
+   {
+    "code": "3.5",
+    "subPoint": "ii",
+    "token": "knderstand",
+    "note": "Issue 2 prints 'knderstand' for 'understand' in 3.5(ii); preserved verbatim (source fidelity over editorial correction)."
+   }
+  ],
+  "counts": {
+   "points": 80,
+   "topics": 4,
+   "units": 3,
+   "practical": 9,
+   "subPointed": 26,
+   "subPoints": 60,
+   "notes": 4,
+   "recommendedPracticals": 5,
+   "fractions": 2,
+   "byUnit": {
+    "1": 38,
+    "2": 42,
+    "3": 0
+   },
+   "byTopic": {
+    "1": 20,
+    "2": 18,
+    "3": 21,
+    "4": 21
+   }
+  }
+ },
+ "units": [
+  {
+   "number": 1,
+   "title": "Unit 1: Molecules, Diet, Transport and Health",
+   "level": "IAS compulsory unit"
+  },
+  {
+   "number": 2,
+   "title": "Unit 2: Cells, Development, Biodiversity and Conservation",
+   "level": "IAS compulsory unit"
+  },
+  {
+   "number": 3,
+   "title": "Unit 3: Practical Skills in Biology I",
+   "level": "IAS compulsory unit"
+  }
+ ],
+ "topics": [
+  {
+   "number": 1,
+   "unit": 1,
+   "name": "Molecules, Transport and Health",
+   "order": 1
+  },
+  {
+   "number": 2,
+   "unit": 1,
+   "name": "Membranes, Proteins, DNA and Gene Expression",
+   "order": 2
+  },
+  {
+   "number": 3,
+   "unit": 2,
+   "name": "Cell Structure, Reproduction and Development",
+   "order": 3
+  },
+  {
+   "number": 4,
+   "unit": 2,
+   "name": "Plant Structure and Function, Biodiversity and Conservation",
+   "order": 4
+  }
+ ],
+ "points": [
+  {
+   "code": "1.1",
+   "topic": 1,
+   "unit": 1,
+   "number": 1,
+   "order": 1,
+   "text": "understand the importance of water as a solvent in transport, including its dipole nature",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "1.2",
+   "topic": 1,
+   "unit": 1,
+   "number": 2,
+   "order": 2,
+   "text": "(i) know the difference between monosaccharides, disaccharides and polysaccharides, including glycogen and starch (amylose and amylopectin)\n(ii) be able to relate the structures of monosaccharides, disaccharides and polysaccharides to their roles in providing and storing energy\nβ-glucose and cellulose are not required in this topic.",
+   "subPoints": [
+    "i",
+    "ii"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "1.3",
+   "topic": 1,
+   "unit": 1,
+   "number": 3,
+   "order": 3,
+   "text": "CORE PRACTICAL 1\nUse a semi-quantitative method with Benedict’s reagent to estimate the concentrations of reducing sugars and with iodine solution to estimate the concentrations of starch, using colour standards.",
+   "subPoints": [],
+   "practical": true,
+   "corePractical": 1
+  },
+  {
+   "code": "1.4",
+   "topic": 1,
+   "unit": 1,
+   "number": 4,
+   "order": 4,
+   "text": "know how monosaccharides (glucose, fructose and galactose) join together to form disaccharides (maltose, sucrose and lactose) and polysaccharides (glycogen, amylose and amylopectin) through condensation reactions forming glycosidic bonds, and how these can be split through hydrolysis reactions",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "1.5",
+   "topic": 1,
+   "unit": 1,
+   "number": 5,
+   "order": 5,
+   "text": "(i) know how a triglyceride is synthesised by the formation of ester bonds during condensation reactions between glycerol and three fatty acids\n(ii) know the differences between saturated and unsaturated lipids",
+   "subPoints": [
+    "i",
+    "ii"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "1.6",
+   "topic": 1,
+   "unit": 1,
+   "number": 6,
+   "order": 6,
+   "text": "understand why many animals have a heart and circulation (mass transport to overcome the limitations of diffusion in meeting the requirements of organisms)",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "1.7",
+   "topic": 1,
+   "unit": 1,
+   "number": 7,
+   "order": 7,
+   "text": "understand how the structures of blood vessels (capillaries, arteries and veins) relate to their functions",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "1.8",
+   "topic": 1,
+   "unit": 1,
+   "number": 8,
+   "order": 8,
+   "text": "know the cardiac cycle (atrial systole, ventricular systole and cardiac diastole) and relate the structure and operation of the mammalian heart, including the major blood vessels, to its function\nDetails of myogenic stimulation are not needed at IAS.",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "1.9",
+   "topic": 1,
+   "unit": 1,
+   "number": 9,
+   "order": 9,
+   "text": "(i) understand the role of haemoglobin in the transport of oxygen and carbon dioxide\n(ii) understand the oxygen dissociation curve of haemoglobin, the Bohr effect and the significance of the oxygen affinity of fetal haemoglobin compared with adult haemoglobin",
+   "subPoints": [
+    "i",
+    "ii"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "1.10",
+   "topic": 1,
+   "unit": 1,
+   "number": 10,
+   "order": 10,
+   "text": "understand the course of events that leads to atherosclerosis (endothelial dysfunction, inflammatory response, plaque formation, raised blood pressure)",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "1.11",
+   "topic": 1,
+   "unit": 1,
+   "number": 11,
+   "order": 11,
+   "text": "understand the blood clotting process (thromboplastin release, conversion of prothrombin to thrombin and fibrinogen to fibrin) and its role in cardiovascular disease (CVD)",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "1.12",
+   "topic": 1,
+   "unit": 1,
+   "number": 12,
+   "order": 12,
+   "text": "know how factors such as genetics, diet, age, gender, high blood pressure, smoking and inactivity increase the risk of cardiovascular disease (CVD)",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "1.13",
+   "topic": 1,
+   "unit": 1,
+   "number": 13,
+   "order": 13,
+   "text": "understand the link between dietary antioxidants and the risk of cardiovascular disease (CVD)",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "1.14",
+   "topic": 1,
+   "unit": 1,
+   "number": 14,
+   "order": 14,
+   "text": "CORE PRACTICAL 2\nInvestigate the vitamin C content of food and drink.",
+   "subPoints": [],
+   "practical": true,
+   "corePractical": 2
+  },
+  {
+   "code": "1.15",
+   "topic": 1,
+   "unit": 1,
+   "number": 15,
+   "order": 15,
+   "text": "be able to analyse and interpret quantitative data on illness and mortality rates to determine health risks, including distinguishing between correlation and causation and recognising conflicting evidence",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "1.16",
+   "topic": 1,
+   "unit": 1,
+   "number": 16,
+   "order": 16,
+   "text": "be able to evaluate the design of studies used to determine health risk factors, including sample selection and sample size used to collect data that is both valid and reliable",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "1.17",
+   "topic": 1,
+   "unit": 1,
+   "number": 17,
+   "order": 17,
+   "text": "understand why people’s perception of risks are often different from the actual risks, including underestimating and overestimating the risks due to diet and other lifestyle factors in the development of heart disease",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "1.18",
+   "topic": 1,
+   "unit": 1,
+   "number": 18,
+   "order": 18,
+   "text": "(i) be able to analyse data on the possible significance for health of blood cholesterol levels and levels of high-density lipoproteins (HDLs) and low-density lipoproteins (LDLs)\n(ii) know the evidence for a causal relationship between blood cholesterol levels (total cholesterol and LDL cholesterol) and cardiovascular disease (CVD)",
+   "subPoints": [
+    "i",
+    "ii"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "1.19",
+   "topic": 1,
+   "unit": 1,
+   "number": 19,
+   "order": 19,
+   "text": "understand how people use scientific knowledge about the effect of diet, including obesity indicators, such as body mass index and waist-to-hip ratio, exercise and smoking to reduce their risk of coronary heart disease",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "1.20",
+   "topic": 1,
+   "unit": 1,
+   "number": 20,
+   "order": 20,
+   "text": "know the benefits and risks of treatments for cardiovascular disease (CVD) (antihypertensives, statins, anticoagulants and platelet inhibitors)",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "2.1",
+   "topic": 2,
+   "unit": 1,
+   "number": 1,
+   "order": 21,
+   "text": "(i) know the properties of gas exchange surfaces in living organisms (large surface area to volume ratio, thickness of surface and difference in concentration)\n(ii) understand how the rate of diffusion is dependent on these properties and can be calculated using Fick’s Law of Diffusion\n(iii) understand how the structure of the mammalian lung is adapted for rapid gaseous exchange",
+   "subPoints": [
+    "i",
+    "ii",
+    "iii"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "2.2",
+   "topic": 2,
+   "unit": 1,
+   "number": 2,
+   "order": 22,
+   "text": "(i) know the structure and properties of cell membranes\n(ii) understand how models such as the fluid mosaic model of membrane structure are interpretations of data used to develop scientific explanations of the structure and properties of cell membranes",
+   "subPoints": [
+    "i",
+    "ii"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "2.3",
+   "topic": 2,
+   "unit": 1,
+   "number": 3,
+   "order": 23,
+   "text": "CORE PRACTICAL 3\nInvestigate membrane properties including the effect of alcohol and temperature on membrane permeability.",
+   "subPoints": [],
+   "practical": true,
+   "corePractical": 3
+  },
+  {
+   "code": "2.4",
+   "topic": 2,
+   "unit": 1,
+   "number": 4,
+   "order": 24,
+   "text": "understand what is meant by osmosis in terms of the movement of free water molecules through a partially permeable membrane, down a water potential gradient",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "2.5",
+   "topic": 2,
+   "unit": 1,
+   "number": 5,
+   "order": 25,
+   "text": "(i) understand what is meant by passive transport (diffusion, facilitated diffusion), active transport (including the role of ATP as an immediate source of energy), endocytosis and exocytosis\n(ii) understand the involvement of carrier and channel proteins in membrane transport",
+   "subPoints": [
+    "i",
+    "ii"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "2.6",
+   "topic": 2,
+   "unit": 1,
+   "number": 6,
+   "order": 26,
+   "text": "(i) know the basic structure of an amino acid\nStructures of specific amino acids are not required.\n(ii) understand the formation of polypeptides and proteins (amino acid monomers linked by condensation reactions to form peptide bonds)\n(iii) understand the significance of a protein’s primary structure in determining its secondary structure, three-dimensional structure and properties (globular and fibrous proteins and the types of bonds involved in its three-dimensional structure)\n(iv) know the molecular structure of a globular protein and a fibrous protein and understand how their structures relate to their functions (including haemoglobin and collagen)",
+   "subPoints": [
+    "i",
+    "ii",
+    "iii",
+    "iv"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "2.7",
+   "topic": 2,
+   "unit": 1,
+   "number": 7,
+   "order": 27,
+   "text": "(i) understand the mechanism of action and the specificity of enzymes in terms of their three-dimensional structure\n(ii) understand that enzymes are biological catalysts that reduce activation energy\n(iii) know that there are intracellular enzymes catalysing reactions inside cells and extracellular enzymes catalysing reactions outside cells",
+   "subPoints": [
+    "i",
+    "ii",
+    "iii"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "2.8",
+   "topic": 2,
+   "unit": 1,
+   "number": 8,
+   "order": 28,
+   "text": "CORE PRACTICAL 4\nInvestigate the effect of temperature, pH, enzyme concentration and substrate concentration on the initial rate of enzyme-catalysed reactions.",
+   "subPoints": [],
+   "practical": true,
+   "corePractical": 4
+  },
+  {
+   "code": "2.9",
+   "topic": 2,
+   "unit": 1,
+   "number": 9,
+   "order": 29,
+   "text": "(i)  know the basic structure of mononucleotides (deoxyribose or ribose linked to a phosphate and a base, including thymine, uracil, adenine, cytosine or guanine) and the structures of DNA and RNA (polynucleotides composed of mononucleotides linked by condensation reactions to form phosphodiester bonds)\n(ii) know how complementary base pairing and the hydrogen bonding between two complementary strands are involved in the formation of the DNA double helix",
+   "subPoints": [
+    "i",
+    "ii"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "2.10",
+   "topic": 2,
+   "unit": 1,
+   "number": 10,
+   "order": 30,
+   "text": "(i)  understand the process of DNA replication, including the role of DNA polymerase\n(ii) understand how Meselson and Stahl’s classic experiment provided new data that supported the accepted theory of replication of DNA and refuted competing theories",
+   "subPoints": [
+    "i",
+    "ii"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "2.11",
+   "topic": 2,
+   "unit": 1,
+   "number": 11,
+   "order": 31,
+   "text": "understand the nature of the genetic code (triplet code, non-overlapping and degenerate)",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "2.12",
+   "topic": 2,
+   "unit": 1,
+   "number": 12,
+   "order": 32,
+   "text": "know that a gene is a sequence of bases on a DNA molecule that codes for a sequence of amino acids in a polypeptide chain",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "2.13",
+   "topic": 2,
+   "unit": 1,
+   "number": 13,
+   "order": 33,
+   "text": "(i)  understand the process of protein synthesis (transcription and translation), including the role of RNA polymerase, translation, messenger RNA, transfer RNA, ribosomes and the role of start and stop codons\n(ii)  understand the roles of the DNA template (antisense) strand in transcription, codons on messenger RNA and anticodons on transfer RNA",
+   "subPoints": [
+    "i",
+    "ii"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "2.14",
+   "topic": 2,
+   "unit": 1,
+   "number": 14,
+   "order": 34,
+   "text": "(i)  understand how errors in DNA replication can give rise to mutations (substitution, insertion and deletion of bases)\n(ii)  know that some mutations will give rise to cancer or genetic disorders, but that many mutations will have no observable effect",
+   "subPoints": [
+    "i",
+    "ii"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "2.15",
+   "topic": 2,
+   "unit": 1,
+   "number": 15,
+   "order": 35,
+   "text": "(i)  understand what is meant by the terms gene, allele, genotype, phenotype, recessive, dominant, codominance, homozygote and heterozygote\n(ii)  understand patterns of inheritance, including the interpretation of genetic pedigree diagrams, in the context of monohybrid inheritance\n(iii)  understand sex linkage on the X chromosome, including red-green colour blindness in humans",
+   "subPoints": [
+    "i",
+    "ii",
+    "iii"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "2.16",
+   "topic": 2,
+   "unit": 1,
+   "number": 16,
+   "order": 36,
+   "text": "understand how the expression of a gene mutation in people with cystic fibrosis impairs the functioning of the gaseous exchange, digestive and reproductive systems",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "2.17",
+   "topic": 2,
+   "unit": 1,
+   "number": 17,
+   "order": 37,
+   "text": "(i) understand the uses of genetic screening, including the identification of carriers, pre-implantation genetic diagnosis (PGD) and prenatal testing, including amniocentesis and chorionic villus sampling\n(ii)  understand the implications of prenatal genetic screening",
+   "subPoints": [
+    "i",
+    "ii"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "2.18",
+   "topic": 2,
+   "unit": 1,
+   "number": 18,
+   "order": 38,
+   "text": "be able to identify and discuss the ethical and social issues relating to genetic screening from a range of ethical viewpoints, including religious, moral and social implications",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "3.1",
+   "topic": 3,
+   "unit": 2,
+   "number": 1,
+   "order": 39,
+   "text": "know that all living organisms are made of cells, sharing some common features",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "3.2",
+   "topic": 3,
+   "unit": 2,
+   "number": 2,
+   "order": 40,
+   "text": "understand how the cells of multicellular organisms are organised into tissues, tissues into organs, and organs into organ systems",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "3.3",
+   "topic": 3,
+   "unit": 2,
+   "number": 3,
+   "order": 41,
+   "text": "(i) know the ultrastructure of eukaryotic cells, including nucleus, nucleolus, ribosomes, rough and smooth endoplasmic reticulum, mitochondria, centrioles, lysosomes and Golgi apparatus\n(ii) understand the function of the organelles listed in (i)",
+   "subPoints": [
+    "i",
+    "ii"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "3.4",
+   "topic": 3,
+   "unit": 2,
+   "number": 4,
+   "order": 42,
+   "text": "understand the role of the rough endoplasmic reticulum (rER) and the Golgi apparatus in protein transport within cells, including their role in the formation of extracellular enzymes",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "3.5",
+   "topic": 3,
+   "unit": 2,
+   "number": 5,
+   "order": 43,
+   "text": "(i) know the ultrastructure of prokaryotic cells, including cell wall, capsule, plasmid, flagellum, pili, ribosomes and circular DNA\n(ii) knderstand the function of the structures listed in (i)",
+   "subPoints": [
+    "i",
+    "ii"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "3.6",
+   "topic": 3,
+   "unit": 2,
+   "number": 6,
+   "order": 44,
+   "text": "be able to recognise the organelles in 3.3 from electron microscope (EM) images",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "3.7",
+   "topic": 3,
+   "unit": 2,
+   "number": 7,
+   "order": 45,
+   "text": "(i) know how magnification and resolution can be achieved using light and electron microscopy\n(ii) understand the importance of staining specimens in microscopy",
+   "subPoints": [
+    "i",
+    "ii"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "3.8",
+   "topic": 3,
+   "unit": 2,
+   "number": 8,
+   "order": 46,
+   "text": "CORE PRACTICAL 5\n(i) use a light microscope to make observations and labelled drawings of suitable animal cells\n(ii) use a graticule with a microscope to make measurements and understand the concept of scale",
+   "subPoints": [
+    "i",
+    "ii"
+   ],
+   "practical": true,
+   "corePractical": 5
+  },
+  {
+   "code": "3.9",
+   "topic": 3,
+   "unit": 2,
+   "number": 9,
+   "order": 47,
+   "text": "(i) know that a locus is the location of genes on a chromosome\n(ii) understand the linkage of genes on a chromosome",
+   "subPoints": [
+    "i",
+    "ii"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "3.10",
+   "topic": 3,
+   "unit": 2,
+   "number": 10,
+   "order": 48,
+   "text": "understand the role of meiosis in ensuring genetic variation through the production of non-identical gametes as a consequence of independent assortment of chromosomes in metaphase I and crossing over of alleles between chromatids in prophase I\nNames of the stages of prophase are not required.",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "3.11",
+   "topic": 3,
+   "unit": 2,
+   "number": 11,
+   "order": 49,
+   "text": "understand how mammalian gametes are specialised for their functions (including the acrosome in sperm and the zona pellucida in the egg cell)",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "3.12",
+   "topic": 3,
+   "unit": 2,
+   "number": 12,
+   "order": 50,
+   "text": "know the process of fertilisation in mammals, including the acrosome reaction, the cortical reaction and the fusion of nuclei",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "3.13",
+   "topic": 3,
+   "unit": 2,
+   "number": 13,
+   "order": 51,
+   "text": "know the process of fertilisation in flowering plants, starting with the growth of a pollen tube and ending with the fusion of nuclei",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "3.14",
+   "topic": 3,
+   "unit": 2,
+   "number": 14,
+   "order": 52,
+   "text": "understand the role of mitosis and the cell cycle in producing genetically identical daughter cells for growth and asexual reproduction",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "3.15",
+   "topic": 3,
+   "unit": 2,
+   "number": 15,
+   "order": 53,
+   "text": "CORE PRACTICAL 6\nPrepare and stain a root tip squash to observe the stages of mitosis.",
+   "subPoints": [],
+   "practical": true,
+   "corePractical": 6
+  },
+  {
+   "code": "3.16",
+   "topic": 3,
+   "unit": 2,
+   "number": 16,
+   "order": 54,
+   "text": "be able to calculate mitotic indices",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "3.17",
+   "topic": 3,
+   "unit": 2,
+   "number": 17,
+   "order": 55,
+   "text": "(i) understand what is meant by the terms stem cell, pluripotent and totipotent, morula and blastocyst\n(ii) be able to discuss the ways in which society uses scientific knowledge to make decisions about the use of stem cells in medical therapies",
+   "subPoints": [
+    "i",
+    "ii"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "3.18",
+   "topic": 3,
+   "unit": 2,
+   "number": 18,
+   "order": 56,
+   "text": "understand how cells become specialised through differential gene expression, producing active mRNA, leading to the synthesis of proteins which, in turn, control cell processes or determine cell structure in animals and plants",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "3.19",
+   "topic": 3,
+   "unit": 2,
+   "number": 19,
+   "order": 57,
+   "text": "understand how one gene can give rise to more than one protein through post-transcriptional changes to messenger RNA (mRNA)",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "3.20",
+   "topic": 3,
+   "unit": 2,
+   "number": 20,
+   "order": 58,
+   "text": "(i) understand how phenotype is the result of an interaction between genotype and the environment\n(ii) know how epigenetic modification, including DNA methylation and histone modification, can alter the activation of certain genes\n(iii) understand how epigenetic modifications can be passed on following cell division",
+   "subPoints": [
+    "i",
+    "ii",
+    "iii"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "3.21",
+   "topic": 3,
+   "unit": 2,
+   "number": 21,
+   "order": 59,
+   "text": "understand how some phenotypes are affected by multiple alleles for the same gene, or by polygenic inheritance, as well as the environment, and how polygenic inheritance can give rise to phenotypes that show continuous variation",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "4.1",
+   "topic": 4,
+   "unit": 2,
+   "number": 1,
+   "order": 60,
+   "text": "(i) know the structure and ultrastructure of plant cells including cell wall, chloroplast, amyloplast, vacuole, tonoplast, plasmodesmata, pits and middle lamella and be able to compare it with animal cells\n(ii) understand the function of the structures listed in (i)",
+   "subPoints": [
+    "i",
+    "ii"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "4.2",
+   "topic": 4,
+   "unit": 2,
+   "number": 2,
+   "order": 61,
+   "text": "be able to recognise the organelles in 4.1 from electron microscope (EM) images",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "4.3",
+   "topic": 4,
+   "unit": 2,
+   "number": 3,
+   "order": 62,
+   "text": "understand the structure and function of the polysaccharides starch and cellulose, including the role of hydrogen bonds between the β-glucose molecules in the formation of cellulose microfibrils",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "4.4",
+   "topic": 4,
+   "unit": 2,
+   "number": 4,
+   "order": 63,
+   "text": "understand how the arrangement of cellulose microfibrils and secondary thickening in plant cell walls contributes to the physical properties of xylem vessels and sclerenchyma fibres in plant fibres that can be exploited by humans",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "4.5",
+   "topic": 4,
+   "unit": 2,
+   "number": 5,
+   "order": 64,
+   "text": "know the similarities and differences between the structures of, the position in the stem, and the function of sclerenchyma fibres (support), xylem vessels (support and transport of water and mineral ions) and phloem (translocation of organic solutes)",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "4.6",
+   "topic": 4,
+   "unit": 2,
+   "number": 6,
+   "order": 65,
+   "text": "CORE PRACTICAL 7\nUse a light microscope to:\n(i) make observations, draw and label plan diagrams of transverse sections of roots, stems and leaves\n(ii) make observations, draw and label cells of plant tissues\n(iii) identify sclerenchyma fibres, phloem, sieve tubes and xylem vessels and their location.",
+   "subPoints": [
+    "i",
+    "ii",
+    "iii"
+   ],
+   "practical": true,
+   "corePractical": 7
+  },
+  {
+   "code": "4.7",
+   "topic": 4,
+   "unit": 2,
+   "number": 7,
+   "order": 66,
+   "text": "understand how the uses of plant fibres and starch may contribute to sustainability, including plant-based products to replace oil-based plastics",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "4.8",
+   "topic": 4,
+   "unit": 2,
+   "number": 8,
+   "order": 67,
+   "text": "understand the importance of water and inorganic ions (nitrate, calcium ions and magnesium ions) to plants",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "4.9",
+   "topic": 4,
+   "unit": 2,
+   "number": 9,
+   "order": 68,
+   "text": "CORE PRACTICAL 8\nDetermine the tensile strength of plant fibres.",
+   "subPoints": [],
+   "practical": true,
+   "corePractical": 8
+  },
+  {
+   "code": "4.10",
+   "topic": 4,
+   "unit": 2,
+   "number": 10,
+   "order": 69,
+   "text": "understand the conditions required for bacterial growth",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "4.11",
+   "topic": 4,
+   "unit": 2,
+   "number": 11,
+   "order": 70,
+   "text": "know that substances derived from plants can have antimicrobial and other therapeutic properties",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "4.12",
+   "topic": 4,
+   "unit": 2,
+   "number": 12,
+   "order": 71,
+   "text": "CORE PRACTICAL 9\nInvestigate the antimicrobial properties of plants, including aseptic techniques for the safe handling of bacteria.",
+   "subPoints": [],
+   "practical": true,
+   "corePractical": 9
+  },
+  {
+   "code": "4.13",
+   "topic": 4,
+   "unit": 2,
+   "number": 13,
+   "order": 72,
+   "text": "understand the development of drug testing from historic to contemporary protocols, including William Withering’s digitalis soup, double blind trials, placebo and three-phased testing",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "4.14",
+   "topic": 4,
+   "unit": 2,
+   "number": 14,
+   "order": 73,
+   "text": "(i) understand that classification is a means of organising the variety of life based on relationships between organisms using differences and similarities in phenotypes and in genotypes, and is built around the species concept\n(ii) understand the process and importance of critical evaluation of new data by the scientific community leading to new taxonomic groupings, based on molecular evidence, including the three-domain system (Archaea, Bacteria and Eukarya)",
+   "subPoints": [
+    "i",
+    "ii"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "4.15",
+   "topic": 4,
+   "unit": 2,
+   "number": 15,
+   "order": 74,
+   "text": "know that, over time, the variety of life has become extensive but is now being threatened by human activity",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "4.16",
+   "topic": 4,
+   "unit": 2,
+   "number": 16,
+   "order": 75,
+   "text": "understand what is meant by the terms biodiversity and endemism",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "4.17",
+   "topic": 4,
+   "unit": 2,
+   "number": 17,
+   "order": 76,
+   "text": "know how biodiversity can be measured within a habitat using species richness, and within a species using genetic diversity by calculating the heterozygosity index:\nheterozygosity index = (number of heterozygotes)/(number of individuals in the population)",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "4.18",
+   "topic": 4,
+   "unit": 2,
+   "number": 18,
+   "order": 77,
+   "text": "understand how biodiversity can be compared in different habitats using the formula to calculate an index of diversity (D):\nD = (N(N-1))/(Σn(n-1))",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "4.19",
+   "topic": 4,
+   "unit": 2,
+   "number": 19,
+   "order": 78,
+   "text": "understand the concept of niche and be able to discuss examples of adaptations of organisms to their environment (behavioural, anatomical and physiological)",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "4.20",
+   "topic": 4,
+   "unit": 2,
+   "number": 20,
+   "order": 79,
+   "text": "(i) understand how the Hardy-Weinberg equation can be used to see whether a change in allele frequency is occurring in a population over time\n(ii) understand that changes in allele frequency can come about as a result of mutation and natural selection\n(iii) understand that reproductive isolation can lead to accumulation of different genetic information in populations, potentially leading to the formation of new species",
+   "subPoints": [
+    "i",
+    "ii",
+    "iii"
+   ],
+   "practical": false,
+   "corePractical": null
+  },
+  {
+   "code": "4.21",
+   "topic": 4,
+   "unit": 2,
+   "number": 21,
+   "order": 80,
+   "text": "be able to evaluate the methods used by zoos and seed banks in the conservation of endangered species and their genetic diversity, including scientific research, captive breeding programmes, reintroduction programmes and education",
+   "subPoints": [],
+   "practical": false,
+   "corePractical": null
+  }
+ ],
+ "recommendedPracticals": [
+  {
+   "unit": 1,
+   "topic": 1,
+   "afterCode": "1.8",
+   "text": "Investigate the structure of a mammalian heart by dissection."
+  },
+  {
+   "unit": 1,
+   "topic": 2,
+   "afterCode": "2.4",
+   "text": "Investigate tissue water potentials using plant tissue and graded concentrations of a solute."
+  },
+  {
+   "unit": 1,
+   "topic": 2,
+   "afterCode": "2.6",
+   "text": "Use a semi-quantitative method to estimate protein concentration using biuret reagent and colour standards."
+  },
+  {
+   "unit": 2,
+   "topic": 3,
+   "afterCode": "3.13",
+   "text": "Investigate factors affecting the growth of pollen tubes."
+  },
+  {
+   "unit": 2,
+   "topic": 4,
+   "afterCode": "4.8",
+   "text": "Investigate plant mineral deficiencies."
+  }
+ ],
+ "notes": [
+  {
+   "code": "1.2",
+   "text": "β-glucose and cellulose are not required in this topic."
+  },
+  {
+   "code": "1.8",
+   "text": "Details of myogenic stimulation are not needed at IAS."
+  },
+  {
+   "code": "2.6",
+   "text": "Structures of specific amino acids are not required."
+  },
+  {
+   "code": "3.10",
+   "text": "Names of the stages of prophase are not required."
+  }
+ ]
+}
