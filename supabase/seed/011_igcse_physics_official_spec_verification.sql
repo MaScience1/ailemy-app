@@ -1,16 +1,38 @@
 -- ============================================================================
 -- AILEMY — 4PH1 OFFICIAL SPECIFICATION VERIFICATION (lifecycle pass)
 --
--- ⚠ NOT YET APPLIED. This file runs ONLY after seed 010 is applied and its
---   read-only post-apply verification has passed (the 008 → 009 procedure):
---   owner-run read-only pre-check first, then a whole-file SQL-Editor paste
---   (byte count clipboard-verified, END-OF-011 sentinel visibly the last
---   line of the paste), then the owner's independent read-only post-apply
---   check, then this header is amended to record APPLIED and VERIFIED.
---   Expected pre-check: 195 eligible draft/unverified Physics points on 30
---   unit-less topics, 48 P-suffix, 0 outside-lifecycle, 0 lesson mappings,
---   0 question mappings, 4CH1 28/182/182/52, 4BI1 22/176/176/42, IAL 157/1,
---   non-Physics total 516.
+-- ⚠ APPLIED 2026-09-06 by the owner via the Supabase SQL Editor (whole-file
+--   paste — 11,814 bytes clipboard-verified byte-identical to this file
+--   (sha256 9562508d…a3cb3 on both sides), END-OF-011 sentinel visibly the
+--   last line of the paste, "Success. No rows returned", no errors). It ran
+--   ONLY after seed 010 was applied and its read-only post-apply
+--   verification had passed (the 008 → 009 procedure). The owner-run
+--   read-only pre-check immediately before the paste matched every expected
+--   row: 195 eligible draft/unverified Physics points on 30 unit-less
+--   topics, 48 P-suffix, 0 outside-lifecycle, 0 duplicate codes,
+--   0 malformed codes, 0 lesson mappings, 0 question mappings, 4CH1
+--   28/182/182/52, 4BI1 22/176/176/42, IAL 157/1, non-Physics total 516.
+--   What "Success" proves by construction: every guard in the DO block
+--   below ran inside the committed transaction — so the end state
+--   195 live+verified / 0 draft / 0 unverified / 48 P-suffix, the 4CH1
+--   28/182/52, 4BI1 22/176/42 and IAL 157/157/1 unchanged-guards, and the
+--   516 non-Physics total were all asserted true at commit time, and only
+--   status + verified_at moved on exactly 195 rows (ROW_COUNT-checked).
+--
+--   VERIFIED 2026-09-06, read-only, by the owner's independent post-apply
+--   production check (the 15-row post-011 result table, sentinel row
+--   present), which returned exactly:
+--     · Physics: 30 topics · 195 points · 48 P-suffix ·
+--       195 live + verified_at set · 0 draft · 0 verified_at NULL ·
+--       0 duplicate codes · 0 malformed codes
+--     · IGCSE Chemistry unchanged: 28 topics / 182 live+verified / 52 C
+--     · IGCSE Biology unchanged: 22 topics / 176 live+verified / 42 B
+--     · IAL AS Chemistry unchanged: 157 live+verified + 1 archived
+--     · zero Physics lesson mappings, zero Physics question mappings
+--     · non-Physics specification total 516.
+--   With this, the full 004/005 → 006/007 → 008/009 → 010/011 lifecycle
+--   convention is complete for 4PH1: every one of the 195 points is live
+--   and carries a verified_at earned against the official Issue 4 document.
 --
 -- WHAT THIS PASS DOES — and the WHOLE of what it does:
 --   status 'draft' -> 'live' and verified_at set, on EXACTLY the 195

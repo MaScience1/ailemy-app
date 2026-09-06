@@ -1,12 +1,14 @@
 # IGCSE Physics (4PH1) → Question Bank mapping — Service 2 handoff
 
-Written 2026-09-06 by Service 3 (Mastery), at the point where the Physics
-specification seeds (010/011) are written and verified locally but **NOT YET
-APPLIED** to production. This document is the complete contract for the
-FUTURE mapping work. Service 3 has deliberately written **zero**
+Written 2026-09-06 by Service 3 (Mastery); updated the same day once seeds
+010/011 were **owner-applied and verified in production** — the Physics
+specification is now live (30 topics / 195 points / 48 P-suffix, all
+live + verified_at set), so the production vocabulary a mapping validates
+against exists. This document is the complete contract for the FUTURE
+mapping work. Service 3 has deliberately written **zero**
 `question_spec_points` rows; everything below is preparation, not action.
-Mapping work must not begin before 010/011 are applied and verified — until
-then there is no production vocabulary for a mapping to be valid against.
+The remaining gate before mapping is transcription (§5 step 2 — there are
+still no `paper_questions` rows to attach to).
 
 ## 1. Canonical identities (do not re-derive these)
 
@@ -18,7 +20,7 @@ then there is no production vocabulary for a mapping to be valid against.
 | Source PDF sha256 | `bac4b8312d4fbfc84672f909100d66b2b3cda0b25e98c0d11bbc7366dae482b2` |
 | Specification vocabulary | **195 points** on 30 topics — canonical list: `scripts/spec-extract/4ph1-issue4.json` (`points[].code`) |
 | Paper-2-only marker | **`P` suffix in the code itself** (48 of 195). No schema field exists or is needed. |
-| Intended production lifecycle | all 195 points `status='live'`, `verified_at` set — after seeds 010 + 011 are applied (Phase 3) |
+| Production lifecycle | all 195 points `status='live'`, `verified_at` set (seeds 010 + 011, owner-applied and verified 2026-09-06) |
 
 ## 2. Canonical tables — and the trap that already fired once
 

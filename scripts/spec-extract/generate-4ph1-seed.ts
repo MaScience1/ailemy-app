@@ -123,18 +123,30 @@ function main() {
 -- AILEMY — PEARSON EDEXCEL INTERNATIONAL GCSE PHYSICS (4PH1) SPECIFICATION
 -- ${meta.counts.topics} sub-topics, ${meta.counts.points} specification points (${bySection})
 --
--- ⚠ NOT YET APPLIED. Phase 3 is owner-run: read-only baseline first, then a
---   whole-file SQL-Editor paste (byte count clipboard-verified, END-OF-010
---   sentinel confirmed as the last line), then the read-only post-apply
---   verification, then this header is amended to record the apply — the
---   exact 008 procedure. Expected baseline BEFORE the apply (recorded by a
---   read-only anon-key probe on 2026-09-06): the live course row is slug
---   edexcel-igcse-physics, uuid e63ebefd-1936-4344-9947-2fbc49bfdc66,
---   status 'live', with 0 units / 0 topics / 0 spec points / 0 lessons and
---   50 past papers; IGCSE Chemistry at 28 topics / 182 live+verified points
---   (52 C-suffix); IGCSE Biology at 22 topics / 176 live+verified points
---   (42 B-suffix); IAL AS Chemistry at 157 live+verified + 1 archived;
---   516 specification points in total across the three sibling courses.
+-- ⚠ APPLIED 2026-09-06 by the owner via the Supabase SQL Editor (whole-file
+--   paste — 150,915 bytes clipboard-verified byte-identical to this file
+--   (sha256 86c5d894…e9b9 on both sides), END-OF-010 sentinel visibly the
+--   last line of the paste, "Success. No rows returned", no errors).
+--   Owner-run read-only baseline BEFORE the apply: the live course row is
+--   slug edexcel-igcse-physics, uuid e63ebefd-1936-4344-9947-2fbc49bfdc66,
+--   status 'live', at exactly 0 units / 0 topics / 0 spec points /
+--   0 lessons / 0 lesson or question mappings, 50 past papers; IGCSE
+--   Chemistry at 28 topics / 182 live+verified points (52 C-suffix); IGCSE
+--   Biology at 22 topics / 176 live+verified points (42 B-suffix); IAL AS
+--   Chemistry at 157 live+verified + 1 archived; 516 specification points
+--   across the three sibling courses. Owner-run read-only verification
+--   AFTER the apply (the 17-row post-010 check, sentinel row present)
+--   returned exactly:
+--     · 30 topics, all unit_id NULL, none empty
+--     · 195 specification points, 48 P-suffix (Paper 2-only)
+--     · all 195 points status='draft', verified_at NULL — INTENTIONALLY
+--       awaiting the Phase 3 official-verification lifecycle pass
+--       (the 004/005, 006/007 and 008/009 convention; that pass is seed
+--       011, applied later the same day)
+--     · 0 duplicate codes, 0 malformed codes, 0 rows missing
+--       title/description, zero lesson and question mappings on 4PH1
+--     · siblings unchanged (Chemistry 28/182/182/52, Biology 22/176/176/42,
+--       IAL 157/157/1; non-Physics total 516).
 --
 -- PROVENANCE — nothing here is invented:
 --   Every sub-topic, code and statement is extracted from the OFFICIAL

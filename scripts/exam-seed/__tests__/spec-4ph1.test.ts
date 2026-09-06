@@ -398,10 +398,10 @@ console.log("§4 the seed SQL is exactly the JSON, course-scoped, non-destructiv
   t("transactional: BEGIN before the first insert, COMMIT after the DO block",
     sql.indexOf("BEGIN;") < sql.indexOf("INSERT INTO topics") &&
     sql.indexOf("COMMIT;") > sql.indexOf("DO $$"));
-  t("the header is honest about lifecycle state: NOT YET APPLIED, the real course identity, the intentional draft state, the pinned source",
-    sql.includes("NOT YET APPLIED") && !sql.includes("⚠ APPLIED") &&
+  t("the header records the 2026-09-06 owner apply, the real course identity, the intentional draft state, and the pinned source (anti-revert: a regenerated seed must keep the applied record)",
+    sql.includes("APPLIED 2026-09-06") && !sql.includes("NOT YET APPLIED") &&
     sql.includes("e63ebefd-1936-4344-9947-2fbc49bfdc66") &&
-    sql.includes("INTENTIONALLY awaiting the Phase 3") &&
+    sql.includes("INTENTIONALLY") && sql.includes("awaiting the Phase 3") &&
     sql.includes(json.meta.pdfSha256));
   t("one edition, everywhere: the seed and the extraction pin Issue 4 and never mention Issue 3 (editions must not mix)",
     json.meta.issue === "Issue 4" &&
@@ -686,9 +686,11 @@ console.log("§7 the 011 lifecycle pass touches lifecycle and NOTHING else");
     v.indexOf("BEGIN;") < v.indexOf("DO $$") &&
     v.indexOf("COMMIT;") > v.indexOf("END $$;") &&
     v.trimEnd().endsWith("If this line is missing, the paste was truncated."));
-  t("the header is honest about lifecycle state: NOT YET APPLIED, runs only after 010, pinned to the same source hash",
-    v.includes("NOT YET APPLIED") && !v.includes("⚠ APPLIED") &&
-    v.includes("ONLY after seed 010 is applied") &&
+  t("the header records the 2026-09-06 owner apply AND the owner's post-apply verification (anti-revert guard; 011 is hand-written)",
+    v.includes("APPLIED 2026-09-06") && !v.includes("NOT YET APPLIED") &&
+    v.includes("VERIFIED 2026-09-06") &&
+    v.includes("ONLY after seed 010 was applied") &&
+    v.includes("195 live + verified_at set · 0 draft · 0 verified_at NULL") &&
     v.includes(json.meta.pdfSha256));
   t("011's counts equal the extraction's: points, P-suffix, and each sibling guard equals ITS extraction",
     v.includes("expected 195") && json.meta.counts.points === 195 &&

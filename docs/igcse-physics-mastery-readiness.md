@@ -1,10 +1,15 @@
 # IGCSE Physics (4PH1) — Service 3 Mastery: owner runbook & readiness
 
-Written 2026-09-06 (Phase 2). State now: seeds **010 and 011 are WRITTEN and
-NOT YET APPLIED** — the working tree's headers say so, and both must be
-amended after their applies (the 008/009 procedure). Intended end state after
-Phase 3: 30 topics / 195 points / 48 P-suffix, all **live + verified_at
-set**, siblings unchanged.
+Written 2026-09-06 (Phase 2); updated the same day after the owner applied
+both seeds. State now: seed **010 APPLIED** (2026-09-06, "Success. No rows
+returned", sentinel confirmed, post-010 17-row check passed) and seed
+**011 APPLIED + VERIFIED** (2026-09-06, same discipline, post-011 15-row
+check passed) — the verified production state is 30 topics / 195 points /
+48 P-suffix, all **live + verified_at set**, 0 draft / 0 unverified /
+0 duplicate / 0 malformed, zero lesson and question mappings, siblings
+unchanged (Chemistry 28/182/52C, Biology 22/176/42B, IAL 157/157/1,
+non-Physics total 516). §1 below is kept as the historical record of the
+apply procedure.
 
 Authority for everything here: Pearson Edexcel International GCSE in Physics
 (4PH1) Specification, **Issue 4**, © Pearson Education Limited 2024 (ISBN
