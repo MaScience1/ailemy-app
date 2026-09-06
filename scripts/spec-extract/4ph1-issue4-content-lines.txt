@@ -1,0 +1,581 @@
+# Pearson Edexcel International GCSE in Physics (4PH1) — Issue 4
+# Content pages 16-34, extracted international-gcse-physics-4ph1-specification-issue4.pdf
+# pdf sha256 bac4b8312d4fbfc84672f909100d66b2b3cda0b25e98c0d11bbc7366dae482b2
+# Rows are POST-equation-assembly: stacked fractions appear inline at
+# their drawn bar's position, super/subscripts as Unicode. The pinned
+# PDF is the byte-level source for re-deriving from zero.
+[p=16 x=62.3 Verdana-Bold [18]] 3 Physics content
+[p=16 x=98.0 Verdana [12]] 1 Forces and motion 11
+[p=16 x=98.0 Verdana [12]] 2 Electricity 14
+[p=16 x=98.0 Verdana [12]] 3 Waves 16
+[p=16 x=98.0 Verdana [12]] 4 Energy resources and energy transfers 19
+[p=16 x=98.0 Verdana [12]] 5 Solids, liquids and gases 21
+[p=16 x=98.0 Verdana [12]] 6 Magnetism and electromagnetism 23
+[p=16 x=98.0 Verdana [12]] 7 Radioactivity and particles 25
+[p=16 x=98.0 Verdana [12]] 8 Astrophysics 27
+[p=16 x=62.3 TrebuchetMS|Verdana [8, 10]] 10 Pearson Edexcel International GCSE in Physics
+[p=16 x=220.9 Verdana [8]] Specification – Issue 4 – September 2024 © Pearson Education Limited 2024
+[p=17 x=62.3 Verdana-Bold [16]] 1 Forces and motion
+[p=17 x=62.3 Verdana [10]] The following sub-topics are covered in this section.
+[p=17 x=62.3 Verdana [10]] (a) Units
+[p=17 x=62.3 Verdana [10]] (b) Movement and position
+[p=17 x=62.3 Verdana [10]] (c) Forces, movement, shape and momentum
+[p=17 x=62.3 Verdana-Bold [10]] (a) Units
+[p=17 x=62.3 Verdana-Bold [10]] Students should:
+[p=17 x=62.3 Verdana [10]] 1.1 use the following units: kilogram (kg), metre (m), metre/second (m/s),
+[p=17 x=98.0 Verdana [6, 10]] metre/second² (m/s²), newton (N), second (s) and newton/kilogram (N/kg)
+[p=17 x=62.3 Verdana-Bold [10]] 1.2P use the following units: newton metre (Nm), kilogram metre/second
+[p=17 x=98.0 Verdana-Bold [10]] (kg m/s)
+[p=17 x=62.3 Verdana-Bold [10]] (b) Movement and position
+[p=17 x=62.3 Verdana-Bold [10]] Students should:
+[p=17 x=62.3 Verdana [10]] 1.3 plot and explain distance−time graphs
+[p=17 x=62.3 Verdana [10]] 1.4 know and use the relationship between average speed, distance moved and time
+[p=17 x=98.0 Verdana [10]] taken:
+[p=17 x=99.6 (assembled-fraction)|SymbolMT|Verdana [10, 12]] average speed = (distance moved)/(time taken)
+[p=17 x=62.3 Verdana|Verdana-Italic [10]] 1.5 practical: investigate the motion of everyday objects such as toy cars or tennis balls
+[p=17 x=62.3 Verdana [10]] 1.6 know and use the relationship between acceleration, change in velocity and time
+[p=17 x=98.0 Verdana [10]] taken:
+[p=17 x=99.6 (assembled-fraction)|SymbolMT|Verdana [10, 12]] acceleration = (change in velocity)/(time taken)
+[p=17 x=99.9 (assembled-fraction)|SymbolMT|TimesNewRomanPS-ItalicMT [12]] a = (v − u)/t
+[p=17 x=62.3 Verdana [10]] 1.7 plot and explain velocity−time graphs
+[p=17 x=62.3 Verdana [10]] 1.8 determine acceleration from the gradient of a velocity−time graph
+[p=17 x=62.3 Verdana [10]] 1.9 determine the distance travelled from the area between a velocity−time graph and
+[p=17 x=98.0 Verdana [10]] the time axis
+[p=17 x=62.3 Verdana [10]] 1.10 use the relationship between final speed, initial speed, acceleration and distance
+[p=17 x=98.0 Verdana [10]] moved:
+[p=17 x=98.0 Verdana [6, 10]] (final speed)² = (initial speed)² + (2 × acceleration × distance moved)
+[p=17 x=98.0 TimesNewRomanPS-ItalicMT|TimesNewRomanPSMT|Verdana [8, 10, 12]] v² = u² + (2 × a × s)
+[p=17 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Physics 11
+[p=17 x=62.3 Verdana [8]] Specification – Issue 4 – September 2024 © Pearson Education Limited 2024
+[p=18 x=62.3 Verdana-Bold [10]] (c) Forces, movement, shape and momentum
+[p=18 x=62.3 Verdana-Bold [10]] Students should:
+[p=18 x=62.3 Verdana [10]] 1.11 describe the effects of forces between bodies such as changes in speed, shape or
+[p=18 x=98.0 Verdana [10]] direction
+[p=18 x=62.3 Verdana [10]] 1.12 identify different types of force such as gravitational or electrostatic
+[p=18 x=62.3 Verdana [10]] 1.13 understand how vector quantities differ from scalar quantities
+[p=18 x=62.3 Verdana [10]] 1.14 understand that force is a vector quantity
+[p=18 x=62.3 Verdana [10]] 1.15 calculate the resultant force of forces that act along a line
+[p=18 x=62.3 Verdana [10]] 1.16 know that friction is a force that opposes motion
+[p=18 x=62.3 Verdana [10]] 1.17 know and use the relationship between unbalanced force, mass and acceleration:
+[p=18 x=98.0 Verdana [10]] force = mass × acceleration
+[p=18 x=98.0 TimesNewRomanPS-ItalicMT|Verdana [10, 12]] F = m × a
+[p=18 x=62.3 Verdana [10]] 1.18 know and use the relationship between weight, mass and gravitational field strength:
+[p=18 x=98.0 Verdana [10]] weight = mass × gravitational field strength
+[p=18 x=98.0 TimesNewRomanPS-ItalicMT|Verdana [10, 12]] W = m × g
+[p=18 x=62.3 Verdana [10]] 1.19 know that the stopping distance of a vehicle is made up of the sum of the thinking
+[p=18 x=98.0 Verdana [10]] distance and the braking distance
+[p=18 x=62.3 Verdana [10]] 1.20 describe the factors affecting vehicle stopping distance, including speed, mass, road
+[p=18 x=98.0 Verdana [10]] condition and reaction time
+[p=18 x=62.3 Verdana [10]] 1.21 describe the forces acting on falling objects (and explain why falling objects reach a
+[p=18 x=98.0 Verdana [10]] terminal velocity)
+[p=18 x=62.3 Verdana|Verdana-Italic [10]] 1.22 practical: investigate how extension varies with applied force for helical springs, metal
+[p=18 x=98.0 Verdana-Italic [10]] wires and rubber bands
+[p=18 x=62.3 Verdana [10]] 1.23 know that the initial linear region of a force-extension graph is associated with
+[p=18 x=98.0 Verdana [10]] Hooke’s law
+[p=18 x=62.3 Verdana [10]] 1.24 describe elastic behaviour as the ability of a material to recover its original shape
+[p=18 x=98.0 Verdana [10]] after the forces causing deformation have been removed
+[p=18 x=62.3 Verdana-Bold [10]] 1.25P know and use the relationship between momentum, mass and velocity:
+[p=18 x=98.0 Verdana-Bold [10]] momentum = mass × velocity
+[p=18 x=98.0 TimesNewRomanPS-BoldItal|Verdana-Bold [10, 12]] p = m × v
+[p=18 x=62.3 Verdana-Bold [10]] 1.26P use the idea of momentum to explain safety features
+[p=18 x=62.3 Verdana-Bold [10]] 1.27P use the conservation of momentum to calculate the mass, velocity or
+[p=18 x=98.0 Verdana-Bold [10]] momentum of objects
+[p=18 x=62.3 Verdana-Bold [10]] 1.28P use the relationship between force, change in momentum and time taken:
+[p=18 x=99.7 (assembled-fraction)|Verdana [11, 13]] force = (change in momentum)/(time taken)
+[p=18 x=100.1 (assembled-fraction)|SymbolMT|TimesNewRomanPS-BoldItal [12]] F = (mv − mu)/t
+[p=18 x=62.3 TrebuchetMS|Verdana [8, 10]] 12 Pearson Edexcel International GCSE in Physics
+[p=18 x=220.9 Verdana [8]] Specification – Issue 4 – September 2024 © Pearson Education Limited 2024
+[p=19 x=62.3 Verdana-Bold [10]] Students should:
+[p=19 x=62.3 Verdana-Bold [10]] 1.29P demonstrate an understanding of Newton’s third law
+[p=19 x=62.3 Verdana-Bold [10]] 1.30P know and use the relationship between the moment of a force and its
+[p=19 x=98.0 Verdana-Bold [10]] perpendicular distance from the pivot:
+[p=19 x=98.0 Verdana-Bold [10]] moment = force × perpendicular distance from the pivot
+[p=19 x=62.3 Verdana-Bold [10]] 1.31P know that the weight of a body acts through its centre of gravity
+[p=19 x=62.3 Verdana-Bold [10]] 1.32P use the principle of moments for a simple system of parallel forces acting in
+[p=19 x=98.0 Verdana-Bold [10]] one plane
+[p=19 x=62.3 Verdana-Bold [10]] 1.33P understand how the upward forces on a light beam, supported at its ends,
+[p=19 x=98.0 Verdana-Bold [10]] vary with the position of a heavy object placed on the beam
+[p=19 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Physics 13
+[p=19 x=62.3 Verdana [8]] Specification – Issue 4 – September 2024 © Pearson Education Limited 2024
+[p=20 x=62.3 Verdana-Bold [16]] 2 Electricity
+[p=20 x=62.3 Verdana [10]] The following sub-topics are covered in this section.
+[p=20 x=62.3 Verdana [10]] (a) Units
+[p=20 x=62.3 Verdana [10]] (b) Mains electricity
+[p=20 x=62.3 Verdana [10]] (c) Energy and voltage in circuits
+[p=20 x=62.3 Verdana [10]] (d) Electric charge
+[p=20 x=62.3 Verdana-Bold [10]] (a) Units
+[p=20 x=62.3 Verdana-Bold [10]] Students should:
+[p=20 x=62.3 SymbolMT|Verdana [10]] 2.1 use the following units: ampere (A), coulomb (C), joule (J), ohm (Ω), second (s),
+[p=20 x=98.1 Verdana [10]] volt (V) and watt (W)
+[p=20 x=62.3 Verdana-Bold [10]] (b) Mains electricity
+[p=20 x=62.3 Verdana-Bold [10]] Students should:
+[p=20 x=62.3 Verdana [10]] 2.2 understand how the use of insulation, double insulation, earthing, fuses and circuit
+[p=20 x=98.0 Verdana [10]] breakers protects the device or user in a range of domestic appliances
+[p=20 x=62.3 Verdana [10]] 2.3 understand why a current in a resistor results in the electrical transfer of energy and
+[p=20 x=98.0 Verdana [10]] an increase in temperature, and how this can be used in a variety of domestic
+[p=20 x=98.0 Verdana [10]] contexts
+[p=20 x=62.3 Verdana [10]] 2.4 know and use the relationship between power, current and voltage:
+[p=20 x=98.0 Verdana [10]] power = current × voltage
+[p=20 x=98.0 TimesNewRomanPS-ItalicMT|Verdana [10, 12]] P = I × V
+[p=20 x=98.0 Verdana [10]] and apply the relationship to the selection of appropriate fuses
+[p=20 x=62.3 Verdana [10]] 2.5 use the relationship between energy transferred, current, voltage and time:
+[p=20 x=98.0 Verdana [10]] energy transferred = current × voltage × time
+[p=20 x=98.0 TimesNewRomanPS-ItalicMT|Verdana [10, 12]] E = I × V x t
+[p=20 x=62.3 Verdana [10]] 2.6 know the difference between mains electricity being alternating current (a.c.) and
+[p=20 x=98.0 Verdana [10]] direct current (d.c.) being supplied by a cell or battery
+[p=20 x=62.3 Verdana-Bold [10]] (c) Energy and voltage in circuits
+[p=20 x=62.3 Verdana-Bold [10]] Students should:
+[p=20 x=62.3 Verdana [10]] 2.7 explain why a series or parallel circuit is more appropriate for particular applications,
+[p=20 x=98.0 Verdana [10]] including domestic lighting
+[p=20 x=62.3 Verdana [10]] 2.8 understand how the current in a series circuit depends on the applied voltage and the
+[p=20 x=98.0 Verdana [10]] number and nature of other components
+[p=20 x=62.3 Verdana [10]] 2.9 describe how current varies with voltage in wires, resistors, metal filament lamps and
+[p=20 x=98.0 Verdana [10]] diodes, and how to investigate this experimentally
+[p=20 x=62.3 TrebuchetMS|Verdana [8, 10]] 14 Pearson Edexcel International GCSE in Physics
+[p=20 x=220.9 Verdana [8]] Specification – Issue 4 – September 2024 © Pearson Education Limited 2024
+[p=21 x=62.3 Verdana-Bold [10]] Students should:
+[p=21 x=62.3 Verdana [10]] 2.10 describe the qualitative effect of changing resistance on the current in a circuit
+[p=21 x=62.3 Verdana [10]] 2.11 describe the qualitative variation of resistance of light-dependent resistors (LDRs)
+[p=21 x=98.0 Verdana [10]] with illumination and thermistors with temperature
+[p=21 x=62.3 Verdana [10]] 2.12 know that lamps and LEDs can be used to indicate the presence of a current in a
+[p=21 x=98.0 Verdana [10]] circuit
+[p=21 x=62.3 Verdana [10]] 2.13 know and use the relationship between voltage, current and resistance:
+[p=21 x=98.0 Verdana [10]] voltage = current × resistance
+[p=21 x=98.0 TimesNewRomanPS-ItalicMT|Verdana [10, 12]] V = I × R
+[p=21 x=62.3 Verdana [10]] 2.14 know that current is the rate of flow of charge
+[p=21 x=62.3 Verdana [10]] 2.15 know and use the relationship between charge, current and time:
+[p=21 x=98.0 Verdana [10]] charge = current × time
+[p=21 x=98.0 TimesNewRomanPS-ItalicMT|Verdana [10, 12]] Q = I × t
+[p=21 x=62.3 Verdana [10]] 2.16 know that electric current in solid metallic conductors is a flow of negatively charged
+[p=21 x=98.0 Verdana [10]] electrons
+[p=21 x=62.3 Verdana [10]] 2.17 understand why current is conserved at a junction in a circuit
+[p=21 x=62.3 Verdana [10]] 2.18 know that the voltage across two components connected in parallel is the same
+[p=21 x=62.3 Verdana [10]] 2.19 calculate the currents, voltages and resistances of two resistive components
+[p=21 x=98.0 Verdana [10]] connected in a series circuit
+[p=21 x=62.3 Verdana [10]] 2.20 know that:
+[p=21 x=98.0 SymbolMT|Verdana [10]] • voltage is the energy transferred per unit charge passed
+[p=21 x=98.0 SymbolMT|Verdana [10]] • the volt is a joule per coulomb
+[p=21 x=62.3 Verdana [10]] 2.21 know and use the relationship between energy transferred, charge and voltage:
+[p=21 x=98.0 Verdana [10]] energy transferred = charge × voltage
+[p=21 x=98.0 TimesNewRomanPS-ItalicMT|Verdana [10, 12]] E = Q × V
+[p=21 x=62.3 Verdana-Bold [10]] (d) Electric charge
+[p=21 x=62.3 Verdana-Bold [10]] Students should:
+[p=21 x=62.3 Verdana-Bold [10]] 2.22P identify common materials that are electrical conductors or insulators,
+[p=21 x=98.0 Verdana-Bold [10]] including metals and plastics
+[p=21 x=62.3 Verdana-Bold|Verdana-BoldItalic [10]] 2.23P practical: investigate how insulating materials can be charged by friction
+[p=21 x=62.3 Verdana-Bold [10]] 2.24P explain how positive and negative electrostatic charges are produced on
+[p=21 x=98.0 Verdana-Bold [10]] materials by the loss and gain of electrons
+[p=21 x=62.3 Verdana-Bold [10]] 2.25P know that there are forces of attraction between unlike charges and forces
+[p=21 x=98.0 Verdana-Bold [10]] of repulsion between like charges
+[p=21 x=62.3 Verdana-Bold [10]] 2.26P explain electrostatic phenomena in terms of the movement of electrons
+[p=21 x=62.3 Verdana-Bold [10]] 2.27P explain the potential dangers of electrostatic charges, e.g. when fuelling
+[p=21 x=98.0 Verdana-Bold [10]] aircraft and tankers
+[p=21 x=62.3 Verdana-Bold [10]] 2.28P explain some uses of electrostatic charges, e.g. in photocopiers and inkjet
+[p=21 x=98.0 Verdana-Bold [10]] printers
+[p=21 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Physics 15
+[p=21 x=62.3 Verdana [8]] Specification – Issue 4 – September 2024 © Pearson Education Limited 2024
+[p=22 x=62.3 Verdana-Bold [16]] 3 Waves
+[p=22 x=62.3 Verdana [10]] The following sub-topics are covered in this section.
+[p=22 x=62.3 Verdana [10]] (a) Units
+[p=22 x=62.3 Verdana [10]] (b) Properties of waves
+[p=22 x=62.3 Verdana [10]] (c) The electromagnetic spectrum
+[p=22 x=62.3 Verdana [10]] (d) Light and sound
+[p=22 x=62.3 Verdana-Bold [10]] (a) Units
+[p=22 x=62.3 Verdana-Bold [10]] Students should:
+[p=22 x=62.3 Verdana [10]] 3.1 use the following units: degree (°), hertz (Hz), metre (m), metre/second (m/s) and
+[p=22 x=98.0 Verdana [10]] second (s)
+[p=22 x=62.3 Verdana-Bold [10]] (b) Properties of waves
+[p=22 x=62.3 Verdana-Bold [10]] Students should:
+[p=22 x=62.3 Verdana [10]] 3.2 explain the difference between longitudinal and transverse waves
+[p=22 x=62.3 Verdana [10]] 3.3 know the definitions of amplitude, wavefront, frequency, wavelength and period of a
+[p=22 x=98.0 Verdana [10]] wave
+[p=22 x=62.3 Verdana [10]] 3.4 know that waves transfer energy and information without transferring matter
+[p=22 x=62.3 Verdana [10]] 3.5 know and use the relationship between the speed, frequency and wavelength of a
+[p=22 x=98.0 Verdana [10]] wave:
+[p=22 x=98.0 Verdana [10]] wave speed = frequency × wavelength
+[p=22 x=98.0 TimesNewRomanPS-ItalicMT|TimesNewRomanPSMT|Verdana [10, 12]] v = f × λ
+[p=22 x=62.3 Verdana [10]] 3.6 use the relationship between frequency and time period:
+[p=22 x=99.8 (assembled-fraction)|Verdana [10, 12]] frequency = 1/(time period)
+[p=22 x=102.1 (assembled-fraction)|SymbolMT|TimesNewRomanPS-ItalicMT [12]] f = 1/T
+[p=22 x=62.3 Verdana [10]] 3.7 use the above relationships in different contexts, including sound waves and
+[p=22 x=98.0 Verdana [10]] electromagnetic waves
+[p=22 x=62.3 Verdana [10]] 3.8 explain why there is a change in the observed frequency and wavelength of a wave
+[p=22 x=98.0 Verdana [10]] when its source is moving relative to an observer and that this is known as the
+[p=22 x=98.0 Verdana [10]] Doppler effect
+[p=22 x=62.3 Verdana [10]] 3.9 explain that all waves can be reflected and refracted
+[p=22 x=62.3 TrebuchetMS|Verdana [8, 10]] 16 Pearson Edexcel International GCSE in Physics
+[p=22 x=220.9 Verdana [8]] Specification – Issue 4 – September 2024 © Pearson Education Limited 2024
+[p=23 x=62.3 Verdana-Bold [10]] (c) The electromagnetic spectrum
+[p=23 x=62.3 Verdana-Bold [10]] Students should:
+[p=23 x=62.3 Verdana [10]] 3.10 know that light is part of a continuous electromagnetic spectrum that includes radio,
+[p=23 x=98.0 Verdana [10]] microwave, infrared, visible, ultraviolet, x-ray and gamma ray radiations, and that all
+[p=23 x=98.0 Verdana [10]] these waves travel at the same speed in free space
+[p=23 x=62.3 Verdana [10]] 3.11 know the order of the electromagnetic spectrum in terms of decreasing wavelength
+[p=23 x=98.0 Verdana [10]] and increasing frequency, including the colours of the visible spectrum
+[p=23 x=62.3 Verdana [10]] 3.12 explain some of the uses of electromagnetic radiations, including:
+[p=23 x=98.0 SymbolMT|Verdana [10]] • radio waves: broadcasting and communications
+[p=23 x=98.0 SymbolMT|Verdana [10]] • microwaves: cooking and satellite transmissions
+[p=23 x=98.0 SymbolMT|Verdana [10]] • infrared: heaters and night vision equipment
+[p=23 x=98.0 SymbolMT|Verdana [10]] • visible light: optical fibres and photography
+[p=23 x=98.0 SymbolMT|Verdana [10]] • ultraviolet: fluorescent lamps
+[p=23 x=98.0 SymbolMT|Verdana [10]] • x-rays: observing the internal structure of objects and materials, including for
+[p=23 x=116.0 Verdana [10]] medical applications
+[p=23 x=98.0 SymbolMT|Verdana [10]] • gamma rays: sterilising food and medical equipment
+[p=23 x=62.3 Verdana [10]] 3.13 explain the detrimental effects of excessive exposure of the human body to
+[p=23 x=98.0 Verdana [10]] electromagnetic waves, including:
+[p=23 x=98.0 SymbolMT|Verdana [10]] • microwaves: internal heating of body tissue
+[p=23 x=98.0 SymbolMT|Verdana [10]] • infrared: skin burns
+[p=23 x=98.0 SymbolMT|Verdana [10]] • ultraviolet: damage to surface cells and blindness
+[p=23 x=98.0 SymbolMT|Verdana [10]] • gamma rays: cancer, mutation
+[p=23 x=98.0 Verdana [10]] and describe simple protective measures against  the risks
+[p=23 x=62.3 Verdana-Bold [10]] (d) Light and sound
+[p=23 x=62.3 Verdana-Bold [10]] Students should:
+[p=23 x=62.3 Verdana [10]] 3.14 know that light waves are transverse waves and that they can be reflected and
+[p=23 x=98.0 Verdana [10]] refracted
+[p=23 x=62.3 Verdana [10]] 3.15 use the law of reflection (the angle of incidence equals the angle of reflection)
+[p=23 x=62.3 Verdana [10]] 3.16 draw ray diagrams to illustrate reflection and refraction
+[p=23 x=62.3 Verdana|Verdana-Italic [10]] 3.17 practical: investigate the refraction of light, using rectangular blocks, semi-circular
+[p=23 x=98.0 Verdana-Italic [10]] blocks and triangular prisms
+[p=23 x=62.3 Verdana [10]] 3.18 know and use the relationship between refractive index, angle of incidence and angle
+[p=23 x=98.0 Verdana [10]] of refraction:
+[p=23 x=99.9 (assembled-fraction)|SymbolMT|TimesNewRomanPS-ItalicMT [12]] n = (sin i)/(sin r)
+[p=23 x=62.3 Verdana|Verdana-Italic [10]] 3.19 practical: investigate the refractive index of glass, using a glass block
+[p=23 x=62.3 Verdana [10]] 3.20 describe the role of total internal reflection in transmitting information along optical
+[p=23 x=98.0 Verdana [10]] fibres and in prisms
+[p=23 x=62.3 TimesNewRomanPS-ItalicMT|Verdana [10, 11]] 3.21 explain the meaning of critical angle c
+[p=23 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Physics 17
+[p=23 x=62.3 Verdana [8]] Specification – Issue 4 – September 2024 © Pearson Education Limited 2024
+[p=24 x=62.3 Verdana-Bold [10]] Students should:
+[p=24 x=62.3 Verdana [10]] 3.22 know and use the relationship between critical angle and refractive index:
+[p=24 x=99.6 (assembled-fraction)|SymbolMT|TimesNewRomanPS-ItalicMT|Verdana [10, 12]] sin c = 1/n
+[p=24 x=62.3 Verdana [10]] 3.23 know that sound waves are longitudinal waves that can be reflected and refracted
+[p=24 x=62.3 Verdana-Bold [10]] 3.24P know that the frequency range for human hearing is 20–20 000 Hz
+[p=24 x=62.3 Verdana-Bold|Verdana-BoldItalic [10]] 3.25P practical: investigate the speed of sound in air
+[p=24 x=62.3 Verdana-Bold [10]] 3.26P understand how an oscilloscope and microphone can be used to display a
+[p=24 x=98.0 Verdana-Bold [10]] sound wave
+[p=24 x=62.3 Verdana-Bold|Verdana-BoldItalic [10]] 3.27P practical: investigate the frequency of a sound wave using an oscilloscope
+[p=24 x=62.3 Verdana-Bold [10]] 3.28P understand how the pitch of a sound relates to the frequency of vibration of
+[p=24 x=98.0 Verdana-Bold [10]] the source
+[p=24 x=62.3 Verdana-Bold [10]] 3.29P understand how the loudness of a sound relates to the amplitude of vibration
+[p=24 x=98.0 Verdana-Bold [10]] of the source
+[p=24 x=62.3 TrebuchetMS|Verdana [8, 10]] 18 Pearson Edexcel International GCSE in Physics
+[p=24 x=220.9 Verdana [8]] Specification – Issue 4 – September 2024 © Pearson Education Limited 2024
+[p=25 x=62.3 Verdana-Bold [16]] 4 Energy resources and energy transfers
+[p=25 x=62.3 Verdana [10]] The following sub-topics are covered in this section.
+[p=25 x=62.3 Verdana [10]] (a) Units
+[p=25 x=62.3 Verdana [10]] (b) Energy transfers
+[p=25 x=62.3 Verdana [10]] (c) Work and power
+[p=25 x=62.3 Verdana [10]] (d) Energy resources and electricity generation
+[p=25 x=62.3 Verdana-Bold [10]] (a) Units
+[p=25 x=62.3 Verdana-Bold [10]] Students should:
+[p=25 x=62.3 Verdana [10]] 4.1 use the following units: kilogram (kg), joule (J), metre (m), metre/second (m/s),
+[p=25 x=98.0 Verdana [6, 10]] metre/second² (m/s²), newton (N), second (s) and watt (W)
+[p=25 x=62.3 Verdana-Bold [10]] (b) Energy transfers
+[p=25 x=62.3 Verdana-Bold [10]] Students should:
+[p=25 x=62.3 Verdana [10]] 4.2 describe energy transfers involving energy stores:
+[p=25 x=98.0 SymbolMT|Verdana [10]] • energy stores: chemical, kinetic, gravitational, elastic, thermal, magnetic,
+[p=25 x=116.0 Verdana [10]] electrostatic, nuclear
+[p=25 x=98.0 SymbolMT|Verdana [10]] • energy transfers: mechanically, electrically, by heating, by radiation
+[p=25 x=116.0 Verdana [10]] (light and sound)
+[p=25 x=62.3 Verdana [10]] 4.3 use the principle of conservation of energy
+[p=25 x=62.3 Verdana [10]] 4.4 know and use the relationship between efficiency, useful energy output and total
+[p=25 x=98.0 Verdana [10]] energy output:
+[p=25 x=99.6 (assembled-fraction)|Verdana [10, 12]] efficiency= (useful energy output)/(total energy output) ×100%
+[p=25 x=62.3 Verdana [10]] 4.5 describe a variety of everyday and scientific devices and situations, explaining the
+[p=25 x=98.0 Verdana [10]] transfer of the input energy in terms of the above relationship, including their
+[p=25 x=98.0 Verdana [10]] representation by Sankey diagrams
+[p=25 x=62.3 Verdana [10]] 4.6 describe how thermal energy transfer may take place by conduction, convection and
+[p=25 x=98.0 Verdana [10]] radiation
+[p=25 x=62.3 Verdana [10]] 4.7 explain the role of convection in everyday phenomena
+[p=25 x=62.3 Verdana [10]] 4.8 explain how emission and absorption of radiation are related to surface and
+[p=25 x=98.0 Verdana [10]] temperature
+[p=25 x=62.3 Verdana|Verdana-Italic [10]] 4.9 practical: investigate thermal energy transfer by conduction, convection and radiation
+[p=25 x=62.3 Verdana [10]] 4.10 explain ways of reducing unwanted energy transfer, such as insulation
+[p=25 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Physics 19
+[p=25 x=62.3 Verdana [8]] Specification – Issue 4 – September 2024 © Pearson Education Limited 2024
+[p=26 x=62.3 Verdana-Bold [10]] (c) Work and power
+[p=26 x=62.3 Verdana-Bold [10]] Students should:
+[p=26 x=62.3 Verdana [10]] 4.11 know and use the relationship between work done, force and distance moved in the
+[p=26 x=98.0 Verdana [10]] direction of the force:
+[p=26 x=98.0 Verdana [10]] work done = force × distance moved
+[p=26 x=98.0 TimesNewRomanPS-ItalicMT|Verdana [10, 12]] W = F × d
+[p=26 x=62.3 Verdana [10]] 4.12 know that work done is equal to energy transferred
+[p=26 x=62.3 Verdana [10]] 4.13 know and use the relationship between gravitational potential energy, mass,
+[p=26 x=98.0 Verdana [10]] gravitational field strength and height:
+[p=26 x=98.0 Verdana [10]] gravitational potential energy = mass × gravitational field strength × height
+[p=26 x=98.0 TimesNewRomanPS-ItalicMT|Verdana [10, 12]] GPE = m × g × h
+[p=26 x=62.3 Verdana [10]] 4.14 know and use the relationship:
+[p=26 x=98.0 (assembled-fraction)|Verdana [6, 10]] kinetic energy = ½ × mass × speed²
+[p=26 x=100.3 (assembled-fraction)|SymbolMT|TimesNewRomanPS-ItalicMT|TimesNewRomanPSMT [7, 12]] KE = ½ × m × v²
+[p=26 x=62.3 Verdana [10]] 4.15 understand how conservation of energy produces a link between gravitational
+[p=26 x=98.0 Verdana [10]] potential energy, kinetic energy and work
+[p=26 x=62.3 Verdana [10]] 4.16 describe power as the rate of transfer of energy or the rate of doing work
+[p=26 x=62.3 Verdana [10]] 4.17 use the relationship between power, work done (energy transferred) and time taken:
+[p=26 x=99.1 (assembled-fraction)|Verdana [10, 12]] power = (work done)/(time taken)
+[p=26 x=100.3 (assembled-fraction)|SymbolMT|TimesNewRomanPS-ItalicMT [12]] P = W/t
+[p=26 x=62.3 Verdana-Bold [10]] (d) Energy resources and electricity generation
+[p=26 x=62.3 Verdana-Bold [10]] Students should:
+[p=26 x=62.3 Verdana-Bold [10]] 4.18P describe the energy transfers involved in generating electricity using:
+[p=26 x=98.0 SymbolMT|Verdana-Bold [10]] • wind
+[p=26 x=98.0 SymbolMT|Verdana-Bold [10]] • water
+[p=26 x=98.0 SymbolMT|Verdana-Bold [10]] • geothermal resources
+[p=26 x=98.0 SymbolMT|Verdana-Bold [10]] • solar heating systems
+[p=26 x=98.0 SymbolMT|Verdana-Bold [10]] • solar cells
+[p=26 x=98.0 SymbolMT|Verdana-Bold [10]] • fossil fuels
+[p=26 x=98.0 SymbolMT|Verdana-Bold [10]] • nuclear power
+[p=26 x=62.3 Verdana-Bold [10]] 4.19P describe the advantages and disadvantages of methods of large-scale
+[p=26 x=98.0 Verdana-Bold [10]] electricity production from various renewable and non-renewable resources
+[p=26 x=62.3 TrebuchetMS|Verdana [8, 10]] 20 Pearson Edexcel International GCSE in Physics
+[p=26 x=220.9 Verdana [8]] Specification – Issue 4 – September 2024 © Pearson Education Limited 2024
+[p=27 x=62.3 Verdana-Bold [16]] 5 Solids, liquids and gases
+[p=27 x=62.3 Verdana [10]] The following sub-topics are covered in this section.
+[p=27 x=62.3 Verdana [10]] (a) Units
+[p=27 x=62.3 Verdana [10]] (b) Density and pressure
+[p=27 x=62.3 Verdana [10]] (c) Change of state
+[p=27 x=62.3 Verdana [10]] (d) Ideal gas molecules
+[p=27 x=62.3 Verdana-Bold [10]] (a) Units
+[p=27 x=62.3 Verdana-Bold [10]] Students should:
+[p=27 x=62.3 Verdana [10]] 5.1 use the following units: degree Celsius (°C), Kelvin (K), joule (J), kilogram (kg),
+[p=27 x=98.0 Verdana [6, 10]] kilogram/metre³ (kg/m³), metre (m), metre² (m²), metre³ (m³), metre/second (m/s),
+[p=27 x=98.0 Verdana [6, 10]] metre/second² (m/s²), newton (N) and pascal (Pa)
+[p=27 x=62.3 Verdana-Bold [10]] 5.2P use the following unit: joules/kilogram degree Celsius (J/kg °C)
+[p=27 x=62.3 Verdana-Bold [10]] (b) Density and pressure
+[p=27 x=62.3 Verdana-Bold [10]] Students should:
+[p=27 x=62.3 Verdana [10]] 5.3  know and use the relationship between density, mass and volume:
+[p=27 x=99.6 (assembled-fraction)|Verdana [10, 12]] density = mass/volume
+[p=27 x=100.3 (assembled-fraction)|SymbolMT [12]] ρ= m/V
+[p=27 x=62.3 Verdana|Verdana-Italic [10]] 5.4 practical: investigate density using direct measurements of mass and volume
+[p=27 x=62.3 TimesNewRomanPSMT|Verdana [10, 12]] 5.5 know and use the relationship between pressure, force and area:
+[p=27 x=99.1 (assembled-fraction)|Verdana [10, 12]] pressure = force/area
+[p=27 x=101.4 (assembled-fraction)|SymbolMT|TimesNewRomanPS-ItalicMT [12]] p = F/A
+[p=27 x=62.3 Verdana [10]] 5.6 understand how the pressure at a point in a gas or liquid at rest acts equally in all
+[p=27 x=98.0 Verdana [10]] directions
+[p=27 x=62.3 Verdana [10]] 5.7 know and use the relationship for pressure difference:
+[p=27 x=98.1 Verdana [10]] pressure difference = height × density × gravitational field strength
+[p=27 x=98.0 TimesNewRomanPS-ItalicMT|Verdana [10, 12]] p = h × ρ × g
+[p=27 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Physics 21
+[p=27 x=62.3 Verdana [8]] Specification – Issue 4 – September 2024 © Pearson Education Limited 2024
+[p=28 x=62.3 Verdana-Bold [10]] (c) Change of state
+[p=28 x=62.3 Verdana-Bold [10]] Students should:
+[p=28 x=62.3 Verdana-Bold [10]] 5.8P  explain why heating a system will change the energy stored within the
+[p=28 x=98.0 Verdana-Bold [10]] system and raise its temperature or produce changes of state
+[p=28 x=62.3 Verdana-Bold [10]] 5.9P describe the changes that occur when a solid melts to form a liquid, and
+[p=28 x=98.0 Verdana-Bold [10]] when a liquid evaporates or boils to form a gas
+[p=28 x=62.3 Verdana-Bold [10]] 5.10P describe the arrangement and motion of particles in solids, liquids and gases
+[p=28 x=62.3 Verdana-Bold|Verdana-BoldItalic [10]] 5.11P practical: obtain a temperature–time graph to show the constant
+[p=28 x=98.0 Verdana-BoldItalic [10]] temperature during a change of state
+[p=28 x=62.3 Verdana-Bold [10]] 5.12P know that specific heat capacity is the energy required to change the
+[p=28 x=98.0 Verdana-Bold [10]] temperature of an object by one degree Celsius per kilogram of mass
+[p=28 x=98.0 Verdana-Bold [10]] (J/kg °C)
+[p=28 x=62.3 Verdana-Bold [10]] 5.13P use the equation:
+[p=28 x=98.0 Verdana-Bold [10]] change in thermal energy = mass × specific heat capacity × change in
+[p=28 x=98.0 Verdana-Bold [10]] temperature
+[p=28 x=98.0 TimesNewRomanPS-BoldItal|TimesNewRomanPS-BoldMT|Verdana-Bold [10, 12]] ΔQ = m × c × ΔT
+[p=28 x=62.3 Verdana-Bold|Verdana-BoldItalic [10]] 5.14P practical: investigate the specific heat capacity of materials including water
+[p=28 x=98.0 Verdana-BoldItalic [10]] and some solids
+[p=28 x=62.3 Verdana-Bold [10]] (d) Ideal gas molecules
+[p=28 x=62.3 Verdana-Bold [10]] Students should:
+[p=28 x=62.3 Verdana [10]] 5.15 explain how molecules in a gas have random motion and that they exert a force, and
+[p=28 x=98.0 Verdana [10]] hence a pressure, on the walls of a container
+[p=28 x=62.3 SymbolMT|Verdana [10]] 5.16 understand why there is an absolute zero of temperature, which is –273 °C
+[p=28 x=62.3 Verdana [10]] 5.17 describe the Kelvin scale of temperature and be able to convert between the Kelvin
+[p=28 x=98.0 Verdana [10]] and Celsius scales
+[p=28 x=62.3 Verdana [10]] 5.18 understand why an increase in temperature results in an increase in the average
+[p=28 x=98.0 Verdana [10]] speed of gas molecules
+[p=28 x=62.3 Verdana [10]] 5.19 know that the Kelvin temperature of a gas is proportional to the average kinetic
+[p=28 x=98.0 Verdana [10]] energy of its molecules
+[p=28 x=62.3 Verdana [10]] 5.20 explain, for a fixed amount of gas, the qualitative relationship between:
+[p=28 x=98.0 SymbolMT|Verdana [10]] • pressure and volume at constant temperature
+[p=28 x=98.0 SymbolMT|Verdana [10]] • pressure and Kelvin temperature at constant volume
+[p=28 x=62.3 Verdana [10]] 5.21 use the relationship between the pressure and Kelvin temperature of a fixed mass of
+[p=28 x=98.0 Verdana [10]] gas at constant volume:
+[p=28 x=100.1 (assembled-fraction)|SymbolMT [12]] p₁/T₁ = p₂/T₂
+[p=28 x=62.3 Verdana [10]] 5.22 use the relationship between the pressure and volume of a fixed mass of gas at
+[p=28 x=98.0 Verdana [10]] constant temperature:
+[p=28 x=101.4 SymbolMT|TimesNewRomanPS-ItalicMT|TimesNewRomanPSMT [7, 12]] p₁V₁ = p₂V₂
+[p=28 x=62.3 TrebuchetMS|Verdana [8, 10]] 22 Pearson Edexcel International GCSE in Physics
+[p=28 x=220.9 Verdana [8]] Specification – Issue 4 – September 2024 © Pearson Education Limited 2024
+[p=29 x=62.3 Verdana-Bold [16]] 6 Magnetism and electromagnetism
+[p=29 x=62.3 Verdana [10]] The following sub-topics are covered in this section.
+[p=29 x=62.3 Verdana [10]] (a) Units
+[p=29 x=62.3 Verdana [10]] (b) Magnetism
+[p=29 x=62.3 Verdana [10]] (c) Electromagnetism
+[p=29 x=62.3 Verdana [10]] (d) Electromagnetic induction
+[p=29 x=62.3 Verdana-Bold [10]] (a) Units
+[p=29 x=62.3 Verdana-Bold [10]] Students should:
+[p=29 x=62.3 Verdana [10]] 6.1 use the following units: ampere (A), volt (V) and watt (W)
+[p=29 x=62.3 Verdana-Bold [10]] (b) Magnetism
+[p=29 x=62.3 Verdana-Bold [10]] Students should:
+[p=29 x=62.3 Verdana [10]] 6.2 know that magnets repel and attract other magnets and attract magnetic  substances
+[p=29 x=62.3 Verdana [10]] 6.3 describe the properties of magnetically hard and soft materials
+[p=29 x=62.3 Verdana [10]] 6.4 understand the term 'magnetic field line'
+[p=29 x=62.3 Verdana [10]] 6.5 know that magnetism is induced in some materials when they are placed in a
+[p=29 x=98.0 Verdana [10]] magnetic field
+[p=29 x=62.3 Verdana|Verdana-Italic [10]] 6.6 practical: investigate the magnetic field pattern for a permanent bar magnet and
+[p=29 x=98.0 Verdana-Italic [10]] between two bar magnets
+[p=29 x=62.3 Verdana [10]] 6.7 describe how to use two permanent magnets to produce a uniform magnetic field
+[p=29 x=98.0 Verdana [10]] pattern
+[p=29 x=62.3 Verdana-Bold [10]] (c) Electromagnetism
+[p=29 x=62.3 Verdana-Bold [10]] Students should:
+[p=29 x=62.3 Verdana [10]] 6.8 know that an electric current in a conductor produces a magnetic field around it
+[p=29 x=62.3 Verdana-Bold [10]] 6.9P describe the construction of electromagnets
+[p=29 x=62.3 Verdana-Bold [10]] 6.10P draw magnetic field patterns for a straight wire, a flat circular coil and a
+[p=29 x=98.0 Verdana-Bold [10]] solenoid when each is carrying a current
+[p=29 x=62.3 Verdana-Bold [10]] 6.11P know that there is a force on a charged particle when it moves in a magnetic
+[p=29 x=98.0 Verdana-Bold [10]] field as long as its motion is not parallel to the field
+[p=29 x=62.3 Verdana [10]] 6.12 understand why a force is exerted on a current-carrying wire in a magnetic field and
+[p=29 x=98.0 Verdana [10]] how this effect is applied in simple d.c. electric motors and loudspeakers
+[p=29 x=62.3 Verdana [10]] 6.13 use the left-hand rule to predict the direction of the resulting force when a wire
+[p=29 x=98.0 Verdana [10]] carries a current perpendicular to a magnetic field
+[p=29 x=62.3 Verdana [10]] 6.14 describe how the force on a current-carrying conductor in a magnetic field changes
+[p=29 x=98.0 Verdana [10]] with the magnitude and direction of the field and current
+[p=29 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Physics 23
+[p=29 x=62.3 Verdana [8]] Specification – Issue 4 – September 2024 © Pearson Education Limited 2024
+[p=30 x=62.3 Verdana-Bold [10]] (d) Electromagnetic induction
+[p=30 x=62.3 Verdana-Bold [10]] Students should:
+[p=30 x=62.3 Verdana [10]] 6.15 know that a voltage is induced in a conductor or a coil when it moves through a
+[p=30 x=98.0 Verdana [10]] magnetic field or when a magnetic field changes through it and describe the factors
+[p=30 x=98.0 Verdana [10]] that affect the size of the induced voltage
+[p=30 x=62.3 Verdana [10]] 6.16 describe the generation of electricity by the rotation of a magnet within a coil of wire
+[p=30 x=98.0 Verdana [10]] and of a coil of wire within a magnetic field, and describe the factors that affect the
+[p=30 x=98.0 Verdana [10]] size of the induced voltage
+[p=30 x=62.3 Verdana-Bold [10]] 6.17P describe the structure of a transformer and understand that a transformer
+[p=30 x=98.0 Verdana-Bold [10]] changes the size of an alternating voltage by having different numbers of
+[p=30 x=98.0 Verdana-Bold [10]] turns on the input and output sides
+[p=30 x=62.3 Verdana-Bold [10]] 6.18P explain the use of step-up and step-down transformers in the large-scale
+[p=30 x=98.0 Verdana-Bold [10]] generation and transmission of electrical energy
+[p=30 x=62.3 Verdana-Bold [10]] 6.19P know and use the relationship between input (primary) and output
+[p=30 x=98.0 Verdana-Bold [10]] (secondary) voltages and the turns ratio for a transformer:
+[p=30 x=100.1 (assembled-fraction)|Verdana [12]] (input (primary) voltage)/(output (secondary) voltage) = (primary turns)/(secondary turns)
+[p=30 x=62.3 Verdana-Bold [10]] 6.20P know and use the relationship:
+[p=30 x=98.0 Verdana-Bold [10]] input power = output power
+[p=30 x=98.6 SymbolMT|TimesNewRomanPS-BoldItal [7, 12]] Vₚ Iₚ = Vₛ Iₛ
+[p=30 x=98.0 Verdana-Bold [10]] for 100% efficiency
+[p=30 x=62.3 TrebuchetMS|Verdana [8, 10]] 24 Pearson Edexcel International GCSE in Physics
+[p=30 x=220.9 Verdana [8]] Specification – Issue 4 – September 2024 © Pearson Education Limited 2024
+[p=31 x=62.3 Verdana-Bold [16]] 7 Radioactivity and particles
+[p=31 x=62.3 Verdana [10]] The following sub-topics are covered in this section.
+[p=31 x=62.3 Verdana [10]] (a) Units
+[p=31 x=62.3 Verdana [10]] (b) Radioactivity
+[p=31 x=62.3 Verdana [10]] (c) Fission and fusion
+[p=31 x=62.3 Verdana-Bold [10]] (a) Units
+[p=31 x=62.3 Verdana-Bold [10]] Students should:
+[p=31 x=62.3 Verdana [10]] 7.1 use the following units: becquerel (Bq), centimetre (cm), hour (h), minute (min) and
+[p=31 x=98.0 Verdana [10]] second (s)
+[p=31 x=62.3 Verdana-Bold [10]] (b) Radioactivity
+[p=31 x=62.3 Verdana-Bold [10]] Students should:
+[p=31 x=62.3 Verdana [10]] 7.2 describe the structure of an atom in terms of protons, neutrons and electrons and use
+[p=31 x=98.0 TimesNewRomanPSMT|Verdana [8, 10, 13]] symbols such as ¹⁴₆C to describe particular nuclei
+[p=31 x=62.3 Verdana [10]] 7.3 know the terms atomic (proton) number, mass (nucleon) number and isotope
+[p=31 x=62.3 TimesNewRomanPSMT|Verdana [7, 10, 11]] 7.4 know that alpha (α) particles, beta (β⁻) particles, and gamma (γ) rays are ionising
+[p=31 x=98.0 Verdana [10]] radiations emitted from unstable nuclei in a random process
+[p=31 x=62.3 TimesNewRomanPSMT|Verdana [7, 10, 11]] 7.5 describe the nature of alpha (α) particles, beta (β⁻) particles and gamma (γ) rays, and
+[p=31 x=98.0 Verdana [10]] recall that they may be distinguished in terms of penetrating power and ability to
+[p=31 x=98.1 Verdana [10]] ionise
+[p=31 x=62.3 Verdana|Verdana-Italic [10]] 7.6 practical: investigate the penetration powers of different types of radiation using
+[p=31 x=98.0 Verdana-Italic [10]] either radioactive sources or simulations
+[p=31 x=62.3 Verdana [10]] 7.7 describe the effects on the atomic and mass numbers of a nucleus of the emission of
+[p=31 x=98.0 Verdana [10]] each of the four main types of radiation (alpha, beta, gamma and neutron radiation)
+[p=31 x=62.3 Verdana [10]] 7.8 understand how to balance nuclear equations in terms of mass and charge
+[p=31 x=62.3 Verdana [10]] 7.9 know that photographic film or a Geiger−Müller detector can detect ionising
+[p=31 x=98.0 Verdana [10]] radiations
+[p=31 x=62.3 Verdana [10]] 7.10 explain the sources of background (ionising) radiation from Earth and space
+[p=31 x=62.3 Verdana [10]] 7.11 know that the activity of a radioactive source decreases over a  period of time and is
+[p=31 x=98.0 Verdana [10]] measured in becquerels
+[p=31 x=62.3 Verdana [10]] 7.12 know the definition of the term 'half-life' and understand that it is different for
+[p=31 x=98.0 Verdana [10]] different radioactive isotopes
+[p=31 x=62.3 Verdana [10]] 7.13 use the concept of the half-life to carry out simple calculations on activity, including
+[p=31 x=98.0 Verdana [10]] graphical methods
+[p=31 x=62.3 Verdana [10]] 7.14 describe uses of radioactivity in industry and medicine
+[p=31 x=62.3 Verdana [10]] 7.15 describe the difference between contamination and irradiation
+[p=31 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Physics 25
+[p=31 x=62.3 Verdana [8]] Specification – Issue 4 – September 2024 © Pearson Education Limited 2024
+[p=32 x=62.3 Verdana-Bold [10]] Students should:
+[p=32 x=62.3 Verdana [10]] 7.16 describe the dangers of ionising radiations, including:
+[p=32 x=98.0 SymbolMT|Verdana [10]] • that radiation can cause mutations in living organisms
+[p=32 x=98.0 SymbolMT|Verdana [10]] • that radiation can damage cells and tissue
+[p=32 x=98.0 SymbolMT|Verdana [10]] • the problems arising from the disposal of radioactive waste and how the
+[p=32 x=116.0 Verdana [10]] associated risks can be reduced
+[p=32 x=62.3 Verdana-Bold [10]] (c) Fission and fusion
+[p=32 x=62.3 Verdana-Bold [10]] Students should:
+[p=32 x=62.3 Verdana [10]] 7.17 know that nuclear reactions, including fission, fusion and radioactive decay, can be a
+[p=32 x=98.0 Verdana [10]] source of energy
+[p=32 x=62.3 Verdana [10]] 7.18 understand how a nucleus of U-235 can be split (the process of fission) by collision
+[p=32 x=98.0 Verdana [10]] with a neutron and that this process releases energy as kinetic energy of the fission
+[p=32 x=98.0 Verdana [10]] products
+[p=32 x=62.3 Verdana [10]] 7.19 know that the fission of U-235 produces two radioactive daughter nuclei and a small
+[p=32 x=98.0 Verdana [10]] number of neutrons
+[p=32 x=62.3 Verdana [10]] 7.20 describe how a chain reaction can be set up if the neutrons produced by one fission
+[p=32 x=98.0 Verdana [10]] strike other U-235 nuclei
+[p=32 x=62.3 Verdana [10]] 7.21 describe the role played by the control rods and moderator in the fission process
+[p=32 x=62.3 Verdana [10]] 7.22 understand the role of shielding around a nuclear reactor
+[p=32 x=62.3 Verdana [10]] 7.23 explain the difference between nuclear fusion and nuclear fission
+[p=32 x=62.3 Verdana [10]] 7.24 describe nuclear fusion as the creation of larger nuclei resulting in a loss of mass from
+[p=32 x=98.0 Verdana [10]] smaller nuclei, accompanied by a release of energy
+[p=32 x=62.3 Verdana [10]] 7.25 know that fusion is the energy source for stars
+[p=32 x=62.3 Verdana [10]] 7.26 explain why nuclear fusion does not happen at low temperatures and pressures, due
+[p=32 x=98.0 Verdana [10]] to electrostatic repulsion of protons
+[p=32 x=62.3 TrebuchetMS|Verdana [8, 10]] 26 Pearson Edexcel International GCSE in Physics
+[p=32 x=220.9 Verdana [8]] Specification – Issue 4 – September 2024 © Pearson Education Limited 2024
+[p=33 x=62.3 Verdana-Bold [16]] 8 Astrophysics
+[p=33 x=62.3 Verdana [10]] The following sub-topics are covered in this section.
+[p=33 x=62.3 Verdana [10]] (a) Units
+[p=33 x=62.3 Verdana [10]] (b) Motion in the universe
+[p=33 x=62.3 Verdana [10]] (c) Stellar evolution
+[p=33 x=62.4 Verdana [10]] (d) Cosmology
+[p=33 x=62.4 Verdana-Bold [10]] (a) Units
+[p=33 x=62.3 Verdana-Bold [10]] Students should:
+[p=33 x=62.3 Verdana [10]] 8.1 use the following units: kilogram (kg), metre (m), metre/second (m/s),
+[p=33 x=98.0 Verdana [6, 10]] metre/second² (m/s²), newton (N), second (s), newton/kilogram (N/kg)
+[p=33 x=62.3 Verdana-Bold [10]] (b) Motion in the universe
+[p=33 x=62.3 Verdana-Bold [10]] Students should:
+[p=33 x=62.3 Verdana [10]] 8.2 know that:
+[p=33 x=98.0 SymbolMT|Verdana [10]] • the universe is a large collection of billions of galaxies
+[p=33 x=98.0 SymbolMT|Verdana [10]] • a galaxy is a large collection of billions of stars
+[p=33 x=98.0 SymbolMT|Verdana [10]] • our solar system is in the Milky Way galaxy
+[p=33 x=62.3 TimesNewRomanPS-ItalicMT|Verdana [10, 12]] 8.3 understand why gravitational field strength, g, varies and know that it is different on
+[p=33 x=98.0 Verdana [10]] other planets and the Moon from that on the Earth
+[p=33 x=62.3 Verdana [10]] 8.4 explain that gravitational force:
+[p=33 x=98.0 SymbolMT|Verdana [10]] • causes moons to orbit planets
+[p=33 x=98.0 SymbolMT|Verdana [10]] • causes the planets to orbit the Sun
+[p=33 x=98.0 SymbolMT|Verdana [10]] • causes artificial satellites to orbit the Earth
+[p=33 x=98.0 SymbolMT|Verdana [10]] • causes comets to orbit the Sun
+[p=33 x=62.3 Verdana [10]] 8.5 describe the differences in the orbits of comets, moons and planets
+[p=33 x=62.3 Verdana [10]] 8.6 use the relationship between orbital speed, orbital radius and time period:
+[p=33 x=99.8 (assembled-fraction)|TimesNewRomanPSMT [10, 12]] orbital speed = (2 × π × orbital radius)/(time period)
+[p=33 x=99.7 (assembled-fraction)|SymbolMT|TimesNewRomanPS-ItalicMT [12]] v = (2 × π × r)/T
+[p=33 x=62.3 TrebuchetMS|Verdana [8, 10]] Pearson Edexcel International GCSE in Physics 27
+[p=33 x=62.3 Verdana [8]] Specification – Issue 4 – September 2024 © Pearson Education Limited 2024
+[p=34 x=62.3 Verdana-Bold [10]] (c) Stellar evolution
+[p=34 x=62.3 Verdana-Bold [10]] Students should:
+[p=34 x=62.3 Verdana [10]] 8.7 understand how stars can be classified according to their colour
+[p=34 x=62.3 Verdana [10]] 8.8 know that a star’s colour is related to its surface temperature
+[p=34 x=62.3 Verdana [10]] 8.9 describe the evolution of stars of similar mass to the Sun through the following
+[p=34 x=98.0 Verdana [10]] stages:
+[p=34 x=98.0 SymbolMT|Verdana [10]] • nebula
+[p=34 x=98.0 SymbolMT|Verdana [10]] • star (main sequence)
+[p=34 x=98.0 SymbolMT|Verdana [10]] • red giant
+[p=34 x=98.0 SymbolMT|Verdana [10]] • white dwarf
+[p=34 x=62.3 Verdana [10]] 8.10 describe the evolution of stars with a mass larger than the Sun
+[p=34 x=62.3 Verdana-Bold [10]] 8.11P understand how the brightness of a star at a standard distance can be
+[p=34 x=98.0 Verdana-Bold [10]] represented using absolute magnitude
+[p=34 x=62.3 Verdana-Bold [10]] 8.12P draw the main components of the Hertzsprung–Russell diagram
+[p=34 x=98.1 Verdana-Bold [10]] (HR diagram)
+[p=34 x=62.3 Verdana-Bold [10]] (d) Cosmology
+[p=34 x=62.3 Verdana-Bold [10]] Students should:
+[p=34 x=62.3 Verdana-Bold [10]] 8.13P describe the past evolution of the universe and the main arguments in favour
+[p=34 x=98.0 Verdana-Bold [10]] of the Big Bang theory
+[p=34 x=62.3 Verdana-Bold [10]] 8.14P describe evidence that supports the Big Bang theory
+[p=34 x=98.0 Verdana-Bold [10]] (red-shift and cosmic microwave background - CMB - radiation)
+[p=34 x=62.3 Verdana-Bold [10]] 8.15P describe that if a wave source is moving relative to an observer, there will be
+[p=34 x=98.0 Verdana-Bold [10]] a change in the observed frequency and wavelength
+[p=34 x=62.3 Verdana-Bold [10]] 8.16P use the equation relating to change in wavelength, reference wavelength,
+[p=34 x=98.0 Verdana-Bold [10]] velocity of a galaxy and the speed of light:
+[p=34 x=100.1 (assembled-fraction)|SymbolMT [12]] (change in wavelength)/(reference wavelength) = (velocity of a galaxy)/(speed of light)
+[p=34 x=100.1 (assembled-fraction)|SymbolMT [12]] (λ − λ₀)/λ₀ = Δλ/λ₀ = v/c
+[p=34 x=62.3 Verdana-Bold [10]] 8.17P describe the red-shift in light received from galaxies at different distances
+[p=34 x=98.0 Verdana-Bold [10]] away from the Earth
+[p=34 x=62.3 Verdana-Bold [10]] 8.18P explain why the red-shift of galaxies provides evidence for the expansion of
+[p=34 x=98.0 Verdana-Bold [10]] the universe
+[p=34 x=62.3 TrebuchetMS|Verdana [8, 10]] 28 Pearson Edexcel International GCSE in Physics
+[p=34 x=220.9 Verdana [8]] Specification – Issue 4 – September 2024 © Pearson Education Limited 2024
