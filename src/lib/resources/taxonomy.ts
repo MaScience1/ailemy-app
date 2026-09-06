@@ -110,14 +110,29 @@ export async function loadCourseResources(
     questionsCountable: false as const,
   };
 
-  const [units, topics, lessons, papers, specPoints, lessonSpec] = await Promise.all([
+  const [units, topics, lessons, papers] = await Promise.all([
     db.from("units").select("id, code, name, status, sort_order").eq("course_id", course.id).order("sort_order"),
     db.from("topics").select("id, code, name, status, unit_id, sort_order").eq("course_id", course.id).order("sort_order"),
     db.from("lessons").select("id, unit_id, status").eq("course_id", course.id).neq("status", "archived"),
     db.from("past_papers").select("id").eq("course_id", course.id),
-    db.from("spec_points").select("id, topic_id"),
-    db.from("lesson_spec_points").select("lesson_id, spec_point_id"),
   ]);
+
+  // ⚠ SPEC POINTS AND LINKS ARE SCOPED TO THIS COURSE'S TOPICS, sequentially,
+  // exactly as specification/queries.ts does — each read is filtered by the
+  // previous read's ids. These two started life as unfiltered whole-table
+  // reads, which was correct at one course but walks into PostgREST's
+  // default 1000-row cap as courses accumulate (516 spec points across three
+  // courses after 4BI1); past the cap the reads silently truncate and every
+  // count on this page goes quietly wrong. Scoped, a course can never fetch
+  // more than its own specification.
+  const courseTopicIds = (topics.data ?? []).map((t) => t.id as string);
+  const specPoints = courseTopicIds.length
+    ? await db.from("spec_points").select("id, topic_id").in("topic_id", courseTopicIds)
+    : { data: [], error: null };
+  const specPointIds = (specPoints.data ?? []).map((s) => s.id as string);
+  const lessonSpec = specPointIds.length
+    ? await db.from("lesson_spec_points").select("lesson_id, spec_point_id").in("spec_point_id", specPointIds)
+    : { data: [], error: null };
 
   // ⚠ A FAILED READ IS REPORTED, NEVER RENDERED AS ZERO. See the header: the
   // one bug this module exists to not repeat.
@@ -198,7 +213,8 @@ export async function loadCourseResources(
       lessons: lessonRows.length,
       liveLessons: lessonRows.filter((l) => l.status === "live").length,
       pastPapers: (papers.data ?? []).length,
-      specPoints: specRows.filter((s) => topicNodes.some((t) => t.id === s.topic_id)).length,
+      // specRows is already scoped to exactly this course's topics above.
+      specPoints: specRows.length,
     },
     error: null,
   };
