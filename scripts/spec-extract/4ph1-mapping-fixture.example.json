@@ -1,0 +1,9 @@
+{
+  "_comment": "TEMPLATE ONLY — not a real mapping. Copy, fill from the actual paper + mark scheme, then run scripts/spec-extract/validate-4ph1-mapping.ts against it. Academic choices are human; the validator only refuses mechanical impossibilities (unknown code, duplicate pair, P-suffix code on a Paper 1 component). Applying mappings to production is a later, owner-gated Question Bank phase.",
+  "course": "edexcel-igcse-physics",
+  "paper": { "code": "4PH1", "component": "1P", "session": "0619" },
+  "mappings": [
+    { "questionNumber": "1(a)", "specCodes": ["1.1"], "note": "units of the motion quantities" },
+    { "questionNumber": "1(b)", "specCodes": ["1.4", "1.3"], "note": "average speed calculation read off a distance-time graph" }
+  ]
+}
