@@ -14,10 +14,18 @@
 --   / 0 draft / 0 unverified / 42 B-suffix, the 4CH1 28/182/52 and IAL
 --   157/157/1 unchanged-guards, and the 340 non-Biology total were all
 --   asserted true at commit time, and only status + verified_at moved on
---   exactly 176 rows (ROW_COUNT-checked). The independent read-only
---   post-apply SQL (docs/igcse-biology-mastery-readiness.md §1c) and the
---   scripts/db-checks/igcse-4bi1-spec-verify.ts --verified gate remain for
---   the owner to run from an env-bearing checkout as the external record.
+--   exactly 176 rows (ROW_COUNT-checked).
+--
+--   VERIFIED 2026-09-06, read-only, by the owner's independent post-apply
+--   production check, which returned exactly:
+--     · Biology: 22 topics · 176 points · 42 B-suffix ·
+--       176 live + verified_at set · 0 draft · 0 verified_at NULL
+--     · IGCSE Chemistry unchanged: 182 live+verified
+--     · IAL AS Chemistry unchanged: 157 live+verified + 1 archived
+--     · zero Biology lesson mappings, zero Biology question mappings.
+--   With this, the full 004/005 → 006/007 → 008/009 lifecycle convention is
+--   complete for 4BI1: every one of the 176 points is live and carries a
+--   verified_at earned against the official Issue 3 document.
 --
 -- WHAT THIS PASS DOES — and the WHOLE of what it does:
 --   status 'draft' -> 'live' and verified_at set, on EXACTLY the 176

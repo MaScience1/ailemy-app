@@ -577,8 +577,10 @@ console.log("§7 the 009 lifecycle pass touches lifecycle and NOTHING else");
     v.indexOf("BEGIN;") < v.indexOf("DO $$") &&
     v.indexOf("COMMIT;") > v.indexOf("END $$;") &&
     v.trimEnd().endsWith("If this line is missing, the paste was truncated."));
-  t("the header records the 2026-09-06 owner apply (009 is hand-written; this test is the anti-revert guard)",
-    v.includes("APPLIED 2026-09-06") && !v.includes("NOT YET APPLIED"));
+  t("the header records the 2026-09-06 owner apply AND the owner's post-apply verification (anti-revert guard; 009 is hand-written)",
+    v.includes("APPLIED 2026-09-06") && !v.includes("NOT YET APPLIED") &&
+    v.includes("VERIFIED 2026-09-06") &&
+    v.includes("176 live + verified_at set · 0 draft · 0 verified_at NULL"));
   t("009's counts equal the extraction's: points, B-suffix, and the chem guard equals ITS extraction",
     v.includes("expected 176") && json.meta.counts.points === 176 &&
     v.includes("expected 42") && json.meta.counts.bOnly === 42 &&
