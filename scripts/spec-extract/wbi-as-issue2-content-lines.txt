@@ -1,0 +1,466 @@
+# Pearson Edexcel International Advanced Level Biology (XBI11/YBI11) — Issue 2
+# AS content pages 20-33 (Unit 1 opener .. page before Unit 4 opener),
+# extracted international-a-level-biology-spec.pdf
+# pdf sha256 9197bf761e06353b492fa04ee3ac4352a02e7e5baf56f277782f4ca0f53d2703
+# Rows are POST-fraction-assembly: the two stacked formulae (4.17, 4.18)
+# appear inline at their drawn bar's position. The pinned PDF is the
+# byte-level source for re-deriving from zero.
+[p=20 x=62.4 Verdana-Bold [16]] Unit 1: Molecules, Diet, Transport and Health
+[p=20 x=62.4 Verdana-Bold [14]] IAS compulsory unit
+[p=20 x=62.4 Verdana-Bold [14]] Externally assessed
+[p=20 x=62.4 Verdana-Bold [14]] Unit description
+[p=20 x=62.4 Verdana|Verdana-Bold [10]] Introduction This unit includes a consideration of molecules that are important
+[p=20 x=199.2 Verdana [10]] in biology – including water, carbohydrates, lipids, proteins and
+[p=20 x=199.2 Verdana [10]] nucleic acids, providing a basis for many areas of biology. This
+[p=20 x=199.2 Verdana [10]] leads to the relevance of diet to health and the cardiovascular
+[p=20 x=199.2 Verdana [10]] system in particular. The unit includes cell membrane transport
+[p=20 x=199.2 Verdana [10]] processes, such as diffusion and active transport, proteins,
+[p=20 x=199.2 Verdana [10]] enzymes and protein synthesis. This unit also includes an
+[p=20 x=199.2 Verdana [10]] understanding of the genetic code and how mutations can result in
+[p=20 x=199.2 Verdana [10]] disorders. Students will also consider techniques for genetic
+[p=20 x=199.2 Verdana [10]] screening and the associated ethical and social issues.
+[p=20 x=62.4 Verdana|Verdana-Bold [10]] Practical skills In order to develop their practical skills, students should be
+[p=20 x=199.2 Verdana [10]] encouraged to carry out a range of core practical experiments
+[p=20 x=199.2 Verdana [10]] related to this topic. There are also opportunities to carry out
+[p=20 x=199.2 Verdana [10]] additional practical work, such as investigating the structure of a
+[p=20 x=199.2 Verdana [10]] mammalian heart.
+[p=20 x=62.4 Verdana|Verdana-Bold [10]] Mathematical skills There are opportunities for the development of mathematical skills
+[p=20 x=199.2 Verdana [10]] in this unit, including tabulation and graphical treatment of data,
+[p=20 x=199.2 Verdana [10]] concentrations and using appropriate units for physical quantities,
+[p=20 x=199.2 Verdana [10]] calculation of percentage changes, and finding the initial rate of
+[p=20 x=199.2 Verdana|Verdana-Italic [10]] enzyme-catalysed reactions. (Please see Appendix 6:
+[p=20 x=199.2 Verdana|Verdana-Italic [10]] Mathematical skills and exemplifications for further information.)
+[p=20 x=62.4 Verdana-Bold [14]] Assessment information
+[p=20 x=199.2 SymbolMT|Verdana [10]] • First assessment: January 2019.
+[p=20 x=199.2 SymbolMT|Verdana [10]] • The assessment is 1 hour and 30 minutes.
+[p=20 x=199.2 SymbolMT|Verdana [10]] • The assessment is out of 80 marks.
+[p=20 x=199.2 SymbolMT|Verdana [10]] • Candidates must answer all questions.
+[p=20 x=199.2 SymbolMT|Verdana [10]] • The paper may include multiple-choice, short-open, open-
+[p=20 x=213.4 Verdana [10]] response, calculations and extended-writing questions.
+[p=20 x=199.2 SymbolMT|Verdana [10]] • The paper will include a minimum of 8 marks that target
+[p=20 x=213.4 Verdana [10]] mathematics at Level 2 or above.
+[p=20 x=199.2 SymbolMT|Verdana [10]] • Calculators may be used in the examination. Please see
+[p=20 x=213.4 Verdana|Verdana-Italic [10]] Appendix 8: Use of calculators.
+[p=20 x=199.2 SymbolMT|Verdana [10]] • Candidates will be expected to apply their knowledge and
+[p=20 x=213.4 Verdana [10]] understanding to familiar and unfamiliar contexts.
+[p=21 x=62.4 Verdana-Bold [14]] Topic 1 – Molecules, Transport and Health
+[p=21 x=62.4 Verdana-Bold [11]] Candidates will be assessed on their ability to:
+[p=21 x=68.0 Verdana|Verdana-Bold [10]] 1.1  understand the importance of water as a solvent in transport, including its
+[p=21 x=110.3 Verdana [10]] dipole nature
+[p=21 x=68.0 Verdana|Verdana-Bold [10]] 1.2 (i) know the difference between monosaccharides, disaccharides and
+[p=21 x=131.5 Verdana [10]] polysaccharides, including glycogen and starch (amylose and amylopectin)
+[p=21 x=110.3 Verdana [10]] (ii) be able to relate the structures of monosaccharides, disaccharides and
+[p=21 x=131.5 Verdana [10]] polysaccharides to their roles in providing and storing energy
+[p=21 x=131.5 SymbolMT|Verdana-Italic [10]] β-glucose and cellulose are not required in this topic.
+[p=21 x=68.0 Verdana-Bold [10]] 1.3 CORE PRACTICAL 1
+[p=21 x=110.3 Verdana-Bold [10]] Use a semi-quantitative method with Benedict’s reagent to estimate the
+[p=21 x=110.3 Verdana-Bold [10]] concentrations of reducing sugars and with iodine solution to estimate the
+[p=21 x=110.3 Verdana-Bold [10]] concentrations of starch, using colour standards.
+[p=21 x=68.0 Verdana|Verdana-Bold [10]] 1.4 know how monosaccharides (glucose, fructose and galactose) join together to form
+[p=21 x=110.3 Verdana [10]] disaccharides (maltose, sucrose and lactose) and polysaccharides (glycogen,
+[p=21 x=110.3 Verdana [10]] amylose and amylopectin) through condensation reactions forming glycosidic bonds,
+[p=21 x=110.3 Verdana [10]] and how these can be split through hydrolysis reactions
+[p=21 x=68.0 Verdana|Verdana-Bold [10]] 1.5 (i) know how a triglyceride is synthesised by the formation of ester bonds during
+[p=21 x=131.5 Verdana [10]] condensation reactions between glycerol and three fatty acids
+[p=21 x=110.3 Verdana [10]] (ii) know the differences between saturated and unsaturated lipids
+[p=21 x=68.0 Verdana|Verdana-Bold [10]] 1.6 understand why many animals have a heart and circulation (mass transport to
+[p=21 x=110.3 Verdana [10]] overcome the limitations of diffusion in meeting the requirements of organisms)
+[p=21 x=68.0 Verdana|Verdana-Bold [10]] 1.7 understand how the structures of blood vessels (capillaries, arteries and veins)
+[p=21 x=110.3 Verdana [10]] relate to their functions
+[p=21 x=68.0 Verdana|Verdana-Bold [10]] 1.8 know the cardiac cycle (atrial systole, ventricular systole and cardiac diastole) and
+[p=21 x=110.3 Verdana [10]] relate the structure and operation of the mammalian heart, including the major
+[p=21 x=110.3 Verdana [10]] blood vessels, to its function
+[p=21 x=110.3 Verdana-Italic [10]] Details of myogenic stimulation are not needed at IAS.
+[p=22 x=68.0 Verdana-Bold [10]] RECOMMENDED ADDITIONAL PRACTICAL
+[p=22 x=68.0 Verdana-Bold [10]] Investigate the structure of a mammalian heart by dissection.
+[p=22 x=68.0 Verdana|Verdana-Bold [10]] 1.9 (i) understand the role of haemoglobin in the transport of oxygen and
+[p=22 x=131.5 Verdana [10]] carbon dioxide
+[p=22 x=110.3 Verdana [10]] (ii) understand the oxygen dissociation curve of haemoglobin, the Bohr effect and
+[p=22 x=131.5 Verdana [10]] the significance of the oxygen affinity of fetal haemoglobin compared with adult
+[p=22 x=131.5 Verdana [10]] haemoglobin
+[p=22 x=68.0 Verdana|Verdana-Bold [10]] 1.10 understand the course of events that leads to atherosclerosis (endothelial
+[p=22 x=110.3 Verdana [10]] dysfunction, inflammatory response, plaque formation, raised blood pressure)
+[p=22 x=68.0 Verdana|Verdana-Bold [10]] 1.11 understand the blood clotting process (thromboplastin release, conversion of
+[p=22 x=110.3 Verdana [10]] prothrombin to thrombin and fibrinogen to fibrin) and its role in cardiovascular
+[p=22 x=110.3 Verdana [10]] disease (CVD)
+[p=22 x=68.0 Verdana|Verdana-Bold [10]] 1.12 know how factors such as genetics, diet, age, gender, high blood pressure, smoking
+[p=22 x=110.3 Verdana [10]] and inactivity increase the risk of cardiovascular disease (CVD)
+[p=22 x=68.0 Verdana|Verdana-Bold [10]] 1.13 understand the link between dietary antioxidants and the risk of cardiovascular
+[p=22 x=110.3 Verdana [10]] disease (CVD)
+[p=22 x=68.0 Verdana-Bold [10]] 1.14 CORE PRACTICAL 2
+[p=22 x=110.3 Verdana-Bold [10]] Investigate the vitamin C content of food and drink.
+[p=22 x=68.0 Verdana|Verdana-Bold [10]] 1.15 be able to analyse and interpret quantitative data on illness and mortality rates to
+[p=22 x=110.3 Verdana [10]] determine health risks, including distinguishing between correlation and causation
+[p=22 x=110.3 Verdana [10]] and recognising conflicting evidence
+[p=22 x=68.0 Verdana|Verdana-Bold [10]] 1.16 be able to evaluate the design of studies used to determine health risk factors,
+[p=22 x=110.3 Verdana [10]] including sample selection and sample size used to collect data that is both valid and
+[p=22 x=110.3 Verdana [10]] reliable
+[p=22 x=68.0 Verdana|Verdana-Bold [10]] 1.17 understand why people’s perception of risks are often different from the actual risks,
+[p=22 x=110.3 Verdana [10]] including underestimating and overestimating the risks due to diet and other
+[p=22 x=110.3 Verdana [10]] lifestyle factors in the development of heart disease
+[p=22 x=68.0 Verdana|Verdana-Bold [10]] 1.18 (i) be able to analyse data on the possible significance for health of blood
+[p=22 x=131.5 Verdana [10]] cholesterol levels and levels of high-density lipoproteins (HDLs) and low-density
+[p=22 x=131.5 Verdana [10]] lipoproteins (LDLs)
+[p=22 x=110.3 Verdana [10]] (ii) know the evidence for a causal relationship between blood cholesterol levels
+[p=22 x=131.5 Verdana [10]] (total cholesterol and LDL cholesterol) and cardiovascular disease (CVD)
+[p=22 x=68.0 Verdana|Verdana-Bold [10]] 1.19 understand how people use scientific knowledge about the effect of diet, including
+[p=22 x=110.3 Verdana [10]] obesity indicators, such as body mass index and waist-to-hip ratio, exercise and
+[p=22 x=110.3 Verdana [10]] smoking to reduce their risk of coronary heart disease
+[p=22 x=68.0 Verdana|Verdana-Bold [10]] 1.20 know the benefits and risks of treatments for cardiovascular disease (CVD)
+[p=22 x=110.3 Verdana [10]] (antihypertensives, statins, anticoagulants and platelet inhibitors)
+[p=23 x=62.4 Verdana-Bold [14]] Topic 2 – Membranes, Proteins, DNA and Gene Expression
+[p=23 x=62.4 Verdana-Bold [11]] Candidates will be assessed on their ability to:
+[p=23 x=68.0 Verdana|Verdana-Bold [10]] 2.1  (i) know the properties of gas exchange surfaces in living organisms (large surface
+[p=23 x=131.5 Verdana [10]] area to volume ratio, thickness of surface and difference in concentration)
+[p=23 x=110.3 Verdana [10]] (ii) understand how the rate of diffusion is dependent on these properties and can be
+[p=23 x=131.5 Verdana [10]] calculated using Fick’s Law of Diffusion
+[p=23 x=110.3 Verdana [10]] (iii) understand how the structure of the mammalian lung is adapted for rapid
+[p=23 x=131.5 Verdana [10]] gaseous exchange
+[p=23 x=68.0 Verdana|Verdana-Bold [10]] 2.2 (i) know the structure and properties of cell membranes
+[p=23 x=110.3 Verdana [10]] (ii) understand how models such as the fluid mosaic model of membrane structure
+[p=23 x=131.5 Verdana [10]] are interpretations of data used to develop scientific explanations of the structure
+[p=23 x=131.5 Verdana [10]] and properties of cell membranes
+[p=23 x=68.0 Verdana-Bold [10]] 2.3 CORE PRACTICAL 3
+[p=23 x=110.3 Verdana-Bold [10]] Investigate membrane properties including the effect of alcohol and
+[p=23 x=110.3 Verdana-Bold [10]] temperature on membrane permeability.
+[p=23 x=68.0 Verdana|Verdana-Bold [10]] 2.4 understand what is meant by osmosis in terms of the movement of free water
+[p=23 x=110.3 Verdana [10]] molecules through a partially permeable membrane, down a water potential gradient
+[p=23 x=68.0 Verdana-Bold [10]] RECOMMENDED ADDITIONAL PRACTICAL
+[p=23 x=68.0 Verdana-Bold [10]] Investigate tissue water potentials using plant tissue and graded concentrations of
+[p=23 x=68.0 Verdana-Bold [10]] a solute.
+[p=23 x=68.0 Verdana|Verdana-Bold [10]] 2.5 (i) understand what is meant by passive transport (diffusion, facilitated diffusion),
+[p=23 x=131.5 Verdana [10]] active transport (including the role of ATP as an immediate source of energy),
+[p=23 x=131.5 Verdana [10]] endocytosis and exocytosis
+[p=23 x=110.3 Verdana [10]] (ii) understand the involvement of carrier and channel proteins in membrane
+[p=23 x=131.5 Verdana [10]] transport
+[p=23 x=68.0 Verdana|Verdana-Bold [10]] 2.6 (i) know the basic structure of an amino acid
+[p=23 x=131.5 Verdana-Italic [10]] Structures of specific amino acids are not required.
+[p=23 x=110.3 Verdana [10]] (ii) understand the formation of polypeptides and proteins (amino acid monomers
+[p=23 x=131.5 Verdana [10]] linked by condensation reactions to form peptide bonds)
+[p=23 x=110.3 Verdana [10]] (iii) understand the significance of a protein’s primary structure in determining its
+[p=23 x=131.5 Verdana [10]] secondary structure, three-dimensional structure and properties (globular and
+[p=23 x=131.5 Verdana [10]] fibrous proteins and the types of bonds involved in its three-dimensional structure)
+[p=23 x=110.3 Verdana [10]] (iv) know the molecular structure of a globular protein and a fibrous protein and
+[p=23 x=131.5 Verdana [10]] understand how their structures relate to their functions (including haemoglobin
+[p=23 x=131.5 Verdana [10]] and collagen)
+[p=23 x=68.0 Verdana-Bold [10]] RECOMMENDED ADDITIONAL PRACTICAL
+[p=23 x=68.0 Verdana-Bold [10]] Use a semi-quantitative method to estimate protein concentration using biuret
+[p=23 x=68.0 Verdana-Bold [10]] reagent and colour standards.
+[p=23 x=68.0 Verdana|Verdana-Bold [10]] 2.7 (i) understand the mechanism of action and the specificity of enzymes in terms of
+[p=23 x=131.5 Verdana [10]] their three-dimensional structure
+[p=23 x=110.3 Verdana [10]] (ii) understand that enzymes are biological catalysts that reduce activation energy
+[p=23 x=110.3 Verdana [10]] (iii) know that there are intracellular enzymes catalysing reactions inside cells and
+[p=23 x=131.5 Verdana [10]] extracellular enzymes catalysing reactions outside cells
+[p=24 x=68.0 Verdana-Bold [10]] 2.8 CORE PRACTICAL 4
+[p=24 x=110.3 Verdana-Bold [10]] Investigate the effect of temperature, pH, enzyme concentration and
+[p=24 x=110.3 Verdana-Bold [10]] substrate concentration on the initial rate of enzyme-catalysed reactions.
+[p=24 x=68.0 Verdana|Verdana-Bold [10]] 2.9 (i)  know the basic structure of mononucleotides (deoxyribose or ribose linked to a
+[p=24 x=131.5 Verdana [10]] phosphate and a base, including thymine, uracil, adenine, cytosine or guanine)
+[p=24 x=131.5 Verdana [10]] and the structures of DNA and RNA (polynucleotides composed of
+[p=24 x=131.5 Verdana [10]] mononucleotides linked by condensation reactions to form phosphodiester bonds)
+[p=24 x=110.3 Verdana [10]] (ii) know how complementary base pairing and the hydrogen bonding between two
+[p=24 x=131.5 Verdana [10]] complementary strands are involved in the formation of the DNA double helix
+[p=24 x=68.0 Verdana|Verdana-Bold [10]] 2.10 (i)  understand the process of DNA replication, including the role of DNA polymerase
+[p=24 x=110.3 Verdana [10]] (ii) understand how Meselson and Stahl’s classic experiment provided new data that
+[p=24 x=131.5 Verdana [10]] supported the accepted theory of replication of DNA and refuted competing
+[p=24 x=131.5 Verdana [10]] theories
+[p=24 x=68.0 Verdana|Verdana-Bold [10]] 2.11 understand the nature of the genetic code (triplet code, non-overlapping and
+[p=24 x=110.3 Verdana [10]] degenerate)
+[p=24 x=68.0 Verdana|Verdana-Bold [10]] 2.12 know that a gene is a sequence of bases on a DNA molecule that codes for a
+[p=24 x=110.3 Verdana [10]] sequence of amino acids in a polypeptide chain
+[p=24 x=68.0 Verdana|Verdana-Bold [10]] 2.13 (i)  understand the process of protein synthesis (transcription and translation),
+[p=24 x=131.5 Verdana [10]] including the role of RNA polymerase, translation, messenger RNA, transfer RNA,
+[p=24 x=131.5 Verdana [10]] ribosomes and the role of start and stop codons
+[p=24 x=110.3 Verdana [10]] (ii)  understand the roles of the DNA template (antisense) strand in transcription,
+[p=24 x=131.5 Verdana [10]] codons on messenger RNA and anticodons on transfer RNA
+[p=24 x=68.0 Verdana|Verdana-Bold [10]] 2.14 (i)  understand how errors in DNA replication can give rise to mutations (substitution,
+[p=24 x=131.5 Verdana [10]] insertion and deletion of bases)
+[p=24 x=110.3 Verdana [10]] (ii)  know that some mutations will give rise to cancer or genetic disorders, but that
+[p=24 x=131.5 Verdana [10]] many mutations will have no observable effect
+[p=24 x=68.0 Verdana|Verdana-Bold|Verdana-Italic [10]] 2.15 (i)  understand what is meant by the terms gene, allele, genotype, phenotype,
+[p=24 x=131.5 Verdana|Verdana-Italic [10]] recessive, dominant, codominance, homozygote and heterozygote
+[p=24 x=110.3 Verdana [10]] (ii)  understand patterns of inheritance, including the interpretation of genetic
+[p=24 x=131.5 Verdana [10]] pedigree diagrams, in the context of monohybrid inheritance
+[p=24 x=110.2 Verdana [10]] (iii)  understand sex linkage on the X chromosome, including red-green colour
+[p=24 x=131.5 Verdana [10]] blindness in humans
+[p=24 x=68.0 Verdana|Verdana-Bold [10]] 2.16 understand how the expression of a gene mutation in people with cystic fibrosis impairs
+[p=24 x=110.3 Verdana [10]] the functioning of the gaseous exchange, digestive and reproductive systems
+[p=24 x=68.0 Verdana|Verdana-Bold [10]] 2.17 (i) understand the uses of genetic screening, including the identification of carriers,
+[p=24 x=131.5 Verdana [10]] pre-implantation genetic diagnosis (PGD) and prenatal testing, including
+[p=24 x=131.5 Verdana [10]] amniocentesis and chorionic villus sampling
+[p=24 x=110.3 Verdana [10]] (ii)  understand the implications of prenatal genetic screening
+[p=24 x=68.0 Verdana|Verdana-Bold [10]] 2.18 be able to identify and discuss the ethical and social issues relating to genetic
+[p=24 x=110.3 Verdana [10]] screening from a range of ethical viewpoints, including religious, moral and social
+[p=24 x=110.3 Verdana [10]] implications
+[p=25 x=62.4 Verdana-Bold [16]] Unit 2: Cells, Development, Biodiversity and
+[p=25 x=62.4 Verdana-Bold [16]] Conservation
+[p=25 x=62.4 Verdana-Bold [14]] IAS compulsory unit
+[p=25 x=62.4 Verdana-Bold [14]] Externally assessed
+[p=25 x=62.4 Verdana-Bold [14]] Unit description
+[p=25 x=62.4 Verdana|Verdana-Bold [10]] Introduction This unit starts with the cell as the basic unit of all living
+[p=25 x=199.2 Verdana [10]] organisms, leading to cell division, formation of gametes,
+[p=25 x=199.2 Verdana [10]] fertilisation and the continuity of life. The roles of stem cells, gene
+[p=25 x=199.2 Verdana [10]] expression, and the influence of the environment and epigenetics
+[p=25 x=199.2 Verdana [10]] on phenotypes are also included. Cell development leads to an
+[p=25 x=199.2 Verdana [10]] understanding of the structure and functions of plant cells, and
+[p=25 x=199.2 Verdana [10]] how plants may be exploited by humans for fibres and as sources
+[p=25 x=199.2 Verdana [10]] of drugs. This unit also considers the diversity of life and how
+[p=25 x=199.2 Verdana [10]] biodiversity can be measured. The unit ends with an account of
+[p=25 x=199.2 Verdana [10]] reasons for changes in populations over time, and the methods
+[p=25 x=199.2 Verdana [10]] used by zoos and seed banks for the conservation of endangered
+[p=25 x=199.2 Verdana [10]] species and their genetic diversity.
+[p=25 x=62.4 Verdana|Verdana-Bold [10]] Practical skills In order to develop their practical skills, students should be
+[p=25 x=199.2 Verdana [10]] encouraged to carry out a range of core practical experiments
+[p=25 x=199.2 Verdana [10]] related to this topic. There are also opportunities to carry out
+[p=25 x=199.2 Verdana [10]] additional practical work, such as investigating factors affecting
+[p=25 x=199.2 Verdana [10]] the growth of pollen tubes.
+[p=25 x=62.4 Verdana|Verdana-Bold [10]] Mathematical skills There are opportunities for the development of mathematical skills
+[p=25 x=199.2 Verdana [10]] in this unit, including using ratios, percentages and fractions,
+[p=25 x=199.2 Verdana [10]] substituting values into algebraic equations, calculation of
+[p=25 x=199.2 Verdana|Verdana-Italic [10]] magnification, understanding the terms mean, mode and median,
+[p=25 x=199.2 Verdana [10]] constructing and interpreting frequency tables, bar charts and
+[p=25 x=199.2 Verdana|Verdana-Italic [10]] histograms. (Please see Appendix 6: Mathematical skills and
+[p=25 x=199.2 Verdana|Verdana-Italic [10]] exemplifications for further information.)
+[p=26 x=62.4 Verdana-Bold [14]] Assessment information
+[p=26 x=199.2 SymbolMT|Verdana [10]] • First assessment: June 2019.
+[p=26 x=199.2 SymbolMT|Verdana [10]] • The assessment is 1 hour and 30 minutes.
+[p=26 x=199.2 SymbolMT|Verdana [10]] • The assessment is out of 80 marks.
+[p=26 x=199.2 SymbolMT|Verdana [10]] • Candidates must answer all questions.
+[p=26 x=199.2 SymbolMT|Verdana [10]] • The paper may include multiple-choice, short open,
+[p=26 x=213.4 Verdana [10]] open-response, calculations and extended-writing questions.
+[p=26 x=199.2 SymbolMT|Verdana [10]] • The paper will include a minimum of 8 marks that target
+[p=26 x=213.4 Verdana [10]] mathematics at Level 2 or above.
+[p=26 x=199.2 SymbolMT|Verdana [10]] • Calculators may be used in the examination. Please see
+[p=26 x=213.4 Verdana|Verdana-Italic [10]] Appendix 8: Use of calculators.
+[p=26 x=199.2 SymbolMT|Verdana [10]] • Candidates will be expected to apply their knowledge and
+[p=26 x=213.4 Verdana [10]] understanding to familiar and unfamiliar contexts.
+[p=27 x=62.4 Verdana-Bold [14]] Topic 3 – Cell Structure, Reproduction and Development
+[p=27 x=62.4 Verdana-Bold [11]] Candidates will be assessed on their ability to:
+[p=27 x=68.0 Verdana|Verdana-Bold [10]] 3.1  know that all living organisms are made of cells, sharing some common features
+[p=27 x=68.0 Verdana|Verdana-Bold [10]] 3.2 understand how the cells of multicellular organisms are organised into tissues,
+[p=27 x=110.3 Verdana [10]] tissues into organs, and organs into organ systems
+[p=27 x=68.0 Verdana|Verdana-Bold [10]] 3.3 (i) know the ultrastructure of eukaryotic cells, including nucleus, nucleolus,
+[p=27 x=131.5 Verdana [10]] ribosomes, rough and smooth endoplasmic reticulum, mitochondria, centrioles,
+[p=27 x=131.5 Verdana [10]] lysosomes and Golgi apparatus
+[p=27 x=110.3 Verdana [10]] (ii) understand the function of the organelles listed in (i)
+[p=27 x=68.0 Verdana|Verdana-Bold [10]] 3.4 understand the role of the rough endoplasmic reticulum (rER) and the Golgi
+[p=27 x=110.3 Verdana [10]] apparatus in protein transport within cells, including their role in the formation of
+[p=27 x=110.3 Verdana [10]] extracellular enzymes
+[p=27 x=68.0 Verdana|Verdana-Bold [10]] 3.5 (i) know the ultrastructure of prokaryotic cells, including cell wall, capsule, plasmid,
+[p=27 x=131.5 Verdana [10]] flagellum, pili, ribosomes and circular DNA
+[p=27 x=110.3 Verdana [10]] (ii) knderstand the function of the structures listed in (i)
+[p=27 x=68.0 Verdana|Verdana-Bold [10]] 3.6 be able to recognise the organelles in 3.3 from electron microscope (EM) images
+[p=27 x=68.0 Verdana|Verdana-Bold [10]] 3.7 (i) know how magnification and resolution can be achieved using light and electron
+[p=27 x=131.5 Verdana [10]] microscopy
+[p=27 x=110.3 Verdana [10]] (ii) understand the importance of staining specimens in microscopy
+[p=27 x=68.0 Verdana-Bold [10]] 3.8 CORE PRACTICAL 5
+[p=27 x=110.3 Verdana-Bold [10]] (i) use a light microscope to make observations and labelled drawings of
+[p=27 x=131.5 Verdana-Bold [10]] suitable animal cells
+[p=27 x=110.3 Verdana-Bold [10]] (ii) use a graticule with a microscope to make measurements and
+[p=27 x=131.5 Verdana-Bold [10]] understand the concept of scale
+[p=27 x=68.0 Verdana|Verdana-Bold [10]] 3.9 (i) know that a locus is the location of genes on a chromosome
+[p=27 x=110.3 Verdana [10]] (ii) understand the linkage of genes on a chromosome
+[p=27 x=68.0 Verdana|Verdana-Bold [10]] 3.10 understand the role of meiosis in ensuring genetic variation through the production
+[p=27 x=110.3 Verdana [10]] of non-identical gametes as a consequence of independent assortment of
+[p=27 x=110.3 Verdana [10]] chromosomes in metaphase I and crossing over of alleles between chromatids in
+[p=27 x=110.3 Verdana [10]] prophase I
+[p=27 x=110.3 Verdana-Italic [10]] Names of the stages of prophase are not required.
+[p=27 x=68.0 Verdana|Verdana-Bold [10]] 3.11 understand how mammalian gametes are specialised for their functions (including
+[p=27 x=110.3 Verdana [10]] the acrosome in sperm and the zona pellucida in the egg cell)
+[p=27 x=68.0 Verdana|Verdana-Bold [10]] 3.12 know the process of fertilisation in mammals, including the acrosome reaction, the
+[p=27 x=110.3 Verdana [10]] cortical reaction and the fusion of nuclei
+[p=27 x=68.0 Verdana|Verdana-Bold [10]] 3.13 know the process of fertilisation in flowering plants, starting with the growth of a
+[p=27 x=110.3 Verdana [10]] pollen tube and ending with the fusion of nuclei
+[p=27 x=68.0 Verdana-Bold [10]] RECOMMENDED ADDITIONAL PRACTICAL
+[p=27 x=68.0 Verdana-Bold [10]] Investigate factors affecting the growth of pollen tubes.
+[p=27 x=68.0 Verdana|Verdana-Bold [10]] 3.14 understand the role of mitosis and the cell cycle in producing genetically identical
+[p=27 x=110.3 Verdana [10]] daughter cells for growth and asexual reproduction
+[p=28 x=68.0 Verdana-Bold [10]] 3.15 CORE PRACTICAL 6
+[p=28 x=110.3 Verdana-Bold [10]] Prepare and stain a root tip squash to observe the stages of mitosis.
+[p=28 x=68.0 Verdana|Verdana-Bold [10]] 3.16 be able to calculate mitotic indices
+[p=28 x=68.0 Verdana|Verdana-Bold|Verdana-Italic [10]] 3.17 (i) understand what is meant by the terms stem cell, pluripotent and totipotent,
+[p=28 x=131.5 Verdana|Verdana-Italic [10]] morula and blastocyst
+[p=28 x=110.3 Verdana [10]] (ii) be able to discuss the ways in which society uses scientific knowledge to make
+[p=28 x=131.5 Verdana [10]] decisions about the use of stem cells in medical therapies
+[p=28 x=68.0 Verdana|Verdana-Bold [10]] 3.18 understand how cells become specialised through differential gene expression,
+[p=28 x=110.3 Verdana [10]] producing active mRNA, leading to the synthesis of proteins which, in turn, control
+[p=28 x=110.3 Verdana [10]] cell processes or determine cell structure in animals and plants
+[p=28 x=68.0 Verdana|Verdana-Bold [10]] 3.19 understand how one gene can give rise to more than one protein through
+[p=28 x=110.3 Verdana [10]] post-transcriptional changes to messenger RNA (mRNA)
+[p=28 x=68.0 Verdana|Verdana-Bold [10]] 3.20 (i) understand how phenotype is the result of an interaction between genotype and
+[p=28 x=131.5 Verdana [10]] the environment
+[p=28 x=110.3 Verdana [10]] (ii) know how epigenetic modification, including DNA methylation and histone
+[p=28 x=131.5 Verdana [10]] modification, can alter the activation of certain genes
+[p=28 x=110.3 Verdana [10]] (iii) understand how epigenetic modifications can be passed on following
+[p=28 x=131.5 Verdana [10]] cell division
+[p=28 x=68.0 Verdana|Verdana-Bold [10]] 3.21 understand how some phenotypes are affected by multiple alleles for the same
+[p=28 x=110.3 Verdana [10]] gene, or by polygenic inheritance, as well as the environment, and how polygenic
+[p=28 x=110.3 Verdana [10]] inheritance can give rise to phenotypes that show continuous variation
+[p=29 x=62.4 Verdana-Bold [14]] Topic 4 – Plant Structure and Function, Biodiversity
+[p=29 x=62.4 Verdana-Bold [14]] and Conservation
+[p=29 x=62.4 Verdana-Bold [11]] Candidates will be assessed on their ability to:
+[p=29 x=68.0 Verdana|Verdana-Bold [10]] 4.1 (i) know the structure and ultrastructure of plant cells including cell wall,
+[p=29 x=131.5 Verdana [10]] chloroplast, amyloplast, vacuole, tonoplast, plasmodesmata, pits and middle
+[p=29 x=131.5 Verdana [10]] lamella and be able to compare it with animal cells
+[p=29 x=110.3 Verdana [10]] (ii) understand the function of the structures listed in (i)
+[p=29 x=68.0 Verdana|Verdana-Bold [10]] 4.2 be able to recognise the organelles in 4.1 from electron microscope (EM) images
+[p=29 x=68.0 Verdana|Verdana-Bold [10]] 4.3 understand the structure and function of the polysaccharides starch and cellulose,
+[p=29 x=110.3 SymbolMT|Verdana [10]] including the role of hydrogen bonds between the β-glucose molecules in the
+[p=29 x=110.3 Verdana [10]] formation of cellulose microfibrils
+[p=29 x=68.0 Verdana|Verdana-Bold [10]] 4.4 understand how the arrangement of cellulose microfibrils and secondary thickening
+[p=29 x=110.3 Verdana [10]] in plant cell walls contributes to the physical properties of xylem vessels and
+[p=29 x=110.3 Verdana [10]] sclerenchyma fibres in plant fibres that can be exploited by humans
+[p=29 x=68.0 Verdana|Verdana-Bold [10]] 4.5 know the similarities and differences between the structures of, the position in the
+[p=29 x=110.3 Verdana [10]] stem, and the function of sclerenchyma fibres (support), xylem vessels (support and
+[p=29 x=110.3 Verdana [10]] transport of water and mineral ions) and phloem (translocation of organic solutes)
+[p=29 x=68.0 Verdana-Bold [10]] 4.6 CORE PRACTICAL 7
+[p=29 x=110.3 Verdana-Bold [10]] Use a light microscope to:
+[p=29 x=110.3 Verdana-Bold [10]] (i) make observations, draw and label plan diagrams of transverse sections
+[p=29 x=131.5 Verdana-Bold [10]] of roots, stems and leaves
+[p=29 x=110.3 Verdana-Bold [10]] (ii) make observations, draw and label cells of plant tissues
+[p=29 x=110.3 Verdana-Bold [10]] (iii) identify sclerenchyma fibres, phloem, sieve tubes and xylem vessels
+[p=29 x=131.5 Verdana-Bold [10]] and their location.
+[p=29 x=68.0 Verdana|Verdana-Bold [10, 11]] 4.7 understand how the uses of plant fibres and starch may contribute to sustainability,
+[p=29 x=110.3 Verdana [10]] including plant-based products to replace oil-based plastics
+[p=29 x=68.0 Verdana|Verdana-Bold [10]] 4.8 understand the importance of water and inorganic ions (nitrate, calcium ions and
+[p=29 x=110.3 Verdana [10]] magnesium ions) to plants
+[p=29 x=68.0 Verdana-Bold [10]] RECOMMENDED ADDITIONAL PRACTICAL
+[p=29 x=68.0 Verdana-Bold [10]] Investigate plant mineral deficiencies.
+[p=29 x=68.0 Verdana-Bold [10]] 4.9 CORE PRACTICAL 8
+[p=29 x=110.3 Verdana-Bold [10]] Determine the tensile strength of plant fibres.
+[p=29 x=68.0 Verdana|Verdana-Bold [10]] 4.10 understand the conditions required for bacterial growth
+[p=29 x=68.0 Verdana|Verdana-Bold [10]] 4.11 know that substances derived from plants can have antimicrobial and other
+[p=29 x=110.3 Verdana [10]] therapeutic properties
+[p=29 x=68.0 Verdana-Bold [10]] 4.12 CORE PRACTICAL 9
+[p=29 x=110.3 Verdana-Bold [10]] Investigate the antimicrobial properties of plants, including aseptic
+[p=29 x=110.3 Verdana-Bold [10]] techniques for the safe handling of bacteria.
+[p=29 x=68.0 Verdana|Verdana-Bold [10]] 4.13 understand the development of drug testing from historic to contemporary
+[p=29 x=110.3 Verdana [10]] protocols, including William Withering’s digitalis soup, double blind trials, placebo
+[p=29 x=110.3 Verdana [10]] and three-phased testing
+[p=30 x=68.0 Verdana|Verdana-Bold [10]] 4.14 (i) understand that classification is a means of organising the variety of life based
+[p=30 x=131.5 Verdana [10]] on relationships between organisms using differences and similarities in
+[p=30 x=131.5 Verdana [10]] phenotypes and in genotypes, and is built around the species concept
+[p=30 x=110.3 Verdana [10]] (ii) understand the process and importance of critical evaluation of new data by the
+[p=30 x=131.5 Verdana [10]] scientific community leading to new taxonomic groupings, based on molecular
+[p=30 x=131.5 Verdana [10]] evidence, including the three-domain system (Archaea, Bacteria and Eukarya)
+[p=30 x=68.0 Verdana|Verdana-Bold [10]] 4.15 know that, over time, the variety of life has become extensive but is now being
+[p=30 x=110.3 Verdana [10]] threatened by human activity
+[p=30 x=68.0 Verdana|Verdana-Bold|Verdana-Italic [10]] 4.16 understand what is meant by the terms biodiversity and endemism
+[p=30 x=68.0 Verdana|Verdana-Bold [10]] 4.17 know how biodiversity can be measured within a habitat using species richness, and
+[p=30 x=110.3 Verdana [10]] within a species using genetic diversity by calculating the heterozygosity index:
+[p=30 x=111.4 (assembled-fraction)|Verdana [10]] heterozygosity index =  (number of heterozygotes)/(number of individuals in the population)
+[p=30 x=68.0 Verdana|Verdana-Bold [10]] 4.18 understand how biodiversity can be compared in different habitats using the formula
+[p=30 x=110.3 Verdana [10]] to calculate an index of diversity (D):
+[p=30 x=293.8 (assembled-fraction)|Verdana [10]] D= (N(N-1))/(Σn(n-1))
+[p=30 x=68.0 Verdana|Verdana-Bold [10]] 4.19 understand the concept of niche and be able to discuss examples of adaptations of
+[p=30 x=110.3 Verdana [10]] organisms to their environment (behavioural, anatomical and physiological)
+[p=30 x=68.0 Verdana|Verdana-Bold [10]] 4.20 (i) understand how the Hardy-Weinberg equation can be used to see whether a
+[p=30 x=131.5 Verdana [10]] change in allele frequency is occurring in a population over time
+[p=30 x=110.3 Verdana [10]] (ii) understand that changes in allele frequency can come about as a result of
+[p=30 x=131.5 Verdana [10]] mutation and natural selection
+[p=30 x=110.3 Verdana [10]] (iii) understand that reproductive isolation can lead to accumulation of different
+[p=30 x=131.5 Verdana [10]] genetic information in populations, potentially leading to the formation of new
+[p=30 x=131.5 Verdana [10]] species
+[p=30 x=68.0 Verdana|Verdana-Bold [10]] 4.21 be able to evaluate the methods used by zoos and seed banks in the conservation of
+[p=30 x=110.3 Verdana [10]] endangered species and their genetic diversity, including scientific research, captive
+[p=30 x=110.3 Verdana [10]] breeding programmes, reintroduction programmes and education
+[p=31 x=62.4 Verdana-Bold [16]] Unit 3: Practical Skills in Biology I
+[p=31 x=62.4 Verdana-Bold [14]] IAS compulsory unit
+[p=31 x=62.4 Verdana-Bold [14]] Externally assessed
+[p=31 x=62.4 Verdana-Bold [14]] Unit description
+[p=31 x=62.4 Verdana|Verdana-Bold [10]] Introduction Students are expected to develop experimental skills, and a
+[p=31 x=199.2 Verdana [10]] knowledge and understanding of experimental techniques, by
+[p=31 x=199.2 Verdana [10]] carrying out the core practicals and other recommended practical
+[p=31 x=199.2 Verdana [10]] investigations and experiments while they study units 1 and 2.
+[p=31 x=199.2 Verdana [10]] This will require them to work safely, produce valid results and
+[p=31 x=199.2 Verdana [10]] present data in the most appropriate format.
+[p=31 x=199.2 Verdana [10]] This unit will assess students’ ability to apply their knowledge and
+[p=31 x=199.2 Verdana [10]] understanding of experimental design, procedures and techniques
+[p=31 x=199.2 Verdana [10]] developed throughout units 1 and 2.
+[p=31 x=62.4 SymbolMT|Verdana|Verdana-Bold [10]] Practical skills • Solve problems set in practical contexts.
+[p=31 x=62.4 Verdana-Bold [10]] identified for
+[p=31 x=199.2 SymbolMT|Verdana [10]] • Apply scientific knowledge to practical contexts.
+[p=31 x=62.4 Verdana-Bold [10]] assessment
+[p=31 x=199.2 SymbolMT|Verdana [10]] • Comment on experimental design and evaluate
+[p=31 x=213.4 Verdana [10]] scientific methods.
+[p=31 x=199.2 SymbolMT|Verdana [10]] • Present data in appropriate ways.
+[p=31 x=199.2 SymbolMT|Verdana [10]] • Evaluate results and draw conclusions with reference to
+[p=31 x=213.3 Verdana [10]] measurement uncertainties and errors.
+[p=31 x=199.2 SymbolMT|Verdana [10]] • Identify variables, including those that must be controlled.
+[p=31 x=199.2 SymbolMT|Verdana [10]] • Plot and interpret graphs.
+[p=31 x=199.2 SymbolMT|Verdana [10]] • Process and analyse data using appropriate mathematical skills
+[p=31 x=213.3 Verdana|Verdana-Italic [10]] (see Appendix 6: Mathematical skills and exemplifications).
+[p=31 x=199.1 SymbolMT|Verdana [10]] • Know and understand how to use a wide range of apparatus,
+[p=31 x=213.3 Verdana [10]] materials and techniques safely, appropriate to the knowledge
+[p=31 x=213.3 Verdana [10]] and understanding in this specification.
+[p=31 x=199.1 SymbolMT|Verdana [10]] • Plan an investigation to test a hypothesis.
+[p=31 x=62.4 SymbolMT|Verdana|Verdana-Bold [10]] Practical skills to be • Apply investigative approaches and methods to practical work.
+[p=31 x=62.4 Verdana-Bold [10]] developed through
+[p=31 x=199.2 SymbolMT|Verdana [10]] • Use a range of practical equipment and materials safely and
+[p=31 x=62.4 Verdana-Bold [10]] teaching and learning
+[p=31 x=213.4 Verdana [10]] correctly.
+[p=31 x=199.2 SymbolMT|Verdana [10]] • Follow written instructions.
+[p=31 x=199.2 SymbolMT|Verdana [10]] • Make and record observations.
+[p=31 x=199.2 SymbolMT|Verdana [10]] • Present information and data in a scientific way.
+[p=31 x=199.2 SymbolMT|Verdana [10]] • Use appropriate software and tools to collect and process data.
+[p=31 x=199.2 SymbolMT|Verdana [10]] • Use online and offline research skills, including websites,
+[p=31 x=213.3 Verdana [10]] textbooks and other printed scientific sources of information.
+[p=31 x=199.2 SymbolMT|Verdana [10]] • Cite sources of information correctly.
+[p=31 x=199.2 SymbolMT|Verdana [10]] • Use a wide range of experimental and practical instruments,
+[p=31 x=213.3 Verdana [10]] equipment and techniques appropriate to the knowledge and
+[p=31 x=213.3 Verdana [10]] understanding included in this specification.
+[p=32 x=62.4 Verdana-Bold [14]] Assessment information
+[p=32 x=199.2 SymbolMT|Verdana [10]] • First assessment: June 2019.
+[p=32 x=199.2 SymbolMT|Verdana [10]] • The assessment is 1 hour and 20 minutes.
+[p=32 x=199.2 SymbolMT|Verdana [10]] • The assessment is out of 50 marks.
+[p=32 x=199.2 SymbolMT|Verdana [10]] • Candidates must answer all questions.
+[p=32 x=199.2 SymbolMT|Verdana [10]] • The paper may include calculations, short open,
+[p=32 x=213.4 Verdana [10]] open-response and calculation questions.
+[p=32 x=199.2 SymbolMT|Verdana [10]] • The paper will include a minimum of 5 marks that target
+[p=32 x=213.4 Verdana [10]] mathematics at Level 2 or above.
+[p=32 x=199.2 SymbolMT|Verdana [10]] • Calculators may be used in the examination. Please see
+[p=32 x=213.4 Verdana|Verdana-Italic [10]] Appendix 8: Use of calculators.
+[p=32 x=62.4 Verdana-Bold [14]] Planning
+[p=32 x=62.4 Verdana [10]] Questions on Unit 3 may require students to plan and evaluate an investigation, based on
+[p=32 x=62.4 Verdana [10]] the practical activities included in units 1 and 2.
+[p=32 x=62.4 Verdana-Bold [11]] Candidates will be assessed on their ability to:
+[p=32 x=62.4 SymbolMT|Verdana|Verdana-Bold [10]] Plan an experiment • identify the apparatus required
+[p=32 x=199.2 SymbolMT|Verdana [10]] • identify the dependent and independent variables, standardised
+[p=32 x=213.4 Verdana [10]] or controlled variables
+[p=32 x=199.2 SymbolMT|Verdana [10]] • describe how to measure relevant variables using the most
+[p=32 x=213.4 Verdana [10]] appropriate instrument and correct measuring techniques
+[p=32 x=199.2 SymbolMT|Verdana [10]] • identify and state how to control all other relevant variables to
+[p=32 x=213.4 Verdana [10]] make it a fair test
+[p=32 x=199.2 SymbolMT|Verdana [10]] • discuss whether repeat readings are appropriate
+[p=32 x=199.2 SymbolMT|Verdana [10]] • identify health and safety issues and discuss how they may be
+[p=32 x=213.4 Verdana [10]] dealt with
+[p=32 x=199.2 SymbolMT|Verdana [10]] • discuss how the data collected will be used
+[p=32 x=199.2 SymbolMT|Verdana [10]] • identify possible sources of uncertainty and/or systematic error,
+[p=32 x=213.4 Verdana [10]] and explain how they may be reduced or eliminated
+[p=32 x=199.2 SymbolMT|Verdana [10]] • comment on the implications of biology (for example:
+[p=32 x=213.4 Verdana [10]] benefits/risks) and on its context (for example:
+[p=32 x=213.4 Verdana [10]] social/environmental/historical).
+[p=33 x=62.4 Verdana-Bold [14]] Implementation and measurements
+[p=33 x=62.4 Verdana-Bold [11]] Candidates will be assessed on their ability to:
+[p=33 x=62.4 SymbolMT|Verdana|Verdana-Bold [10]] Implementation and • comment on the number of readings taken
+[p=33 x=62.4 Verdana-Bold [10]] measurements
+[p=33 x=206.3 SymbolMT|Verdana [10]] • comment on the range of measurements taken
+[p=33 x=206.3 SymbolMT|Verdana [10]] • comment on significant figures
+[p=33 x=206.3 SymbolMT|Verdana [10]] • check a reading that is inconsistent with other readings –
+[p=33 x=220.5 Verdana [10]] for example, a point that is not on the line of a graph
+[p=33 x=206.3 SymbolMT|Verdana [10]] • comment on how the experiment may be improved, possibly by
+[p=33 x=220.4 Verdana [10]] using additional apparatus (for example, to reduce errors).
+[p=33 x=62.4 Verdana-Bold [14]] Processing results
+[p=33 x=62.4 Verdana [10]] Candidates may be provided with experimental data in a tabulated or graphical form.
+[p=33 x=62.4 Verdana-Bold [11]] Candidates will be assessed on their ability to:
+[p=33 x=62.4 SymbolMT|Verdana|Verdana-Bold [10]] Processing results • perform calculations, using the correct number of significant
+[p=33 x=213.4 Verdana [10]] figures
+[p=33 x=199.2 SymbolMT|Verdana [10]] • plot results on a graph using an appropriate scale
+[p=33 x=199.2 SymbolMT|Verdana [10]] • use the correct units throughout
+[p=33 x=199.2 SymbolMT|Verdana [10]] • comment on the relationship obtained from the graph
+[p=33 x=199.2 SymbolMT|Verdana [10]] • determine the relationship between two variables or determine
+[p=33 x=213.4 Verdana [10]] a constant with the aid of a graph – for example, by
+[p=33 x=213.4 Verdana [10]] determining the gradient using a large triangle
+[p=33 x=199.2 SymbolMT|Verdana [10]] • suggest realistic modifications to reduce errors
+[p=33 x=199.2 SymbolMT|Verdana [10]] • suggest realistic modifications to improve the experiment
+[p=33 x=199.2 SymbolMT|Verdana [10]] • discuss uncertainties, qualitatively and quantitatively.
